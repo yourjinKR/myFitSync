@@ -50,7 +50,7 @@ const ReviewList = () => {
         slidesPerView={1.2}
         centeredSlides={true}
         loop={true}
-        loopedSlides={3}
+        
         spaceBetween={15}
         className="mySwiper"
         style={{ padding: '30px' }}
