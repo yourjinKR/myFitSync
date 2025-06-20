@@ -10,6 +10,9 @@ const HeaderWrapper = styled.div`
   align-items : center;
   box-shadow : 0 5px 5px rgba(0,0,0,0.1);
   position: sticky;
+  top: 0;
+  z-index: 999; 
+  background:#fff;
 `;
 
 const Header = () => {

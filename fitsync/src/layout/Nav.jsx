@@ -7,14 +7,14 @@ import { useNavigate } from 'react-router-dom';
 
 const NavWrapper = styled.div`
   display:flex;
-  position:fixed;
-  bottom: 0;
-  left:50%;
   width:100%;
   max-width:750px;
-  transform: translateX(-50%);
   box-shadow:0 -5px 5px rgba(0,0,0,0.05);
   background: gray;
+
+  position: sticky;
+  bottom: 0;
+  z-index: 999; 
   
   & > button {
     width: 33.3333%;
