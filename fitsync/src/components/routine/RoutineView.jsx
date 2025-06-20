@@ -13,7 +13,7 @@ const  RoutineWrapper = styled.div`
     width:100%;
     font-size: 2rem;
     line-height:1.2;
-    font-weight:boldl
+    font-weight:bold;
   }
   & > h3{
     margin-top:30px;
