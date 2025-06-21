@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import Nav from '../layout/Nav';
 import TrainerSearch from '../components/trainer/TrainerSearch';
 import RoutineView from '../components/routine/RoutineView';
+import RoutineAdd from '../components/routine/RoutineAdd';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -23,6 +24,7 @@ const Display = () => {
         <Route path='/' element={<Main/>}/>
         <Route path='/trainer/search' element={<TrainerSearch/>}/>
         <Route path='/routine' element={<RoutineView />}/>
+        <Route path='/routine/add' element={<RoutineAdd />}/>
       </Routes>
       <Nav/>
     </DisplayWrapper>

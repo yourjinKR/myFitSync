@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import RoutineList from './RoutineList';
+import { useNavigate } from 'react-router-dom';
 
 
 const  RoutineWrapper = styled.div`
@@ -23,9 +24,14 @@ const  RoutineWrapper = styled.div`
 
 
 const RoutineView = () => {
+
+  const nav = useNavigate();
+  const handleAddRoutine = () => {
+    nav('/routine/add');
+  }
   return (
     <RoutineWrapper>
-      <button>루틴 추가하기<br/> + </button>
+      <button onClick={handleAddRoutine}>루틴 추가하기<br/> + </button>
       <h3>내 루틴</h3>
       <RoutineList/>
     </RoutineWrapper>
