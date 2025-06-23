@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.fitsync.mapper.ChatAttachMapper">
+
+	<!-- 1. 파일 등록 -->
+	<insert id="insert" parameterType="org.fitsync.domain.ChatAttachVO">
+		
+	</insert>
+	
+	<!-- 2. 파일 수정 -->
+	<update id="update" parameterType="org.fitsync.domain.ChatAttachVO">
+		
+	</update>
+	
+	<!-- 3. 파일 삭제 -->
+	<delete id="delete" parameterType="int">
+		
+	</delete>
+	
+	<!-- 4. 파일 view -->
+	<select id="read" parameterType="int" resultType="org.fitsync.domain.ChatAttachVO">
+		
+	</select>
+	
+	<!-- 5. 파일 목록 -->
+	<select id="getAttach" resultType="org.fitsync.domain.ChatAttachVO">
+		
+	</select>
+
+</mapper>
