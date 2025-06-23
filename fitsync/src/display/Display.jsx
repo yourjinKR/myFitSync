@@ -12,6 +12,7 @@ import RoutineSet from '../components/routine/RoutineSet';
 import RoutineMain from '../components/routine/RoutineMain';
 import Login from '../components/Login';
 import googleAuthManager from '../util/googleAuth';
+import TrainerMain from '../components/trainer/TrainerMain';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -41,6 +42,7 @@ const Display = () => {
       <Routes>
         <Route path='/' element={<Main/>}/>
         <Route path='/login' element={<Login/>}/>
+        <Route path='/trainer' element={<TrainerMain/>}/>
         <Route path='/trainer/search' element={<TrainerSearch/>}/>
         <Route path='/routine' element={<RoutineMain/>}>
           <Route path='view' element={<RoutineView />}/>
