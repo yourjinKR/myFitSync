@@ -1,11 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 import RoutineList from './RoutineList';
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 
 const  RoutineWrapper = styled.div`
   padding: 15px;
+  position:relative;
   & > button {
     text-align:center;
     border:1px solid #ccc;

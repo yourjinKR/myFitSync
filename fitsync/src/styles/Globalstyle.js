@@ -1,4 +1,5 @@
 import { createGlobalStyle } from 'styled-components';
+import '@fontsource/noto-sans-kr';
 
 const GlobalStyle = createGlobalStyle`
   /* reset.css 기반 */
@@ -12,7 +13,7 @@ const GlobalStyle = createGlobalStyle`
  
   html, body {
     height: 100%;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     background-color: #fff;
     color: #000;
     line-height: 1.5;

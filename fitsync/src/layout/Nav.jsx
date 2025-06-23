@@ -35,7 +35,7 @@ const Nav = () => {
     if(type === 'home'){
       nav('/');
     }else if(type === 'routine'){
-      nav('/routine');
+      nav('/routine/view');
     }else{
       nav('/mypage');
     }

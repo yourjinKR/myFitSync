@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../layout/Header';
 import { Route, Routes } from 'react-router-dom';
 import Main from '../components/Main';
@@ -8,6 +8,10 @@ import Nav from '../layout/Nav';
 import TrainerSearch from '../components/trainer/TrainerSearch';
 import RoutineView from '../components/routine/RoutineView';
 import RoutineAdd from '../components/routine/RoutineAdd';
+import RoutineSet from '../components/routine/RoutineSet';
+import RoutineMain from '../components/routine/RoutineMain';
+import Login from '../components/Login';
+import googleAuthManager from '../util/googleAuth';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -17,14 +21,32 @@ const DisplayWrapper = styled.div`
  height:100vh;
 `;
 const Display = () => {
+  useEffect(() => {
+    // 앱 시작 시 Google API 미리 로드
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
+    try {
+      // Google API 스크립트 미리 로드 (백그라운드에서)
+      await googleAuthManager.loadScript();
+    } catch (error) {
+      console.error('앱 초기화 실패:', error);
+    }
+  };
+  
   return (
     <DisplayWrapper>
       <Header/>
       <Routes>
         <Route path='/' element={<Main/>}/>
+        <Route path='/login' element={<Login/>}/>
         <Route path='/trainer/search' element={<TrainerSearch/>}/>
-        <Route path='/routine' element={<RoutineView />}/>
-        <Route path='/routine/add' element={<RoutineAdd />}/>
+        <Route path='/routine' element={<RoutineMain/>}>
+          <Route path='view' element={<RoutineView />}/>
+          <Route path='add' element={<RoutineAdd />}/>
+          <Route path='set' element={<RoutineSet />}/>
+        </Route>
       </Routes>
       <Nav/>
     </DisplayWrapper>
