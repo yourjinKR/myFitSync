@@ -3,7 +3,6 @@ package org.fitsync.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
@@ -14,13 +13,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.io.InputStream;
 
-@Controller
+@RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class GoogleAuthController {
 
     @PostMapping(value = "/google", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
     public ResponseEntity<Map<String, Object>> googleLogin(@RequestBody Map<String, String> body, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         String idToken = body.get("idToken");

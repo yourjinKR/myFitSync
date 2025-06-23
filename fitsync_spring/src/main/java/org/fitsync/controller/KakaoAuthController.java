@@ -13,7 +13,6 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -21,11 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
+@RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class KakaoAuthController {
-    
     @Value("${kakao.client.id}")
     private String clientId;
     
@@ -49,9 +47,7 @@ public class KakaoAuthController {
     
     // 카카오 로그인 URL 반환
     @GetMapping("/kakao/url")
-    @ResponseBody
     public ResponseEntity<Map<String, String>> getKakaoLoginUrl() {
-    	System.out.println(clientId);
         String loginUrl = authUrl + 
                          "?client_id=" + clientId +
                          "&redirect_uri=" + redirectUri +
@@ -59,28 +55,32 @@ public class KakaoAuthController {
         
         Map<String, String> response = new HashMap<>();
         response.put("loginUrl", loginUrl);
-        
         return ResponseEntity.ok(response);
     }
     
     // 카카오 콜백 처리
     @GetMapping("/kakao/callback")
-    @ResponseBody
     public ResponseEntity<Map<String, Object>> kakaoCallback(@RequestParam String code) {
         try {
             // 1. 액세스 토큰 요청
             String accessToken = getAccessToken(code);
-            
+
             // 2. 사용자 정보 요청
             Map<String, Object> userInfo = getUserInfo(accessToken);
-            
-            return ResponseEntity.ok(userInfo);
-            
+
+            // 이름, 이메일, 프로필이미지만 추출해서 반환
+            Map<String, Object> result = new HashMap<>();
+            result.put("name", userInfo.get("name"));
+            result.put("email", userInfo.get("email"));
+            result.put("profileImage", userInfo.get("profileImage"));
+
+            return ResponseEntity.ok(result);
+
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "카카오 로그인 처리 중 오류가 발생했습니다.");
             errorResponse.put("message", e.getMessage());
-            
+
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
