@@ -11,7 +11,8 @@ const HeaderWrapper = styled.div`
   box-shadow : 0 5px 5px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
-  z-index: 999; 
+  z-index: 999;
+  height: 50px; 
   background:#fff;
 `;
 

@@ -16,6 +16,7 @@ import java.io.InputStream;
 
 @Controller
 @RequestMapping("/auth")
+@CrossOrigin(origins = "*")
 public class GoogleAuthController {
 
     @PostMapping(value = "/google", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -39,7 +40,8 @@ public class GoogleAuthController {
                 // 3. 사용자 정보 추출
                 String email = tokenInfo.get("email").asText();
                 String name = tokenInfo.has("name") ? tokenInfo.get("name").asText() : "";
-
+                String picture = tokenInfo.get("picture").asText();
+                
                 // 4. (선택) DB에서 사용자 조회 및 회원가입/로그인 처리
 
                 // 5. 세션에 사용자 정보 저장 (예시)
@@ -49,6 +51,7 @@ public class GoogleAuthController {
                 Map<String, Object> user = new HashMap<>();
                 user.put("email", email);
                 user.put("name", name);
+                user.put("picture", picture);
 
                 result.put("success", true);
                 result.put("user", user);

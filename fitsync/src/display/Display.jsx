@@ -21,6 +21,12 @@ const DisplayWrapper = styled.div`
  position: relative;
  height:100vh;
 `;
+const DisplayInnner = styled.div`
+  position: relative;
+  overflow: auto;
+  height: calc(100% - 100px);
+`;
+
 const Display = () => {
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
@@ -39,17 +45,19 @@ const Display = () => {
   return (
     <DisplayWrapper>
       <Header/>
-      <Routes>
-        <Route path='/' element={<Main/>}/>
-        <Route path='/login' element={<Login/>}/>
-        <Route path='/trainer' element={<TrainerMain/>}/>
-        <Route path='/trainer/search' element={<TrainerSearch/>}/>
-        <Route path='/routine' element={<RoutineMain/>}>
-          <Route path='view' element={<RoutineView />}/>
-          <Route path='add' element={<RoutineAdd />}/>
-          <Route path='set' element={<RoutineSet />}/>
-        </Route>
-      </Routes>
+      <DisplayInnner>
+        <Routes>
+          <Route path='/' element={<Main/>}/>
+          <Route path='/login' element={<Login/>}/>
+          <Route path='/trainer' element={<TrainerMain/>}/>
+          <Route path='/trainer/search' element={<TrainerSearch/>}/>
+          <Route path='/routine' element={<RoutineMain/>}>
+            <Route path='view' element={<RoutineView />}/>
+            <Route path='add' element={<RoutineAdd />}/>
+            <Route path='set' element={<RoutineSet />}/>
+          </Route>
+        </Routes>
+      </DisplayInnner>
       <Nav/>
     </DisplayWrapper>
   );

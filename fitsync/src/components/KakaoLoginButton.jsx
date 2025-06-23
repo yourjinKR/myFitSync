@@ -1,93 +1,149 @@
-import { useEffect } from 'react';
-import axios from 'axios';
-import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import styled, { keyframes } from 'styled-components';
+import axios from 'axios'; // axios 추가
 
-const KakaoLoginButton = () => {
+const SpinnerAnimation = keyframes`
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+`;
 
-  const KakaoButtonWrapper = styled.div`
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    `;
+const KakaoButton = styled.button`
+  background-color: #fee500;
+  color: #000000;
+  border: 2px solid #fee500;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  width: 100%;
+  
+  &:hover {
+    background-color: #fdd835;
+    border-color: #fdd835;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
 
-  const KakaoButton = styled.button`
-      background-color: #fee500;
-      border: none;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-      font-size: 16px;
-      font-weight: bold;
-      color: #3c1e1e;
-      gap: 12px;
+const KakaoIcon = styled.svg`
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+`;
 
-      &:hover {
-        background-color: #ffe14a;
-      }
-    `;
+const Spinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top: 2px solid #000000;
+  border-radius: 50%;
+  animation: ${SpinnerAnimation} 1s linear infinite;
+  flex-shrink: 0;
+`;
 
-  const KakaoSvg = () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#fee500" />
-      <path d="M12 6C7.58 6 4 8.94 4 12.22c0 2.13 1.81 3.97 4.5 4.72-.18.62-.65 2.18-.75 2.53 0 0-.01.03 0 .04.07.09.19.08.26.06.11-.02 1.61-1.07 2.26-1.51.5.07 1.02.11 1.56.11 4.42 0 8-2.94 8-6.22S16.42 6 12 6z" fill="#3c1e1e" />
-    </svg>
-  );
+const ButtonText = styled.span`
+  font-weight: 500;
+`;
+
+const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Kakao SDK 로드
-    const script = document.createElement('script');
-    script.src = 'https://developers.kakao.com/sdk/js/kakao.js';
-    script.async = true;
-    script.onload = () => {
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        window.Kakao.init('56a1079174ea8026777a9d8b11807bce');
-        console.log('✅ Kakao SDK 초기화 완료');
-      }
-    };
-    document.body.appendChild(script);
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code) {
+      handleKakaoCallback(code);
+    }
+    // eslint-disable-next-line
   }, []);
 
-  const loginWithKakao = () => {
-    if (!window.Kakao) {
-      alert('Kakao SDK가 아직 로드되지 않았습니다.');
-      return;
+  // 카카오 로그인 버튼 클릭
+  const handleKakaoLogin = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axios.get('/auth/kakao/url');
+      const data = response.data;
+
+      if (response.status === 200) {
+        window.location.href = data.loginUrl;
+      } else {
+        console.error('로그인 URL을 가져오는데 실패했습니다.');
+        if (onLoginFailure) {
+          onLoginFailure('로그인 URL을 가져오는데 실패했습니다.');
+        }
+        setLoading(false);
+      }
+
+    } catch (err) {
+      console.error('로그인 오류:', err);
+      if (onLoginFailure) {
+        onLoginFailure('로그인 처리 중 오류가 발생했습니다.');
+      }
+      setLoading(false);
     }
+  };
 
-    window.Kakao.Auth.login({
-      scope: 'profile_nickname,account_email',
-      success: function (authObj) {
-        const accessToken = authObj.access_token;
-        console.log('🔐 access_token:', accessToken);
+  // 카카오 콜백 처리
+  const handleKakaoCallback = async (code) => {
+    try {
+      setLoading(true);
 
-        // ✅ axios로 백엔드에 access token 전송
-        axios.post('/api/auth/kakao', { accessToken })
-          .then((res) => {
-            alert('✅ 백엔드 응답:', res.data);
-            // 로그인 처리 또는 세션 저장 등
-          })
-          .catch((err) => {
-            console.error('❌ 백엔드 오류:', err);
-          });
-      },
-      fail: function (err) {
-        console.error('카카오 로그인 실패', err);
-      },
-    });
+      const response = await axios.get(`/auth/kakao/callback?code=${code}`);
+      const userData = response.data;
+
+      if (response.status === 200) {
+        // URL에서 code 파라미터 제거
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // 로그인 성공 콜백 호출
+        if (onLoginSuccess) {
+          onLoginSuccess(userData);
+        }
+      } else {
+        console.error('로그인 처리 실패:', userData.message);
+        if (onLoginFailure) {
+          onLoginFailure(userData.message || '로그인 처리에 실패했습니다.');
+        }
+      }
+
+    } catch (err) {
+      console.error('콜백 처리 오류:', err);
+      if (onLoginFailure) {
+        onLoginFailure('콜백 처리 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <KakaoButtonWrapper>
-      <KakaoButton onClick={loginWithKakao}>
-        <KakaoSvg />
-        카카오 로그인
-      </KakaoButton>
-    </KakaoButtonWrapper>
+    <KakaoButton onClick={handleKakaoLogin} disabled={loading}>
+      {loading ? (
+        <>
+          <Spinner />
+          <ButtonText>로그인 중...</ButtonText>
+        </>
+      ) : (
+        <>
+          <KakaoIcon viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z" />
+          </KakaoIcon>
+          <ButtonText>카카오로 로그인</ButtonText>
+        </>
+      )}
+    </KakaoButton>
   );
 };
 
