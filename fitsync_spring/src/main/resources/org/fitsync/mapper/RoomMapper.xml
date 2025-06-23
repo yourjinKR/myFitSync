@@ -4,4 +4,6 @@
 
 <mapper namespace="org.fitsync.mapper.RoomMapper">
 
+	
+
 </mapper>
