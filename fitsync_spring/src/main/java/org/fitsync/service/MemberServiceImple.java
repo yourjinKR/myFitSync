@@ -63,7 +63,6 @@ public class MemberServiceImple implements MemberService {
 		bvo.setBody_skeletal_muscle(body.get("body_skeletal_muscle") != null && body.get("body_skeletal_muscle") != "" ? Double.parseDouble(body.get("body_skeletal_muscle")) : 0.0);
 		bvo.setBody_fat_percentage(body.get("body_fat_percentage") != null && body.get("body_fat_percentage") != "" ? Double.parseDouble(body.get("body_fat_percentage")) : 0.0);
 		result = result + bodymapper.insertBody(bvo);
-		System.out.println(result);
 		return result == 2 ? true : false;
 	}
 }

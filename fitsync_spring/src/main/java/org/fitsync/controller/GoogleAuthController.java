@@ -49,6 +49,7 @@ public class GoogleAuthController {
                 // 4. (선택) DB에서 사용자 조회 및 회원가입/로그인 처리
                 // 유저 존재 확인
                 int chkUser = service.getFindUser(email);
+                session.setAttribute("USER_IDX", chkUser);
                 // 유저 추가 정보 확인
                 boolean chkInfo = service.getFindInfo(email);
                 
@@ -68,7 +69,7 @@ public class GoogleAuthController {
                 user.put("name", name);
                 user.put("picture", picture);
                 user.put("isInfo", chkInfo);
-                session.setAttribute("USER_IDX", chkUser);
+
                 
                 result.put("success", true);
                 result.put("user", user);
