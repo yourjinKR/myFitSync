@@ -5,56 +5,82 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
 
-const NavWrapper = styled.div`
-  display:flex;
-  width:100%;
-  max-width:750px;
-  box-shadow:0 -5px 5px rgba(0,0,0,0.05);
-  background: gray;
-
+const NavWrapper = styled.nav`
+  display: flex;
+  width: 100%;
+  max-width: 750px;
+  margin: 0 auto;
+  background: #232946;
+  box-shadow: 0 -2px 12px rgba(44, 62, 80, 0.08);
   position: sticky;
   bottom: 0;
-  z-index: 999; 
-  
-  & > button {
-    width: 33.3333%;
-    display: flex;
-    flex-direction: column;
-    justify-content:center;
-    align-items:center;
-    padding:10px;
-    border-left:1px solid #fff;
-    color:#fff;
+  z-index: 999;
+  padding: 0 8px;
+
+  @media (max-width: 750px) {
+    padding: 0 2px;
   }
 `;
 
+const NavButton = styled.button`
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #eebbc3;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 15px 0;
+
+  svg {
+    margin-bottom: 2px;
+    font-size: 1.7rem;
+  }
+
+`;
+
+// 버튼 사이 구분선
+const Divider = styled.div`
+  width: 1px;
+  background: #393e53;
+  margin: 10px 0;
+  align-self: stretch;
+  opacity: 0.7;
+`;
+
 const Nav = () => {
-  
   const nav = useNavigate();
   const handleNav = (type) => {
-    if(type === 'home'){
+    if (type === 'home') {
       nav('/');
-    }else if(type === 'routine'){
+    } else if (type === 'routine') {
       nav('/routine/view');
-    }else{
+    } else {
       nav('/mypage');
     }
-  }
+  };
 
   return (
     <NavWrapper>
-      <button onClick={() => handleNav('home')}>
-        <HomeIcon/>
+      <NavButton onClick={() => handleNav('home')}>
+        <HomeIcon />
         홈
-      </button>
-      <button onClick={() => handleNav('routine')}>
-        <FitnessCenterIcon/>
+      </NavButton>
+      <Divider />
+      <NavButton onClick={() => handleNav('routine')}>
+        <FitnessCenterIcon />
         운동
-      </button>
-      <button onClick={() => handleNav()}>
-        <PersonIcon/>
+      </NavButton>
+      <Divider />
+      <NavButton onClick={() => handleNav()}>
+        <PersonIcon />
         프로필
-      </button>
+      </NavButton>
     </NavWrapper>
   );
 };

@@ -1,117 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import styled from 'styled-components';
 
 // Styled Components
-const LoginButton = ({ isLoading, onClick, children }) => (
-  <button
-    onClick={onClick}
-    disabled={isLoading}
-    style={{
-      width: '200px',
-      height: '45px',
-      backgroundColor: '#03C75A',
-      color: 'white',
-      border: 'none',
-      borderRadius: '3px',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      cursor: isLoading ? 'not-allowed' : 'pointer',
-      opacity: isLoading ? 0.7 : 1,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px',
-      transition: 'all 0.2s ease',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    }}
-    onMouseEnter={(e) => {
-      if (!isLoading) {
-        e.target.style.backgroundColor = '#02B350';
-      }
-    }}
-    onMouseLeave={(e) => {
-      if (!isLoading) {
-        e.target.style.backgroundColor = '#03C75A';
-      }
-    }}
-  >
-    {children}
-  </button>
-);
+const LoginButton = styled.button`
+  width: 200px;
+  height: 45px;
+  background-color: #03C75A;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
 
-const LogoutButton = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    style={{
-      width: '200px',
-      height: '35px',
-      backgroundColor: '#f5f5f5',
-      color: '#666',
-      border: '1px solid #ddd',
-      borderRadius: '3px',
-      fontSize: '14px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease'
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.backgroundColor = '#e9e9e9';
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.backgroundColor = '#f5f5f5';
-    }}
-  >
-    로그아웃
-  </button>
-);
+const LogoutButton = styled.button`
+  width: 200px;
+  height: 35px;
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 
-const UserInfo = ({ user }) => (
-  <div style={{
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '20px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px',
-    border: '1px solid #e0e0e0'
-  }}>
-    {user?.profileImage && (
-      <img
-        src={user.profileImage}
-        alt="프로필"
-        style={{
-          width: '50px',
-          height: '50px',
-          borderRadius: '50%',
-          border: '2px solid #03C75A'
-        }}
-      />
-    )}
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-        {user?.name}
-      </div>
-      <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-        {user?.email}
-      </div>
-    </div>
-  </div>
-);
+  &:hover {
+    background-color: #e9e9e9;
+  }
 
-const Container = ({ children }) => (
-  <div style={{
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '16px',
-    padding: '20px'
-  }}>
-    {children}
-  </div>
-);
+  &:active {
+    background-color: #f5f5f5;
+  }
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+`;
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+`;
 
 const NaverLoginButton = () => {
-  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState('checking');
 
@@ -119,6 +67,7 @@ const NaverLoginButton = () => {
     checkLoginStatus();
   }, []);
 
+  // 현재 로그인 상태를 서버에 요청하여 확인
   const checkLoginStatus = async () => {
     try {
       const response = await axios.get('/auth/naver/status', {
@@ -126,7 +75,6 @@ const NaverLoginButton = () => {
       });
       
       if (response.data.isLoggedIn) {
-        setUser(response.data.user);
         setLoginStatus('loggedIn');
       } else {
         setLoginStatus('loggedOut');
@@ -137,6 +85,7 @@ const NaverLoginButton = () => {
     }
   };
 
+  // 네이버 로그인 버튼 클릭 시 호출, 로그인 URL을 받아 리다이렉트
   const handleNaverLogin = async () => {
     setIsLoading(true);
     
@@ -156,6 +105,7 @@ const NaverLoginButton = () => {
     }
   };
 
+  // 로그아웃 버튼 클릭 시 호출, 서버에 로그아웃 요청
   const handleLogout = async () => {
     try {
       const response = await axios.post('/auth/naver/logout', {}, {
@@ -163,7 +113,6 @@ const NaverLoginButton = () => {
       });
       
       if (response.data.success) {
-        setUser(null);
         setLoginStatus('loggedOut');
       }
     } catch (error) {
@@ -182,7 +131,6 @@ const NaverLoginButton = () => {
 
   return (
     <Container>
-      {loginStatus === 'loggedOut' ? (
         <LoginButton isLoading={isLoading} onClick={handleNaverLogin}>
           {isLoading ? (
             <>
@@ -205,19 +153,6 @@ const NaverLoginButton = () => {
             </>
           )}
         </LoginButton>
-      ) : (
-        <>
-          <UserInfo user={user} />
-          <LogoutButton onClick={handleLogout} />
-        </>
-      )}
-      
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </Container>
   );
 };

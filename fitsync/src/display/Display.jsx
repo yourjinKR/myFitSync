@@ -14,6 +14,7 @@ import Login from '../components/Login';
 import googleAuthManager from '../util/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
+import Register from '../components/Register';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -25,7 +26,7 @@ const DisplayWrapper = styled.div`
 const DisplayInnner = styled.div`
   position: relative;
   overflow: auto;
-  height: calc(100% - 100px);
+  height: calc(100% - 114px);
 `;
 
 const Display = () => {
@@ -50,6 +51,7 @@ const Display = () => {
         <Routes>
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>
+          <Route path='/Register' element={<Register/>}/>
           <Route path='/trainer' element={<TrainerMain/>}/>
           <Route path='/trainer/view' element={<TrainerDetailView/>}/>
           <Route path='/trainer/search' element={<TrainerSearch/>}/>

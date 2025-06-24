@@ -1,5 +1,7 @@
 package org.fitsync.mapper;
 
-public interface BodyMapper {
+import org.fitsync.domain.BodyVO;
 
+public interface BodyMapper {
+	public int insertBody(BodyVO vo);
 }

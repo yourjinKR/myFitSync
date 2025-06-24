@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
 import googleAuthManager from '../util/googleAuth';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../action/userAction';
+import { useNavigate } from 'react-router-dom';
 
 const SpinnerAnimation = keyframes`
   0% { transform: rotate(0deg);}
@@ -41,34 +44,38 @@ const ButtonContainer = styled.div.attrs(() => ({}))`
   display: ${props => (props.$isReady ? 'block' : 'none')};
 
   & > div {
-    width: 100% !important;
-    min-height: 48px !important;
+    width: 100%;
+    min-height: 48px;
   }
 
   & button, & div[role="button"] {
-    width: 100% !important;
-    min-height: 48px !important;
-    border-radius: 8px !important;
-    font-size: 16px !important;
-    font-weight: 500 !important;
-    padding: 12px 24px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 12px !important;
-    transition: all 0.2s ease !important;
-    border: 2px solid #dadce0 !important;
+    width: 100%;
+    min-height: 48px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    border: 2px solid #dadce0;
 
     &:hover {
-      background-color: #f8f9fa !important;
-      border-color: #dadce0 !important;
+      background-color: #f8f9fa;
+      border-color: #dadce0;
     }
   }
 `;
 
-const GoogleLoginButton = ({ onLoginSuccess, onLoginFailure, buttonOptions = {} }) => {
+const GoogleLoginButton = () => {
     const [isReady, setIsReady] = useState(false);
     const buttonRef = useRef(null);
+
+    const nav = useNavigate();
+    const dispatch = useDispatch();
+    const { user } = useSelector(state => state.userInfo);
 
     useEffect(() => {
         initializeButton();
@@ -93,7 +100,6 @@ const GoogleLoginButton = ({ onLoginSuccess, onLoginFailure, buttonOptions = {} 
                         size: 'large',
                         width: '100%',
                         text: 'signin_with',
-                        ...buttonOptions
                     }
                 );
                 setIsReady(true);
@@ -116,13 +122,16 @@ const GoogleLoginButton = ({ onLoginSuccess, onLoginFailure, buttonOptions = {} 
             });
 
             if (result.data.success) {
-                onLoginSuccess(result.data.user);
+                dispatch(setUser(result.data.user));
+                if(!result.data.user.isInfo) {
+                    nav('/register');  
+                } else{
+                    nav('/');
+                }
             } else {
-                onLoginFailure(result.data.message);
             }
         } catch (error) {
             console.error('로그인 오류:', error);
-            onLoginFailure('로그인 처리 중 오류가 발생했습니다.');
         }
     };
 

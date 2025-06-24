@@ -3,5 +3,17 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.BodyMapper">
-
+	<insert id="insertBody" parameterType="org.fitsync.domain.BodyVO">
+		INSERT INTO BODY VALUES(
+			body_seq.nextval,
+			#{member_idx},
+			#{body_height},
+			#{body_weight},
+			#{body_skeletal_muscle},
+			#{body_fat},
+			#{body_fat_percentage},
+			#{body_fat_bmi},
+			sysdate
+		)
+	</insert>
 </mapper>
