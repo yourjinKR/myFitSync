@@ -13,11 +13,11 @@ import styled from 'styled-components';
 import ScheduleInsertModal from './ScheduleInsertModal';
 
 const Wrapper = styled.div`
-  padding: 1.5rem;
+  padding: 3rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  font-size: 1.125rem;
+  gap: 3rem;
+  font-size: 1.8rem; /* 기존 1.5rem → 1.8rem으로 대폭 상승 */
 `;
 
 const TopBar = styled.div`
@@ -29,16 +29,16 @@ const TopBar = styled.div`
 const MonthTitle = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 1.5rem;
-  font-weight: 600;
+  gap: 1.5rem;
+  font-size: 2.5rem; /* 기존 2rem → 2.5rem */
+  font-weight: 700;
 
   button {
     background: none;
     border: none;
-    font-size: 1.5rem; /* 크기 유지 */
+    font-size: 2.5rem; /* 같이 키움 */
     cursor: pointer;
-    padding: 0.3rem;
+    padding: 0.6rem;
 
     &:hover {
       color: #666;
@@ -48,22 +48,20 @@ const MonthTitle = styled.div`
 
 const Toggle = styled.div`
   display: flex;
-  gap: 1.25rem;
+  gap: 1.5rem;
 
-  /* 전체 기본 버튼 스타일은 크게 유지 */
   button {
-    padding: 1rem 2rem;
+    padding: 1.2rem 2.5rem;
     border: none;
-    border-radius: 1.5rem;
+    border-radius: 1.8rem;
     background: #eee;
     cursor: pointer;
-    font-size: 1.75rem;
+    font-size: 2rem; /* 기존 1.75rem → 2rem */
   }
 
-  /* 주간보기, 월간보기 버튼만 작게 */
   button.toggle-btn {
-    font-size: 1rem !important;
-    padding: 0.5rem 1rem !important;
+    font-size: 1.1rem !important; /* 기존 1rem → 1.1rem (조금 키움) */
+    padding: 0.7rem 1.3rem !important;
   }
 
   button.toggle-btn.active {
@@ -74,41 +72,42 @@ const Toggle = styled.div`
 
 const ScheduleBox = styled.div`
   background: #fff;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.15rem 0.6rem rgba(0, 0, 0, 0.07);
+  font-size: 1.5rem; /* 기존 1.25rem → 1.5rem */
 `;
 
 const HeaderRow = styled.div`
   display: grid;
-  grid-template-columns: 4rem repeat(7, 1fr);
+  grid-template-columns: 5rem repeat(7, 1fr);
   background: #eee;
   font-weight: bold;
 
   div {
     text-align: center;
-    font-size: 1.25rem;
-    padding: 0.75rem 0;
-    line-height: 1.2;
+    font-size: 1.8rem; /* 기존 1.5rem → 1.8rem */
+    padding: 1.3rem 0;
+    line-height: 1.4;
   }
 `;
 
 const WeekGrid = styled.div`
   display: grid;
-  grid-template-columns: 4rem repeat(7, 1fr);
+  grid-template-columns: 5rem repeat(7, 1fr);
 `;
 
 const TimeLabel = styled.div`
-  font-size: 1rem;
+  font-size: 1.5rem; /* 기존 1.25rem → 1.5rem */
   text-align: right;
-  height: 2.5rem;
-  line-height: 2.5rem;
+  height: 4rem; /* 기존 3rem → 4rem */
+  line-height: 4rem;
   box-sizing: border-box;
 `;
 
 const DayCell = styled.div`
   border-left: 1px solid #ddd;
-  height: 2.5rem;
+  height: 4rem; /* 기존 3rem → 4rem */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,15 +118,15 @@ const DayCell = styled.div`
 const ScheduleItem = styled.div`
   background-color: #5b6eff;
   color: white;
-  font-size: 1rem;
-  border-radius: 0.375rem;
+  font-size: 1.4rem; /* 기존 1.125rem → 1.4rem */
+  border-radius: 1rem;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.25rem;
-  margin-top: 2rem;
+  padding: 0 0.3rem;
+  margin-top: 4rem;
   box-sizing: border-box;
   white-space: nowrap;
   overflow: hidden;
@@ -138,17 +137,17 @@ const CalendarHeader = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
-  font-size: 1.5rem;
+  gap: 2rem;
+  font-size: 2.5rem; /* 기존 2rem → 2.5rem */
   font-weight: bold;
-  padding-top: 1rem;
+  padding-top: 2rem;
 
   button {
     background: none;
     border: none;
-    font-size: 1.5rem; /* 크기 유지 */
+    font-size: 2.5rem; /* 기존 2rem → 2.5rem */
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0.4rem;
 
     &:hover {
       color: #666;
@@ -159,7 +158,7 @@ const CalendarHeader = styled.div`
 const CalendarContainer = styled.div`
   display: flex;
   flex-direction: column;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   overflow: hidden;
 `;
 
@@ -168,8 +167,9 @@ const WeekdaysRow = styled.div`
   grid-template-columns: repeat(7, 1fr);
   font-weight: bold;
   background: #f0f0f0;
-  padding: 0.5rem 0;
+  padding: 1rem 0; /* 기존 0.75rem → 1rem */
   text-align: center;
+  font-size: 1.5rem; /* 기존 1.25rem → 1.5rem */
 `;
 
 const CustomCalendar = styled.div`
@@ -177,18 +177,19 @@ const CustomCalendar = styled.div`
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   background: #fff;
+  font-size: 1.5rem; /* 기존 1.25rem → 1.5rem */
 `;
 
 const DayCellBox = styled.div`
   background: ${({ isSelected }) => (isSelected ? '#5b6eff' : 'transparent')};
   color: ${({ isSunday, isSaturday }) =>
     isSunday ? 'red' : isSaturday ? 'blue' : '#000'};
-  padding: 0.75rem 0;
+  padding: 1.3rem 0; /* 기존 1rem → 1.3rem */
   border: 1px solid #eee;
   border-top: none;
   border-left: none;
   cursor: ${({ isClickable }) => (isClickable ? 'pointer' : 'default')};
-  font-size: 1rem;
+  font-size: 1.5rem; /* 기존 1.25rem → 1.5rem */
 
   &:hover {
     background: ${({ isSelected }) => (isSelected ? '#5b6eff' : '#f3f3f3')};
@@ -196,12 +197,12 @@ const DayCellBox = styled.div`
 `;
 
 const SlidePanel = styled(motion.div)`
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   background: white;
-  border-radius: 1.25rem;
-  box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 0.15rem 0.75rem rgba(0, 0, 0, 0.12);
   z-index: 10;
-  padding: 1rem;
+  padding: 1.3rem;
 `;
 
 const SlidePanelHeader = styled.div`
@@ -212,8 +213,9 @@ const SlidePanelHeader = styled.div`
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
 `;
+
 
 const TrainerMain = () => {
   const [view, setView] = useState('week');

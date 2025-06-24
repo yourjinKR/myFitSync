@@ -13,6 +13,7 @@ import RoutineMain from '../components/routine/RoutineMain';
 import Login from '../components/Login';
 import googleAuthManager from '../util/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
+import TrainerDetailView from '../components/trainer/TrainerDetailView';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -50,6 +51,7 @@ const Display = () => {
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>
           <Route path='/trainer' element={<TrainerMain/>}/>
+          <Route path='/trainer/view' element={<TrainerDetailView/>}/>
           <Route path='/trainer/search' element={<TrainerSearch/>}/>
           <Route path='/routine' element={<RoutineMain/>}>
             <Route path='view' element={<RoutineView />}/>
