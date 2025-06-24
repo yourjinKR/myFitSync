@@ -55,7 +55,6 @@ public class MemberServiceImple implements MemberService {
 		mvo.setMember_disease(body.get("member_disease"));
 		mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
 		result = mapper.updateInfo(mvo);
-		
 		bvo.setMember_idx(idx);
 		bvo.setBody_bmi(body.get("body_bmi") != null && body.get("body_bmi") != "" ? Double.parseDouble(body.get("body_bmi")) : 0.0);
 		bvo.setBody_fat(body.get("body_fat") != null && body.get("body_fat") != "" ? Double.parseDouble(body.get("body_fat")) : 0.0);
@@ -64,7 +63,7 @@ public class MemberServiceImple implements MemberService {
 		bvo.setBody_skeletal_muscle(body.get("body_skeletal_muscle") != null && body.get("body_skeletal_muscle") != "" ? Double.parseDouble(body.get("body_skeletal_muscle")) : 0.0);
 		bvo.setBody_fat_percentage(body.get("body_fat_percentage") != null && body.get("body_fat_percentage") != "" ? Double.parseDouble(body.get("body_fat_percentage")) : 0.0);
 		result = result + bodymapper.insertBody(bvo);
-		
+		System.out.println(result);
 		return result == 2 ? true : false;
 	}
 }

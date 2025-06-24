@@ -12,7 +12,7 @@
 			#{body_skeletal_muscle},
 			#{body_fat},
 			#{body_fat_percentage},
-			#{body_fat_bmi},
+			#{body_bmi},
 			sysdate
 		)
 	</insert>
