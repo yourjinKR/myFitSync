@@ -12,4 +12,12 @@ public class MessageVO {
 	private int message_idx, room_idx, sender_idx, receiver_idx, parent_idx, message_order;
 	private String message_content, message_type, message_delete;
 	private Timestamp message_senddate, message_deleverdate, message_readdate, message_editdate;
+	
+	public MessageVO(int room_idx, int sender_idx, int receiver_idx, String message_content) {
+        this();
+        this.room_idx = room_idx;
+        this.sender_idx = sender_idx;
+        this.receiver_idx = receiver_idx;
+        this.message_content = message_content;
+    }
 }

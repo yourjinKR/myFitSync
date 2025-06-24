@@ -12,4 +12,12 @@ public class RoomVO {
 	private int room_idx, trainer_idx, user_idx, last_message;
 	private Timestamp room_regdate, room_msgdate;
 	private String room_status, room_name;
+	
+	public RoomVO(int trainer_idx, int user_idx, String room_name) {
+		this.trainer_idx = trainer_idx;
+        this.user_idx = user_idx;
+        this.room_name = room_name;
+        this.room_status = "active";
+        this.room_regdate = new Timestamp(System.currentTimeMillis());
+	}
 }
