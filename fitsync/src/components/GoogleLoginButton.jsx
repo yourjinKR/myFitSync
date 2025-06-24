@@ -122,7 +122,7 @@ const GoogleLoginButton = () => {
             });
 
             if (result.data.success) {
-                dispatch(setUser(result.data.user));
+                await dispatch(setUser(result.data.user));
                 if(!result.data.user.isInfo) {
                     nav('/register');  
                 } else{
