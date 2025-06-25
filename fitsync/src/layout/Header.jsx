@@ -2,6 +2,10 @@ import React from 'react';
 import styled from 'styled-components';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../action/userAction';
+import axios from 'axios'; // axios import 추가
+import { persistor } from '../reducers/store';
 
 const HeaderWrapper = styled.header`
   display: flex;
@@ -59,19 +63,46 @@ const MenuButton = styled.button`
   }
 `;
 
-const Header = () => {
+const LoginButton = styled.button`
 
+`;
+
+const Header = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.user);
   const nav = useNavigate();
-  const navigator = (path) => {
-    nav(path);
+
+  const navigator = async (path) => {
+    if (path === "/logout") {
+      // eslint-disable-next-line no-restricted-globals
+      if(confirm("로그아웃 하시겠습니까?")){
+        const res = await axios.get("/member/logout", { withCredentials: true });
+        dispatch(logoutUser());
+        persistor.purge();          
+        alert(res.data.message);
+        nav("/");
+      }
+    } else {
+      nav(path);
+    }
   };
 
   return (
     <HeaderWrapper>
-      <Logo onClick={()=>navigator('/')}>로고</Logo>
       <MenuButton>
         <MenuIcon />
       </MenuButton>
+      <Logo onClick={() => navigator('/')}>로고</Logo>
+      {
+        user === null ?
+          <LoginButton onClick={() => navigator('/login')}>
+            로그인
+          </LoginButton>
+        :
+          <LoginButton onClick={() => navigator('/logout')}>
+            로그아웃
+          </LoginButton>
+      }
     </HeaderWrapper>
   );
 };

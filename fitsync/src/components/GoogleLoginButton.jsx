@@ -75,7 +75,7 @@ const GoogleLoginButton = () => {
 
     const nav = useNavigate();
     const dispatch = useDispatch();
-    const { user } = useSelector(state => state.userInfo);
+    const { user } = useSelector(state => state.user);
 
     useEffect(() => {
         initializeButton();

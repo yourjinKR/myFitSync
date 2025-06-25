@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import MemberRegister from './MemberRegister';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterWrapper = styled.div`
   display: flex;
@@ -22,6 +24,19 @@ const TypeButton = styled.button`
 
 const Register = () => {
   const [isType, setIsType] = new useState('');
+  const { user } = useSelector(state => state.user);
+  const nav = useNavigate();
+
+  useEffect(()=>{
+    if(user.isInfo){
+      alert("잘못된 접근입니다.");
+      nav("/");
+    }
+  },[]);
+  
+  useEffect(() => { 
+  }, [isType]);
+
   const handleRegister = (type) => {
     if (type === 'trainer') {
       // 트레이너 등록 로직
@@ -29,10 +44,8 @@ const Register = () => {
     }else{
       setIsType('member');
     }
-  }
+  };
 
-  useEffect(() => { 
-  }, [isType]);
 
   return (
     <>

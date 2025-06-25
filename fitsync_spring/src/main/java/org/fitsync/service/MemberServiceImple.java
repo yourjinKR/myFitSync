@@ -24,13 +24,9 @@ public class MemberServiceImple implements MemberService {
 	
 	// 유저 존재여부
 	@Override
-	public int getFindUser(String member_email) {
-		int count = mapper.getFindUser(member_email); 
-		if(count == 0) {
-			return count;
-		}else {
-			return mapper.getUserIdx(member_email);
-		}
+	public MemberVO getFindUser(String member_email) {
+		MemberVO vo = mapper.getFindUser(member_email); 
+		return vo;
 	}
 	
 	// 유저 추가
@@ -43,6 +39,7 @@ public class MemberServiceImple implements MemberService {
 	public boolean getFindInfo(String member_email) {
 		return mapper.getFindInfo(member_email) > 0 ? true : false;
 	}
+	
 	// 유저 추가정보 입력
 	@Override
 	@Transactional

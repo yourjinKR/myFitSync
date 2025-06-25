@@ -5,19 +5,27 @@ import GoogleLoginButton from './GoogleLoginButton';
 import NaverLoginButton from './NaverLoginButton';
 import axios from 'axios';
 import googleAuthManager from '../util/googleAuth';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 
 const Login = () => {
 
-  
-  const handleLoginSuccess = (userData) => {
-    console.log('로그인 성공:', userData);
-  };
+  const { user } = useSelector(state => state.user);
+  const nav = useNavigate();
 
-  const handleLoginFailure = (error) => {
-    console.error('로그인 실패:', error);
-    alert('로그인에 실패했습니다: ' + error);
-  };
+  
+
+  useEffect(()=>{
+    if(user !== null){
+      alert("이미 로그인되어있습니다.");
+      if(user.isInfo){
+        nav("/");
+      }else{
+        nav("/register");
+      }
+    }
+  },[])
 
   const handleLogout = async () => {
     try {
@@ -32,12 +40,11 @@ const Login = () => {
       console.error('로그아웃 오류:', error);
     }
   };
+
   return (
     <>
       <div>
         <GoogleLoginButton
-          onLoginSuccess={handleLoginSuccess}
-          onLoginFailure={handleLoginFailure}
           buttonOptions={{
             theme: 'filled',
             size: 'large',

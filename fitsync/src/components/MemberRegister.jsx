@@ -257,7 +257,7 @@ const MemberRegister = () => {
   };
 
   const postInfo = async () => {
-    const response = await axios.post('/register/member', info);
+    const response = await axios.post('/member/register', info);
     if (response.data === "success") {
       alert('회원 정보가 등록되었습니다.');
       nav("/");

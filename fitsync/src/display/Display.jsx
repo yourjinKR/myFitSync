@@ -15,6 +15,7 @@ import googleAuthManager from '../util/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
 import Register from '../components/Register';
+import { useSelector } from 'react-redux';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -30,9 +31,11 @@ const DisplayInnner = styled.div`
 `;
 
 const Display = () => {
+
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
     initializeApp();
+    
   }, []);
 
   const initializeApp = async () => {

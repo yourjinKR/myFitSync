@@ -5,8 +5,8 @@
 <mapper namespace="org.fitsync.mapper.MemberMapper">
 
 	<!-- 유저 존재여부 -->
-	<select id="getFindUser" parameterType="String" resultType="int">
-		SELECT COUNT(*)
+	<select id="getFindUser" parameterType="String" resultType="org.fitsync.domain.MemberVO">
+		SELECT *
 		FROM MEMBER
 		WHERE MEMBER_EMAIL = #{member_email}
 	</select>

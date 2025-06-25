@@ -7,6 +7,7 @@ import org.finsync.util.JwtUtil;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.service.MemberServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
@@ -51,21 +52,12 @@ public class GoogleAuthController {
                 String picture = tokenInfo.has("picture") ? tokenInfo.get("picture").asText() : "";
 
                 // 4. DB에서 사용자 조회 및 가입 처리
-                int chkUser = service.getFindUser(email);
-                session.setAttribute("USER_IDX", chkUser);
+                MemberVO chkUser = service.getFindUser(email);
+                session.setAttribute("USER_IDX", chkUser.getMember_idx());
                 boolean chkInfo = service.getFindInfo(email);
 
-                if (chkUser == 0) {
-                    MemberVO vo = new MemberVO();
-                    vo.setMember_name(name);
-                    vo.setMember_email(email);
-                    vo.setMember_image(picture);
-                    service.insertUser(vo);
-                    // 가입 후 다시 사용자 PK 조회 (예: service.getFindUser(email))
-                }
-
                 // 5. JWT 생성 (사용자 PK 기준)
-                String jwt = jwtUtil.createToken((long) chkUser);
+                String jwt = jwtUtil.createToken((long) chkUser.getMember_idx());
 
                 // 6. HttpOnly 쿠키 생성 및 설정
                 ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
