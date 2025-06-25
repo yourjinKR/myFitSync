@@ -13,4 +13,6 @@ public interface MemberMapper {
 	public int getFindInfo(String member_email);
 	// 추가 정보입력
 	public int updateInfo(MemberVO mvo);
+	// 추가 정보입력
+	public int updateTrainerInfo(MemberVO mvo);
 }

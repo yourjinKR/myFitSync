@@ -1,7 +1,9 @@
 import axios from 'axios';
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { css } from 'styled-components';
+import { FormGroup, Label, Input, TextArea, TimeSelect, TimeInputWrapper, ButtonSubmit } from '../../styles/FormStyles';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import styled from 'styled-components';
 
 const TrainerRegisterWrapper = styled.div`
   margin: 0 auto;
@@ -10,114 +12,40 @@ const TrainerRegisterWrapper = styled.div`
   border-radius: 16px;
 `;
 
-const FormGroup = styled.div`
-  margin-bottom: 22px;
+// 체크박스 커스텀 스타일
+const CheckboxWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
 `;
 
-const Label = styled.label`
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 7px;
-  color: #222;
-  span {
-    font-size: 0.95rem;
-    font-weight: 400;
-    color: #7D93FF;
-    margin-left: 4px;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: 1.5px solid #e3e7f1;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f8faff;
-  transition: border 0.2s;
-  ${(props) =>
-    props.$invalid &&
-    css`
-      border-color: #ff4d4f !important;
-      background: #fff0f0;
-    `}
-  &:focus {
-    border-color: ${(props) => (props.$invalid ? '#ff4d4f' : '#7D93FF')};
-    outline: none;
-    background: #fff;
-  }
-  @media (max-width: 600px) {
-    height: 38px;
-    font-size: 0.97rem;
-    padding: 0 8px;
-  }
-`;
-
-const TimeInputWrapper = styled.div`
+const CustomCheckboxLabel = styled.label`
   display: flex;
   align-items: center;
-  gap: 8px;
-
-  @media (max-width: 600px) {
-    gap: 4px;
-  }
-`;
-
-const TimeSelect = styled.select`
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: 1.5px solid #e3e7f1;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f8faff;
-  transition: border 0.2s;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  ${(props) =>
-    props.$invalid &&
-    css`
-      border-color: #ff4d4f !important;
-      background: #fff0f0;
-    `}
-  &:focus {
-    border-color: ${(props) => (props.$invalid ? '#ff4d4f' : '#7D93FF')};
-    outline: none;
-    background: #fff;
-  }
-  @media (max-width: 600px) {
-    height: 38px;
-    font-size: 0.97rem;
-    padding: 0 8px;
-  }
-`;
-
-const ButtonSubmit = styled.button`
-  width: 100%;
-  height: 48px;
-  background: linear-gradient(90deg, #7D93FF 0%, #5e72e4 100%);
-  font-size: 1.2rem;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  margin-top: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(125,147,255,0.08);
-  transition: background 0.2s;
-  &:hover {
-    background: linear-gradient(90deg, #5e72e4 0%, #7D93FF 100%);
-  }
+  font-size: 1rem;
+  font-weight: 500;
+  color: ${({ $active }) => ($active ? '#fff' : '#393e53')};
+  background: ${({ $active }) => ($active ? '#7D93FF' : '#f4f6fb')};
+  border: 2px solid #7D93FF;
+  border-radius: 20px;
+  padding: 8px 18px;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  user-select: none;
+  min-width: 60px;
+  min-height: 36px;
+  box-sizing: border-box;
 
-  @media (max-width: 600px) {
-    height: 40px;
-    font-size: 1rem;
-    margin-top: 12px;
+  &:hover {
+    background: #e3e7f9;
+    color: #5e72e4;
   }
+`;
+
+const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
+  display: none;
 `;
 
 // 00:00 ~ 23:30까지 30분 단위로 옵션 생성
@@ -130,208 +58,157 @@ for (let h = 0; h < 24; h++) {
   }
 }
 
+const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+const init = {
+  member_type: "trainer",
+  member_time_start: '',
+  member_time_end: '',
+  member_activity_area: '',
+  member_info: '',
+  member_awards: '',
+  member_day: []
+};
+
+const textAreaPattern = /^.{1,500}$/;
+const textPattern = /^[가-힣a-zA-Z0-9\s]{1,30}$/;
+const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+// 유효성 검사 함수
+function validateFn(info) {
+  const newInvalid = {};
+  if (!info.member_day || info.member_day.length === 0) {
+    newInvalid.member_day = true;
+  }
+  if (!info.member_time_start || !timePattern.test(info.member_time_start)) {
+    newInvalid.member_time_start = true;
+  }
+  if (!info.member_time_end || !timePattern.test(info.member_time_end)) {
+    newInvalid.member_time_end = true;
+  }
+  if (
+    info.member_time_start &&
+    info.member_time_end &&
+    timePattern.test(info.member_time_start) &&
+    timePattern.test(info.member_time_end) &&
+    info.member_time_start >= info.member_time_end
+  ) {
+    newInvalid.member_time_start = true;
+    newInvalid.member_time_end = true;
+  }
+  if (!info.member_activity_area || !textPattern.test(info.member_activity_area)) {
+    newInvalid.member_activity_area = true;
+  }
+  if (!info.member_info || !textAreaPattern.test(info.member_info)) {
+    newInvalid.member_info = true;
+  }
+  if (info.member_awards && !textAreaPattern.test(info.member_awards)) {
+    newInvalid.member_awards = true;
+  }
+  return newInvalid;
+}
+
 const TrainerRegister = () => {
-  const init = {
-    body_height: '',
-    body_weight: '',
-    member_purpose: '',
-    member_disease: '',
-    member_time_start: '',
-    member_time_end: '',
-    body_skeletal_muscle: '',
-    body_bmi: '',
-    body_fat: '',
-    body_fat_percentage: ''
-  };
-
-  const numberPattern = /^(?:[1-9]\d{0,2}|0)(?:\.\d)?$/;
-  const percentPattern = /^(?:100(?:\.0)?|[1-9]?\d(?:\.\d)?)$/;
-  const textPattern = /^[가-힣a-zA-Z0-9\s]{1,30}$/;
-  const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-  const [info, setInfo] = useState(init);
-  const [invalid, setInvalid] = useState({});
   const nav = useNavigate();
+  const {
+    info,
+    setInfo,
+    invalid,
+    setInvalid,
+    inputRefs,
+    handleChange,
+    validate
+  } = useFormValidation(init, validateFn);
 
-  // 하나의 useRef로 모든 input을 관리
-  const inputRefs = useRef({});
-
-  const handleChangeInfo = (e) => {
-    const { name, value } = e.target;
-    setInfo((prev) => ({ ...prev, [name]: value }));
-    setInvalid((prev) => ({ ...prev, [name]: false }));
+  // 요일 체크박스 상태 관리
+  const handleDayChange = (e) => {
+    const { value, checked } = e.target;
+    setInfo((prev) => ({
+      ...prev,
+      member_day: checked
+        ? [...prev.member_day, value]
+        : prev.member_day.filter((d) => d !== value)
+    }));
+    setInvalid((prev) => ({ ...prev, member_day: false }));
   };
 
+  // 시간 선택 핸들러
   const handleTimeSelect = (e) => {
-    const { name, value } = e.target;
-    setInfo((prev) => ({ ...prev, [name]: value }));
-    setInvalid((prev) => ({ ...prev, [name]: false }));
+    handleChange(e);
   };
 
   // 정보 전송
   const handleSubmit = () => {
-    // 유효성 검사 결과를 임시로 저장
-    const newInvalid = {};
-
-    // 필수 입력값 유효성 검사
-    if (!info.body_height || !numberPattern.test(info.body_height) || info.body_height < 0 || info.body_height > 300) {
-      newInvalid.body_height = true;
-    }
-    if (!info.body_weight || !numberPattern.test(info.body_weight) || info.body_weight < 0 || info.body_weight > 300) {
-      newInvalid.body_weight = true;
-    }
-    if (!info.member_purpose || !textPattern.test(info.member_purpose)) {
-      newInvalid.member_purpose = true;
-    }
-    if (!info.member_disease || !textPattern.test(info.member_disease)) {
-      newInvalid.member_disease = true;
-    }
-    if (!info.member_time_start || !timePattern.test(info.member_time_start)) {
-      newInvalid.member_time_start = true;
-    }
-    if (!info.member_time_end || !timePattern.test(info.member_time_end)) {
-      newInvalid.member_time_end = true;
-    }
-    if (
-      info.member_time_start &&
-      info.member_time_end &&
-      timePattern.test(info.member_time_start) &&
-      timePattern.test(info.member_time_end) &&
-      info.member_time_start >= info.member_time_end
-    ) {
-      newInvalid.member_time_start = true;
-      newInvalid.member_time_end = true;
-    }
-
-    // 선택 입력값은 값이 있을 때만 유효성 검사
-    if (info.body_skeletal_muscle && !numberPattern.test(info.body_skeletal_muscle)) {
-      newInvalid.body_skeletal_muscle = true;
-    }
-    if (info.body_bmi && !percentPattern.test(info.body_bmi)) {
-      newInvalid.body_bmi = true;
-    }
-    if (info.body_fat && !numberPattern.test(info.body_fat)) {
-      newInvalid.body_fat = true;
-    }
-    if (info.body_fat_percentage && !percentPattern.test(info.body_fat_percentage)) {
-      newInvalid.body_fat_percentage = true;
-    }
-
-    setInvalid(newInvalid);
-
-    // 하나라도 유효하지 않으면 포커스 및 alert
-    const firstInvalidKey = Object.keys(newInvalid)[0];
-    if (firstInvalidKey) {
-      inputRefs.current[firstInvalidKey] && inputRefs.current[firstInvalidKey].focus();
-
-      // 각 항목별로 알림 메시지
-      const alertMsg = {
-        body_height: '키는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        body_weight: '몸무게는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        member_purpose: '운동목적은 한글, 영문, 숫자, 공백으로 최대 30자까지 입력해주세요.',
-        member_disease: '질병은 한글, 영문, 숫자, 공백으로 최대 30자까지 입력해주세요.',
-        member_time_start: '운동 시작 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
-        member_time_end: '운동 종료 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
-        body_skeletal_muscle: '골격근량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        body_bmi: 'BMI는 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        body_fat: '체지방량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        body_fat_percentage: '체지방률은 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-      };
-      // 시작/종료 시간 순서 오류는 별도 처리
-      if (
-        newInvalid.member_time_start &&
-        newInvalid.member_time_end &&
-        info.member_time_start &&
-        info.member_time_end &&
-        info.member_time_start >= info.member_time_end
-      ) {
-        alert('운동 시작 시간은 종료 시간보다 이전이어야 합니다.');
+    if (!validate()) {
+      const firstInvalidKey = Object.keys(invalid)[0];
+      if (firstInvalidKey === "member_day") {
+        alert("수업 가능 요일을 1개 이상 선택해주세요.");
       } else {
-        alert(alertMsg[firstInvalidKey]);
+        const alertMsg = {
+          member_time_start: '수업 시작 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
+          member_time_end: '수업 종료 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
+          member_activity_area: '활동지역을 1~30자 이내로 입력해주세요.',
+          member_info: '자기소개를 1~500자 이내로 입력해주세요.',
+          member_awards: '수상경력은 1~500자 이내로 입력해주세요.',
+        };
+        if (
+          invalid.member_time_start &&
+          invalid.member_time_end &&
+          info.member_time_start &&
+          info.member_time_end &&
+          info.member_time_start >= info.member_time_end
+        ) {
+          alert('수업 시작 시간은 종료 시간보다 이전이어야 합니다.');
+        } else {
+          alert(alertMsg[firstInvalidKey]);
+        }
       }
       return;
     }
 
-    // 모든 유효성 통과
-    postInfo();
+    // member_day를 문자열로 변환해서 전송
+    const sendInfo = {
+      ...info,
+      member_day: Array.isArray(info.member_day) ? info.member_day.join(',') : info.member_day
+    };
+
+    postInfo(sendInfo);
   };
 
-  const postInfo = async () => {
-    const response = await axios.post('/member/register', info);
+  const postInfo = async (sendInfo) => {
+    const response = await axios.post('/member/register', sendInfo);
     if (response.data === "success") {
       alert('회원 정보가 등록되었습니다.');
       nav("/");
     } else {
       alert('회원 정보 등록에 실패했습니다.');
     }
-  }
-
-  
+  };
 
   return (
     <TrainerRegisterWrapper>
       <FormGroup>
-        <Label htmlFor='body_height'>키 <span>(필수)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChangeInfo}
-          value={info.body_height}
-          name="body_height"
-          id="body_height"
-          placeholder="cm"
-          ref={el => (inputRefs.current.body_height = el)}
-          $invalid={invalid.body_height}
-          inputMode="decimal"
-        />
+        <h3 htmlFor='member_day'>수업 가능 요일 <span>(필수)</span></h3>
+        <CheckboxWrapper>
+          {days.map((day) => (
+            <CustomCheckboxLabel
+              key={day}
+              $active={info.member_day.includes(day)}
+              style={invalid.member_day ? { outline: '2px solid #ff4d4f' } : {}}
+            >
+              <CustomCheckbox
+                name="member_day"
+                value={day}
+                checked={info.member_day.includes(day)}
+                onChange={handleDayChange}
+              />
+              {day}
+            </CustomCheckboxLabel>
+          ))}
+        </CheckboxWrapper>
       </FormGroup>
       <FormGroup>
-        <Label htmlFor='body_weight'>몸무게 <span>(필수)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChangeInfo}
-          value={info.body_weight}
-          name="body_weight"
-          id="body_weight"
-          placeholder="kg"
-          ref={el => (inputRefs.current.body_weight = el)}
-          $invalid={invalid.body_weight}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_purpose'>운동목적 <span>(필수)</span></Label>
-        <Input
-          type="text"
-          onChange={handleChangeInfo}
-          value={info.member_purpose}
-          name="member_purpose"
-          id="member_purpose"
-          placeholder="예) 다이어트, 근력향상"
-          ref={el => (inputRefs.current.member_purpose = el)}
-          $invalid={invalid.member_purpose}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_disease'>질병 <span>(필수)</span></Label>
-        <Input
-          type="text"
-          onChange={handleChangeInfo}
-          value={info.member_disease}
-          name="member_disease"
-          id="member_disease"
-          placeholder="예) 고혈압, 당뇨 등"
-          ref={el => (inputRefs.current.member_disease = el)}
-          $invalid={invalid.member_disease}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_time_start'>운동 시간대 <span>(필수, 24시간제)</span></Label>
+        <Label htmlFor='member_time_start'>수업 가능 시간 <span>(필수, 24시간제)</span></Label>
         <TimeInputWrapper>
           <TimeSelect
             name="member_time_start"
@@ -363,70 +240,40 @@ const TrainerRegister = () => {
         </TimeInputWrapper>
       </FormGroup>
       <FormGroup>
-        <Label htmlFor='body_skeletal_muscle'>골격근량 <span>(선택)</span></Label>
+        <Label htmlFor='member_activity_area'>활동지역 <span>(필수)</span></Label>
         <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChangeInfo}
-          value={info.body_skeletal_muscle}
-          name="body_skeletal_muscle"
-          id="body_skeletal_muscle"
-          placeholder="kg"
-          ref={el => (inputRefs.current.body_skeletal_muscle = el)}
-          $invalid={invalid.body_skeletal_muscle}
-          inputMode="decimal"
+          type="text"
+          onChange={handleChange}
+          value={info.member_activity_area}
+          name="member_activity_area"
+          id="member_activity_area"
+          placeholder="예) 서울 강남구"
+          ref={el => (inputRefs.current.member_activity_area = el)}
+          $invalid={invalid.member_activity_area}
         />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor='body_bmi'>BMI <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="100"
-          onChange={handleChangeInfo}
-          value={info.body_bmi}
-          name="body_bmi"
-          id="body_bmi"
-          ref={el => (inputRefs.current.body_bmi = el)}
-          $invalid={invalid.body_bmi}
-          inputMode="decimal"
+        <Label htmlFor='member_info'>자기소개 <span>(필수)</span></Label>
+        <TextArea
+          onChange={handleChange}
+          value={info.member_info}
+          name="member_info"
+          id="member_info"
+          placeholder="자신을 소개해 주세요. (최대 500자)"
+          ref={el => (inputRefs.current.member_info = el)}
+          $invalid={invalid.member_info}
         />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor='body_fat'>체지방량 <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChangeInfo}
-          value={info.body_fat}
-          name="body_fat"
-          id="body_fat"
-          placeholder="kg"
-          ref={el => (inputRefs.current.body_fat = el)}
-          $invalid={invalid.body_fat}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='body_fat_percentage'>체지방률 <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="100"
-          onChange={handleChangeInfo}
-          value={info.body_fat_percentage}
-          name="body_fat_percentage"
-          id="body_fat_percentage"
-          placeholder="%"
-          ref={el => (inputRefs.current.body_fat_percentage = el)}
-          $invalid={invalid.body_fat_percentage}
-          inputMode="decimal"
+        <Label htmlFor='member_awards'>수상경력 <span>(선택)</span></Label>
+        <TextArea
+          onChange={handleChange}
+          value={info.member_awards}
+          name="member_awards"
+          id="member_awards"
+          placeholder="수상경력이 있다면 입력해 주세요. (최대 500자)"
+          ref={el => (inputRefs.current.member_awards = el)}
+          $invalid={invalid.member_awards}
         />
       </FormGroup>
       <ButtonSubmit onClick={handleSubmit}>추가정보등록</ButtonSubmit>

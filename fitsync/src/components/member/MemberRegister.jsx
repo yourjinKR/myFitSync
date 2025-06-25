@@ -2,122 +2,14 @@ import axios from 'axios';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
+import { FormGroup, Label, Input, TimeSelect, TimeInputWrapper, ButtonSubmit, Select } from '../../styles/FormStyles';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 const MemberRegisterWrapper = styled.div`
   margin: 0 auto;
   padding: 15px;
   background: #fff;
   border-radius: 16px;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 22px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 7px;
-  color: #222;
-  span {
-    font-size: 0.95rem;
-    font-weight: 400;
-    color: #7D93FF;
-    margin-left: 4px;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: 1.5px solid #e3e7f1;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f8faff;
-  transition: border 0.2s;
-  ${(props) =>
-    props.$invalid &&
-    css`
-      border-color: #ff4d4f !important;
-      background: #fff0f0;
-    `}
-  &:focus {
-    border-color: ${(props) => (props.$invalid ? '#ff4d4f' : '#7D93FF')};
-    outline: none;
-    background: #fff;
-  }
-  @media (max-width: 600px) {
-    height: 38px;
-    font-size: 0.97rem;
-    padding: 0 8px;
-  }
-`;
-
-const TimeInputWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  @media (max-width: 600px) {
-    gap: 4px;
-  }
-`;
-
-const TimeSelect = styled.select`
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: 1.5px solid #e3e7f1;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f8faff;
-  transition: border 0.2s;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  ${(props) =>
-    props.$invalid &&
-    css`
-      border-color: #ff4d4f !important;
-      background: #fff0f0;
-    `}
-  &:focus {
-    border-color: ${(props) => (props.$invalid ? '#ff4d4f' : '#7D93FF')};
-    outline: none;
-    background: #fff;
-  }
-  @media (max-width: 600px) {
-    height: 38px;
-    font-size: 0.97rem;
-    padding: 0 8px;
-  }
-`;
-
-const ButtonSubmit = styled.button`
-  width: 100%;
-  height: 48px;
-  background: linear-gradient(90deg, #7D93FF 0%, #5e72e4 100%);
-  font-size: 1.2rem;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  margin-top: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(125,147,255,0.08);
-  transition: background 0.2s;
-  &:hover {
-    background: linear-gradient(90deg, #5e72e4 0%, #7D93FF 100%);
-  }
-
-  @media (max-width: 600px) {
-    height: 40px;
-    font-size: 1rem;
-    margin-top: 12px;
-  }
 `;
 
 // 00:00 ~ 23:30까지 30분 단위로 옵션 생성
@@ -130,105 +22,87 @@ for (let h = 0; h < 24; h++) {
   }
 }
 
+const init = {
+  member_type: "user",
+  body_height: '',
+  body_weight: '',
+  member_purpose: '',
+  member_disease: '',
+  member_time_start: '',
+  member_time_end: '',
+  body_skeletal_muscle: '',
+  body_bmi: '',
+  body_fat: '',
+  body_fat_percentage: ''
+};
+
+const numberPattern = /^(?:[1-9]\d{0,2}|0)(?:\.\d)?$/;
+const percentPattern = /^(?:100(?:\.0)?|[1-9]?\d(?:\.\d)?)$/;
+const textPattern = /^[가-힣a-zA-Z0-9\s]{1,30}$/;
+const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+const validateFn = (info) => {
+  const newInvalid = {};
+
+  // 필수 입력값 유효성 검사
+  if (!info.body_height || !numberPattern.test(info.body_height) || info.body_height < 0 || info.body_height > 300) {
+    newInvalid.body_height = true;
+  }
+  if (!info.body_weight || !numberPattern.test(info.body_weight) || info.body_weight < 0 || info.body_weight > 300) {
+    newInvalid.body_weight = true;
+  }
+  if (!info.member_purpose || !textPattern.test(info.member_purpose)) {
+    newInvalid.member_purpose = true;
+  }
+  if (!info.member_disease || !textPattern.test(info.member_disease)) {
+    newInvalid.member_disease = true;
+  }
+  if (!info.member_time_start || !timePattern.test(info.member_time_start)) {
+    newInvalid.member_time_start = true;
+  }
+  if (!info.member_time_end || !timePattern.test(info.member_time_end)) {
+    newInvalid.member_time_end = true;
+  }
+  if (
+    info.member_time_start &&
+    info.member_time_end &&
+    timePattern.test(info.member_time_start) &&
+    timePattern.test(info.member_time_end) &&
+    info.member_time_start >= info.member_time_end
+  ) {
+    newInvalid.member_time_start = true;
+    newInvalid.member_time_end = true;
+  }
+
+  // 선택 입력값은 값이 있을 때만 유효성 검사
+  if (info.body_skeletal_muscle && !numberPattern.test(info.body_skeletal_muscle)) {
+    newInvalid.body_skeletal_muscle = true;
+  }
+  if (info.body_bmi && !percentPattern.test(info.body_bmi)) {
+    newInvalid.body_bmi = true;
+  }
+  if (info.body_fat && !numberPattern.test(info.body_fat)) {
+    newInvalid.body_fat = true;
+  }
+  if (info.body_fat_percentage && !percentPattern.test(info.body_fat_percentage)) {
+    newInvalid.body_fat_percentage = true;
+  }
+
+  return newInvalid;
+};
+
 const MemberRegister = () => {
-  const init = {
-    body_height: '',
-    body_weight: '',
-    member_purpose: '',
-    member_disease: '',
-    member_time_start: '',
-    member_time_end: '',
-    body_skeletal_muscle: '',
-    body_bmi: '',
-    body_fat: '',
-    body_fat_percentage: ''
-  };
-
-  const numberPattern = /^(?:[1-9]\d{0,2}|0)(?:\.\d)?$/;
-  const percentPattern = /^(?:100(?:\.0)?|[1-9]?\d(?:\.\d)?)$/;
-  const textPattern = /^[가-힣a-zA-Z0-9\s]{1,30}$/;
-  const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-  const [info, setInfo] = useState(init);
-  const [invalid, setInvalid] = useState({});
+  const { info, invalid, inputRefs, handleChange, validate } = useFormValidation(init, validateFn);
   const nav = useNavigate();
 
-  // 하나의 useRef로 모든 input을 관리
-  const inputRefs = useRef({});
-
-  const handleChangeInfo = (e) => {
-    const { name, value } = e.target;
-    setInfo((prev) => ({ ...prev, [name]: value }));
-    setInvalid((prev) => ({ ...prev, [name]: false }));
-  };
-
-  const handleTimeSelect = (e) => {
-    const { name, value } = e.target;
-    setInfo((prev) => ({ ...prev, [name]: value }));
-    setInvalid((prev) => ({ ...prev, [name]: false }));
-  };
-
-  // 정보 전송
   const handleSubmit = () => {
-    // 유효성 검사 결과를 임시로 저장
-    const newInvalid = {};
-
-    // 필수 입력값 유효성 검사
-    if (!info.body_height || !numberPattern.test(info.body_height) || info.body_height < 0 || info.body_height > 300) {
-      newInvalid.body_height = true;
-    }
-    if (!info.body_weight || !numberPattern.test(info.body_weight) || info.body_weight < 0 || info.body_weight > 300) {
-      newInvalid.body_weight = true;
-    }
-    if (!info.member_purpose || !textPattern.test(info.member_purpose)) {
-      newInvalid.member_purpose = true;
-    }
-    if (!info.member_disease || !textPattern.test(info.member_disease)) {
-      newInvalid.member_disease = true;
-    }
-    if (!info.member_time_start || !timePattern.test(info.member_time_start)) {
-      newInvalid.member_time_start = true;
-    }
-    if (!info.member_time_end || !timePattern.test(info.member_time_end)) {
-      newInvalid.member_time_end = true;
-    }
-    if (
-      info.member_time_start &&
-      info.member_time_end &&
-      timePattern.test(info.member_time_start) &&
-      timePattern.test(info.member_time_end) &&
-      info.member_time_start >= info.member_time_end
-    ) {
-      newInvalid.member_time_start = true;
-      newInvalid.member_time_end = true;
-    }
-
-    // 선택 입력값은 값이 있을 때만 유효성 검사
-    if (info.body_skeletal_muscle && !numberPattern.test(info.body_skeletal_muscle)) {
-      newInvalid.body_skeletal_muscle = true;
-    }
-    if (info.body_bmi && !percentPattern.test(info.body_bmi)) {
-      newInvalid.body_bmi = true;
-    }
-    if (info.body_fat && !numberPattern.test(info.body_fat)) {
-      newInvalid.body_fat = true;
-    }
-    if (info.body_fat_percentage && !percentPattern.test(info.body_fat_percentage)) {
-      newInvalid.body_fat_percentage = true;
-    }
-
-    setInvalid(newInvalid);
-
-    // 하나라도 유효하지 않으면 포커스 및 alert
-    const firstInvalidKey = Object.keys(newInvalid)[0];
-    if (firstInvalidKey) {
-      inputRefs.current[firstInvalidKey] && inputRefs.current[firstInvalidKey].focus();
-
-      // 각 항목별로 알림 메시지
+    if (!validate()) {
+      // 유효성 검사 실패 시 첫 번째 에러 필드에 따라 알림
+      const firstInvalidKey = Object.keys(invalid)[0];
       const alertMsg = {
         body_height: '키는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_weight: '몸무게는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        member_purpose: '운동목적은 한글, 영문, 숫자, 공백으로 최대 30자까지 입력해주세요.',
+        member_purpose: '운동목적을 선택해주세요.',
         member_disease: '질병은 한글, 영문, 숫자, 공백으로 최대 30자까지 입력해주세요.',
         member_time_start: '운동 시작 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
         member_time_end: '운동 종료 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
@@ -237,10 +111,9 @@ const MemberRegister = () => {
         body_fat: '체지방량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_fat_percentage: '체지방률은 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
       };
-      // 시작/종료 시간 순서 오류는 별도 처리
       if (
-        newInvalid.member_time_start &&
-        newInvalid.member_time_end &&
+        invalid.member_time_start &&
+        invalid.member_time_end &&
         info.member_time_start &&
         info.member_time_end &&
         info.member_time_start >= info.member_time_end
@@ -252,7 +125,6 @@ const MemberRegister = () => {
       return;
     }
 
-    // 모든 유효성 통과
     postInfo();
   };
 
@@ -266,8 +138,6 @@ const MemberRegister = () => {
     }
   }
 
-  
-
   return (
     <MemberRegisterWrapper>
       <FormGroup>
@@ -277,7 +147,7 @@ const MemberRegister = () => {
           step="0.1"
           min="0"
           max="300"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.body_height}
           name="body_height"
           id="body_height"
@@ -294,7 +164,7 @@ const MemberRegister = () => {
           step="0.1"
           min="0"
           max="300"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.body_weight}
           name="body_weight"
           id="body_weight"
@@ -306,22 +176,26 @@ const MemberRegister = () => {
       </FormGroup>
       <FormGroup>
         <Label htmlFor='member_purpose'>운동목적 <span>(필수)</span></Label>
-        <Input
-          type="text"
-          onChange={handleChangeInfo}
+        <Select
+          onChange={handleChange}
           value={info.member_purpose}
           name="member_purpose"
           id="member_purpose"
-          placeholder="예) 다이어트, 근력향상"
           ref={el => (inputRefs.current.member_purpose = el)}
           $invalid={invalid.member_purpose}
-        />
+        >
+          <option value="">선택</option>
+          <option value="체중 관리">체중 관리</option>
+          <option value="근육 증가">근육 증가</option>
+          <option value="체형 교정">체형 교정</option>
+          <option value="바디 프로필">바디 프로필</option>
+        </Select>
       </FormGroup>
       <FormGroup>
         <Label htmlFor='member_disease'>질병 <span>(필수)</span></Label>
         <Input
           type="text"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.member_disease}
           name="member_disease"
           id="member_disease"
@@ -337,7 +211,7 @@ const MemberRegister = () => {
             name="member_time_start"
             id="member_time_start"
             value={info.member_time_start}
-            onChange={handleTimeSelect}
+            onChange={handleChange}
             ref={el => (inputRefs.current.member_time_start = el)}
             $invalid={invalid.member_time_start}
           >
@@ -351,7 +225,7 @@ const MemberRegister = () => {
             name="member_time_end"
             id="member_time_end"
             value={info.member_time_end}
-            onChange={handleTimeSelect}
+            onChange={handleChange}
             ref={el => (inputRefs.current.member_time_end = el)}
             $invalid={invalid.member_time_end}
           >
@@ -369,7 +243,7 @@ const MemberRegister = () => {
           step="0.1"
           min="0"
           max="300"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.body_skeletal_muscle}
           name="body_skeletal_muscle"
           id="body_skeletal_muscle"
@@ -386,7 +260,7 @@ const MemberRegister = () => {
           step="0.1"
           min="0"
           max="100"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.body_bmi}
           name="body_bmi"
           id="body_bmi"
@@ -402,7 +276,7 @@ const MemberRegister = () => {
           step="0.1"
           min="0"
           max="300"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.body_fat}
           name="body_fat"
           id="body_fat"
@@ -419,7 +293,7 @@ const MemberRegister = () => {
           step="0.1"
           min="0"
           max="100"
-          onChange={handleChangeInfo}
+          onChange={handleChange}
           value={info.body_fat_percentage}
           name="body_fat_percentage"
           id="body_fat_percentage"

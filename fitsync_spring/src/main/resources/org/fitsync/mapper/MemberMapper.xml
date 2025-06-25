@@ -48,4 +48,15 @@
 			MEMBER_TIME = #{member_time}			
 		WHERE MEMBER_IDX = #{member_idx}
 	</update>
+	
+	<!-- 트레이너 추가정보 입력 -->
+	<update id="updateTrainerInfo" parameterType="org.fitsync.domain.MemberVO">
+		UPDATE MEMBER SET 
+			MEMBER_TIME = #{member_time},
+			MEMBER_ACTIVITY_AREA = #{member_activity_area},
+			MEMBER_INFO = #{member_info},
+			MEMBER_AWARDS = #{member_awards},
+			MEMBER_DAY = #{member_day}			
+		WHERE MEMBER_IDX = #{member_idx}
+	</update>
 </mapper>

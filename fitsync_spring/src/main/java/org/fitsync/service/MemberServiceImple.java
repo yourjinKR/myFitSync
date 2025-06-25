@@ -44,22 +44,34 @@ public class MemberServiceImple implements MemberService {
 	@Override
 	@Transactional
 	public boolean insertInfo(Map<String, String> body, int idx) {
-		MemberVO mvo = new MemberVO();
-		BodyVO bvo = new BodyVO();
 		int result = 0;
+		MemberVO mvo = new MemberVO();
 		mvo.setMember_idx(idx);
-		mvo.setMember_purpose(body.get("member_purpose"));
-		mvo.setMember_disease(body.get("member_disease"));
-		mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
-		result = mapper.updateInfo(mvo);
-		bvo.setMember_idx(idx);
-		bvo.setBody_bmi(body.get("body_bmi") != null && body.get("body_bmi") != "" ? Double.parseDouble(body.get("body_bmi")) : 0.0);
-		bvo.setBody_fat(body.get("body_fat") != null && body.get("body_fat") != "" ? Double.parseDouble(body.get("body_fat")) : 0.0);
-		bvo.setBody_height(Double.parseDouble(body.get("body_height")));
-		bvo.setBody_weight(Double.parseDouble(body.get("body_weight")));
-		bvo.setBody_skeletal_muscle(body.get("body_skeletal_muscle") != null && body.get("body_skeletal_muscle") != "" ? Double.parseDouble(body.get("body_skeletal_muscle")) : 0.0);
-		bvo.setBody_fat_percentage(body.get("body_fat_percentage") != null && body.get("body_fat_percentage") != "" ? Double.parseDouble(body.get("body_fat_percentage")) : 0.0);
-		result = result + bodymapper.insertBody(bvo);
-		return result == 2 ? true : false;
+		if(body.get("member_type").equals("user")) {
+			mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
+			mvo.setMember_purpose(body.get("member_purpose"));
+			mvo.setMember_disease(body.get("member_disease"));
+			result = mapper.updateInfo(mvo);
+			
+			BodyVO bvo = new BodyVO();
+			bvo.setMember_idx(idx);
+			bvo.setBody_bmi(body.get("body_bmi") != null && body.get("body_bmi") != "" ? Double.parseDouble(body.get("body_bmi")) : 0.0);
+			bvo.setBody_fat(body.get("body_fat") != null && body.get("body_fat") != "" ? Double.parseDouble(body.get("body_fat")) : 0.0);
+			bvo.setBody_height(Double.parseDouble(body.get("body_height")));
+			bvo.setBody_weight(Double.parseDouble(body.get("body_weight")));
+			bvo.setBody_skeletal_muscle(body.get("body_skeletal_muscle") != null && body.get("body_skeletal_muscle") != "" ? Double.parseDouble(body.get("body_skeletal_muscle")) : 0.0);
+			bvo.setBody_fat_percentage(body.get("body_fat_percentage") != null && body.get("body_fat_percentage") != "" ? Double.parseDouble(body.get("body_fat_percentage")) : 0.0);
+			result = result + bodymapper.insertBody(bvo);
+			return result == 2 ? true : false;
+		}else {
+			mvo.setMember_day(body.get("member_day"));
+			mvo.setMember_activity_area(body.get("member_activity_area"));
+			mvo.setMember_info(body.get("member_info"));
+			mvo.setMember_awards(body.get("member_awards") != null && body.get("member_awards") != "" ? body.get("member_awards") : "");
+			mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
+			result = mapper.updateTrainerInfo(mvo);
+			
+			return result == 1 ? true : false;
+		}
 	}
 }
