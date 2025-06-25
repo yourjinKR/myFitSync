@@ -4,6 +4,76 @@
 
 <mapper namespace="org.fitsync.mapper.MessageMapper">
 
-	
+	<!-- 메시지 저장 -->
+    <insert id="insertMessage" parameterType="org.fitsync.domain.MessageVO">
+        <selectKey keyProperty="message_idx" resultType="int" order="BEFORE">
+            SELECT message_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO message (
+            message_idx,
+            room_idx,
+            sender_idx,
+            receiver_idx,
+            message_content,
+            message_type,
+            message_senddate,
+            message_delete,
+            message_order
+        ) VALUES (
+            #{message_idx},
+            #{room_idx},
+            #{sender_idx},
+            #{receiver_idx},
+            #{message_content},
+            #{message_type},
+            SYSTIMESTAMP,
+            'N',
+            #{message_order}
+        )
+    </insert>
+    
+    <!-- 메시지 상세 조회 -->
+    <select id="getMessage" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+        SELECT * FROM message WHERE message_idx = #{message_idx}
+    </select>
+    
+    <!-- 채팅방 메시지 목록 조회 -->
+    <select id="getMessageList" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+        SELECT * FROM message 
+        WHERE room_idx = #{room_idx} AND message_delete = 'N'
+        ORDER BY message_senddate ASC
+    </select>
+    
+    <!-- 메시지 페이징 조회 -->
+    <select id="getMessageListPaging" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+        SELECT * FROM (
+            SELECT ROWNUM rn, m.* FROM (
+                SELECT * FROM message 
+                WHERE room_idx = #{room_idx} AND message_delete = 'N'
+                ORDER BY message_senddate DESC
+            ) m WHERE ROWNUM &lt;= #{limit}
+        ) WHERE rn > #{offset}
+        ORDER BY message_senddate ASC
+    </select>
+    
+    <!-- 메시지 검색 -->
+    <select id="searchMessage" parameterType="org.fitsync.domain.MessageVO" resultType="org.fitsync.domain.MessageVO">
+        SELECT * FROM message 
+        WHERE room_idx = #{room_idx} AND message_delete = 'N'AND UPPER(message_content) LIKE UPPER('%' || #{keyword} || '%')
+        ORDER BY message_senddate DESC
+    </select>
+    
+    <!-- 메시지 읽음 처리 -->
+    <update id="readMark" parameterType="int">
+        UPDATE message SET 
+            message_readdate = SYSTIMESTAMP
+        WHERE message_idx = #{message_idx} AND receiver_idx = #{receiver_idx} AND message_readdate IS NULL
+    </update>
+    
+    <!-- 읽지 않은 메시지 수 조회 -->
+    <select id="unreadCount" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM message 
+        WHERE room_idx = #{room_idx} AND receiver_idx = #{receiver_idx} AND message_readdate IS NULL AND message_delete = 'N'
+    </select>
 
 </mapper>

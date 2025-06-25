@@ -99,15 +99,15 @@ public class ChatServiceImple implements ChatService {
 	}
 
 	@Override
-	public int readMark(int message_idx, int member_idx) {
-		log.info("readMark..." + message_idx + ", " + member_idx);
-		return messageMapper.readMark(message_idx, member_idx);
+	public int readMark(int message_idx, int receiver_idx) {
+		log.info("readMark..." + message_idx + ", " + receiver_idx);
+		return messageMapper.readMark(message_idx, receiver_idx);
 	}
 
 	@Override
-	public int unreadCount(int room_idx, int member_idx) {
-		log.info("unreadCount..." + room_idx + ", " + member_idx);
-		return messageMapper.unreadCount(room_idx, member_idx);
+	public int unreadCount(int room_idx, int receiver_idx) {
+		log.info("unreadCount..." + room_idx + ", " + receiver_idx);
+		return messageMapper.unreadCount(room_idx, receiver_idx);
 	}
 
 	@Override

@@ -4,6 +4,51 @@
 
 <mapper namespace="org.fitsync.mapper.RoomMapper">
 
-	
+	<!-- 채팅방 생성 -->
+    <insert id="insertRoom" parameterType="org.fitsync.domain.RoomVO">
+        <selectKey keyProperty="room_idx" resultType="int" order="BEFORE">
+            SELECT room_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO room (
+            room_idx,
+            trainer_idx,
+            user_idx,
+            room_regdate, 
+            room_status,
+            room_name
+        ) VALUES (
+            #{room_idx},
+            #{trainer_idx},
+            #{user_idx},
+            SYSTIMESTAMP,
+            #{room_status},
+            #{room_name}
+        )
+    </insert>
+    
+    <!-- 채팅방 마지막 메시지 업데이트 -->
+    <update id="updateLastMessage" parameterType="org.fitsync.domain.MessageVO">
+        UPDATE room SET 
+            room_msgdate = SYSTIMESTAMP,
+            last_message = #{message_idx}
+        WHERE room_idx = #{room_idx}
+    </update>
+    
+    <!-- 채팅방 조회 (트레이너 + 회원) -->
+    <select id="getMembers" parameterType="org.fitsync.domain.RoomVO" resultType="org.fitsync.domain.RoomVO">
+        SELECT * FROM room WHERE trainer_idx = #{trainer_idx} AND user_idx = #{user_idx} AND room_status = 'active'
+    </select>
+    
+    <!-- 채팅방 상세 조회 -->
+    <select id="getRoom" parameterType="org.fitsync.domain.RoomVO" resultType="org.fitsync.domain.RoomVO">
+        SELECT * FROM room WHERE room_idx = #{room_idx}
+    </select>
+    
+    <!-- 사용자 채팅방 목록 조회 -->
+    <select id="getRoomList" parameterType="org.fitsync.domain.RoomVO" resultType="org.fitsync.domain.RoomVO">
+        SELECT * FROM room 
+        WHERE (trainer_idx = #{user_idx} OR user_idx = #{user_idx}) AND room_status = 'active'
+        ORDER BY room_msgdate DESC NULLS LAST
+    </select>
 
 </mapper>

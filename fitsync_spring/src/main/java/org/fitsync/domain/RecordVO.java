@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RecordVO {
-	private int record_idx, member_idx;
+	private int record_idx, member_idx, pt_idx;
 	private Timestamp record_date;
-	private String routine_title, pt_name, routinept_memo;
+	private String routine_title, routinept_memo;
 }

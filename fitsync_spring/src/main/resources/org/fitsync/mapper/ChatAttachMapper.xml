@@ -3,30 +3,45 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.ChatAttachMapper">
-
-	<!-- 1. 파일 등록 -->
-	<insert id="insert" parameterType="org.fitsync.domain.ChatAttachVO">
-		
-	</insert>
 	
-	<!-- 2. 파일 수정 -->
-	<update id="update" parameterType="org.fitsync.domain.ChatAttachVO">
-		
-	</update>
-	
-	<!-- 3. 파일 삭제 -->
-	<delete id="delete" parameterType="int">
-		
-	</delete>
-	
-	<!-- 4. 파일 view -->
-	<select id="read" parameterType="int" resultType="org.fitsync.domain.ChatAttachVO">
-		
-	</select>
-	
-	<!-- 5. 파일 목록 -->
-	<select id="getAttach" resultType="org.fitsync.domain.ChatAttachVO">
-		
-	</select>
+	<!-- 첨부파일 저장 -->
+    <insert id="insertAttach" parameterType="org.fitsync.domain.ChatAttachVO">
+        <selectKey keyProperty="attach_idx" resultType="int" order="BEFORE">
+            SELECT chatattach_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO chatattach (
+            attach_idx,
+            message_idx,
+            original_filename,
+            cloudinary_url,
+            cloudinary_public_id,
+            file_size_bytes,
+            mime_type, 
+            file_extension,
+            uploaddate
+        ) VALUES (
+            #{attach_idx},
+            #{message_idx},
+            #{original_filename},
+            #{cloudinary_url},
+            #{cloudinary_public_id},
+            #{file_size_bytes},
+            #{mime_type},
+            #{file_extension},
+            SYSTIMESTAMP
+        )
+    </insert>
+    
+    <!-- 첨부파일 상세 조회 -->
+    <select id="getAttach" parameterType="int" resultType="org.fitsync.domain.ChatAttachVO">
+        SELECT * FROM chatattach WHERE attach_idx = #{attach_idx}
+    </select>
+    
+    <!-- 메시지별 첨부파일 조회 -->
+    <select id="getAttachList" parameterType="int" resultType="org.fitsync.domain.ChatAttachVO">
+        SELECT * FROM chatattach 
+        WHERE message_idx = #{message_idx}
+        ORDER BY uploaddate ASC
+    </select>
 
 </mapper>
