@@ -10,12 +10,11 @@ import RoutineView from '../components/routine/RoutineView';
 import RoutineAdd from '../components/routine/RoutineAdd';
 import RoutineSet from '../components/routine/RoutineSet';
 import RoutineMain from '../components/routine/RoutineMain';
-import Login from '../components/Login';
+import Login from '../components/member/Login';
 import googleAuthManager from '../util/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
-import Register from '../components/Register';
-import { useSelector } from 'react-redux';
+import Register from '../components/member/Register';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;

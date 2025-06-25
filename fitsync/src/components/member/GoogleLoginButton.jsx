@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
-import googleAuthManager from '../util/googleAuth';
+import googleAuthManager from '../../util/googleAuth';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUser } from '../action/userAction';
+import { setUser } from '../../action/userAction';
 import { useNavigate } from 'react-router-dom';
 
 const SpinnerAnimation = keyframes`

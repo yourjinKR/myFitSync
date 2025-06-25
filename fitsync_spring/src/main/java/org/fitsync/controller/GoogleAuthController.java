@@ -45,7 +45,6 @@ public class GoogleAuthController {
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode tokenInfo = mapper.readTree(is);
-
             if (tokenInfo.has("email")) {
                 String email = tokenInfo.get("email").asText();
                 String name = tokenInfo.has("name") ? tokenInfo.get("name").asText() : "";
@@ -53,6 +52,14 @@ public class GoogleAuthController {
 
                 // 4. DB에서 사용자 조회 및 가입 처리
                 MemberVO chkUser = service.getFindUser(email);
+                if(chkUser == null) {
+                    MemberVO vo = new MemberVO();
+                    vo.setMember_name(name);
+                    vo.setMember_email(email);
+                    vo.setMember_image(picture);
+                    service.insertUser(vo);
+                    chkUser = vo;
+                }
                 session.setAttribute("USER_IDX", chkUser.getMember_idx());
                 boolean chkInfo = service.getFindInfo(email);
 

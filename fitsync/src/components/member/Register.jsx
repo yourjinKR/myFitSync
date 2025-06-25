@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import MemberRegister from './MemberRegister';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import TrainerRegister from './TrainerRegister';
 
 const RegisterWrapper = styled.div`
   display: flex;
@@ -56,9 +57,7 @@ const Register = () => {
             <TypeButton onClick={() => handleRegister('member')} data-type="member">회원</TypeButton>
           </RegisterWrapper>
         : isType === 'trainer' ?
-          <>
-            <div>트레이너 등록 페이지</div>
-          </>
+          <TrainerRegister/>
         :
         <MemberRegister/>
       }
