@@ -19,27 +19,9 @@ const Login = () => {
   useEffect(()=>{
     if(user !== null){
       alert("이미 로그인되어있습니다.");
-      if(user.isInfo){
-        nav("/");
-      }else{
-        nav("/register");
-      }
+      nav("/");
     }
   },[])
-
-  const handleLogout = async () => {
-    try {
-      await axios.post('/auth/logout', {}, {
-        withCredentials: true
-      });
-
-      // Google 로그아웃
-      googleAuthManager.logout();
-
-    } catch (error) {
-      console.error('로그아웃 오류:', error);
-    }
-  };
 
   return (
     <>

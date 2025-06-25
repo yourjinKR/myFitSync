@@ -1,16 +1,23 @@
-package org.finsync.util;
+package org.fitsync.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 
+@Component
 public class JwtUtil {
 
-    private String secret = "YourSecretKeyMustBeAtLeast32CharactersLong!"; // 최소 32자 이상
-    private long expirationMs = 1000 * 60 * 60 * 24 * 7; // 7일
+	@Value("${jwt.secret:YourSecretKeyMustBeAtLeast32CharactersLong!}")
+    private String secret;
+
+    @Value("${jwt.expirationMs:604800000}") // 7일(밀리초)
+    private long expirationMs;
+
     private Key key;
 
     @PostConstruct
@@ -18,19 +25,27 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // createToken 파라미터 이름 user -> userId 로 변경 (가독성)
-    public String createToken(Long userId) {
+    // 사용자 정보 포함하여 토큰 생성
+    public String generateToken(int idx, String email) {
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))    // 오타 수정: userId 사용
+                .setSubject(String.valueOf(idx))
+                .claim("email", email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    // 토큰에서 사용자 id 추출
     public Long getUserId(String token) {
         Claims claims = parseClaims(token);
         return Long.parseLong(claims.getSubject());
+    }
+
+    // 토큰에서 이메일 추출
+    public String getEmail(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("email", String.class);
     }
 
     public boolean validate(String token) {

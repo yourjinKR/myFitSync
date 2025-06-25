@@ -29,32 +29,27 @@ public class MemberServiceImple implements MemberService {
 		return vo;
 	}
 	
-	// 유저 추가
-	@Override
-	public boolean insertUser(MemberVO vo) {
-		return mapper.insertUser(vo) > 0 ? true : false;
-	}
-	// 추가입력여부
-	@Override
-	public boolean getFindInfo(String member_email) {
-		return mapper.getFindInfo(member_email) > 0 ? true : false;
-	}
-	
 	// 유저 추가정보 입력
 	@Override
 	@Transactional
-	public boolean insertInfo(Map<String, String> body, int idx) {
+	public boolean insertUser(Map<String, String> body) {
 		int result = 0;
 		MemberVO mvo = new MemberVO();
-		mvo.setMember_idx(idx);
+		mvo.setMember_type(body.get("member_type"));
+		mvo.setMember_email(body.get("member_email"));
+		mvo.setMember_name(body.get("member_name"));
+		mvo.setMember_image(body.get("member_image"));
+		mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
+
 		if(body.get("member_type").equals("user")) {
-			mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
 			mvo.setMember_purpose(body.get("member_purpose"));
 			mvo.setMember_disease(body.get("member_disease"));
-			result = mapper.updateInfo(mvo);
+			result = mapper.insertMemberInfo(mvo);
 			
+			int member_idx = mapper.getUserIdx(mvo.getMember_email());
+
 			BodyVO bvo = new BodyVO();
-			bvo.setMember_idx(idx);
+			bvo.setMember_idx(member_idx);
 			bvo.setBody_bmi(body.get("body_bmi") != null && body.get("body_bmi") != "" ? Double.parseDouble(body.get("body_bmi")) : 0.0);
 			bvo.setBody_fat(body.get("body_fat") != null && body.get("body_fat") != "" ? Double.parseDouble(body.get("body_fat")) : 0.0);
 			bvo.setBody_height(Double.parseDouble(body.get("body_height")));
@@ -67,10 +62,7 @@ public class MemberServiceImple implements MemberService {
 			mvo.setMember_day(body.get("member_day"));
 			mvo.setMember_activity_area(body.get("member_activity_area"));
 			mvo.setMember_info(body.get("member_info"));
-			mvo.setMember_awards(body.get("member_awards") != null && body.get("member_awards") != "" ? body.get("member_awards") : "");
-			mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
-			result = mapper.updateTrainerInfo(mvo);
-			
+			result = mapper.insertTrainerInfo(mvo);
 			return result == 1 ? true : false;
 		}
 	}

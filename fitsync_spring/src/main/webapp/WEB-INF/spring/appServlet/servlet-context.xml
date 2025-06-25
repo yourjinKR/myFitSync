@@ -26,7 +26,7 @@
 		<beans:property name="prefix" value="/WEB-INF/views/" />
 		<beans:property name="suffix" value=".jsp" />
 	</beans:bean>
-	<beans:bean id="jwtUtil" class="org.finsync.util.JwtUtil" init-method="init" ></beans:bean>
+	<context:component-scan base-package="org.fitsync.util" />
 	<context:property-placeholder location="classpath:application.properties"/>
 	<context:component-scan base-package="org.fitsync.controller" />
 	<context:component-scan base-package="org.fitsync.websocket" />

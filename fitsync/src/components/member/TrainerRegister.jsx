@@ -1,9 +1,11 @@
 import axios from 'axios';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FormGroup, Label, Input, TextArea, TimeSelect, TimeInputWrapper, ButtonSubmit } from '../../styles/FormStyles';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../../action/userAction';
 
 const TrainerRegisterWrapper = styled.div`
   margin: 0 auto;
@@ -48,15 +50,12 @@ const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
   display: none;
 `;
 
-// 00:00 ~ 23:30까지 30분 단위로 옵션 생성
 const timeOptions = [];
 for (let h = 0; h < 24; h++) {
-  for (let m = 0; m < 60; m += 30) {
-    const hh = h.toString().padStart(2, '0');
-    const mm = m.toString().padStart(2, '0');
-    timeOptions.push(`${hh}:${mm}`);
-  }
+  const hh = h.toString().padStart(2, '0');
+  timeOptions.push(`${hh}:00`);
 }
+
 
 const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
@@ -66,7 +65,6 @@ const init = {
   member_time_end: '',
   member_activity_area: '',
   member_info: '',
-  member_awards: '',
   member_day: []
 };
 
@@ -102,23 +100,22 @@ function validateFn(info) {
   if (!info.member_info || !textAreaPattern.test(info.member_info)) {
     newInvalid.member_info = true;
   }
-  if (info.member_awards && !textAreaPattern.test(info.member_awards)) {
-    newInvalid.member_awards = true;
-  }
   return newInvalid;
 }
 
 const TrainerRegister = () => {
   const nav = useNavigate();
-  const {
-    info,
-    setInfo,
-    invalid,
-    setInvalid,
-    inputRefs,
-    handleChange,
-    validate
-  } = useFormValidation(init, validateFn);
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.user);
+  const { info, setInfo, invalid, setInvalid, inputRefs, handleChange, validate } = useFormValidation(init, validateFn);
+
+
+  useEffect(() => {
+    setInfo({
+      ...info,
+      ...user
+    })
+  }, [])
 
   // 요일 체크박스 상태 관리
   const handleDayChange = (e) => {
@@ -140,29 +137,31 @@ const TrainerRegister = () => {
   // 정보 전송
   const handleSubmit = () => {
     if (!validate()) {
-      const firstInvalidKey = Object.keys(invalid)[0];
-      if (firstInvalidKey === "member_day") {
-        alert("수업 가능 요일을 1개 이상 선택해주세요.");
-      } else {
-        const alertMsg = {
-          member_time_start: '수업 시작 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
-          member_time_end: '수업 종료 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
-          member_activity_area: '활동지역을 1~30자 이내로 입력해주세요.',
-          member_info: '자기소개를 1~500자 이내로 입력해주세요.',
-          member_awards: '수상경력은 1~500자 이내로 입력해주세요.',
-        };
-        if (
-          invalid.member_time_start &&
-          invalid.member_time_end &&
-          info.member_time_start &&
-          info.member_time_end &&
-          info.member_time_start >= info.member_time_end
-        ) {
-          alert('수업 시작 시간은 종료 시간보다 이전이어야 합니다.');
-        } else {
-          alert(alertMsg[firstInvalidKey]);
+      // 시간 논리 오류(시작 >= 종료)는 가장 먼저 체크
+      if (
+        info.member_time_start &&
+        info.member_time_end &&
+        info.member_time_start >= info.member_time_end
+      ) {
+        alert('수업 시작 시간은 종료 시간보다 이전이어야 합니다.');
+        return;
+      }
+
+      // 각 필수항목에 맞는 알럿을 순서대로 표시
+      const alertMsg = {
+        member_day: '수업 가능 요일을 1개 이상 선택해주세요.',
+        member_time_start: '수업 시작 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
+        member_time_end: '수업 종료 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
+        member_activity_area: '활동지역을 1~30자 이내로 입력해주세요.',
+        member_info: '자기소개를 1~500자 이내로 입력해주세요.'
+      };
+      for (const key of Object.keys(alertMsg)) {
+        if (invalid[key]) {
+          alert(alertMsg[key]);
+          return;
         }
       }
+      alert('입력값을 확인해주세요.');
       return;
     }
 
@@ -177,7 +176,8 @@ const TrainerRegister = () => {
 
   const postInfo = async (sendInfo) => {
     const response = await axios.post('/member/register', sendInfo);
-    if (response.data === "success") {
+    if (response.data.success) {
+      dispatch(setUser(response.data.user));
       alert('회원 정보가 등록되었습니다.');
       nav("/");
     } else {
@@ -262,18 +262,6 @@ const TrainerRegister = () => {
           placeholder="자신을 소개해 주세요. (최대 500자)"
           ref={el => (inputRefs.current.member_info = el)}
           $invalid={invalid.member_info}
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_awards'>수상경력 <span>(선택)</span></Label>
-        <TextArea
-          onChange={handleChange}
-          value={info.member_awards}
-          name="member_awards"
-          id="member_awards"
-          placeholder="수상경력이 있다면 입력해 주세요. (최대 500자)"
-          ref={el => (inputRefs.current.member_awards = el)}
-          $invalid={invalid.member_awards}
         />
       </FormGroup>
       <ButtonSubmit onClick={handleSubmit}>추가정보등록</ButtonSubmit>

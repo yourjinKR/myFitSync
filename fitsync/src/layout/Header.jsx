@@ -86,7 +86,6 @@ const Header = () => {
       nav(path);
     }
   };
-
   return (
     <HeaderWrapper>
       <MenuButton>
@@ -94,7 +93,7 @@ const Header = () => {
       </MenuButton>
       <Logo onClick={() => navigator('/')}>로고</Logo>
       {
-        user === null ?
+        user == null || !user.isLogin ?
           <LoginButton onClick={() => navigator('/login')}>
             로그인
           </LoginButton>

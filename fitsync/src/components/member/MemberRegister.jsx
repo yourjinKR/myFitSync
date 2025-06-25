@@ -1,9 +1,11 @@
 import axios from 'axios';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { FormGroup, Label, Input, TimeSelect, TimeInputWrapper, ButtonSubmit, Select } from '../../styles/FormStyles';
 import { useFormValidation } from '../../hooks/useFormValidation';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../../action/userAction';
 
 const MemberRegisterWrapper = styled.div`
   margin: 0 auto;
@@ -12,14 +14,11 @@ const MemberRegisterWrapper = styled.div`
   border-radius: 16px;
 `;
 
-// 00:00 ~ 23:30까지 30분 단위로 옵션 생성
+// 00:00 ~ 23:00까지 1시간 단위로 옵션 생성
 const timeOptions = [];
 for (let h = 0; h < 24; h++) {
-  for (let m = 0; m < 60; m += 30) {
-    const hh = h.toString().padStart(2, '0');
-    const mm = m.toString().padStart(2, '0');
-    timeOptions.push(`${hh}:${mm}`);
-  }
+  const hh = h.toString().padStart(2, '0');
+  timeOptions.push(`${hh}:00`);
 }
 
 const init = {
@@ -92,13 +91,18 @@ const validateFn = (info) => {
 };
 
 const MemberRegister = () => {
-  const { info, invalid, inputRefs, handleChange, validate } = useFormValidation(init, validateFn);
+  const { info, invalid, inputRefs, handleChange, validate, setInfo } = useFormValidation(init, validateFn);
   const nav = useNavigate();
-
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.user);
+  useEffect(()=>{
+    setInfo({
+      ...info,
+      ...user
+    })
+  },[])
   const handleSubmit = () => {
     if (!validate()) {
-      // 유효성 검사 실패 시 첫 번째 에러 필드에 따라 알림
-      const firstInvalidKey = Object.keys(invalid)[0];
       const alertMsg = {
         body_height: '키는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_weight: '몸무게는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
@@ -111,17 +115,26 @@ const MemberRegister = () => {
         body_fat: '체지방량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_fat_percentage: '체지방률은 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
       };
+
+      // 운동 시간대 논리 오류(시작 >= 종료)는 가장 먼저 체크
       if (
-        invalid.member_time_start &&
-        invalid.member_time_end &&
         info.member_time_start &&
         info.member_time_end &&
         info.member_time_start >= info.member_time_end
       ) {
         alert('운동 시작 시간은 종료 시간보다 이전이어야 합니다.');
-      } else {
-        alert(alertMsg[firstInvalidKey]);
+        return;
       }
+
+      // 각 invalid 항목에 맞는 알럿을 순서대로 표시
+      for (const key of Object.keys(alertMsg)) {
+        if (invalid[key]) {
+          alert(alertMsg[key]);
+          return;
+        }
+      }
+      // 혹시라도 매칭되는 항목이 없을 경우
+      alert('입력값을 확인해주세요.');
       return;
     }
 
@@ -129,8 +142,10 @@ const MemberRegister = () => {
   };
 
   const postInfo = async () => {
+    
     const response = await axios.post('/member/register', info);
-    if (response.data === "success") {
+    if (response.data.success) {
+      dispatch(setUser(response.data.user));
       alert('회원 정보가 등록되었습니다.');
       nav("/");
     } else {

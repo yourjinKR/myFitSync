@@ -123,12 +123,11 @@ const GoogleLoginButton = () => {
 
             if (result.data.success) {
                 await dispatch(setUser(result.data.user));
-                if(!result.data.user.isInfo) {
+                if(!result.data.user.isLogin) {
                     nav('/register');  
                 } else{
                     nav('/');
                 }
-            } else {
             }
         } catch (error) {
             console.error('로그인 오류:', error);

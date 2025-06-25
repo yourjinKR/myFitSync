@@ -3,9 +3,9 @@ package org.fitsync.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.finsync.util.JwtUtil;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.service.MemberServiceImple;
+import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -27,9 +27,8 @@ public class GoogleAuthController {
 
     @Autowired
     private MemberServiceImple service;
-
     @Autowired
-    private JwtUtil jwtUtil;  // 주입받은 JwtUtil 사용
+	private JwtUtil jwtUtil;
 
     @PostMapping(value = "/google", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> googleLogin(@RequestBody Map<String, String> body, HttpSession session) {
@@ -50,42 +49,43 @@ public class GoogleAuthController {
                 String name = tokenInfo.has("name") ? tokenInfo.get("name").asText() : "";
                 String picture = tokenInfo.has("picture") ? tokenInfo.get("picture").asText() : "";
 
-                // 4. DB에서 사용자 조회 및 가입 처리
-                MemberVO chkUser = service.getFindUser(email);
-                if(chkUser == null) {
-                    MemberVO vo = new MemberVO();
-                    vo.setMember_name(name);
-                    vo.setMember_email(email);
-                    vo.setMember_image(picture);
-                    service.insertUser(vo);
-                    chkUser = vo;
+                MemberVO vo = service.getFindUser(email);
+                if(vo != null) {
+                	// JWT 생성
+                	String jwt = jwtUtil.generateToken(vo.getMember_idx(), vo.getMember_email());
+                	
+                	// HttpOnly 쿠키 생성
+                	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
+                			.httpOnly(true)
+                			.secure(false) // 배포시 true
+                			.path("/")
+                			.maxAge(7 * 24 * 60 * 60)
+                			.build();
+                	
+                	Map<String, Object> user = new HashMap<>();
+                	
+                	user.put("member_email", vo.getMember_email());
+                	user.put("member_name", vo.getMember_name());
+                	user.put("member_image", vo.getMember_image());
+                	user.put("isLogin", true);
+                	
+                	result.put("success", true);
+                	result.put("user", user);
+                	
+                	return ResponseEntity.ok()
+                			.header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
+                			.body(result);
+                }else {
+                	Map<String, Object> user = new HashMap<>();
+                	user.put("member_email", email);
+                	user.put("member_name", name);
+                	user.put("member_image", picture);
+                	user.put("isLogin", false);
+                	
+                	result.put("success", true);
+                	result.put("user", user);
+                	return ResponseEntity.ok(result);
                 }
-                session.setAttribute("USER_IDX", chkUser.getMember_idx());
-                boolean chkInfo = service.getFindInfo(email);
-
-                // 5. JWT 생성 (사용자 PK 기준)
-                String jwt = jwtUtil.createToken((long) chkUser.getMember_idx());
-
-                // 6. HttpOnly 쿠키 생성 및 설정
-                ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
-                        .httpOnly(true)
-                        .secure(false)   // 개발환경은 false, 배포시 true로 변경
-                        .path("/")
-                        .maxAge(7 * 24 * 60 * 60)
-                        .build();
-
-                Map<String, Object> user = new HashMap<>();
-                user.put("email", email);
-                user.put("name", name);
-                user.put("picture", picture);
-                user.put("isInfo", chkInfo);
-
-                result.put("success", true);
-                result.put("user", user);
-
-                return ResponseEntity.ok()
-                        .header("Set-Cookie", cookie.toString() + "; SameSite=Lax")
-                        .body(result);
 
             } else {
                 result.put("success", false);

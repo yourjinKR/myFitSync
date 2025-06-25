@@ -18,39 +18,63 @@
 		WHERE MEMBER_EMAIL = #{member_email}
 	</select>
 
-	<!-- 추가입력여부 -->
-	<select id="getFindInfo" parameterType="String" resultType="int">
-		SELECT COUNT(member_time)
-		FROM MEMBER
-		WHERE MEMBER_EMAIL = #{member_email}
-	</select>
-
 	<!-- 소셜 로그인 정보 등록 -->
-	<insert id="insertUser" parameterType="org.fitsync.domain.MemberVO">
+	<insert id="insertMemberInfo" parameterType="org.fitsync.domain.MemberVO">
 		INSERT INTO MEMBER (
 			MEMBER_IDX,
 			MEMBER_EMAIL,
 			MEMBER_NAME,
-			MEMBER_IMAGE
+			MEMBER_IMAGE,
+			MEMBER_TYPE,
+			MEMBER_PURPOSE,
+			MEMBER_DISEASE,
+			MEMBER_TIME
 		) VALUES(
-		MEMBER_SEQ.nextval,
+			MEMBER_SEQ.nextval,
 			#{member_email},
 			#{member_name},
-			#{member_image}
+			#{member_image},
+			#{member_type},
+			#{member_purpose},
+			#{member_disease},
+			#{member_time}
+		)
+	</insert>
+	<insert id="insertTrainerInfo" parameterType="org.fitsync.domain.MemberVO">
+		INSERT INTO MEMBER (
+			MEMBER_IDX,
+			MEMBER_EMAIL,
+			MEMBER_NAME,
+			MEMBER_IMAGE,
+			MEMBER_TYPE,
+			MEMBER_TIME,
+			MEMBER_DAY,
+			MEMBER_ACTIVITY_AREA,
+			MEMBER_INFO
+		) VALUES(
+			MEMBER_SEQ.nextval,
+			#{member_email},
+			#{member_name},
+			#{member_image},
+			#{member_type},
+			#{member_time},
+			#{member_day},
+			#{member_activity_area},
+			#{member_info}
 		)
 	</insert>
 
 	<!-- 유저 추가정보 입력 -->
-	<update id="updateInfo" parameterType="org.fitsync.domain.MemberVO">
+	<!-- <update id="updateInfo" parameterType="org.fitsync.domain.MemberVO">
 		UPDATE MEMBER SET 
 			MEMBER_PURPOSE = #{member_purpose},
 			MEMBER_DISEASE = #{member_disease},
 			MEMBER_TIME = #{member_time}			
 		WHERE MEMBER_IDX = #{member_idx}
-	</update>
+	</update> -->
 	
 	<!-- 트레이너 추가정보 입력 -->
-	<update id="updateTrainerInfo" parameterType="org.fitsync.domain.MemberVO">
+	<!-- <update id="updateTrainerInfo" parameterType="org.fitsync.domain.MemberVO">
 		UPDATE MEMBER SET 
 			MEMBER_TIME = #{member_time},
 			MEMBER_ACTIVITY_AREA = #{member_activity_area},
@@ -58,5 +82,5 @@
 			MEMBER_AWARDS = #{member_awards},
 			MEMBER_DAY = #{member_day}			
 		WHERE MEMBER_IDX = #{member_idx}
-	</update>
+	</update> -->
 </mapper>
