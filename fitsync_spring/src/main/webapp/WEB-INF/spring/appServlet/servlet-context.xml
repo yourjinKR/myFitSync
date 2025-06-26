@@ -30,6 +30,7 @@
 	<context:property-placeholder location="classpath:application.properties"/>
 	<context:component-scan base-package="org.fitsync.controller" />
 	<context:component-scan base-package="org.fitsync.websocket" />
+	<context:component-scan base-package="org.fitsync.service" />
 	
 	<!-- Multipart Resolver -->
     <beans:bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver">

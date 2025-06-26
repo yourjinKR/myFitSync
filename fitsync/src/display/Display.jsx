@@ -15,6 +15,8 @@ import googleAuthManager from '../util/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
 import Register from '../components/member/Register';
+import AItest from '../components/AItest';
+import MyPage from '../components/MyPage';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -62,6 +64,8 @@ const Display = () => {
             <Route path='add' element={<RoutineAdd />}/>
             <Route path='set' element={<RoutineSet />}/>
           </Route>
+          <Route path='/mypage' element={<MyPage/>}/>
+          <Route path='/ai' element={<AItest/>}/>
         </Routes>
       </DisplayInnner>
       <Nav/>

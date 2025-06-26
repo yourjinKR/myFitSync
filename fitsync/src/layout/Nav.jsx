@@ -77,7 +77,7 @@ const Nav = () => {
         운동
       </NavButton>
       <Divider />
-      <NavButton onClick={() => handleNav()}>
+      <NavButton onClick={() => handleNav('mypage')}>
         <PersonIcon />
         프로필
       </NavButton>
