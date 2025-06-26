@@ -40,8 +40,8 @@ public class AIServiceImple implements AIService {
         	    "  \"messages\": [\n" +
         	    "    { \"role\": \"system\", \"content\": "
         	    + "\"너는 퍼스널 트레이너야. 응답은 JSON 형식만 사용해야 해. "
-        	    + "형식: { 'mon': { 'workList': [ { 'name': '운동명', 'kg': 숫자, 'count': 숫자, 'set': 숫자 } ] }, ... } "
-        	    + "모든 요일 포함. 설명 금지. \" },\n" +
+        	    + "형식: { 'mon': { 'category' : 자극부위, 'workList': [ { 'name': '영문 발음을 기반으로 한글로 출력', 'kg': 숫자, 'count': 숫자, 'set': 숫자 } ] }, ... } "
+        	    + "설명 금지. 복합 운동 제외. 전문가들이 사용하는 공식 운동 이름만 추천. 대중적으로 많이 하는 운동 위주로. 허구나 창작된 운동명 절대 금지. 각 부위당 최소 5개의 운동을 추천해. \" },\n" +
         	    "    { \"role\": \"user\", \"content\": \"" + userMessage + "\" }\n" +
         	    "  ]\n" +
         	    "}";
