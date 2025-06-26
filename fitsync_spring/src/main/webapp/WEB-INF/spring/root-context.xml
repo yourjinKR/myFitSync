@@ -32,9 +32,10 @@
     <bean id="cloudinary" class="com.cloudinary.Cloudinary">
         <constructor-arg>
             <map>
-                <entry key="cloud_name" value="dhupmoprk" /> <!-- Cloudinary 대시보드에서 확인한 Cloud Name -->
-                <entry key="api_key" value="159686618656727" />       <!-- Cloudinary 대시보드에서 확인한 API Key -->
-                <entry key="api_secret" value="ALc19JyQRMkmWRmqr9_P-VwUpYw" /> <!-- Cloudinary 대시보드에서 확인한 API Secret -->
+                <entry key="cloud_name" value="${cloudinary.cloud_name}" /> <!-- Cloudinary 대시보드에서 확인한 Cloud Name -->
+                <entry key="api_key" value="${cloudinary.api_key}" />       <!-- Cloudinary 대시보드에서 확인한 API Key -->
+                <entry key="api_secret" value="${cloudinary.api_secret}" /> <!-- Cloudinary 대시보드에서 확인한 API Secret -->
+                <entry key="secure" value="true" />  						<!-- HTTPS 강제 사용 -->
             </map>
         </constructor-arg>
     </bean>

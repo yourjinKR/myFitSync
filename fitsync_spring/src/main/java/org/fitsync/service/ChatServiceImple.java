@@ -34,16 +34,15 @@ public class ChatServiceImple implements ChatService {
     private ChatAttachMapper attachMapper;
     
     @Autowired
-    private Cloudinary cloudinary;
-//    @Autowired
-//    private CloudinaryService cloudinaryService;
+    private CloudinaryService cloudinaryService;
 
+    // 채팅방생성 or 기존방 조회
 	@Override
 	public RoomVO registerRoom(int trainer_idx, int user_idx, String room_name) {
 		log.info("registerRoom..." + trainer_idx + ", " + user_idx + ", " + room_name);
 		// 기존 채팅방 확인
 		RoomVO existingRoom = roomMapper.getMembers(trainer_idx, user_idx);
-        
+		// 기존 채팅방이 있다면 해당 방 정보를 반환 (중복 생성 방지)
         if (existingRoom != null) {
             return existingRoom;
         }
@@ -55,105 +54,92 @@ public class ChatServiceImple implements ChatService {
         return newRoom;
 	}
 
+	// 채팅방 상세정보 조회
 	@Override
 	public RoomVO readRoom(int room_idx) {
 		log.info("readRoom..." + room_idx);
 		return roomMapper.getRoom(room_idx);
 	}
 
+	// 특정 사용자의 모든 채팅방 목록 조회
 	@Override
 	public List<RoomVO> readRoomList(int member_idx) {
 		log.info("readRoomList..." + member_idx);
 		return roomMapper.getRoomList(member_idx);
 	}
+	
+	/*-------------------------------------------------------------------*/
 
+	// 새채팅 메시지 등록
 	@Override
 	public MessageVO registerMessage(MessageVO vo) {
 		log.info("registerMessage..." + vo);
 		// 메시지 저장
 		messageMapper.insertMessage(vo);
         
-        // 채팅방 마지막 메시지 업데이트
+        // 채팅방 마지막 메시지 업데이트(최신 메시지 표시용)
 		roomMapper.updateLastMessage(vo.getRoom_idx(), vo.getMessage_idx());
         
         return vo;
 	}
 
+	// 채팅방의 모든 메시지 조회
 	@Override
 	public List<MessageVO> readMessageList(int room_idx) {
 		log.info("readMessageList..." + room_idx);
 		return messageMapper.getMessageList(room_idx);
 	}
 
+	// 모든 메시지 페이징처리 조회
 	@Override
 	public List<MessageVO> readMessageListPaging(int room_idx, int page, int size) {
 		log.info("readMessageListPaging..." + room_idx + ", " + page + ", " + size);
+		// 페이지 번호를 데이터베이스 OFFSET으로 변환
 		int offset = page * size;
 		return messageMapper.getMessageListPaging(room_idx, offset, size);
 	}
 
+	// 채팅방의 메시지를 키워드로 검색
 	@Override
 	public List<MessageVO> searchMessage(int room_idx, String keyword) {
 		log.info("searchMessage..." + room_idx + ", " + keyword);
 		return messageMapper.searchMessage(room_idx, keyword);
 	}
 
+	// 메시지를 읽었을때 읽음 상태 업데이트 처리
 	@Override
 	public int readMark(int message_idx, int receiver_idx) {
 		log.info("readMark..." + message_idx + ", " + receiver_idx);
 		return messageMapper.readMark(message_idx, receiver_idx);
 	}
 
+	// 채팅방의 읽지 않은 메시지 개수를 조회
 	@Override
 	public int unreadCount(int room_idx, int receiver_idx) {
 		log.info("unreadCount..." + room_idx + ", " + receiver_idx);
 		return messageMapper.unreadCount(room_idx, receiver_idx);
 	}
 
+	/*-------------------------------------------------------------------*/
+	
+	// 메시지에 첨부파일을 업로드(Cloudinary에 실제파일을 업로드하고 DB에 파일정보를 저장)
 	@Override
 	public Map<String, Object> uploadFile(MultipartFile file, int message_idx) throws Exception {
-		log.info("uploadFile..." + file + ", " + message_idx);
-		// Cloudinary 업로드 설정
-        Map<String, Object> uploadParams = ObjectUtils.asMap(
-            "resource_type", "image",
-            "folder", "pt-chat-images",
-            "public_id", "chat_" + System.currentTimeMillis(),
-            "overwrite", false,
-            "quality", "auto:good"
-        );
-        
-        // Cloudinary에 업로드
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadParams);
-        
-        // 첨부파일 정보 저장
-        ChatAttachVO vo = new ChatAttachVO();
-        vo.setMessage_idx(message_idx);
-        vo.setOriginal_filename(file.getOriginalFilename());
-        vo.setCloudinary_url((String) uploadResult.get("secure_url"));
-        vo.setCloudinary_public_id((String) uploadResult.get("public_id"));
-        vo.setFile_size_bytes(file.getSize());
-        vo.setMime_type(file.getContentType());
-        
-        // 파일 확장자 추출
-        String filename = file.getOriginalFilename();
-        if (filename != null && filename.contains(".")) {
-            String extension = filename.substring(filename.lastIndexOf("."));
-            vo.setFile_extension(extension);
-        }
-        
-        attachMapper.insertAttach(vo);
-        
-        return ObjectUtils.asMap(
-            "attachIdx", vo.getAttach_idx(),
-            "originalFilename", vo.getOriginal_filename(),
-            "cloudinaryUrl", vo.getCloudinary_url(),
-            "fileSize", vo.getFile_size_bytes()
-        );
+		log.info("uploadFile..." + file.getOriginalFilename() + ", " + message_idx);
+		return cloudinaryService.uploadFile(file, message_idx);
+	}
+	
+	// 메시지에 첨부된 파일 삭제
+	@Override
+	public boolean deleteFile(int attach_idx) {
+		log.info("ChatService deleteAttachment..." + attach_idx);
+		return cloudinaryService.deleteFile(attach_idx);
 	}
 
+	// 메시지에 첨부된 파일 목록을 조회
 	@Override
-	public List<ChatAttachVO> readAttachList(int message_idx) {
-		log.info("readAttachList..." + message_idx);
+	public List<ChatAttachVO> readFile(int message_idx) {
+		log.info("readFile..." + message_idx);
 		return attachMapper.getAttachList(message_idx);
 	}
 

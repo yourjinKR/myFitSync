@@ -26,6 +26,7 @@ public interface ChatService {
     
     // 파일 업로드
     public Map<String, Object> uploadFile(MultipartFile file, int message_idx) throws Exception;
-    public List<ChatAttachVO> readAttachList(int message_idx);
+    boolean deleteFile(int attach_idx);
+    public List<ChatAttachVO> readFile(int message_idx);
 	
 }

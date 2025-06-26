@@ -43,5 +43,10 @@
         WHERE message_idx = #{message_idx}
         ORDER BY uploaddate ASC
     </select>
+    
+    <!-- 첨부파일 삭제 -->
+    <delete id="deleteAttach" parameterType="int">
+        DELETE FROM chatattach WHERE attach_idx = #{attach_idx}
+    </delete>
 
 </mapper>
