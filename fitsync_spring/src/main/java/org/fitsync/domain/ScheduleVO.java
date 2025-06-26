@@ -9,7 +9,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ScheduleVO {
-	private int schedule_idx, member_idx;
+	private int schedule_idx, trainer_idx, user_idx;
 	private Date schedule_date, schedule_regdate;
 	private String schedule_stime, schedule_etime, schedule_content;
 }
