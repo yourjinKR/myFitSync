@@ -11,7 +11,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.fitsync.domain.MemberVO;
+import org.fitsync.service.MemberServiceImple;
+import org.fitsync.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +51,11 @@ public class KakaoAuthController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClients.createDefault();
     
+    @Autowired
+    private MemberServiceImple service;
+    @Autowired
+	private JwtUtil jwtUtil;
+    
     // 카카오 로그인 URL 반환
     @GetMapping("/kakao/url")
     public ResponseEntity<Map<String, String>> getKakaoLoginUrl() {
@@ -68,13 +79,49 @@ public class KakaoAuthController {
             // 2. 사용자 정보 요청
             Map<String, Object> userInfo = getUserInfo(accessToken);
 
-            // 이름, 이메일, 프로필이미지만 추출해서 반환
+            
+            System.out.println(userInfo.get("email"));
+            MemberVO vo = service.getFindUser((String) userInfo.get("email"));
             Map<String, Object> result = new HashMap<>();
-            result.put("name", userInfo.get("name"));
-            result.put("email", userInfo.get("email"));
-            result.put("profileImage", userInfo.get("profileImage"));
-
-            return ResponseEntity.ok(result);
+            Map<String, Object> user = new HashMap<>();
+            if(vo != null) {
+            	// JWT 생성
+            	String jwt = jwtUtil.generateToken(vo.getMember_idx(), vo.getMember_email());
+            	
+            	// HttpOnly 쿠키 생성
+            	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
+            			.httpOnly(true)
+            			.secure(false) // 배포시 true
+            			.path("/")
+            			.maxAge(7 * 24 * 60 * 60)
+            			.build();
+            	
+            	
+            	user.put("member_email", vo.getMember_email());
+            	user.put("member_name", vo.getMember_name());
+            	user.put("member_image", vo.getMember_image());
+            	user.put("isLogin", true);
+            	
+            	result.put("success", true);
+            	result.put("user", user);
+            	
+            	return ResponseEntity.ok()
+            			.header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
+            			.body(result);
+            }else {
+            	// 이름, 이메일, 프로필이미지만 추출해서 반환
+            	user.put("member_name", userInfo.get("name"));
+            	user.put("member_email", userInfo.get("email"));
+            	user.put("member_image", userInfo.get("profileImage"));
+            	user.put("isLogin", false);
+            	
+            	result.put("success", true);
+            	result.put("user", user);
+            	
+            	return ResponseEntity.ok(result);
+            }
+            
+            
 
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
