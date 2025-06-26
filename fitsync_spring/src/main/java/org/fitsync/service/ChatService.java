@@ -6,6 +6,7 @@ import java.util.Map;
 import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MessageVO;
 import org.fitsync.domain.RoomVO;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface ChatService {
