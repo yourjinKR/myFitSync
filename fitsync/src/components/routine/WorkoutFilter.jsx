@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import MuscleGroup from './MuscleGroup';
 
 const FilterWrapper = styled.div`
-  position:absolute;
+  position:fixed;
   bottom:0;
   left:0;
   width:100%;
@@ -40,12 +40,18 @@ const MuscleList = styled.div`
 `;
 
 
-const WorkoutFilter = ({filterRef}) => {
-
+const WorkoutFilter = ({init, setList, filterRef, category}) => {
   const [muscle, setMuscle] = useState(0);
-  
   useEffect(() => {
     filterRef.current.classList.remove("on");
+    const newList = init.filter(data => {
+      if(parseInt(muscle) !== 0){
+        return data.pt_category === category[muscle - 1];
+      }else{
+        return true;
+      }
+    });
+    setList(newList);
   },[filterRef, muscle]);
 
   const handleFilter = (e) => {
@@ -59,14 +65,20 @@ const WorkoutFilter = ({filterRef}) => {
       <FilterInner>
         <h3>근육 그룹</h3>
         <MuscleList>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={0}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={1}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={2}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={3}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={4}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={5}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={6}/>
-          <MuscleGroup muscle={muscle} setMuscle={setMuscle} idx={7}/>
+          <MuscleGroup 
+            key={0} 
+            idx={0}
+            data={'전체'} 
+            muscle={muscle}
+            setMuscle={setMuscle} />
+          {category.map((data,idx) => (
+            <MuscleGroup 
+              key={idx} 
+              idx={idx + 1}
+              data={data} 
+              muscle={muscle}
+              setMuscle={setMuscle} />
+          ))}
         </MuscleList>
       </FilterInner>
     </FilterWrapper>

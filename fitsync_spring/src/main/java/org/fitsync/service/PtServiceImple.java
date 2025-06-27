@@ -1,5 +1,8 @@
 package org.fitsync.service;
 
+import java.util.List;
+
+import org.fitsync.domain.PtVO;
 import org.fitsync.mapper.PtMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,5 +15,10 @@ public class PtServiceImple implements PtService {
 	
 	@Autowired
 	private PtMapper mapper;
+	
+	@Override
+	public List<PtVO> getWorkOut() {
+		return mapper.getWorkOut();
+	}
 	
 }

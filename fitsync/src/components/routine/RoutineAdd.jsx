@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import WorkoutList from './WorkoutList';
 import WorkoutFilter from './WorkoutFilter';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const RoutineAddWrapper = styled.div`
   padding:15px;
@@ -62,6 +63,28 @@ const RoutineAddCTA = styled.button`
 
 const RoutineAdd = ({routineData, setRoutineData}) => {
   const filterRef = useRef();
+
+  // 운동리스트 정보 
+  const [init, setInit] = useState([]);
+  const [list, setList] = useState([]);
+  const [category, setCategory] = useState([]);
+  
+  const getWorkOut = async () => {
+    const response = await axios.get("/routine/workout");
+    setInit(response.data.list);
+    setList(response.data.list);
+    const categories = Array.from(new Set(response.data.list.map((workout) => workout.pt_category)));
+    setCategory(categories);
+  }
+  
+  useEffect(() => {
+    getWorkOut();
+  },[])
+  
+  useEffect(() => {
+  },[init, list]);
+
+
   const handleSearch = () => {
     
   }
@@ -72,7 +95,8 @@ const RoutineAdd = ({routineData, setRoutineData}) => {
 
   const nav = useNavigate();
   const handleButton = () => {
-    nav('/routine/set');
+    console.log(routineData);
+    // nav('/routine/set');
   }
 
   return (
@@ -85,10 +109,10 @@ const RoutineAdd = ({routineData, setRoutineData}) => {
       
       {/*부위 선택*/}
       <FilterCTA onClick={handleFilter}>부위 선택</FilterCTA>
-      <WorkoutFilter filterRef={filterRef}/>
+      <WorkoutFilter init={init} setList={setList} filterRef={filterRef} category={category}/>
 
       {/*운동 목록*/}
-      <WorkoutList context={{ routineData, setRoutineData }}/>  
+      <WorkoutList context={{ routineData, setRoutineData }} list={list}/>  
 
       {/* 루틴 추가 버튼 */}
       <RoutineAddCTA onClick={handleButton}>루틴 추가</RoutineAddCTA>

@@ -3,5 +3,11 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.PtMapper">
-
+	<select id="getWorkOut" resultType="org.fitsync.domain.PtVO">
+		SELECT * FROM PT
+		ORDER BY 
+		CASE 
+			WHEN PT_CATEGORY = '기타' 
+			THEN 1 ELSE 0 END, PT_CATEGORY
+	</select>
 </mapper>

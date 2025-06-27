@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import WorkoutName from './WorkoutName';
 import styled from 'styled-components';
 import { useOutletContext } from 'react-router-dom';
+import axios from 'axios';
 
 const ListWrapper = styled.div`
   border:1px solid #ccc;
@@ -9,17 +10,22 @@ const ListWrapper = styled.div`
 `;
 
 
-const WorkoutList = () => {
+const WorkoutList = ({list}) => {
+
   const { routineData, setRoutineData } = useOutletContext();
   
   return (
     <ListWrapper>
-      <WorkoutName routineData={routineData} setRoutineData={setRoutineData} idx={1}/>
-      <WorkoutName routineData={routineData} setRoutineData={setRoutineData} idx={2}/>
-      <WorkoutName routineData={routineData} setRoutineData={setRoutineData} idx={3}/>
-      <WorkoutName routineData={routineData} setRoutineData={setRoutineData} idx={4}/>
-      <WorkoutName routineData={routineData} setRoutineData={setRoutineData} idx={5}/>
-      <WorkoutName routineData={routineData} setRoutineData={setRoutineData} idx={6}/>
+      {
+        list.map((workout, idx) => (
+          <WorkoutName
+            key={workout.idx || idx}
+            routineData={routineData}
+            setRoutineData={setRoutineData}
+            data={workout}
+          />
+        ))
+      }
     </ListWrapper>
   );
 };

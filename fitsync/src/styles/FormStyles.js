@@ -87,12 +87,10 @@ export const ButtonSubmit = styled.button`
   margin-top: 18px;
   font-weight: 700;
   letter-spacing: 1px;
-  cursor: pointer;
+  cursor: pointer; 
   box-shadow: 0 2px 8px rgba(125,147,255,0.08);
   transition: background 0.2s;
-  &:hover {
-    background: linear-gradient(90deg, #5e72e4 0%, #7D93FF 100%);
-  }
+
   @media (max-width: 600px) {
     height: 40px;
     font-size: 1rem;
