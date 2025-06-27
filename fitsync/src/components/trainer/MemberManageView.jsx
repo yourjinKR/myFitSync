@@ -58,13 +58,13 @@ const Tab = styled.button`
     `}
   span.count {
     margin-left: 0.25rem;
-    color: #ff7a00;
+    color: #5b6eff;
   }
 `;
 
 const AddBtn = styled.button`
   margin-left: auto;
-  background: #ffb36d;
+  background: #5b6eff;      
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
@@ -73,7 +73,7 @@ const AddBtn = styled.button`
   padding: 0.6rem 1rem;
   cursor: pointer;
   &:hover {
-    background: #ffa14a;
+    background: #4a5de0;  
   }
 `;
 
@@ -142,7 +142,7 @@ const dummyMembers = {
       done: 1,
       remain: 9,
       reserved: 1,
-      dots: 2,
+      
     },
   ],
   expired: [],
