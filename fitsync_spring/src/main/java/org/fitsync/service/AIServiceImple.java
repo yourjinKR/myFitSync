@@ -35,16 +35,20 @@ public class AIServiceImple implements AIService {
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setDoOutput(true);
         
-        String requestBody = "{\n" +
-        	    "  \"model\": \"gpt-3.5-turbo\",\n" +
-        	    "  \"messages\": [\n" +
-        	    "    { \"role\": \"system\", \"content\": "
-        	    + "\"너는 퍼스널 트레이너야. 응답은 JSON 형식만 사용해야 해. "
-        	    + "형식: { 'mon': { 'category' : 자극부위, 'workList': [ { 'name': '영문 발음을 기반으로 한글로 출력', 'kg': 숫자, 'count': 숫자, 'set': 숫자 } ] }, ... } "
-        	    + "설명 금지. 복합 운동 제외. 전문가들이 사용하는 공식 운동 이름만 추천. 대중적으로 많이 하는 운동 위주로. 허구나 창작된 운동명 절대 금지. 각 부위당 최소 5개의 운동을 추천해. \" },\n" +
-        	    "    { \"role\": \"user\", \"content\": \"" + userMessage + "\" }\n" +
-        	    "  ]\n" +
-        	    "}";
+        String requestBody = "{"
+        	    + "\"model\":\"gpt-3.5-turbo\","
+        	    + "\"messages\":["
+        	    + "{\"role\":\"system\",\"content\":\""
+        	    + "너는 퍼스널 트레이너야. 사용자 정보를 기반으로 맞춤 루틴을 추천해. "
+        	    + "응답은 반드시 JSON 형식으로만 작성해야 하며, 설명 없이 JSON만 응답해. "
+        	    + "복합 운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해. 창작된 운동명은 금지하고, 대중적인 운동만 추천해. "
+        	    + "루틴은 1시간 분량이므로 운동 종목을 5~6개 정도 추천해. "
+        	    + "형식: {\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목\\\",\\\"routine_category\\\":\\\"운동 부위\\\"},\\\"routines\\\":[{\\\"pt\\\":{\\\"pt_name\\\":\\\"운동명\\\",\\\"pt_category\\\":\\\"부위\\\"},\\\"routine\\\":{\\\"routine_memo\\\":\\\"주의 사항\\\"},\\\"routineSet\\\":{\\\"set_num\\\":3,\\\"set_kg\\\":60,\\\"set_count\\\":10}}]}"
+        	    + "\"},"
+        	    + "{\"role\":\"user\",\"content\":\"" + userMessage + "\"}"
+        	    + "]"
+        	    + "}";
+
 
 
         try (OutputStream os = connection.getOutputStream()) {
