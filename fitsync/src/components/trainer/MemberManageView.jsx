@@ -1,7 +1,7 @@
-// MemberManageView.jsx
 import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 import { AiOutlineSearch } from 'react-icons/ai';
+import UserInsetForTrainer from './UserInsetForTrainer'; // ✅ 하단 삽입 컴포넌트
 
 /* ---------- styled-components ---------- */
 const Wrapper = styled.div`
@@ -11,7 +11,6 @@ const Wrapper = styled.div`
   width: 100%;
 `;
 
-/* 검색 영역 */
 const SearchBox = styled.div`
   position: relative;
   width: 100%;
@@ -37,7 +36,6 @@ const SearchIcon = styled(AiOutlineSearch)`
   color: #666;
 `;
 
-/* 탭 영역 */
 const Tabs = styled.div`
   display: flex;
   align-items: center;
@@ -64,7 +62,7 @@ const Tab = styled.button`
 
 const AddBtn = styled.button`
   margin-left: auto;
-  background: #5b6eff;      
+  background: #5b6eff;
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
@@ -73,11 +71,10 @@ const AddBtn = styled.button`
   padding: 0.6rem 1rem;
   cursor: pointer;
   &:hover {
-    background: #4a5de0;  
+    background: #4a5de0;
   }
 `;
 
-/* 회원 카드 */
 const Card = styled.div`
   background: #fff;
   border-radius: 0.75rem;
@@ -142,7 +139,6 @@ const dummyMembers = {
       done: 1,
       remain: 9,
       reserved: 1,
-      
     },
   ],
   expired: [],
@@ -150,17 +146,16 @@ const dummyMembers = {
 
 /* ---------- 메인 컴포넌트 ---------- */
 const MemberManageView = () => {
-  const [tab, setTab] = useState('active'); // 'active' | 'expired'
+  const [tab, setTab] = useState('active');
   const [keyword, setKeyword] = useState('');
+  const [showInsertForm, setShowInsertForm] = useState(false); // ✅ 삽입폼 on/off
 
-  /* 검색 필터 */
   const members = dummyMembers[tab].filter((m) =>
     m.name.toLowerCase().includes(keyword.toLowerCase())
   );
 
   return (
     <Wrapper>
-      {/* 검색창 */}
       <SearchBox>
         <SearchInput
           placeholder="검색"
@@ -170,7 +165,6 @@ const MemberManageView = () => {
         <SearchIcon />
       </SearchBox>
 
-      {/* 탭 + 추가 버튼 */}
       <Tabs>
         <Tab active={tab === 'active'} onClick={() => setTab('active')}>
           활성 회원 <span className="count">{dummyMembers.active.length}</span>
@@ -179,8 +173,8 @@ const MemberManageView = () => {
           만료 회원 <span className="count">{dummyMembers.expired.length}</span>
         </Tab>
 
-        <AddBtn onClick={() => alert('회원 추가 기능(추후 구현)')}>
-          + 회원 추가하기
+        <AddBtn onClick={() => setShowInsertForm((prev) => !prev)}>
+          {showInsertForm ? '닫기' : '+ 회원 추가하기'}
         </AddBtn>
       </Tabs>
 
@@ -201,7 +195,7 @@ const MemberManageView = () => {
           </StatusRow>
 
           <DotRow>
-            {Array.from({ length: m.dots }).map((_, i) => (
+            {Array.from({ length: m.dots || 0 }).map((_, i) => (
               <div key={i} />
             ))}
           </DotRow>
@@ -209,6 +203,9 @@ const MemberManageView = () => {
       ))}
 
       {members.length === 0 && <p>해당 회원이 없습니다.</p>}
+
+      {/* ✅ 회원 추가 폼 (모달처럼 하단에 표시) */}
+      {showInsertForm && <UserInsetForTrainer />}
     </Wrapper>
   );
 };
