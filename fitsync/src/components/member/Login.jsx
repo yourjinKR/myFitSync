@@ -15,9 +15,8 @@ const Login = () => {
   const nav = useNavigate();
 
   
-
   useEffect(()=>{
-    if(user !== null){
+    if(user.isLogin === true){
       alert("이미 로그인되어있습니다.");
       nav("/");
     }

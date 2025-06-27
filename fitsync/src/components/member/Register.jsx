@@ -29,7 +29,7 @@ const Register = () => {
   const nav = useNavigate();
 
   useEffect(()=>{
-    if(user !== null){
+    if(user.isLogin === true){
       alert("잘못된 접근입니다.");
       nav("/");
     }

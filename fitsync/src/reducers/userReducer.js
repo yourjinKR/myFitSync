@@ -1,6 +1,12 @@
+const initialUser = {
+  member_idx: 0,
+  member_email: '',
+  member_image: '',
+  isLogin: false,
+};
+
 const initialState = {
-  user: null,
-  isLoggedIn: false,
+  user: { ...initialUser },
 };
 
 const userReducer = (state = initialState, action) => {
@@ -8,14 +14,12 @@ const userReducer = (state = initialState, action) => {
     case 'SET_USER':
       return {
         ...state,
-        user: action.payload,
-        isLoggedIn: true,
+        user: { ...initialUser, ...action.payload }, // 기본값 + payload 병합
       };
     case 'LOGOUT_USER':
       return {
         ...state,
-        user: null,
-        isLoggedIn: false,
+        user: { ...initialUser },
       };
     default:
       return state;
