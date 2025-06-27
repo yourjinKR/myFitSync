@@ -17,6 +17,8 @@ import TrainerDetailView from '../components/trainer/TrainerDetailView';
 import Register from '../components/member/Register';
 import AItest from '../components/AItest';
 import MyPage from '../components/MyPage';
+import ChatMain from '../components/chat/ChatMain';
+import ChatRoom from '../components/chat/ChatRoom';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -66,6 +68,8 @@ const Display = () => {
           </Route>
           <Route path='/mypage' element={<MyPage/>}/>
           <Route path='/ai' element={<AItest/>}/>
+          <Route path='/chat' element={<ChatMain/>}/>
+          <Route path='/chat/:roomId' element={<ChatRoom/>}/>
         </Routes>
       </DisplayInnner>
       <Nav/>
