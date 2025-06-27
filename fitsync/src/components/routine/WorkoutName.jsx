@@ -35,24 +35,24 @@ const InfoBox = styled.div`
   }
 `;
 
-const WorkoutName = ({ idx, routineData, setRoutineData }) => {
+const WorkoutName = ({ data, routineData, setRoutineData }) => {
   const isChecked = false;
   const [chk, setChk] = useState(isChecked);
   const workoutRef = useRef();
-  
   
   const handleWorkOut = () => {
     setChk(workoutRef.current.checked);
   }
   useEffect(() => {
     const selectedValue = parseInt(workoutRef.current.value);
+    const selectedName = workoutRef.current.dataset['pt'];
     
     if (chk) {
       // 배열에 값이 없으면 추가
       if (!routineData.exercises.includes(selectedValue)) {
         setRoutineData({
           ...routineData,
-          exercises: [...routineData.exercises, selectedValue],
+          exercises: [...routineData.exercises, {name: selectedName ,value : selectedValue}],
         });
       }
     } else {
@@ -66,15 +66,15 @@ const WorkoutName = ({ idx, routineData, setRoutineData }) => {
 
   return (
     <WorkoutWrapper>
-      <input type="checkbox" onChange={handleWorkOut} ref={workoutRef} name='workout[]' value={idx} id={`workout${idx}`} />
-      <label htmlFor={`workout${idx}`}>
+      <input type="checkbox" onChange={handleWorkOut} ref={workoutRef} data-pt={data.pt_name} name='workout[]' value={data.pt_idx} id={`workout${data.pt_idx}`} />
+      <label htmlFor={`workout${data.pt_idx}`}>
         <ImgBox>
-          <img src="" alt="" />
+          <img src={data.pt_image} alt={data.pt_name} />
         </ImgBox>
         <InfoBox>
           <dl>
-            <dt>운동명</dt>
-            <dd>운동 부위</dd>
+            <dt>{data.pt_name}</dt>
+            <dd>{data.pt_category}</dd>
           </dl>
         </InfoBox>
         {

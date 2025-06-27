@@ -28,24 +28,30 @@ const InfoBox = styled.div`
   width:calc(100% - 112px);
 `;
 
-const MuscleGroup = ({idx, muscle, setMuscle}) => {
+const MuscleGroup = ({data, muscle, setMuscle, idx}) => {
 
   const handleChangeInput = (e) => {
-    setMuscle(parseInt(e.target.value));
+    setMuscle(e.target.value);
   }
 
   return (
     <MuscleWrapper>
-      <input type="radio" onChange={handleChangeInput} checked={muscle ===idx} value={idx} name='muscle' id={`muscle${idx}`} />
+      <input 
+        type="radio" 
+        onChange={handleChangeInput} 
+        checked={parseInt(muscle) === parseInt(idx)} 
+        value={idx} name='muscle' 
+        id={`muscle${idx}`} data-name={data} />
+
       <MuscleInner htmlFor={`muscle${idx}`}>
         <ImgBox>
           <img src="" alt="" />
         </ImgBox>
         <InfoBox>
-          {idx === 0 ? "전체": "운동 부위 명"}
+          {data}
         </InfoBox>
         {
-          muscle ===idx ?
+          parseInt(muscle) === parseInt(idx) ?
           <CheckIcon style={{ color: 'green', fontSize: '32px' }} /> : 
           <></> 
         }
