@@ -26,7 +26,7 @@ const user = {
 
 
 const AItest = () => {
-    const initialValue = {content : '', token : 0};
+    const initialValue = {content : '운동 루틴 추천해줘', token : 0};
 
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
     const [resultText, setResultText] = useState('');
