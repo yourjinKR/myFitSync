@@ -79,8 +79,6 @@ public class KakaoAuthController {
             // 2. 사용자 정보 요청
             Map<String, Object> userInfo = getUserInfo(accessToken);
 
-            
-            System.out.println(userInfo.get("email"));
             MemberVO vo = service.getFindUser((String) userInfo.get("email"));
             Map<String, Object> result = new HashMap<>();
             Map<String, Object> user = new HashMap<>();

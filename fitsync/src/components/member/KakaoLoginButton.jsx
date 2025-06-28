@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import axios from 'axios'; // axios 추가
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../../action/userAction';
 
 const SpinnerAnimation = keyframes`
   0% { transform: rotate(0deg);}
@@ -58,6 +61,10 @@ const ButtonText = styled.span`
 const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
   const [loading, setLoading] = useState(false);
 
+  const nav = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.user);
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -102,6 +109,12 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
 
       const response = await axios.get(`/auth/kakao/callback?code=${code}`);
       const userData = response.data;
+      await dispatch(setUser(response.data.user));
+      if(!response.data.user.isLogin) {
+          nav('/register');  
+      } else{
+          nav('/');
+      }
 
       if (response.status === 200) {
         // URL에서 code 파라미터 제거
