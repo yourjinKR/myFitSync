@@ -64,12 +64,12 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
   const nav = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.user);
-
+  
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
 
-    if (code) {
+    if (code && user.provider === 'kakao') {
       handleKakaoCallback(code);
     }
     // eslint-disable-next-line
@@ -84,6 +84,7 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
       const data = response.data;
 
       if (response.status === 200) {
+        await dispatch(setUser(data.provider));
         window.location.href = data.loginUrl;
       } else {
         console.error('로그인 URL을 가져오는데 실패했습니다.');
@@ -110,6 +111,7 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
       const response = await axios.get(`/auth/kakao/callback?code=${code}`);
       const userData = response.data;
       await dispatch(setUser(response.data.user));
+      
       if(!response.data.user.isLogin) {
           nav('/register');  
       } else{

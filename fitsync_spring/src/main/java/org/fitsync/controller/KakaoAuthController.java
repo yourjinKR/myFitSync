@@ -66,6 +66,8 @@ public class KakaoAuthController {
         
         Map<String, String> response = new HashMap<>();
         response.put("loginUrl", loginUrl);
+        response.put("provider", "kakao");
+        
         return ResponseEntity.ok(response);
     }
     
@@ -98,6 +100,7 @@ public class KakaoAuthController {
             	user.put("member_email", vo.getMember_email());
             	user.put("member_name", vo.getMember_name());
             	user.put("member_image", vo.getMember_image());
+            	user.put("provider", "kakao");
             	user.put("isLogin", true);
             	
             	result.put("success", true);
@@ -111,6 +114,7 @@ public class KakaoAuthController {
             	user.put("member_name", userInfo.get("name"));
             	user.put("member_email", userInfo.get("email"));
             	user.put("member_image", userInfo.get("profileImage"));
+            	user.put("provider", "kakao");
             	user.put("isLogin", false);
             	
             	result.put("success", true);

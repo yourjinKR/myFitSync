@@ -1,5 +1,9 @@
 package org.fitsync.controller;
 
+import org.fitsync.domain.MemberVO;
+import org.fitsync.service.MemberServiceImple;
+import org.fitsync.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +27,11 @@ public class NaverAuthController {
 
     @Value("${naver.redirect.uri}")
     private String redirectUri;
+    
+    @Autowired
+    private MemberServiceImple service;
+    @Autowired
+	private JwtUtil jwtUtil;
 
     @GetMapping("/login")
     public ResponseEntity<Map<String, Object>> naverLogin(HttpSession session) {
@@ -90,7 +99,7 @@ public class NaverAuthController {
             }
 
             String accessToken = (String) tokenResponse.getBody().get("access_token");
-
+            
             // 사용자 정보 요청
             HttpHeaders headers = new HttpHeaders();
             headers.add("Authorization", "Bearer " + accessToken);
@@ -107,19 +116,49 @@ public class NaverAuthController {
             }
 
             Map responseBody = profileResponse.getBody();
-            Map response = (Map) responseBody.get("response");
+            Map userInfo = (Map) responseBody.get("response");
 
             // 프론트에 전달할 최소 정보만 추출
+            MemberVO vo = service.getFindUser((String) userInfo.get("email"));
             Map<String, Object> user = new HashMap<>();
-            user.put("name", response.get("name"));
-            user.put("email", response.get("email"));
-            user.put("profileImage", response.get("profile_image"));
-
-            session.setAttribute("naverUser", user); // 세션에 사용자 정보 저장
-
-            result.put("success", true);
-            result.put("user", user);
-            return ResponseEntity.ok(result);
+            if(vo != null) {
+            	// JWT 생성
+            	String jwt = jwtUtil.generateToken(vo.getMember_idx(), vo.getMember_email());
+            	
+            	// HttpOnly 쿠키 생성
+            	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
+            			.httpOnly(true)
+            			.secure(false) // 배포시 true
+            			.path("/")
+            			.maxAge(7 * 24 * 60 * 60)
+            			.build();
+            	
+            	
+            	user.put("member_email", vo.getMember_email());
+            	user.put("member_name", vo.getMember_name());
+            	user.put("member_image", vo.getMember_image());
+            	user.put("provider", "naver");
+            	user.put("isLogin", true);
+            	
+            	result.put("success", true);
+            	result.put("user", user);
+            	
+            	return ResponseEntity.ok()
+            			.header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
+            			.body(result);
+            }else {
+            	// 이름, 이메일, 프로필이미지만 추출해서 반환
+            	user.put("member_name", userInfo.get("name"));
+            	user.put("member_email", userInfo.get("email"));
+            	user.put("member_image", userInfo.get("profileImage"));
+            	user.put("provider", "naver");
+            	user.put("isLogin", false);
+            	
+            	result.put("success", true);
+            	result.put("user", user);
+            	
+            	return ResponseEntity.ok(result);
+            }
 
         } catch (Exception e) {
             // 예외 발생 시 내부 서버 오류 반환
