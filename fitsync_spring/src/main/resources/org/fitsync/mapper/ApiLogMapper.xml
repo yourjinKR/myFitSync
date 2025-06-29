@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.fitsync.mapper.ApiLogMapper">
+
+    <insert id="insertApiLog" parameterType="org.fitsync.domain.ApiLogVO">
+        INSERT INTO apilog (
+            apilog_idx,
+            member_idx,
+            apilog_prompt,
+            apilog_response,
+            apilog_request_time,
+            apilog_response_time,
+            apilog_input_tokens,
+            apilog_output_tokens,
+            apilog_model,
+            apilog_version,
+            apilog_status
+        ) VALUES (
+            apilog_seq.NEXTVAL,
+            #{member_idx},
+            #{apilog_prompt},
+            #{apilog_response},
+            #{apilog_request_time},
+            #{apilog_response_time},
+            #{apilog_input_tokens},
+            #{apilog_output_tokens},
+            #{apilog_model},
+            #{apilog_version},
+            #{apilog_status}
+        )
+    </insert>
+
+    <select id="selectApiLogById" resultType="org.fitsync.domain.ApiLogVO" parameterType="int">
+        SELECT *
+        FROM apilog
+        WHERE apilog_idx = #{apilog_idx}
+    </select>
+
+</mapper>

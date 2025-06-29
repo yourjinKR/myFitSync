@@ -5,7 +5,7 @@ const user = {
   member: {
     memberIdx: 101,
     day: "월,수,금",
-    type: "일반",                 // 예: 일반, 트레이너
+    type: "일반",
     purpose: "체중 감량",
     time: "18:00~22:00",
     disease: "고혈압",
@@ -14,13 +14,13 @@ const user = {
     info: "운동을 시작한지 3년차입니다. 지속적인 체형 관리가 목표입니다.",
   },
   body: {
-    height: 175,                   // cm
-    weight: 72.5,                  // kg
-    skeletalMuscle: 32.1,          // kg
-    fat: 15.2,                     // kg
-    fatPercentage: 21.0,           // %
+    height: 175,
+    weight: 72.5,
+    skeletalMuscle: 32.1,
+    fat: 15.2,
+    fatPercentage: 21.0,
     bmi: 23.7,
-    regDate: "2025-06-26"          // ISO 형식 권장
+    regDate: "2025-06-26"
   }
 };
 
@@ -63,6 +63,7 @@ const AItest = () => {
             console.log(`응답 시간: ${elapsedSeconds}초`);
 
             console.log(response.data);
+            console.log('타입 :', typeof response.data);
             setResultText(response.data);
         })
         .catch(error => {

@@ -1,0 +1,24 @@
+package org.fitsync.domain;
+
+import java.sql.Timestamp;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ApiLogVO {
+    private int apilog_idx;
+    private int member_idx;
+    private String apilog_prompt;
+    private String apilog_response;
+    private Timestamp apilog_request_time;
+    private Timestamp apilog_response_time;
+    private Integer apilog_input_tokens;
+    private Integer apilog_output_tokens;
+    private String apilog_model;
+    private String apilog_version;
+    private String apilog_status;
+}

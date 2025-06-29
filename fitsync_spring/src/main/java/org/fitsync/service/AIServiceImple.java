@@ -7,10 +7,14 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
+import org.fitsync.domain.ApiLogVO;
+import org.fitsync.mapper.ApiLogMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.fitsync.service.AIService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,10 +27,13 @@ public class AIServiceImple implements AIService {
 
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
 
+    @Autowired
+    private ApiLogMapper aiLogMapper;
+
     @Override
     public String requestAIResponse(String userMessage) throws IOException {
-    	// System.out.println(apiKey);
-    	
+    	Timestamp requestTime = new Timestamp(System.currentTimeMillis());
+
         URL url = new URL(API_URL);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -34,39 +41,32 @@ public class AIServiceImple implements AIService {
         connection.setRequestProperty("Authorization", "Bearer " + apiKey);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setDoOutput(true);
-        
+
         String requestBody = "{"
-        	    + "\"model\":\"gpt-3.5-turbo\","
-        	    + "\"messages\":["
-        	    + "{\"role\":\"system\",\"content\":\""
-        	    + "너는 퍼스널 트레이너야. 사용자 정보를 기반으로 4분할 루틴을 추천해. "
-        	    + "응답은 반드시 JSON 형식으로만 작성하고, 설명 없이 JSON만 응답해야 해. "
-        	    + "result 배열 안에 반드시 4개의 루틴 묶음을 포함해야 해. "
-        	    + "각 루틴은 1시간 분량이며, 운동 종목은 5~6개로 구성하고, 각 운동은 routine_set 배열로 세트 구성 정보를 포함해야 해. "
-        	    + "복합 운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해. 창작된 운동명은 금지하고, 대중적인 운동만 추천해. "
-        	    + "형식: {\\\"result\\\":["
-
-        	    + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 A\\\"},"
-        	    + "\\\"routines\\\":["
-        	    + "{\\\"pt\\\":{\\\"pt_name\\\":\\\"운동명1\\\"},"
-        	    + "\\\"routine_set\\\":["
-        	    + "{\\\"set_num\\\":1,\\\"set_kg\\\":60,\\\"set_count\\\":10},"
-        	    + "{\\\"set_num\\\":2,\\\"set_kg\\\":70,\\\"set_count\\\":8}"
-        	    + "]}]},"
-
-        	    + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 B\\\"},\\\"routines\\\":[...]},"
-        	    + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 C\\\"},\\\"routines\\\":[...]},"
-        	    + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 D\\\"},\\\"routines\\\":[...]}"
-
-        	    + "]}"
-        	    + "\"},"
-        	    + "{\"role\":\"user\",\"content\":\"" + userMessage + "\"}"
-        	    + "]"
-        	    + "}";
-
-
-
-
+            + "\"model\":\"gpt-3.5-turbo\","
+            + "\"messages\":["
+            + "{\"role\":\"system\",\"content\":\""
+            + "너는 퍼스널 트레이너야. 사용자 정보를 기반으로 4분할 루틴을 추천해. "
+            + "응답은 반드시 JSON 형식으로만 작성하고, 설명 없이 JSON만 응답해야 해. "
+            + "result 배열 안에 반드시 4개의 루틴 묶음을 포함해야 해. "
+            + "각 루틴은 1시간 분량이며, 운동 종목은 5~6개로 구성하고, 각 운동은 routine_set 배열로 세트 구성 정보를 포함해야 해. "
+            + "복합 운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해. 창작된 운동명은 금지하고, 대중적인 운동만 추천해. "
+            + "형식: {\\\"result\\\":["
+            + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 A\\\"},"
+            + "\\\"routines\\\":["
+            + "{\\\"pt\\\":{\\\"pt_name\\\":\\\"운동명1\\\"},"
+            + "\\\"routine_set\\\":["
+            + "{\\\"set_num\\\":1,\\\"set_kg\\\":60,\\\"set_count\\\":10},"
+            + "{\\\"set_num\\\":2,\\\"set_kg\\\":70,\\\"set_count\\\":8}"
+            + "]}]},"
+            + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 B\\\"},\\\"routines\\\":[...]},"
+            + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 C\\\"},\\\"routines\\\":[...]},"
+            + "{\\\"routineList\\\":{\\\"routine_title\\\":\\\"루틴 제목 D\\\"},\\\"routines\\\":[...]}"
+            + "]}"
+            + "\"},"
+            + "{\"role\":\"user\",\"content\":\"" + userMessage + "\"}"
+            + "]"
+            + "}";
 
         try (OutputStream os = connection.getOutputStream()) {
             os.write(requestBody.getBytes(StandardCharsets.UTF_8));
@@ -80,11 +80,28 @@ public class AIServiceImple implements AIService {
             }
         }
 
+        Timestamp responseTime = new Timestamp(System.currentTimeMillis());
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(responseBuilder.toString());
+        String content = root.path("choices").get(0).path("message").path("content").asText();
+        int inputTokens = root.path("usage").path("prompt_tokens").asInt();
+        int outputTokens = root.path("usage").path("completion_tokens").asInt();
 
-        return root.path("choices").get(0).path("message").path("content").asText();
+        ApiLogVO log = new ApiLogVO();
+        log.setMember_idx(0); // 임시idx
+        log.setApilog_prompt(requestBody);
+        log.setApilog_response(content);
+        log.setApilog_request_time(requestTime);
+        log.setApilog_response_time(responseTime);
+        log.setApilog_input_tokens(inputTokens);
+        log.setApilog_output_tokens(outputTokens);
+        log.setApilog_model("gpt-3.5-turbo");
+        log.setApilog_version("1.0.0");
+        log.setApilog_status("success");
+
+        aiLogMapper.insertApiLog(log);
+
+        return content;
     }
-    
-    
 }
