@@ -5,33 +5,36 @@
 
 <mapper namespace="org.fitsync.mapper.ApiLogMapper">
 
-    <insert id="insertApiLog" parameterType="org.fitsync.domain.ApiLogVO">
-        INSERT INTO apilog (
-            apilog_idx,
-            member_idx,
-            apilog_prompt,
-            apilog_response,
-            apilog_request_time,
-            apilog_response_time,
-            apilog_input_tokens,
-            apilog_output_tokens,
-            apilog_model,
-            apilog_version,
-            apilog_status
-        ) VALUES (
-            apilog_seq.NEXTVAL,
-            #{member_idx},
-            #{apilog_prompt},
-            #{apilog_response},
-            #{apilog_request_time},
-            #{apilog_response_time},
-            #{apilog_input_tokens},
-            #{apilog_output_tokens},
-            #{apilog_model},
-            #{apilog_version},
-            #{apilog_status}
-        )
-    </insert>
+	<insert id="insertApiLog" parameterType="org.fitsync.domain.ApiLogVO">
+	    INSERT INTO apilog (
+	        apilog_idx,
+	        member_idx,
+	        apilog_prompt,
+	        apilog_response,
+	        apilog_request_time,
+	        apilog_response_time,
+	        apilog_input_tokens,
+	        apilog_output_tokens,
+	        apilog_model,
+	        apilog_version,
+	        apilog_status,
+	        apilog_service_type
+	    ) VALUES (
+	        apilog_seq.NEXTVAL,
+	        #{member_idx},
+	        #{apilog_prompt},
+	        #{apilog_response},
+	        #{apilog_request_time},
+	        #{apilog_response_time},
+	        #{apilog_input_tokens},
+	        #{apilog_output_tokens},
+	        #{apilog_model},
+	        #{apilog_version},
+	        #{apilog_status},
+	        #{apilog_service_type}
+	    )
+	</insert>
+
 
     <select id="selectApiLogById" resultType="org.fitsync.domain.ApiLogVO" parameterType="int">
         SELECT *

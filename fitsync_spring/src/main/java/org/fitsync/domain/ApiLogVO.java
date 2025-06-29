@@ -21,4 +21,7 @@ public class ApiLogVO {
     private String apilog_model;
     private String apilog_version;
     private String apilog_status;
+    private String apilog_service_type;
+    private String apilog_feedback;
+    private String apilog_feedback_reason;
 }
