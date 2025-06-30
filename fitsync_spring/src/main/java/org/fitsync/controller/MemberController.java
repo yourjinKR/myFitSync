@@ -5,7 +5,10 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.fitsync.domain.BodyVO;
 import org.fitsync.domain.MemberVO;
+import org.fitsync.service.BodyService;
+import org.fitsync.service.BodyServiceImple;
 import org.fitsync.service.MemberServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.extern.log4j.Log4j;
@@ -29,6 +33,8 @@ public class MemberController {
 	
 	@Autowired
 	private MemberServiceImple service;
+	@Autowired
+	private BodyServiceImple bodyService;
 	@Autowired
 	private JwtUtil jwtUtil;
 	
@@ -82,4 +88,17 @@ public class MemberController {
     	            .header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
     	            .body(Map.of("message", "로그아웃 되었습니다"));
     }
+	
+	// 유저 정보 불러오기 임시
+	@GetMapping(value = "/infoTemp")
+    public ResponseEntity<Map<String, Object>> getMemberInfoWithBody(@RequestParam String member_email) {
+		MemberVO member = service.getFindUser(member_email);
+		BodyVO body = bodyService.getLatestBodyByMemberIdx(member.getMember_idx());
+		
+		Map<String, Object> result = new HashMap<>();
+		result.put("member", member);
+		result.put("body", body);
+		return ResponseEntity.ok(result);
+    }
+	
 }

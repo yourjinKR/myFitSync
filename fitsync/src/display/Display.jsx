@@ -15,7 +15,7 @@ import googleAuthManager from '../util/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
 import Register from '../components/member/Register';
-import AItest from '../components/AItest';
+import AItest from '../components/admin/AItest';
 import MyPage from '../components/MyPage';
 import ChatMain from '../components/chat/ChatMain';
 import ChatRoom from '../components/chat/ChatRoom';
@@ -69,16 +69,16 @@ const Display = () => {
             <Route path='set' element={<RoutineSet />}/>
           </Route>
           <Route path='/mypage' element={<MyPage/>}/>
-          <Route path='/ai' element={<AItest/>}/>
           <Route path='/chat' element={<ChatMain/>}/>
           <Route path='/chat/:roomId' element={<ChatRoom/>}/>
           <Route path='/test' element={<Test/>}/>
 
           {/* 관리자 페이지 라우트 */}
           <Route path='/admin' element={<AdminMain/>}>
+            <Route path='ai' element={<AItest/>}/>
             <Route path='api' element={<AdminApiContainer/>}/>
           </Route>
-          
+
         </Routes>
       </DisplayInnner>
       <Nav/>

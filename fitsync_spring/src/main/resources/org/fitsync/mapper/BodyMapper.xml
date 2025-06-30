@@ -16,4 +16,42 @@
 			sysdate
 		)
 	</insert>
+	
+    <!-- member_idx로 해당 회원의 모든 신체 데이터 조회 -->
+    <select id="selectByMemberIdx" parameterType="int" resultType="org.fitsync.domain.BodyVO">
+        SELECT 
+            body_idx,
+            member_idx,
+            body_height,
+            body_weight,
+            body_skeletal_muscle,
+            body_fat,
+            body_fat_percentage,
+            body_bmi,
+            body_regdate
+        FROM body
+        WHERE member_idx = #{member_idx}
+        ORDER BY body_regdate DESC
+    </select>
+
+    <!-- 해당 회원의 가장 최근 신체 데이터 1건 조회 -->
+    <select id="selectLatestByMemberIdx" parameterType="int" resultType="org.fitsync.domain.BodyVO">
+        SELECT 
+            body_idx,
+            member_idx,
+            body_height,
+            body_weight,
+            body_skeletal_muscle,
+            body_fat,
+            body_fat_percentage,
+            body_bmi,
+            body_regdate
+        FROM body
+        WHERE member_idx = #{member_idx}
+        AND body_regdate = (
+            SELECT MAX(body_regdate)
+            FROM body
+            WHERE member_idx = #{member_idx}
+        )
+    </select>
 </mapper>
