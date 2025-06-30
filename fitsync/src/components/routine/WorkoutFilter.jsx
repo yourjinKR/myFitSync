@@ -85,4 +85,4 @@ const WorkoutFilter = ({init, setList, filterRef, category}) => {
   );
 };
 
-export default WorkoutFilter;
+export default React.memo(WorkoutFilter);

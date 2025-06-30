@@ -10,6 +10,12 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
     font-size:10px;
   }
+
+  @media (max-width: 750px) {
+    *, *::before, *::after {
+      font-size:1.3vw;
+    }
+  }
  
   html, body {
     height: 100%;

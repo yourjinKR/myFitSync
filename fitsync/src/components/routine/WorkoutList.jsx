@@ -1,19 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import WorkoutName from './WorkoutName';
 import styled from 'styled-components';
-import { useOutletContext } from 'react-router-dom';
-import axios from 'axios';
 
 const ListWrapper = styled.div`
   border:1px solid #ccc;
   border-bottom:0px;
+  margin-bottom: 50px;
 `;
 
 
-const WorkoutList = ({list}) => {
-
-  const { routineData, setRoutineData } = useOutletContext();
-  
+const WorkoutList = ({routineData, setRoutineData, list}) => {
   return (
     <ListWrapper>
       {
@@ -30,4 +26,4 @@ const WorkoutList = ({list}) => {
   );
 };
 
-export default WorkoutList;
+export default React.memo(WorkoutList);

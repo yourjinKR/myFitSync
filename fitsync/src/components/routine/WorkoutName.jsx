@@ -36,37 +36,64 @@ const InfoBox = styled.div`
 `;
 
 const WorkoutName = ({ data, routineData, setRoutineData }) => {
-  const isChecked = false;
-  const [chk, setChk] = useState(isChecked);
+  const [chk, setChk] = useState(false);
   const workoutRef = useRef();
-  
+
   const handleWorkOut = () => {
     setChk(workoutRef.current.checked);
-  }
+  };
+
   useEffect(() => {
     const selectedValue = parseInt(workoutRef.current.value);
     const selectedName = workoutRef.current.dataset['pt'];
-    
+
     if (chk) {
-      // 배열에 값이 없으면 추가
-      if (!routineData.exercises.includes(selectedValue)) {
+      // 이미 추가된 운동인지 확인
+      const exists = routineData.list.some(item => item.exercise === selectedValue);
+      if (!exists) {
         setRoutineData({
           ...routineData,
-          exercises: [...routineData.exercises, {name: selectedName ,value : selectedValue}],
+          list: [
+            ...routineData.list,
+            {
+              exercise: selectedValue,
+              name: selectedName,
+              sets: []
+            }
+          ]
         });
       }
     } else {
-      // 체크 해제된 경우: 해당 값 제거
+      // 체크 해제된 경우: 해당 운동 제거
       setRoutineData({
         ...routineData,
-        exercises: routineData.exercises.filter(val => val !== selectedValue),
+        list: routineData.list.filter(item => item.exercise !== selectedValue)
       });
     }
-  }, [chk])
+    // eslint-disable-next-line
+  }, [chk]);
+
+  // 체크박스의 checked 상태를 routineData.list와 동기화
+  useEffect(() => {
+    const selectedValue = parseInt(data.pt_idx);
+    const checked = routineData.list.some(item => item.exercise === selectedValue);
+    setChk(checked);
+    // eslint-disable-next-line
+  }, [routineData.list]);
 
   return (
     <WorkoutWrapper>
-      <input type="checkbox" onChange={handleWorkOut} ref={workoutRef} data-pt={data.pt_name} name='workout[]' value={data.pt_idx} id={`workout${data.pt_idx}`} />
+      <input
+        type="checkbox"
+        onChange={handleWorkOut}
+        ref={workoutRef}
+        data-pt={data.pt_name}
+        name='workout[]'
+        value={data.pt_idx}
+        id={`workout${data.pt_idx}`}
+        checked={chk}
+        readOnly
+      />
       <label htmlFor={`workout${data.pt_idx}`}>
         <ImgBox>
           <img src={data.pt_image} alt={data.pt_name} />
@@ -77,14 +104,10 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
             <dd>{data.pt_category}</dd>
           </dl>
         </InfoBox>
-        {
-          chk ?
-            <CheckIcon style={{ color: 'green', fontSize: '32px' }} /> :
-            <></>
-        }
+        {chk && <CheckIcon style={{ color: 'green', fontSize: '32px' }} />}
       </label>
     </WorkoutWrapper>
   );
 };
 
-export default WorkoutName;
+export default React.memo(WorkoutName);

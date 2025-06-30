@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Header from '../layout/Header';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import Main from '../components/Main';
 import Test from '../components/Test';
 import styled from 'styled-components';
@@ -36,11 +36,11 @@ const DisplayInnner = styled.div`
 `;
 
 const Display = () => {
+  const location = useLocation();
 
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
     initializeApp();
-    
   }, []);
 
   const initializeApp = async () => {
@@ -52,9 +52,13 @@ const Display = () => {
     }
   };
   
+  const isShow = 
+    location.pathname !== '/routine/add' && 
+    location.pathname !== '/routine/set';
+
   return (
-    <DisplayWrapper>
-      <Header/>
+    <DisplayWrapper >
+      {isShow && <Header/>}
       <DisplayInnner>
         <Routes>
           <Route path='/' element={<Main/>}/>
@@ -81,7 +85,7 @@ const Display = () => {
 
         </Routes>
       </DisplayInnner>
-      <Nav/>
+      {isShow && <Nav/>}
     </DisplayWrapper>
   );
 };
