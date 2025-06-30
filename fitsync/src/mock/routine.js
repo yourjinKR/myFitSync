@@ -1,4 +1,4 @@
-// 루티 추천 출력값 예상 형식
+// 루틴 추천 출력값 예상 형식
 const aiResponseExample = 
 {
     result : [

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { ButtonSubmit, Input } from '../../styles/FormStyles';
 
 const initialMemberData = {
     member : {
@@ -120,12 +121,13 @@ const AItest = () => {
     return (
         <div>
             <h1>chapGPT 토큰 계산기</h1>
-            <input type="text" value={inputText.content} onChange={handleInputText}/>
-            <button onClick={testAPI}>전송</button>
-            <h3>응답요청</h3>
-            <p>응답 내용 : {inputText.content}</p>
-            <p>토큰 수 : {inputText.token}</p>
-            <h3>결과창</h3>
+            <Input 
+                type="text" 
+                value={inputText.content}
+                placeholder="챗봇에게 질문할 내용을 입력하세요 (50자 이내)"
+                maxLength={50} 
+                onChange={handleInputText}/>
+            <ButtonSubmit onClick={testAPI}>전송</ButtonSubmit>
         </div>
     );
 };
