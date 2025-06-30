@@ -19,6 +19,8 @@ import AItest from '../components/AItest';
 import MyPage from '../components/MyPage';
 import ChatMain from '../components/chat/ChatMain';
 import ChatRoom from '../components/chat/ChatRoom';
+import AdminApiContainer from '../components/admin/AdminApiContainer';
+import AdminMain from '../components/admin/AdminMain';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -70,6 +72,13 @@ const Display = () => {
           <Route path='/ai' element={<AItest/>}/>
           <Route path='/chat' element={<ChatMain/>}/>
           <Route path='/chat/:roomId' element={<ChatRoom/>}/>
+          <Route path='/test' element={<Test/>}/>
+
+          {/* 관리자 페이지 라우트 */}
+          <Route path='/admin' element={<AdminMain/>}>
+            <Route path='api' element={<AdminApiContainer/>}/>
+          </Route>
+          
         </Routes>
       </DisplayInnner>
       <Nav/>
