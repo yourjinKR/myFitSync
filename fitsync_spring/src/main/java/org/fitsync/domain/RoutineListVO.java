@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RoutineListVO {
 	private int routine_list_idx, member_idx, writer_idx;
-	private String routine_name, routine_category;
+	private String routine_name;
 }

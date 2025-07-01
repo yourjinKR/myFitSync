@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PtVO {
 	private int pt_idx;
-	private String pt_name, pt_category, pt_image;
+	private String pt_name, pt_category, pt_image, pt_content;
 }
