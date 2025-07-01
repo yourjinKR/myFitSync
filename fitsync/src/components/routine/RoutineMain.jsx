@@ -35,7 +35,8 @@ const RoutineMain = () => {
   location.pathname !== '/routine/add' && 
   location.pathname !== '/routine/set';
   const [routineData, setRoutineData] = useState({
-    name: '',
+    routine_name: '',
+    member_idx : '',
     list: [],
   });
   

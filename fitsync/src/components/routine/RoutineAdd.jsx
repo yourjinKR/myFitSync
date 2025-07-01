@@ -77,7 +77,7 @@ const RoutineAdd = () => {
   // 운동리스트 정보 
   const [init, setInit] = useState([]);
   const [list, setList] = useState([]);
-  const [routineTitle, setRoutineTitle] = useState("");
+  const [routineName, setRoutineName] = useState("");
   const [category, setCategory] = useState([]);
   const [pendingNav, setPendingNav] = useState(false);
 
@@ -105,14 +105,14 @@ const RoutineAdd = () => {
 
   // 루틴 추가 버튼 클릭
   const handleButton = () => {
-    if(routineTitle === ""){
+    if(routineName === ""){
       alert("루틴명을 작성해주세요.");
       return;
     }
     if(routineData.list.length > 0){
       setRoutineData({
         ...routineData,
-        name: routineTitle
+        routine_name : routineName
       });
       setPendingNav(true); // 상태 반영 후 이동 예약
     }else{
@@ -122,20 +122,20 @@ const RoutineAdd = () => {
 
   // routineData.name이 변경된 후에만 이동
   useEffect(() => {
-    if (pendingNav && routineData.name === routineTitle) {
+    if (pendingNav && routineData.routine_name === routineName) {
       nav('/routine/set');
       setPendingNav(false);
     }
     // eslint-disable-next-line
-  }, [pendingNav, routineData.name, routineTitle, nav]);
+  }, [pendingNav, routineData.routine_name, routineName, nav]);
 
   const handleRoutineTitle = (e) => {
-    setRoutineTitle(e.target.value);
+    setRoutineName(e.target.value);
   };
 
   return (
     <RoutineAddWrapper>
-      <RoutineTitleInputBox value={routineTitle} onChange={handleRoutineTitle} />
+      <RoutineTitleInputBox value={routineName} onChange={handleRoutineTitle} />
       <SearchBox>
         <input type="text" placeholder='운동 검색'/>
         <button onClick={handleSearch} type="button">검색</button>

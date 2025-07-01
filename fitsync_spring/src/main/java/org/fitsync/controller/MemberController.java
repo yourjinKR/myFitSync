@@ -48,7 +48,7 @@ public class MemberController {
 	        service.insertUser(body);
 	        vo = service.getFindUser(body.get("member_email")); // 새로 가입한 사용자 정보 조회
 	        // JWT 생성
-	        String jwt = jwtUtil.generateToken(vo.getMember_idx(), vo.getMember_email());
+	        String jwt = jwtUtil.generateToken(vo.getMember_idx());
 	        // HttpOnly 쿠키 생성
 	        ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
 	                .httpOnly(true)

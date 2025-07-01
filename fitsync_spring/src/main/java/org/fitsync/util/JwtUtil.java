@@ -25,11 +25,10 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // 사용자 정보 포함하여 토큰 생성
-    public String generateToken(int idx, String email) {
+    // 사용자 정보 포함하여 토큰 생성 → member_idx만 저장
+    public String generateToken(int idx) {
         return Jwts.builder()
                 .setSubject(String.valueOf(idx))
-                .claim("email", email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -37,7 +36,7 @@ public class JwtUtil {
     }
 
     // 토큰에서 사용자 id 추출
-    public Long getUserId(String token) {
+    public Long getUserIdx(String token) {
         Claims claims = parseClaims(token);
         return Long.parseLong(claims.getSubject());
     }
@@ -49,6 +48,7 @@ public class JwtUtil {
     }
 
     public boolean validate(String token) {
+    	System.out.println(token);
         try {
             parseClaims(token);
             return true;

@@ -51,31 +51,30 @@ public class GoogleAuthController {
 
                 MemberVO vo = service.getFindUser(email);
                 if(vo != null) {
-                	// JWT 생성
-                	String jwt = jwtUtil.generateToken(vo.getMember_idx(), vo.getMember_email());
-                	
-                	// HttpOnly 쿠키 생성
-                	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
-                			.httpOnly(true)
-                			.secure(false) // 배포시 true
-                			.path("/")
-                			.maxAge(7 * 24 * 60 * 60)
-                			.build();
-                	
-                	Map<String, Object> user = new HashMap<>();
-                	
-                	user.put("member_email", vo.getMember_email());
-                	user.put("member_name", vo.getMember_name());
-                	user.put("member_image", vo.getMember_image());
-                	user.put("member_type", vo.getMember_type());
-                	user.put("isLogin", true);
-                	
-                	result.put("success", true);
-                	result.put("user", user);
-                	
-                	return ResponseEntity.ok()
-                			.header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
-                			.body(result);
+                    // JWT 생성 (member_idx만 저장)
+                    String jwt = jwtUtil.generateToken(vo.getMember_idx());
+                    // HttpOnly 쿠키 생성
+                    ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
+                            .httpOnly(true)
+                            .secure(false) // 배포시 true
+                            .path("/")
+                            .maxAge(7 * 24 * 60 * 60)
+                            .build();
+                    
+                    Map<String, Object> user = new HashMap<>();
+                    
+                    user.put("member_email", vo.getMember_email());
+                    user.put("member_name", vo.getMember_name());
+                    user.put("member_image", vo.getMember_image());
+                    user.put("member_type", vo.getMember_type());
+                    user.put("isLogin", true);
+                    
+                    result.put("success", true);
+                    result.put("user", user);
+                    
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
+                            .body(result);
                 }else {
                 	Map<String, Object> user = new HashMap<>();
                 	user.put("member_email", email);

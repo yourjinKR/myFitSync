@@ -49,16 +49,16 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
 
     if (chk) {
       // 이미 추가된 운동인지 확인
-      const exists = routineData.list.some(item => item.exercise === selectedValue);
+      const exists = routineData.list.some(item => item.pt_idx === selectedValue);
       if (!exists) {
         setRoutineData({
           ...routineData,
           list: [
             ...routineData.list,
             {
-              exercise: selectedValue,
+              pt_idx: selectedValue,
               name: selectedName,
-              sets: []
+              routineSet: []
             }
           ]
         });
@@ -67,7 +67,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
       // 체크 해제된 경우: 해당 운동 제거
       setRoutineData({
         ...routineData,
-        list: routineData.list.filter(item => item.exercise !== selectedValue)
+        list: routineData.list.filter(item => item.pt_idx !== selectedValue)
       });
     }
     // eslint-disable-next-line
@@ -76,7 +76,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
   // 체크박스의 checked 상태를 routineData.list와 동기화
   useEffect(() => {
     const selectedValue = parseInt(data.pt_idx);
-    const checked = routineData.list.some(item => item.exercise === selectedValue);
+    const checked = routineData.list.some(item => item.pt_idx === selectedValue);
     setChk(checked);
     // eslint-disable-next-line
   }, [routineData.list]);

@@ -4,9 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpSession;
+
 import org.fitsync.domain.PtVO;
 import org.fitsync.service.PtServiceImple;
 import org.fitsync.service.RoutineServiceImple;
+import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -26,6 +29,8 @@ public class RoutineController {
 	private RoutineServiceImple service;
 	@Autowired
 	private PtServiceImple ptservice;
+	@Autowired
+	private JwtUtil jwtUtil;
 	
 	@GetMapping("/workout")
 	public ResponseEntity<?> getWorkOut() {
@@ -41,14 +46,26 @@ public class RoutineController {
 		}
 	}
 	
+	// 루틴 등록
 	@PostMapping("/add")
-	public ResponseEntity<?> insertRoutine(@RequestBody Map<String, Object> body, @CookieValue(value = "accessToken", required = false) String token){
-		System.out.println(token);
-	    Map<String, Object> result = new HashMap<>();
-	    // 실제 저장 로직 추가 필요
-	    result.put("success", true);
-	    result.put("msg", "루틴이 등록되었습니다.");
-	    return ResponseEntity.ok(result);
+	public ResponseEntity<?> insertRoutine(
+			@RequestBody Map<String, Object> body,
+			HttpSession session) {
+
+		Map<String, Object> result = new HashMap<>();
+		Object sessionIdx = session.getAttribute("member_idx");
+		System.out.println(sessionIdx);
+		if (sessionIdx == null) {
+			result.put("success", false);
+			result.put("msg", "인증 정보가 없습니다.");
+			return ResponseEntity.status(401).body(result);
+		}
+
+		int memberIdx = Integer.parseInt(sessionIdx.toString());
+		service.insertRoutine(body, memberIdx);
+		result.put("success", true);
+		result.put("msg", "루틴이 등록되었습니다.");
+		return ResponseEntity.ok(result);
 	}
 	
 }

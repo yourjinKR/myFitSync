@@ -86,27 +86,27 @@ const SetAddCTA = styled.button`
   padding:15px 0;
 `;
 
-// 공통적으로 list의 특정 운동의 sets만 변경하는 함수
-function updateSets(routineData, exercise, updateFn) {
+// 공통적으로 list의 특정 운동의 routineSet 변경하는 함수
+function updateSets(routineData, pt_idx, updateFn) {
   return {
     ...routineData,
     list: routineData.list.map(item =>
-      item.exercise === exercise
-        ? { ...item, sets: updateFn(item.sets) }
+      item.pt_idx === pt_idx
+        ? { ...item, routineSet: updateFn(item.routineSet) }
         : item
     )
   };
 }
 
 const WorkoutSet = ({ data, routineData, setRoutineData }) => {
-  const setData = routineData.list.find((item) => item.exercise === data.exercise);
+  const setData = routineData.list.find((item) => item.pt_idx === data.pt_idx);
 
   // 세트 추가
   const handleAddSet = () => {
     setRoutineData(prev =>
-      updateSets(prev, data.exercise, sets => [
-        ...sets,
-        { id: Date.now(), kg: '', reps: '' }
+      updateSets(prev, data.pt_idx, routineSet => [
+        ...routineSet,
+        { id: Date.now(), set_kg: '', set_count: '' }
       ])
     );
   };
@@ -114,8 +114,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   // 세트 값 변경
   const handleSetChange = (setId, field, value) => {
     setRoutineData(prev =>
-      updateSets(prev, data.exercise, sets =>
-        sets.map(set =>
+      updateSets(prev, data.pt_idx, routineSet =>
+        routineSet.map(set =>
           set.id === setId ? { ...set, [field]: value } : set
         )
       )
@@ -129,8 +129,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
         destructive={true}
         onClick={() => {
           setRoutineData(prev =>
-            updateSets(prev, data.exercise, sets =>
-              sets.filter(set => set.id !== targetId)
+            updateSets(prev, data.pt_idx, routineSet =>
+              routineSet.filter(set => set.id !== targetId)
             )
           );
         }}
@@ -142,9 +142,9 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
 
   // 최초 1세트 없으면 1개 추가
   React.useEffect(() => {
-    if (setData && setData.sets.length === 0) {
+    if (setData && setData.routineSet.length === 0) {
       setRoutineData(prev =>
-        updateSets(prev, data.exercise, () => [{ id: Date.now(), kg: '', reps: '' }])
+        updateSets(prev, data.pt_idx, () => [{ id: Date.now(), set_kg: '', set_count: '' }])
       );
     }
     // eslint-disable-next-line
@@ -169,7 +169,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
       </ListHeader>
       <ListBody>
         <SwipeableList actionDelay={0}>
-          {setData.sets.map((set, index) => (
+          {setData.routineSet.map((set, index) => (
             <SwipeableListItem
               key={set.id}
               trailingActions={trailingActions(set.id)}
@@ -177,13 +177,13 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
               <div>{index + 1}</div>
               <input
                 type="number"
-                value={set.kg}
+                value={set.set_kg}
                 onChange={e => handleSetChange(set.id, 'kg', e.target.value)}
                 placeholder="-"
               />
               <input
                 type="number"
-                value={set.reps}
+                value={set.set_count}
                 onChange={e => handleSetChange(set.id, 'reps', e.target.value)}
                 placeholder="-"
               />

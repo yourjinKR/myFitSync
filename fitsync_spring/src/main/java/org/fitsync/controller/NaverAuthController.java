@@ -123,7 +123,7 @@ public class NaverAuthController {
             Map<String, Object> user = new HashMap<>();
             if(vo != null) {
             	// JWT 생성
-            	String jwt = jwtUtil.generateToken(vo.getMember_idx(), vo.getMember_email());
+            	String jwt = jwtUtil.generateToken(vo.getMember_idx());
             	
             	// HttpOnly 쿠키 생성
             	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)

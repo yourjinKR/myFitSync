@@ -1,5 +1,7 @@
 package org.fitsync.service;
 
-public interface RoutineService {
+import java.util.Map;
 
+public interface RoutineService {
+	public boolean insertRoutine(Map<String, Object> body, int member_idx);
 }
