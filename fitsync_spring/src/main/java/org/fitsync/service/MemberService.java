@@ -16,4 +16,6 @@ public interface MemberService {
     public MemberVO getTrainerByIdx(int memberIdx);
     public List<AwardsVO> getAwardsByMemberIdx(int memberIdx);
     public List<ReviewVO> getReviewsByMemberIdx(int memberIdx);
+	// 트레이너 목록 가져오기
+	public List<MemberVO> getTrainerList();
 }

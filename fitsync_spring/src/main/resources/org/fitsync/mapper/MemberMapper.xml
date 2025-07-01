@@ -105,5 +105,25 @@
 	    FROM review
 	    WHERE trainer_idx = #{trainer_idx}
 	</select>
+	<!-- 트레이너 목록 가져오기 -->
+	<select id="getTrainerList" resultType="org.fitsync.domain.MemberVO">
+	    SELECT 
+	        member_idx,
+	        member_email,
+	        member_name,
+	        member_image,
+	        member_status,
+	        member_day,
+	        member_type,
+	        member_time,
+	        member_activity_area,
+	        member_price,
+	        member_info,
+	        member_info_image
+	    FROM member 
+	    WHERE member_type = 'trainer'
+	    AND member_status = 'active'
+	    ORDER BY member_idx DESC
+	</select>
 	
 </mapper>

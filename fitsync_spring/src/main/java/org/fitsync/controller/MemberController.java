@@ -1,6 +1,7 @@
 package org.fitsync.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
@@ -100,5 +101,12 @@ public class MemberController {
 		result.put("body", body);
 		return ResponseEntity.ok(result);
     }
+	
+	// 트레이너 목록 가져오기
+	@GetMapping("/trainers")
+	public ResponseEntity<List<MemberVO>> getTrainerList() {
+        List<MemberVO> trainers = service.getTrainerList();
+        return ResponseEntity.ok(trainers);
+	}
 	
 }

@@ -84,4 +84,10 @@ public class MemberServiceImple implements MemberService {
     public List<ReviewVO> getReviewsByMemberIdx(int memberIdx) {
         return mapper.selectReviewsByMemberIdx(memberIdx);
     }
+	// 트레이너 목록 가져오기
+	@Override
+	public List<MemberVO> getTrainerList() {
+	    return mapper.getTrainerList();
+	}
+	
 }

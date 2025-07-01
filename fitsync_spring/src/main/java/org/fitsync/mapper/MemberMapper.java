@@ -26,4 +26,6 @@ public interface MemberMapper {
     // 트레이너의 리뷰 목록 조회
     public List<ReviewVO> selectReviewsByMemberIdx(int member_idx);
 	
+	// 트레이너 목록 가져오기
+	public List<MemberVO> getTrainerList();
 }
