@@ -1,9 +1,12 @@
 package org.fitsync.service;
 
+import java.util.List;
 import java.util.Map;
 
+import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.BodyVO;
 import org.fitsync.domain.MemberVO;
+import org.fitsync.domain.ReviewVO;
 import org.fitsync.mapper.BodyMapper;
 import org.fitsync.mapper.MemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,4 +69,19 @@ public class MemberServiceImple implements MemberService {
 			return result == 1 ? true : false;
 		}
 	}
+	
+    @Override
+    public MemberVO getTrainerByIdx(int memberIdx) {
+        return mapper.selectTrainerByIdx(memberIdx);
+    }
+
+    @Override
+    public List<AwardsVO> getAwardsByMemberIdx(int memberIdx) {
+        return mapper.selectAwardsByMemberIdx(memberIdx);
+    }
+
+    @Override
+    public List<ReviewVO> getReviewsByMemberIdx(int memberIdx) {
+        return mapper.selectReviewsByMemberIdx(memberIdx);
+    }
 }

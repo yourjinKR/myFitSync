@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import oracle.sql.DATE;
 
 @Data
-@AllArgsConstructor
+@AllArgsConstructor	
 @NoArgsConstructor
 public class MatchingVO {
 	

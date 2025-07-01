@@ -74,7 +74,7 @@ const TrainerProfileHeader = ({ trainer }) => {
 
       <SummaryBox>
         <SummaryItem>📜 자격증 {trainer.certifications.length}개</SummaryItem>
-        <SummaryItem>🏋️‍♂️ 전문: {trainer.specialties.join(', ')}</SummaryItem>
+        <SummaryItem>🏋️‍♂️ 전문: {(trainer.specialties || []).join(', ')}</SummaryItem>
         <SummaryItem>💰 1회 {trainer.priceBase.toLocaleString()}원</SummaryItem>
       </SummaryBox>
     </ProfileHeader>
