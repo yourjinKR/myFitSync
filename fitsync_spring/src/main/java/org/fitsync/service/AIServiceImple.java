@@ -125,7 +125,7 @@ public class AIServiceImple implements AIService {
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.0.3");
+            apiLog.setApilog_version("0.0.4");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 
