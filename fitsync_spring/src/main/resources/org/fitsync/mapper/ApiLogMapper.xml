@@ -41,5 +41,9 @@
         FROM apilog
         WHERE apilog_idx = #{apilog_idx}
     </select>
+    
+    <select id="selectApiList" resultType="org.fitsync.domain.ApiLogVO">
+        SELECT * FROM apilog
+    </select>
 
 </mapper>

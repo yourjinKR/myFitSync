@@ -1,10 +1,10 @@
-package org.fitsync.mapper;
+package org.fitsync.service;
 
 import java.util.List;
 
 import org.fitsync.domain.ApiLogVO;
 
-public interface ApiLogMapper {
+public interface ApiLogService {
     void insertApiLog(ApiLogVO log);
     
     ApiLogVO selectApiLogById(int apilog_idx);

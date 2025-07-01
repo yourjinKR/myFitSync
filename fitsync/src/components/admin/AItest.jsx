@@ -68,10 +68,10 @@ const AItest = () => {
             alert('50자 내외로 작성 바랍니다');
             return;
         }
-        if (resultText) {
-            console.log('결과값 이미 존재');
-            return;
-        }
+        // if (resultText) {
+        //     console.log('결과값 이미 존재');
+        //     return;
+        // }
 
         const startTime = performance.now();
 
@@ -96,7 +96,7 @@ const AItest = () => {
 
         const userInfoMessage = infoParts.join(', ');
         const fullMessage = userInfoMessage
-            ? `사용자 정보: ${userInfoMessage}. ${inputText.content}`
+            ? `사용자 정보( ${userInfoMessage}. ${inputText.content} )`
             : inputText.content;
 
         axios.post('/ai/getAiTest', {
