@@ -2,19 +2,39 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, SectionContent, RoutineCard, Exercise } from '../../styles/chartStyle';
 
+// 버전 비교 함수
+function isVersionAtLeast(current, target) {
+  const currentParts = current.split('.').map(Number);
+  const targetParts = target.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(currentParts.length, targetParts.length); i++) {
+    const cur = currentParts[i] || 0;
+    const tar = targetParts[i] || 0;
+    if (cur > tar) return true;
+    if (cur < tar) return false;
+  }
+  return true; // 동일한 경우 포함
+}
 
 /** 로그 JSON 파싱 함수 */
 function parseApiLogData(apiLogItem) {
+    const version = apiLogItem.apilog_version;
+    console.log(version);
+    
     try {
         const parsedPrompt = JSON.parse(apiLogItem.apilog_prompt);
         const parsedResponse = JSON.parse(apiLogItem.apilog_response);
+        let parsedUserMassage = null;
+        if (isVersionAtLeast(version, "0.0.7")) {
+            // 0.0.7 이상이면 실행
+            parsedUserMassage = JSON.parse(parsedPrompt.messages[1]?.content);
+        }   
 
         return {
             ...apiLogItem,
             parsed_prompt: parsedPrompt,
             parsed_response: parsedResponse,
-            original_prompt: apiLogItem.apilog_prompt,
-            original_response: apiLogItem.apilog_response
+            parsed_userMassage: parsedUserMassage
         };
     } catch (error) {
         console.error('JSON 파싱 오류:', error);
@@ -137,7 +157,8 @@ const AdminApiContainer = () => {
                                 <tr>
                                     <Th>ID</Th>
                                     <Th>사용자</Th>
-                                    <Th>모델</Th>
+                                    {/* <Th>모델</Th> */}
+                                    <Th>버전</Th>
                                     <Th>상태</Th>
                                     <Th>토큰</Th>
                                     <Th>시간</Th>
@@ -151,7 +172,8 @@ const AdminApiContainer = () => {
                                         <tr key={log.apilog_idx}>
                                             <Td>{log.apilog_idx}</Td>
                                             <Td>{log.member_idx}</Td>
-                                            <Td>{log.apilog_model}</Td>
+                                            {/* <Td>{log.apilog_model}</Td> */}
+                                            <Td>{log.apilog_version}</Td>
                                             <Td><StatusTag status={log.apilog_status}>{log.apilog_status}</StatusTag></Td>
                                             <Td>{(log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0)}</Td>
                                             <Td>{new Date(log.apilog_request_time).toLocaleString()}</Td>
@@ -177,7 +199,17 @@ const AdminApiContainer = () => {
                             <Section>
                                 <SectionTitle>사용자 요청:</SectionTitle>
                                 <SectionContent>
-                                    {selectedLog.parsed_prompt?.messages?.[1]?.content || '파싱 오류'}
+                                    {selectedLog.parsed_userMassage ? (
+                                        <ul>
+                                            {Object.entries(selectedLog.parsed_userMassage).map(([key, value]) => (
+                                            <li key={key}>
+                                                <strong>{key}:</strong> {String(value)}
+                                            </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                    <>{selectedLog.parsed_prompt?.messages?.[1]?.content || '파싱 오류'}</>
+                                    )}
                                 </SectionContent>
                             </Section>
 
@@ -185,17 +217,26 @@ const AdminApiContainer = () => {
                                 <Section>
                                     <SectionTitle>AI 응답 (운동 루틴):</SectionTitle>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        {selectedLog.parsed_response.map((routine, index) => (
+                                        {Array.isArray(selectedLog.parsed_response) ? (
+                                            selectedLog.parsed_response.map((routine, index) => (
                                             <RoutineCard key={index}>
-                                                <h5 style={{ fontWeight: '500', color: '#1e3a8a', marginBottom: '0.5rem' }}>{routine.routine_name}</h5>
+                                                <h5 style={{ fontWeight: '500', color: '#1e3a8a', marginBottom: '0.5rem' }}>
+                                                {routine.routine_name}
+                                                </h5>
                                                 <ul style={{ paddingLeft: '1rem' }}>
-                                                    {routine.exercises.map((ex, i) => (
-                                                        <Exercise key={i}>• {ex.pt_name}: {ex.set_kg}kg × {ex.set_count}회 × {ex.set_num}세트</Exercise>
-                                                    ))}
+                                                {routine.exercises.map((ex, i) => (
+                                                    <Exercise key={i}>
+                                                    • {ex.pt_name}: {ex.set_kg}kg × {ex.set_count}회 × {ex.set_num}세트
+                                                    </Exercise>
+                                                ))}
                                                 </ul>
                                             </RoutineCard>
-                                        ))}
+                                            ))
+                                        ) : (
+                                            <div>루틴 정보가 없거나 형식이 잘못되었습니다.</div>
+                                        )}
                                     </div>
+
                                 </Section>
                             )}
                         </ModalContent>

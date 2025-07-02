@@ -9,6 +9,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.*;
 
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.mapper.ApiLogMapper;
@@ -33,7 +34,7 @@ public class AIServiceImple implements AIService {
     @Override
     public String requestAIResponse(String userMessage) throws IOException {
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
-        
+
         String content = "";
         String status = "success";
         String errorMessage = null;
@@ -41,44 +42,69 @@ public class AIServiceImple implements AIService {
         int outputTokens = 0;
         Timestamp responseTime = null;
         String apiModel = "gpt-3.5-turbo";
-        
 
-		String requestBody = "{"
-		        + "\"model\":\""+ apiModel +"\","
-		        + "\"messages\":["
-		        + "{\"role\":\"system\",\"content\":\""
-		        + "너는 퍼스널 트레이너야. 사용자 정보를 기반으로 분할 루틴을 추천해. "
-		        + "응답은 반드시 JSON 형식으로만 작성하고, 설명 없이 응답해야 해. "
-		        + "분할 수에 맞게 루틴을 구성하고, 루틴은 1시간 분량으로 운동 종목은 4~6개로 구성해. "
-		        + "복합 운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해. 창작된 운동명은 금지하고, 대중적인 운동만 추천해. "
-		        + "각 운동의 무게(set_kg), 횟수(set_count), 세트 수(set_num)를 적절히 설정해. "
-		        + "형식 예시: "
-		        + "["
-		        + "{\\\"routine_name\\\":\\\"가슴 등 루틴\\\","
-		        + "\\\"exercises\\\":["
-		        + "{\\\"pt_name\\\":\\\"벤치프레스\\\",\\\"set_kg\\\":60,\\\"set_count\\\":10,\\\"set_num\\\":4},"
-		        + "{\\\"pt_name\\\":\\\"랫풀다운\\\",\\\"set_kg\\\":50,\\\"set_count\\\":10,\\\"set_num\\\":4}"
-		        + "]},"
-		        + "{\\\"routine_name\\\":\\\"하체 루틴\\\","
-		        + "\\\"exercises\\\":["
-		        + "{\\\"pt_name\\\":\\\"스쿼트\\\",\\\"set_kg\\\":80,\\\"set_count\\\":10,\\\"set_num\\\":4},"
-		        + "{\\\"pt_name\\\":\\\"레그프레스\\\",\\\"set_kg\\\":100,\\\"set_count\\\":10,\\\"set_num\\\":4}"
-		        + "]},"
-		        + "{\\\"routine_name\\\":\\\"어깨 루틴\\\","
-		        + "\\\"exercises\\\":["
-		        + "{\\\"pt_name\\\":\\\"밀리터리프레스\\\",\\\"set_kg\\\":50,\\\"set_count\\\":10,\\\"set_num\\\":4},"
-		        + "{\\\"pt_name\\\":\\\"사이드레터럴레이즈\\\",\\\"set_kg\\\":15,\\\"set_count\\\":12,\\\"set_num\\\":3}"
-		        + "]},"
-		        + "{\\\"routine_name\\\":\\\"팔 루틴\\\","
-		        + "\\\"exercises\\\":["
-		        + "{\\\"pt_name\\\":\\\"바벨컬\\\",\\\"set_kg\\\":40,\\\"set_count\\\":10,\\\"set_num\\\":4},"
-		        + "{\\\"pt_name\\\":\\\"트라이셉스 푸시다운\\\",\\\"set_kg\\\":30,\\\"set_count\\\":10,\\\"set_num\\\":4}"
-		        + "]}"
-		        + "]"
-		        + "\"},"
-		        + "{\"role\":\"user\",\"content\":\"" + userMessage + "\"}"
-		        + "]"
-		        + "}";
+        // 1. 메시지 구성
+        String systemContent =
+		    "너는 퍼스널 트레이너야. 아래 사용자 정보(JSON)를 기반으로, 분할 루틴을 추천해.\n\n" +
+		    "사용자 정보는 다음 필드를 포함해:\n" +
+		    "- age: 사용자 나이 (정수)\n" +
+		    "- height: 키 (cm)\n" +
+		    "- weight: 몸무게 (kg)\n" +
+		    "- bmi: 체질량지수\n" +
+		    "- fat: 체지방량 (kg)\n" +
+		    "- fat_percentage: 체지방률 (%)\n" +
+		    "- skeletal_muscle: 골격근량 (kg)\n" +
+		    "- disease: 사용자가 가진 질병명 (예: 고혈압, 디스크 등, 없으면 null)\n" +
+		    "- purpose: 운동 목적 (예: 다이어트, 근력 증가, 체형 교정 등)\n" +
+		    "- day: 운동 가능한 요일 (예: 월, 수, 금)\n" +
+		    "- time: 운동 가능한 시간대 (예: 오전, 오후, 저녁)\n" +
+		    "- split: 사용자가 원하는 루틴 분할 수 (예: 3이면 3분할 루틴 생성)\n\n" +
+		    "이 정보들을 기반으로 루틴을 작성하고, 응답은 반드시 JSON 형식으로만 작성해. 설명은 포함하지 마.\n\n" +
+		    "루틴은 분할 수에 맞춰 나눠야 하며, 각 루틴은 운동 4~6개, 1시간 분량으로 구성해.\n" +
+		    "복합운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해.\n" +
+		    "각 운동은 아래 항목을 포함해야 해:\n" +
+		    "- pt_name: 운동 이름\n" +
+		    "- set_kg: 중량\n" +
+		    "- set_count: 횟수\n" +
+		    "- set_num: 세트 수\n\n" +
+		    "형식 예시:\n" +
+		    "[\n" +
+		    "  {\n" +
+		    "    \"routine_name\": \"가슴 등 루틴\",\n" +
+		    "    \"exercises\": [\n" +
+		    "      {\"pt_name\": \"벤치프레스\", \"set_kg\": 60, \"set_count\": 10, \"set_num\": 4},\n" +
+		    "      {\"pt_name\": \"랫풀다운\", \"set_kg\": 50, \"set_count\": 10, \"set_num\": 4}\n" +
+		    "    ]\n" +
+		    "  },\n" +
+		    "  {\n" +
+		    "    \"routine_name\": \"하체 루틴\",\n" +
+		    "    \"exercises\": [\n" +
+		    "      {\"pt_name\": \"스쿼트\", \"set_kg\": 80, \"set_count\": 10, \"set_num\": 4},\n" +
+		    "      {\"pt_name\": \"레그프레스\", \"set_kg\": 100, \"set_count\": 10, \"set_num\": 4}\n" +
+		    "    ]\n" +
+		    "  }\n" +
+		    "]";
+
+        // 2. 메시지를 Jackson으로 구성
+        ObjectMapper mapper = new ObjectMapper();
+
+        Map<String, Object> systemMessage = new HashMap<>();
+        systemMessage.put("role", "system");
+        systemMessage.put("content", systemContent);
+
+        Map<String, Object> userMessageMap = new HashMap<>();
+        userMessageMap.put("role", "user");
+        userMessageMap.put("content", userMessage);
+
+        List<Map<String, Object>> messages = new ArrayList<>();
+        messages.add(systemMessage);
+        messages.add(userMessageMap);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", apiModel);
+        body.put("messages", messages);
+
+        String requestBody = mapper.writeValueAsString(body);
 
         try {
             URL url = new URL(API_URL);
@@ -102,7 +128,6 @@ public class AIServiceImple implements AIService {
 
             responseTime = new Timestamp(System.currentTimeMillis());
 
-            ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(responseBuilder.toString());
             content = root.path("choices").get(0).path("message").path("content").asText();
             inputTokens = root.path("usage").path("prompt_tokens").asInt();
@@ -114,7 +139,7 @@ public class AIServiceImple implements AIService {
             content = e.getMessage();
         }
 
-        // ⭐ 로그 저장은 실패해도 메인 로직에 영향 안 주게 처리
+        // 로그 저장
         try {
             ApiLogVO apiLog = new ApiLogVO();
             apiLog.setMember_idx(61); // 임시 ID
@@ -125,23 +150,20 @@ public class AIServiceImple implements AIService {
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.0.5");
+            apiLog.setApilog_version("0.0.9");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 
             aiLogMapper.insertApiLog(apiLog);
         } catch (Exception logEx) {
-            // 여기서 DB 장애 발생 시 사용자 응답엔 영향 없음
             System.err.println("로그 저장 실패: " + logEx.getMessage());
-            // 또는 로깅 프레임워크 사용: log.error(...)
         }
 
-        // 요청 자체가 실패했으면 예외 던짐
         if ("fail".equals(status)) {
             throw new IOException("GPT 요청 실패: " + content);
         }
 
         return content;
-        
     }
+
 }

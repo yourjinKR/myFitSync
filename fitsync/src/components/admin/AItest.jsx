@@ -87,35 +87,35 @@ const AItest = () => {
         const startTime = performance.now();
 
         const infoParts = [];
-        // const { member, body } = memberData || {};
+        const { member, body } = memberData || {};
         // DUMMY USER DATA
-        const { member, body } = userMock[20] || {};
-        console.log('memberData:', userMock[20]);
+        // const { member, body } = userMock[20] || {};
+        // console.log('memberData:', userMock[20]);
 
-        // if (member?.member_name) infoParts.push(`이름: ${member.member_name}`);
-        // if (member?.member_type) infoParts.push(`회원 유형: ${member.member_type}`);
-        // if (member?.member_activity_area) infoParts.push(`활동 지역: ${member.member_activity_area}`);
-        if (member?.member_day) infoParts.push(`운동 요일: ${member.member_day}`);
-        if (member?.member_time) infoParts.push(`운동 시간대: ${member.member_time}`);
-        if (member?.member_disease) infoParts.push(`질병: ${member.member_disease}`);
-        if (member?.member_purpose) infoParts.push(`운동 목적: ${member.member_purpose}`);
-        // if (member?.member_price && member.member_price > 0) infoParts.push(`PT 1회 가격: ${member.member_price}원`);
+        const userInfo = {
+            name: member?.member_name || null,
+            type: member?.member_type || null,
+            activity_area: member?.member_activity_area || null,
+            day: member?.member_day || null,
+            time: member?.member_time || null,
+            disease: member?.member_disease || null,
+            purpose: member?.member_purpose || null,
+            price: member?.member_price > 0 ? member.member_price : null,
 
-        if (body?.body_height) infoParts.push(`키: ${body.body_height}cm`);
-        if (body?.body_weight) infoParts.push(`몸무게: ${body.body_weight}kg`);
-        // 나이 임시로 추가
-        infoParts.push(`나이: 8세`);
-        if (body?.body_bmi) infoParts.push(`BMI: ${body.body_bmi}`);
-        if (body?.body_fat) infoParts.push(`체지방: ${body.body_fat}kg`);
-        if (body?.body_fat_percentage) infoParts.push(`체지방률: ${body.body_fat_percentage}%`);
-        if (body?.body_skeletal_muscle) infoParts.push(`골격근량: ${body.body_skeletal_muscle}kg`);        
+            height: body?.body_height || null,
+            weight: body?.body_weight || null,
+            age: 26,  // 나이는 임시값이므로 수정 필요
+            bmi: body?.body_bmi || null,
+            fat: body?.body_fat || null,
+            fat_percentage: body?.body_fat_percentage || null,
+            skeletal_muscle: body?.body_skeletal_muscle || null,
 
-        if (additionalMemberData?.split) infoParts.push(`분할 수: ${additionalMemberData.split}`);
-
-        const userInfoMessage = infoParts.join(', ');
-        const fullMessage = userInfoMessage
-            ? `사용자 정보( ${userInfoMessage}. ${inputText.content} )`
-            : inputText.content;
+            split: additionalMemberData?.split || null
+        };
+        const filteredUserInfo = Object.fromEntries(
+            Object.entries(userInfo).filter(([_, value]) => value !== null)
+        );
+        const fullMessage = JSON.stringify(filteredUserInfo);
 
         axios.post('/ai/getAiTest', {
             message: fullMessage
