@@ -93,14 +93,14 @@ const AItest = () => {
         // console.log('memberData:', userMock[20]);
 
         const userInfo = {
-            name: member?.member_name || null,
-            type: member?.member_type || null,
-            activity_area: member?.member_activity_area || null,
-            day: member?.member_day || null,
-            time: member?.member_time || null,
+            // name: member?.member_name || null,
+            // type: member?.member_type || null,
+            // activity_area: member?.member_activity_area || null,
+            // day: member?.member_day || null,
+            // time: member?.member_time || null,
             disease: member?.member_disease || null,
             purpose: member?.member_purpose || null,
-            price: member?.member_price > 0 ? member.member_price : null,
+            // price: member?.member_price > 0 ? member.member_price : null,
 
             height: body?.body_height || null,
             weight: body?.body_weight || null,
