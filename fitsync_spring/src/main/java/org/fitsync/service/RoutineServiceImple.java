@@ -29,6 +29,14 @@ public class RoutineServiceImple implements RoutineService {
 	
 	
 	
+	// 루틴 리스트
+	@Override
+	public List<RoutineListVO> getRoutineList(int member_idx) {
+		rlmapper.getRoutineList(member_idx);
+		return null;
+	}
+	
+	// 루틴 등록
 	@Override
 	@Transactional(rollbackFor = { Exception.class, Throwable.class })
 	public boolean insertRoutine(Map<String, Object> body, int member_idx) {

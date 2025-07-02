@@ -23,7 +23,7 @@ const H3 = styled.h3`
 
 const AddButton = styled.button`
   display: block;
-  max-width: 750px;
+  max-width: 700px;
   width: 90%;
   padding: 15px 0;
   background: #7D93FF;
@@ -36,12 +36,16 @@ const AddButton = styled.button`
   box-shadow: 0 1px 4px rgba(125,147,255,0.07);
   position:fixed;
   bottom: 15px;
-  left:5%;
+  left:50%;
+  transform:translateX(-50%);
 `;
 
 const RoutineSet = () => {
   const nav = useNavigate();
   const { routineData, setRoutineData } = useOutletContext();
+  if(routineData.list.length === 0){
+    nav("/routine/add");
+  }
   
   const list = routineData.list;
 

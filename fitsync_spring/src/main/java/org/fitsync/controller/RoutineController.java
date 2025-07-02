@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.PtVO;
+import org.fitsync.domain.RoutineListVO;
 import org.fitsync.service.PtServiceImple;
 import org.fitsync.service.RoutineServiceImple;
 import org.fitsync.util.JwtUtil;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/routine")
-@CrossOrigin(origins = "*", allowCredentials = "true")  // allowCredentials 꼭 추가
 public class RoutineController {
 
 	@Autowired
@@ -44,6 +44,16 @@ public class RoutineController {
 			result.put("success",false);
 			return ResponseEntity.ok(result);
 		}
+	}
+	
+	@GetMapping("/getRoutine")
+	public ResponseEntity<?> getRoutineList(HttpSession session){
+		Map<String, Object> result = new HashMap<>();
+		List<RoutineListVO> list = null;
+		list = service.getRoutineList((int) session.getAttribute("member_idx"));
+		
+		
+		return ResponseEntity.ok(result); 
 	}
 	
 	// 루틴 등록

@@ -193,13 +193,13 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
               <input
                 type="number"
                 value={set.set_kg}
-                onChange={e => handleSetChange(set.id, 'kg', e.target.value)}
+                onChange={e => handleSetChange(set.id, 'set_kg', e.target.value)}
                 placeholder="-"
               />
               <input
                 type="number"
                 value={set.set_count}
-                onChange={e => handleSetChange(set.id, 'reps', e.target.value)}
+                onChange={e => handleSetChange(set.id, 'set_count', e.target.value)}
                 placeholder="-"
               />
               <div></div>
