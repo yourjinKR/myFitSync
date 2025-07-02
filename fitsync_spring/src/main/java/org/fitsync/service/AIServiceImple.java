@@ -10,9 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.mapper.ApiLogMapper;
+import org.fitsync.mapper.PtMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,16 @@ public class AIServiceImple implements AIService {
 
     @Autowired
     private ApiLogMapper aiLogMapper;
+	@Autowired
+	private PtMapper ptMapper;
+	
+	public String getWorkoutNamesJsonArray() {
+	    List<String> names = ptMapper.getWorkOutName();
+	    String jsonArray = names.stream()
+	        .map(name -> "\"" + name + "\"")
+	        .collect(Collectors.joining(", ", "[", "]"));
+	    return jsonArray;
+	}
 
     @Override
     public String requestAIResponse(String userMessage) throws IOException {
@@ -142,7 +154,7 @@ public class AIServiceImple implements AIService {
         // 로그 저장
         try {
             ApiLogVO apiLog = new ApiLogVO();
-            apiLog.setMember_idx(61); // 임시 ID
+            apiLog.setMember_idx(0); // 임시 ID
             apiLog.setApilog_prompt(requestBody);
             apiLog.setApilog_response(content);
             apiLog.setApilog_request_time(requestTime);

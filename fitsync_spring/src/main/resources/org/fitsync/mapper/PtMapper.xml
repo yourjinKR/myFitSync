@@ -10,4 +10,9 @@
 			WHEN PT_CATEGORY = '기타' 
 			THEN 1 ELSE 0 END, PT_CATEGORY
 	</select>
+	
+	<select id="getWorkOutName" resultType="string">
+	    SELECT PT_NAME
+	    FROM PT
+	</select>
 </mapper>

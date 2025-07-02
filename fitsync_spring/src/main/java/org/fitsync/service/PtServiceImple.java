@@ -20,5 +20,9 @@ public class PtServiceImple implements PtService {
 	public List<PtVO> getWorkOut() {
 		return mapper.getWorkOut();
 	}
+	@Override
+    public List<String> getAllPtNames() {
+        return mapper.getWorkOutName();
+    }
 	
 }
