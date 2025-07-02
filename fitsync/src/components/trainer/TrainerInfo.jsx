@@ -21,6 +21,15 @@ const ImgBox = styled.div`
   width: 75px;
   height: 75px;
   border: 1px solid #ccc;
+  overflow: hidden;
+  border-radius: 8px;
+  flex-shrink: 0;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 const ChatCTA = styled.button`
   border-radius:5px;
@@ -100,8 +109,8 @@ const TrainerInfo = ({idx, trainerData}) => {
   const trainerImage = trainerData?.member_image;
 
   return (
-    <InfoWrapper onClick={handleTrainerDetail}>
-      <ImgBox>
+    <InfoWrapper>
+      <ImgBox onClick={handleTrainerDetail}>
         <img src={trainerImage} alt={`${trainerName} 프로필`} />
       </ImgBox>
       <InfoBox>

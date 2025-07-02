@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import HomeIcon from '@mui/icons-material/Home';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PersonIcon from '@mui/icons-material/Person';
+import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate } from 'react-router-dom';
 
 const NavWrapper = styled.nav`
@@ -56,12 +57,21 @@ const Divider = styled.div`
 const Nav = () => {
   const nav = useNavigate();
   const handleNav = (type) => {
-    if (type === 'home') {
-      nav('/');
-    } else if (type === 'routine') {
-      nav('/routine/view');
-    } else {
-      nav('/mypage');
+    switch (type) {
+      case 'home':
+        nav('/');
+        break;
+      case 'routine':
+        nav('/routine/view');
+        break;
+      case 'chat':
+        nav('/chat');
+        break;
+      case 'mypage':
+        nav('/mypage');
+        break;
+      default:
+        nav('/');
     }
   };
 
@@ -75,6 +85,11 @@ const Nav = () => {
       <NavButton onClick={() => handleNav('routine')}>
         <FitnessCenterIcon />
         운동
+      </NavButton>
+      <Divider />
+      <NavButton onClick={() => handleNav('chat')}>
+        <ChatIcon />
+        채팅
       </NavButton>
       <Divider />
       <NavButton onClick={() => handleNav('mypage')}>
