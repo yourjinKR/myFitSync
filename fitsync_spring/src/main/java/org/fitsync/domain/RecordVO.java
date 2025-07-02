@@ -11,5 +11,5 @@ import java.sql.Timestamp;
 public class RecordVO {
 	private int record_idx, member_idx, pt_idx;
 	private Timestamp record_date;
-	private String routinept_memo;
+	private String routine_name, routine_memo;
 }

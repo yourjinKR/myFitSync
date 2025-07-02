@@ -1,5 +1,7 @@
 package org.fitsync.domain;
 
+import java.sql.Timestamp;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +9,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RecordSetVO {
-	private int record_idx, set_num, set_kg, set_count, purpose_kg, purpose_count;
+public class ReportVO {
+	
+	private int report_idx, idx_num;
+	private String report_category, report_content;
+	
 }
