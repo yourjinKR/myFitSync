@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ButtonSubmit, Input } from '../../styles/FormStyles';
+import userMock from '../../mock/userMock';
 
 const initialMemberData = {
     member : {
@@ -40,10 +41,18 @@ const AItest = () => {
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
     const [resultText, setResultText] = useState('');
     const [memberData, setMemberData] = useState(initialMemberData);
+    // 추가 질문 나이, 분할 수... 등등
+    const [additionalMemberData, setAdditionalMemberData] = useState({split : null});
 
     const handleInputText = (e) => {
         const {value} = e.target;
         setInputText({...inputText, content : value});
+    }
+
+    const handleAdditionalData = (e) => {
+        const {name, value} = e.target;
+
+        setAdditionalMemberData({...additionalMemberData, [name]: value});
     }
 
     useEffect(() => {
@@ -59,6 +68,8 @@ const AItest = () => {
     }, []);
 
     const testAPI = () => {
+        console.log('실행');
+        
         if (!inputText.content) {
             alert('값을 입력하시오');
             return;
@@ -76,7 +87,10 @@ const AItest = () => {
         const startTime = performance.now();
 
         const infoParts = [];
-        const { member, body } = memberData || {};
+        // const { member, body } = memberData || {};
+        // DUMMY USER DATA
+        const { member, body } = userMock[20] || {};
+        console.log('memberData:', userMock[20]);
 
         // if (member?.member_name) infoParts.push(`이름: ${member.member_name}`);
         // if (member?.member_type) infoParts.push(`회원 유형: ${member.member_type}`);
@@ -89,10 +103,14 @@ const AItest = () => {
 
         if (body?.body_height) infoParts.push(`키: ${body.body_height}cm`);
         if (body?.body_weight) infoParts.push(`몸무게: ${body.body_weight}kg`);
+        // 나이 임시로 추가
+        infoParts.push(`나이: 8세`);
         if (body?.body_bmi) infoParts.push(`BMI: ${body.body_bmi}`);
         if (body?.body_fat) infoParts.push(`체지방: ${body.body_fat}kg`);
         if (body?.body_fat_percentage) infoParts.push(`체지방률: ${body.body_fat_percentage}%`);
-        if (body?.body_skeletal_muscle) infoParts.push(`골격근량: ${body.body_skeletal_muscle}kg`);
+        if (body?.body_skeletal_muscle) infoParts.push(`골격근량: ${body.body_skeletal_muscle}kg`);        
+
+        if (additionalMemberData?.split) infoParts.push(`분할 수: ${additionalMemberData.split}`);
 
         const userInfoMessage = infoParts.join(', ');
         const fullMessage = userInfoMessage
@@ -127,6 +145,12 @@ const AItest = () => {
                 placeholder="챗봇에게 질문할 내용을 입력하세요 (50자 이내)"
                 maxLength={50} 
                 onChange={handleInputText}/>
+            <Input 
+                type="number"
+                name="split"
+                value={additionalMemberData.split}
+                placeholder="분할 수 (예: 4)"
+                onChange={handleAdditionalData} />
             <ButtonSubmit onClick={testAPI}>전송</ButtonSubmit>
         </div>
     );

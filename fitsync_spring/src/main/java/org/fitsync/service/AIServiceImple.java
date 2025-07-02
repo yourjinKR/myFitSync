@@ -47,9 +47,9 @@ public class AIServiceImple implements AIService {
 		        + "\"model\":\""+ apiModel +"\","
 		        + "\"messages\":["
 		        + "{\"role\":\"system\",\"content\":\""
-		        + "너는 퍼스널 트레이너야. 사용자 정보를 기반으로 4분할 루틴을 추천해. "
-		        + "응답은 반드시 JSON 형식으로만 작성하고, 설명 없이 JSON만 응답해야 해. "
-		        + "반드시 4개의 루틴을 포함해야 하며, 각 루틴은 1시간 분량으로 운동 종목은 4~6개로 구성해. "
+		        + "너는 퍼스널 트레이너야. 사용자 정보를 기반으로 분할 루틴을 추천해. "
+		        + "응답은 반드시 JSON 형식으로만 작성하고, 설명 없이 응답해야 해. "
+		        + "분할 수에 맞게 루틴을 구성하고, 루틴은 1시간 분량으로 운동 종목은 4~6개로 구성해. "
 		        + "복합 운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해. 창작된 운동명은 금지하고, 대중적인 운동만 추천해. "
 		        + "각 운동의 무게(set_kg), 횟수(set_count), 세트 수(set_num)를 적절히 설정해. "
 		        + "형식 예시: "
@@ -117,7 +117,7 @@ public class AIServiceImple implements AIService {
         // ⭐ 로그 저장은 실패해도 메인 로직에 영향 안 주게 처리
         try {
             ApiLogVO apiLog = new ApiLogVO();
-            apiLog.setMember_idx(0); // 임시 ID
+            apiLog.setMember_idx(61); // 임시 ID
             apiLog.setApilog_prompt(requestBody);
             apiLog.setApilog_response(content);
             apiLog.setApilog_request_time(requestTime);
@@ -125,7 +125,7 @@ public class AIServiceImple implements AIService {
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.0.4");
+            apiLog.setApilog_version("0.0.5");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 
