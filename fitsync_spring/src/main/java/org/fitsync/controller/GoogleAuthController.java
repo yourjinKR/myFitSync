@@ -22,7 +22,6 @@ import java.io.InputStream;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "*", allowCredentials = "true")  // allowCredentials 꼭 추가
 public class GoogleAuthController {
 
     @Autowired
@@ -57,13 +56,12 @@ public class GoogleAuthController {
                     // 세션에 member_idx 저장
                     session.setAttribute("member_idx", vo.getMember_idx());
 
+                    String cookieValue = "accessToken=" + jwt + 
+                            "; HttpOnly" +
+                            "; Path=/" + 
+                            "; Max-Age=" + (7 * 24 * 60 * 60) + 
+                            "; SameSite=Lax";
                     // HttpOnly 쿠키 생성
-                    ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
-                            .httpOnly(true)
-                            .secure(false) // 배포시 true
-                            .path("/")
-                            .maxAge(7 * 24 * 60 * 60)
-                            .build();
                     
                     Map<String, Object> user = new HashMap<>();
                     
@@ -75,9 +73,8 @@ public class GoogleAuthController {
                     
                     result.put("success", true);
                     result.put("user", user);
-                    
                     return ResponseEntity.ok()
-                            .header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
+                            .header(HttpHeaders.SET_COOKIE, cookieValue)
                             .body(result);
                 }else {
                 	Map<String, Object> user = new HashMap<>();

@@ -58,6 +58,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
             {
               pt_idx: selectedValue,
               name: selectedName,
+              routine_memo: "",
               routineSet: []
             }
           ]

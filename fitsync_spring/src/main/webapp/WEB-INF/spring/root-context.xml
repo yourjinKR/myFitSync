@@ -1,48 +1,56 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
-	xmlns:context="http://www.springframework.org/schema/context"
-	xmlns:tx="http://www.springframework.org/schema/tx"
-	xmlns:aop="http://www.springframework.org/schema/aop"
-	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
-		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
-		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
-		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+   xmlns:context="http://www.springframework.org/schema/context"
+   xmlns:tx="http://www.springframework.org/schema/tx"
+   xmlns:aop="http://www.springframework.org/schema/aop"
+   xsi:schemaLocation="
+        http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+      http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+      http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+   <!-- DB 설정 -->
+   <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+       <property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"/>
+       <property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@192.168.0.161:1521:XE"/>
+       <property name="username" value="fitsync"/>
+       <property name="password" value="fitsync"/>
+   </bean>
+
+   <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+       <constructor-arg ref="hikariConfig"/>
+   </bean>
+
+   <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+       <property name="dataSource" ref="dataSource"/>
+   </bean>
+   
+
+   <!-- MyBatis 매퍼 스캔 -->
+   <mybatis-spring:scan base-package="org.fitsync.mapper"/>
+
+   <!-- 서비스 컴포넌트 스캔 -->
+   <context:component-scan base-package="org.fitsync.service"/>
+
+   <!-- Cloudinary 설정 -->
+   <bean id="cloudinary" class="com.cloudinary.Cloudinary">
+       <constructor-arg>
+           <map>
+               <entry key="cloud_name" value="${cloudinary.cloud_name}" />
+               <entry key="api_key" value="${cloudinary.api_key}" />
+               <entry key="api_secret" value="${cloudinary.api_secret}" />
+               <entry key="secure" value="true" />
+           </map>
+       </constructor-arg>
+   </bean>
+
+   <!-- 트랜잭션 설정 추가 -->
+   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+       <property name="dataSource" ref="dataSource" />
+   </bean>
 	
-	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
-	    <!-- log4jdbc --> 
-	    <property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"></property>
-	    <property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@192.168.0.161:1521:XE"/>
-	    <property name="username" value="fitsync"></property>
-	    <property name="password" value="fitsync"></property>
-	</bean>
-	
-	<!-- HikariCP configuration -->
-	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
-	    <constructor-arg ref="hikariConfig"></constructor-arg>
-	</bean>
-	
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-	    <property name="dataSource" ref="dataSource"></property>
-	</bean>
-	
-	<!-- Cloudinary Configuration -->
-    <bean id="cloudinary" class="com.cloudinary.Cloudinary">
-        <constructor-arg>
-            <map>
-                <entry key="cloud_name" value="${cloudinary.cloud_name}" /> <!-- Cloudinary 대시보드에서 확인한 Cloud Name -->
-                <entry key="api_key" value="${cloudinary.api_key}" />       <!-- Cloudinary 대시보드에서 확인한 API Key -->
-                <entry key="api_secret" value="${cloudinary.api_secret}" /> <!-- Cloudinary 대시보드에서 확인한 API Secret -->
-                <entry key="secure" value="true" />  						<!-- HTTPS 강제 사용 -->
-            </map>
-        </constructor-arg>
-    </bean>
-    
-    <!-- Cloudinary Service -->
-	
-	<mybatis-spring:scan base-package="org.fitsync.mapper"/>
-	<context:component-scan base-package="org.fitsync.service"/>
-		
+   <tx:annotation-driven transaction-manager="transactionManager" />
+
 </beans>

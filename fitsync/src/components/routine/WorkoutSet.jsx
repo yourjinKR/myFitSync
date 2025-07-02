@@ -121,6 +121,19 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
       )
     );
   };
+  const handleChangeMemo = (e) => {
+    const memo = e.target.value;
+    setRoutineData(prev =>
+      ({
+        ...prev,
+        list: prev.list.map(item =>
+          item.pt_idx === data.pt_idx
+            ? { ...item, routine_memo: memo }
+            : item
+        )
+      })
+    );
+  };
 
   // 세트 삭제
   const trailingActions = (targetId) => (
@@ -160,6 +173,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
         name="memo"
         type="text"
         placeholder="루틴에 대한 메모를 적성해주세요."
+        value={data.routine_memo}
+        onChange={handleChangeMemo}
       />
       <ListHeader>
         <div>번호</div>

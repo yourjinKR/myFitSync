@@ -3,5 +3,13 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.RoutineSetMapper">
-
+	<insert id="insert" parameterType="org.fitsync.domain.RoutineSetVO">
+		INSERT INTO ROUTINESET
+		VALUES (
+		 	#{routine_idx},
+		 	#{set_num},
+		 	#{set_kg},
+		 	#{set_count}
+		)
+	</insert>
 </mapper>

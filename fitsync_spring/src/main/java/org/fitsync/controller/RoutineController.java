@@ -54,7 +54,6 @@ public class RoutineController {
 
 		Map<String, Object> result = new HashMap<>();
 		Object sessionIdx = session.getAttribute("member_idx");
-		System.out.println(sessionIdx);
 		if (sessionIdx == null) {
 			result.put("success", false);
 			result.put("msg", "인증 정보가 없습니다.");
@@ -62,6 +61,7 @@ public class RoutineController {
 		}
 
 		int memberIdx = Integer.parseInt(sessionIdx.toString());
+		
 		service.insertRoutine(body, memberIdx);
 		result.put("success", true);
 		result.put("msg", "루틴이 등록되었습니다.");

@@ -11,26 +11,27 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-
 	@Value("${jwt.secret:YourSecretKeyMustBeAtLeast32CharactersLong!}")
     private String secret;
-
-    @Value("${jwt.expirationMs:604800000}") // 7일(밀리초)
-    private long expirationMs;
-
+    
+    // 임시로 하드코딩 테스트
+    private long expirationMs = 604800000L; // 7일을 직접 설정
+    
     private Key key;
-
+    
     @PostConstruct
     public void init() {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
-
-    // 사용자 정보 포함하여 토큰 생성 → member_idx만 저장
+    
     public String generateToken(int idx) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + expirationMs);
+
         return Jwts.builder()
                 .setSubject(String.valueOf(idx))
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .setIssuedAt(now)
+                .setExpiration(expiration)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -48,20 +49,30 @@ public class JwtUtil {
     }
 
     public boolean validate(String token) {
-    	System.out.println(token);
         try {
-            parseClaims(token);
-            return true;
+            Claims claims = parseClaims(token);
+            Date expiration = claims.getExpiration();
+            Date now = new Date();
+            
+            return !expiration.before(now);
+        } catch (ExpiredJwtException e) {
+            System.out.println("토큰 만료 예외: " + e.getMessage());
+            return false;
         } catch (JwtException | IllegalArgumentException e) {
+            System.out.println("토큰 검증 예외: " + e.getMessage());
             return false;
         }
     }
-
+    
     private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+    
+    public Key getKey() {
+        return this.key;
     }
 }

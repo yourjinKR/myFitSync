@@ -3,5 +3,18 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.RoutineMapper">
+	<select id="getIdx" parameterType="int" resultType="int">
+		SELECT MAX(ROUTINE_IDX) 
+		FROM ROUTINE 
+		WHERE ROUTINE_LIST_IDX = #{routine_list_idx}
+	</select>
 
+	<insert id="insert" parameterType="org.fitsync.domain.RoutineVO">
+		INSERT INTO ROUTINE VALUES(
+			ROUTINE_SEQ.nextval, 
+			#{routine_list_idx},
+			#{pt_idx},
+			#{routine_memo}
+		)
+	</insert>
 </mapper>

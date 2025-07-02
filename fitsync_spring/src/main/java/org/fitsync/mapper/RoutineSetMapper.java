@@ -1,5 +1,7 @@
 package org.fitsync.mapper;
 
-public interface RoutineSetMapper {
+import org.fitsync.domain.RoutineSetVO;
 
+public interface RoutineSetMapper {
+	public int insert(RoutineSetVO vo);
 }
