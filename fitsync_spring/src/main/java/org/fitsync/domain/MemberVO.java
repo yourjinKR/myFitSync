@@ -12,6 +12,6 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 public class MemberVO {
 	private int member_idx, member_price, gym_idx;
-	private String member_email, member_name, member_num, member_image, member_status, member_day, member_type, member_purpose, member_time, member_disease, member_activity_area, member_info, member_info_image;
+	private String member_email, member_name, member_num, member_image, member_status, member_day, member_type, member_purpose, member_time, member_disease, member_activity_area, member_info, member_info_image, member_intro;
 	private DATE member_birth;
 }
