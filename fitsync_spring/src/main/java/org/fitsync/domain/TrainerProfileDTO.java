@@ -12,12 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrainerProfileDTO {
-    private int member_idx;
-    private String member_name;
-    private String member_image;
-    private String member_info;
-    private int member_price;
-    private String member_info_image;
+    private int member_idx, member_price;
+    private String member_name, member_image, member_info, member_info_image, member_time;
 
     // 연관 VO들
     private List<AwardsVO> awards;
@@ -30,5 +26,6 @@ public class TrainerProfileDTO {
         this.member_info = vo.getMember_info();
         this.member_price = vo.getMember_price();
         this.member_info_image = vo.getMember_info_image();
-    }
+        this.member_time = vo.getMember_time();
+        }
 }

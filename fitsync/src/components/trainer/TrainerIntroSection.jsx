@@ -68,17 +68,21 @@ const MoreButton = styled.button`
   padding: 0;
 `;
 
-const TrainerIntroSection = ({ trainer, onMoreClick }) => {
+const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange }) => {
   return (
     <>
+      {/* 소개 + 이미지 */}
       <Section>
         <SectionTitle>선생님 소개</SectionTitle>
         <TrainerIntroduce
           images={trainer.images}
           description={trainer.description}
+          isEdit={isEdit}
+          onChange={onChange}
         />
       </Section>
 
+      {/* 자격증 */}
       <Section>
         <SectionTitle>검증된 자격 사항</SectionTitle>
         <CertList>
@@ -88,11 +92,13 @@ const TrainerIntroSection = ({ trainer, onMoreClick }) => {
         </CertList>
       </Section>
 
+      {/* 레슨 시간 */}
       <Section>
         <SectionTitle>레슨 가능 시간</SectionTitle>
         <InfoContent>{trainer.availableTime}</InfoContent>
       </Section>
 
+      {/* 최근 후기 */}
       <Section>
         <SectionTitle>최근 후기</SectionTitle>
         {trainer.reviewList
@@ -108,7 +114,12 @@ const TrainerIntroSection = ({ trainer, onMoreClick }) => {
         <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
       </Section>
 
-      <TrainerPriceList priceBase={trainer.priceBase} />
+      {/* 가격표 */}
+      <TrainerPriceList
+        priceBase={trainer.priceBase}
+        isEdit={isEdit}
+        onChange={onChange}
+      />
     </>
   );
 };

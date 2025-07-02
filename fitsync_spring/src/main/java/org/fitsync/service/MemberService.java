@@ -13,9 +13,14 @@ public interface MemberService {
 	// 유저 추가 입력
 	public boolean insertUser(Map<String, String> body);
 	
+	// 트레이너 정보 조회
     public MemberVO getTrainerByIdx(int memberIdx);
+    // 트레이너의 자격증/수상경력/학위 조회
     public List<AwardsVO> getAwardsByMemberIdx(int memberIdx);
+    // 트레이너의 리뷰 목록 조회
     public List<ReviewVO> getReviewsByMemberIdx(int memberIdx);
-	// 트레이너 목록 가져오기
+    // 트레이너 정보 수정
+	public void updateTrainerProfile(MemberVO member);
+    // 트레이너 목록 가져오기
 	public List<MemberVO> getTrainerList();
 }

@@ -28,15 +28,36 @@ const PriceItem = styled.div`
   }
 `;
 
-const TrainerPriceList = ({ priceBase }) => {
+const Input = styled.input`
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 10px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+`;
+
+const TrainerPriceList = ({ priceBase, isEdit, onChange }) => {
+  const discountRates = { 1: 0, 10: 0.1, 30: 0.2, 50: 0.3 };
+
   return (
     <Section>
       <SectionTitle>가격표</SectionTitle>
+
+      {isEdit && (
+        <Input
+          type="number"
+          value={priceBase}
+          onChange={(e) => onChange('priceBase', parseInt(e.target.value || '0'))}
+          placeholder="기본 회당 가격을 입력하세요"
+        />
+      )}
+
       {[50, 30, 10, 1].map((count) => {
-        const discount =
-          count === 1 ? 0 : count === 10 ? 0.1 : count === 30 ? 0.2 : 0.3;
+        const discount = discountRates[count];
         const pricePer = Math.round(priceBase * (1 - discount));
         const total = pricePer * count;
+
         return (
           <PriceItem key={count}>
             <div>

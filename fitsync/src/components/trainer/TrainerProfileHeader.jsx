@@ -21,13 +21,6 @@ const Name = styled.h2`
   margin-bottom: 8px;
 `;
 
-const Rating = styled.p`
-  color: #facc15;
-  font-size: 1.2rem;
-  span {
-    color: #333;
-  }
-`;
 
 const ReviewCount = styled.p`
   color: #666;
@@ -41,6 +34,17 @@ const Quote = styled.p`
   color: #555;
   margin-top: 10px;
   padding: 0 10px;
+`;
+
+const QuoteInput = styled.input`
+  margin-top: 10px;
+  padding: 8px 10px;
+  width: 80%;
+  font-size: 1.1rem;
+  font-style: italic;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
 `;
 
 const SummaryBox = styled.div`
@@ -61,16 +65,24 @@ const SummaryItem = styled.div`
   gap: 8px;
 `;
 
-const TrainerProfileHeader = ({ trainer }) => {
+const TrainerProfileHeader = ({ trainer, isEdit, onChange }) => {
   return (
     <ProfileHeader>
       <ProfileImage />
       <Name>{trainer.name} 선생님</Name>
-      <Rating>
-        {trainer.level} <span>({trainer.rating})</span>
-      </Rating>
       <ReviewCount>⭐ 후기 {trainer.reviews}개</ReviewCount>
-      <Quote>"{trainer.quote}"</Quote>
+
+      {/* 🔽 한줄소개 영역 수정 */}
+      {isEdit ? (
+        <QuoteInput
+          type="text"
+          value={trainer.quote || ''}
+          onChange={(e) => onChange('quote', e.target.value)}
+          placeholder="한줄소개를 입력하세요"
+        />
+      ) : (
+        <Quote>"{trainer.quote}"</Quote>
+      )}
 
       <SummaryBox>
         <SummaryItem>📜 자격증 {trainer.certifications.length}개</SummaryItem>

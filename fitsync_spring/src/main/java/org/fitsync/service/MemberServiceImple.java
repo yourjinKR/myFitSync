@@ -70,20 +70,28 @@ public class MemberServiceImple implements MemberService {
 		}
 	}
 	
+	// 트레이너 프로필 조회
     @Override
     public MemberVO getTrainerByIdx(int memberIdx) {
         return mapper.selectTrainerByIdx(memberIdx);
     }
-
+    // 트레이너의 자격증/수상경력/학위 조회
     @Override
     public List<AwardsVO> getAwardsByMemberIdx(int memberIdx) {
         return mapper.selectAwardsByMemberIdx(memberIdx);
     }
-
+    // 트레이너의 리뷰 목록 조회
     @Override
     public List<ReviewVO> getReviewsByMemberIdx(int memberIdx) {
-        return mapper.selectReviewsByMemberIdx(memberIdx);
+    	return mapper.selectReviewsByTrainerIdx(memberIdx);
     }
+    // 트레이너 프로필 수정
+    @Override
+    @Transactional
+    public void updateTrainerProfile(MemberVO member) {
+    	mapper.updateTrainerProfile(member);
+    }
+    
 	// 트레이너 목록 가져오기
 	@Override
 	public List<MemberVO> getTrainerList() {

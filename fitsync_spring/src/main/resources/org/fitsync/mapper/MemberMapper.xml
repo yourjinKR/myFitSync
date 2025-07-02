@@ -84,7 +84,7 @@
 		WHERE MEMBER_IDX = #{member_idx}
 	</update> -->
 	
-	<!-- 트레이너 정보 조회 -->
+	<!-- 트레이너 프로필 조회 -->
 	<select id="selectTrainerByIdx" parameterType="int" resultType="org.fitsync.domain.MemberVO">
 	    SELECT *
 	    FROM member
@@ -92,7 +92,7 @@
 	      AND member_type = 'trainer'
 	</select>
 	
-	  <!-- 자격증 / 수상경력 / 학위 목록 조회 -->
+	<!-- 자격증 / 수상경력 / 학위 목록 조회 -->
 	<select id="selectAwardsByMemberIdx" parameterType="int" resultType="org.fitsync.domain.AwardsVO">
 	    SELECT *
 	    FROM awards
@@ -100,11 +100,25 @@
 	</select>
 	
 	<!-- 리뷰 목록 조회 -->
-	<select id="selectReviewsByMemberIdx" parameterType="int" resultType="org.fitsync.domain.ReviewVO">
-	    SELECT *
-	    FROM review
-	    WHERE trainer_idx = #{trainer_idx}
+	<select id="selectReviewsByTrainerIdx" parameterType="int" resultType="org.fitsync.domain.ReviewVO">
+	  SELECT r.*
+	  FROM review r
+	  JOIN matching m ON r.matching_idx = m.matching_idx
+	  WHERE m.trainer_idx = #{trainer_idx}
 	</select>
+	
+	<!-- 트레이너 프로필 수정 -->
+	<!-- 
+	<update id="updateTrainerProfile" parameterType="org.joonzis.domain.MemberVO">
+	    UPDATE member
+	    SET
+	        member_intro = #{member_intro},
+	        member_info = #{member_info},
+	        member_price = #{member_price},
+	        member_info_image = #{member_info_image}
+	    WHERE member_idx = #{member_idx}
+	</update>
+	 -->
 	<!-- 트레이너 목록 가져오기 -->
 	<select id="getTrainerList" resultType="org.fitsync.domain.MemberVO">
 	    SELECT 

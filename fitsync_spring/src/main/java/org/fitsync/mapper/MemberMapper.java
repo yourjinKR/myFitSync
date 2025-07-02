@@ -2,6 +2,7 @@ package org.fitsync.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
@@ -19,12 +20,14 @@ public interface MemberMapper {
 	public int updateInfo(MemberVO mvo);
 	// 추가 정보입력
 	public int updateTrainerInfo(MemberVO mvo);
-    // 트레이너 단일 정보 조회
-    public MemberVO selectTrainerByIdx(int member_idx);
+    // 트레이너  프로필 조회
+    public MemberVO selectTrainerByIdx(@Param("member_idx") int member_idx);
     // 트레이너의 자격증/수상경력/학위 조회
-    public List<AwardsVO> selectAwardsByMemberIdx(int member_idx);
+    public List<AwardsVO> selectAwardsByMemberIdx(@Param("trainer_idx") int trainer_idx);
     // 트레이너의 리뷰 목록 조회
-    public List<ReviewVO> selectReviewsByMemberIdx(int member_idx);
+    public List<ReviewVO> selectReviewsByTrainerIdx(@Param("trainer_idx") int trainer_idx);
+    // 트레이너 프로필 수정
+    public void updateTrainerProfile(MemberVO member);
 	
 	// 트레이너 목록 가져오기
 	public List<MemberVO> getTrainerList();
