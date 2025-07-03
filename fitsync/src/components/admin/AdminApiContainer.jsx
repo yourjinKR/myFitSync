@@ -47,6 +47,17 @@ const AdminApiContainer = () => {
 
     const [rawData, setRawData] = useState(null); // 백엔드에서 받은 JSON 문자열
 
+    const handleSelectedLog = (num) => {
+        if (!selectedLog) return;
+
+        const currentIndex = apiLogs.findIndex(log => log.apilog_idx === selectedLog.apilog_idx);
+        const newIndex = currentIndex + num;
+
+        if (newIndex >= 0 && newIndex < apiLogs.length) {
+            setSelectedLog(apiLogs[newIndex]);
+        }
+    };
+
     // 컴포넌트 최초 마운트 시 운동명 리스트 요청
     useEffect(() => {
         const fetchWorkoutNames = async () => {
@@ -207,7 +218,9 @@ const AdminApiContainer = () => {
                                 <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>API 로그 상세 - ID: {selectedLog.apilog_idx}</h3>
                                 <button onClick={() => setSelectedLog(null)} style={{ color: '#6b7280' }}>✕</button>
                             </div>
-
+                            
+                            <button onClick={() => handleSelectedLog(-1)} disabled={apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0} style={{ fontSize: '1.5rem'}}>⬅️</button>
+                            <button onClick={() => handleSelectedLog(1)} disabled={apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= apiLogs.length - 1} style={{ fontSize: '1.5rem'}}>➡️</button>
                             <Section>
                                 <SectionTitle>사용자 요청:</SectionTitle>
                                 <SectionContent>
