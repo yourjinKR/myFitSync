@@ -53,29 +53,28 @@ const TrainerInfo = ({idx, trainerData}) => {
     }
 
     // 자기 자신과 채팅 방지
-    if (user.member_idx === trainerData.member_idx) {
-      alert('자기 자신과는 채팅할 수 없습니다.');
-      return;
-    }
+    if (user.member_email === trainerData.member_email) {
+    alert('자기 자신과는 채팅할 수 없습니다.');
+    return;
+  }
 
     try {
       // 채팅방 참여자 정보 설정
       const trainer_idx = trainerData.member_idx; // 실제 트레이너 ID 우선 사용
-      const user_idx = user.member_idx; // 현재 로그인한 사용자 ID
       const room_name = `${trainerData.member_name}님과의 상담`;
 
-      console.log('채팅방 생성 요청:', { trainer_idx, user_idx, room_name });
+      console.log('채팅방 생성 요청:', { trainer_idx, room_name });
 
       // 채팅방 생성/조회 API 호출
-      const roomData = await ChatApi.registerRoom(trainer_idx, user_idx, room_name);
+      const roomData = await ChatApi.registerRoom(trainer_idx, null, room_name);
 
       console.log('채팅방 생성/조회 성공:', roomData);
 
       // 채팅방으로 이동 (state를 통해 추가 정보 전달)
       navigate(`/chat/${roomData.room_idx}`, {
         state: {
-          roomData,           // 채팅방 기본 정보
-          trainerInfo: trainerData // 트레이너 상세 정보 (UI 표시용)
+          roomData,                 // 채팅방 기본 정보
+          trainerInfo: trainerData  // 트레이너 상세 정보 (UI 표시용)
         }
       });
 
