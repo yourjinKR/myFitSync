@@ -203,6 +203,8 @@ const MemberRegister = () => {
           <option value="체중 관리">체중 관리</option>
           <option value="근육 증가">근육 증가</option>
           <option value="체형 교정">체형 교정</option>
+          <option value="체력 증진">체력 증진</option>
+          <option value="재활">재활</option>
           <option value="바디 프로필">바디 프로필</option>
         </Select>
       </FormGroup>
