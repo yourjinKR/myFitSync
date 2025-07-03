@@ -30,7 +30,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // socket 연결을 위한 STOMP 엔드포인트 설정
         registry.addEndpoint("/chat")	// 클라이언트가 ws://localhost:7070/chat으로 연결
-        		.setAllowedOrigins("*")	// 모든 도메인에서의 연결을 허용 (CORS 설정)
+        		.setAllowedOrigins("http://localhost:3000")	// 모든 도메인에서의 연결을 허용 (CORS 설정)
         		.withSockJS();			// SockJS 지원 활성화 (WebSocket을 지원하지 않는 브라우저를 위한 폴백)
         /*
          * 1. 메시지 브로커 구조:

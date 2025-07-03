@@ -1,5 +1,4 @@
 const initialUser = {
-  member_idx: 0,
   member_email: '',
   member_image: '',
   provider: '',
