@@ -56,12 +56,9 @@ public class TrainerController {
         HttpSession session) {
 
         Map<String, Object> result = new HashMap<>();
-        System.out.println("[백엔드] PUT 요청 도착 - trainerIdx: " + trainerIdx);
-        System.out.println("[백엔드] 요청 데이터: " + member);
 
         Object sessionIdx = session.getAttribute("member_idx");
         if (sessionIdx == null) {
-            System.out.println("[백엔드] 세션 없음");
             result.put("success", false);
             result.put("msg", "인증 정보 없음");
             return ResponseEntity.status(401).body(result);
@@ -69,14 +66,12 @@ public class TrainerController {
 
         int memberIdx = Integer.parseInt(sessionIdx.toString());
         if (memberIdx != trainerIdx) {
-            System.out.println("[백엔드] 본인 아님. sessionIdx=" + memberIdx + ", pathIdx=" + trainerIdx);
             result.put("success", false);
             result.put("msg", "수정 권한 없음");
             return ResponseEntity.status(403).body(result);
         }
 
         try {
-            System.out.println("[백엔드] 수정 서비스 호출");
             memberService.updateTrainerProfile(member);
             System.out.println("[백엔드] 수정 성공");
 
@@ -85,9 +80,7 @@ public class TrainerController {
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            System.out.println("[백엔드] 수정 중 오류 발생");
             e.printStackTrace();
-
             result.put("success", false);
             result.put("msg", "업데이트 중 오류 발생: " + e.getMessage());
             return ResponseEntity.status(500).body(result);

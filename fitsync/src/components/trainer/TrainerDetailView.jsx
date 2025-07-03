@@ -16,28 +16,31 @@ const TrainerDetailView = ({ loginUserId, loginUserType }) => {
   const [activeTab, setActiveTab] = useState('소개');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  useEffect(() => {
-    axios.get(`/trainer/profile/${trainerIdx}`)
-      .then((res) => {
-        const data = res.data;
-        const trainerData = {
-          member_idx: data.member_idx,
-          name: data.member_name,
-          images: data.member_info_image ? data.member_info_image.split(',') : [],
-          description: data.member_info,
-          certifications: data.awards ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`) : [],
-          availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
-          priceBase: data.member_price,
-          reviewList: data.reviews || [],
-          intro: data.member_intro || '',
-          specialties: data.specialties || [],
-          reviews: data.reviewList?.length || 0
-        };
-        setTrainer(trainerData);
-        setEditedTrainer(trainerData); // 복사본 저장
-      })
-      .catch(console.error);
-  }, [trainerIdx]);
+useEffect(() => {
+  axios.get(`/trainer/profile/${trainerIdx}`)
+    .then((res) => {
+      console.log("새로고침 시 서버 응답:", res.data);
+
+      const data = res.data;
+      const trainerData = {
+        member_idx: data.member_idx,
+        name: data.member_name,
+        images: data.member_info_image ? data.member_info_image.split(',') : [],
+        description: data.member_info,
+        certifications: data.awards ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`) : [],
+        availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
+        priceBase: data.member_price,
+        reviewList: data.reviews || [],
+        intro: data.member_intro || '',
+        specialties: data.specialties || [],
+        reviews: data.reviewList?.length || 0
+      };
+
+      setTrainer(trainerData);
+      setEditedTrainer(trainerData);
+    })
+    .catch(console.error);
+}, [trainerIdx]);
 
   const isLoggedIn = !!loginUserId;
 
@@ -59,17 +62,13 @@ const handleEditToggle = async () => {
       member_info_image: editedTrainer.images?.join(',') || '',
     };
 
-    console.log('[프론트] 수정 요청 데이터:', payload);
-
     try {
       const res = await axios.put(
         `/trainer/update/${trainerIdx}`,
         payload,
         { withCredentials: true }
       );
-
-      console.log('[프론트] 응답 수신:', res.data);
-
+      console.log('[프론트] 수정 성공:', res.data);
       alert('수정이 완료되었습니다.');
       setTrainer(editedTrainer);
 
@@ -89,9 +88,6 @@ const handleEditToggle = async () => {
 
   setIsEditMode(!isEditMode);
 };
-
-
-
 
   const handleChange = (field, value) => {
     setEditedTrainer(prev => ({
