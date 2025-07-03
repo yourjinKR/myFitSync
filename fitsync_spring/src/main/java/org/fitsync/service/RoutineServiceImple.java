@@ -77,7 +77,7 @@ public class RoutineServiceImple implements RoutineService {
 	                    Map<String, Object> set = sets.get(i);
 	                    rsvo.setRoutine_idx(routine_idx);
 	                    rsvo.setSet_num((i + 1));
-	                    rsvo.setSet_kg(set.get("set_kg") != "" ? (int) set.get("set_kg") : 0);
+	                    rsvo.setSet_volum(set.get("set_volum") != "" ? (int) set.get("set_volum") : 0);
 	                    rsvo.setSet_count(set.get("set_count") != "" ? (int) set.get("set_count") : 0);
 
 	                    setResult += rsmapper.insert(rsvo); // 세트 등록

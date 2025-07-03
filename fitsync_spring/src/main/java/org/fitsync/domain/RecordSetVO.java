@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RecordSetVO {
-	private int record_idx, set_num, set_kg, set_count, purpose_kg, purpose_count;
+	private int record_idx, set_num, set_volum, set_count, purpose_volum, purpose_count;
 }
