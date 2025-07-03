@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import Routine from './Routine';
+import axios from 'axios';
 
 const EmptyData = styled.div`
   font-weight:bold;
@@ -13,7 +14,20 @@ const EmptyData = styled.div`
   margin-top:5px;
 `;
 
+
+
 const RoutineList = () => {
+
+  const handleRoutineResponse = async () => {
+    const response = await axios.get("/routine/getList" , { withCredentials: true });
+    const data = response.data;
+    console.log(" data ", data);
+  }
+
+  useEffect(()=>{
+    handleRoutineResponse();
+  },[])
+
   const List = [1];
   return (
     <div>

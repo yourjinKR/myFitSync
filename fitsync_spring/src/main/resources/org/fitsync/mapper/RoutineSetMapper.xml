@@ -8,7 +8,7 @@
 		VALUES (
 		 	#{routine_idx},
 		 	#{set_num},
-		 	#{set_kg},
+		 	#{set_volume},
 		 	#{set_count}
 		)
 	</insert>

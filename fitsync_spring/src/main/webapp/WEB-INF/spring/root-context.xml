@@ -50,6 +50,11 @@
    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
        <property name="dataSource" ref="dataSource" />
    </bean>
+   
+   	<bean id="jwtUtil" class="org.fitsync.util.JwtUtil" />
+	<bean id="authTokenFilter" class="org.fitsync.filter.AuthTokenFilter">
+	    <property name="jwtUtil" ref="jwtUtil" />
+	</bean>
 	
    <tx:annotation-driven transaction-manager="transactionManager" />
 

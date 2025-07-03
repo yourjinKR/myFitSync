@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 const HeaderWrapper = styled.header`
@@ -34,14 +34,17 @@ const RoutineMain = () => {
   const changeHeader = 
   location.pathname !== '/routine/add' && 
   location.pathname !== '/routine/set';
-  const [routineData, setRoutineData] = useState({
+  const init = {
     routine_name: '',
     member_idx : '',
     list: [],
-  });
+  };
+  const [routineData, setRoutineData] = useState(init);
   
   useEffect(() => {
   },[routineData])
+
+  const nav = useNavigate();
 
   const handleRoutineResponse = async () => {
     try {
@@ -53,6 +56,8 @@ const RoutineMain = () => {
       const result = response.data;
       if(result.success) {
         alert(result.msg);
+        nav("/routine/view");
+        setRoutineData(init);
       }
     } catch (error) {
       console.error("루틴 등록 오류:", error);

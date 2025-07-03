@@ -43,9 +43,13 @@ const AddButton = styled.button`
 const RoutineSet = () => {
   const nav = useNavigate();
   const { routineData, setRoutineData } = useOutletContext();
-  if(routineData.list.length === 0){
-    nav("/routine/add");
-  }
+  console.log(" routineData.list.length", routineData.list.length)
+
+  useEffect(()=>{
+    if(routineData.list.length === 0){
+      nav("/routine/add");
+    }
+  },[])
   
   const list = routineData.list;
 

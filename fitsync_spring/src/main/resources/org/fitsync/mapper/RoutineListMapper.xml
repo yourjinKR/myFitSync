@@ -4,7 +4,7 @@
 
 <mapper namespace="org.fitsync.mapper.RoutineListMapper">
 	
-	<select id="getRoutineList" parameterType="int">
+	<select id="getRoutineList" parameterType="int" resultType="org.fitsync.domain.RoutineListVO">
 		SELECT * 
 		FROM ROUTINELIST
 		WHERE MEMBER_IDX = #{member_idx}

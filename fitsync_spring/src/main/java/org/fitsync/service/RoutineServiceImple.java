@@ -1,6 +1,5 @@
 package org.fitsync.service;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -32,8 +31,9 @@ public class RoutineServiceImple implements RoutineService {
 	// 루틴 리스트
 	@Override
 	public List<RoutineListVO> getRoutineList(int member_idx) {
-		rlmapper.getRoutineList(member_idx);
-		return null;
+		List<RoutineListVO> list = null; 
+		list = rlmapper.getRoutineList(member_idx);
+		return list;
 	}
 	
 	// 루틴 등록
@@ -41,7 +41,6 @@ public class RoutineServiceImple implements RoutineService {
 	@Transactional(rollbackFor = { Exception.class, Throwable.class })
 	public boolean insertRoutine(Map<String, Object> body, int member_idx) {
 	    int result = 0;
-	    
 	    try {
 	        // RoutineListVO 등록
 	        RoutineListVO rlvo = new RoutineListVO();

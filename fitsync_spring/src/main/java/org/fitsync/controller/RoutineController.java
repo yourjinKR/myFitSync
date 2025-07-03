@@ -46,14 +46,20 @@ public class RoutineController {
 		}
 	}
 	
-	@GetMapping("/getRoutine")
+	@GetMapping("/getList")
 	public ResponseEntity<?> getRoutineList(HttpSession session){
 		Map<String, Object> result = new HashMap<>();
 		List<RoutineListVO> list = null;
+		System.out.println(session.getAttribute("member_idx"));
 		list = service.getRoutineList((int) session.getAttribute("member_idx"));
-		
-		
+		if(list != null) {
+			result.put("success", true);
+			result.put("vo", list);
+		}else {
+			result.put("success", false);
+		}
 		return ResponseEntity.ok(result); 
+		
 	}
 	
 	// 루틴 등록
@@ -72,7 +78,7 @@ public class RoutineController {
 
 		int memberIdx = Integer.parseInt(sessionIdx.toString());
 		
-		service.insertRoutine(body, memberIdx);
+		service.insertRoutine(body, (int) sessionIdx);
 		result.put("success", true);
 		result.put("msg", "루틴이 등록되었습니다.");
 		return ResponseEntity.ok(result);

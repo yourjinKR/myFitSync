@@ -65,12 +65,15 @@
 	</filter-mapping>
 	
 
-	<!-- <filter>
-	    <filter-name>authFilter</filter-name>
-	    <filter-class>org.fitsync.filter.AuthTokenFilter</filter-class>
-	</filter>
-	<filter-mapping>
-	    <filter-name>authFilter</filter-name>
-	    <url-pattern>/routine/add</url-pattern>
-	</filter-mapping> -->
+	<!-- 필터 정의 -->
+    <filter>
+        <filter-name>authTokenFilter</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    </filter>
+
+    <!-- 필터 매핑 -->
+    <filter-mapping>
+        <filter-name>authTokenFilter</filter-name>
+        <url-pattern>/routine/*</url-pattern>  <!-- 필터를 적용할 URL 패턴 -->
+    </filter-mapping>
 </web-app>

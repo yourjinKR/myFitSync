@@ -226,7 +226,7 @@ const AdminApiContainer = () => {
                                                 <ul style={{ paddingLeft: '1rem' }}>
                                                 {routine.exercises.map((ex, i) => (
                                                     <Exercise key={i}>
-                                                    • {ex.pt_name}: {ex.set_kg}kg × {ex.set_count}회 × {ex.set_num}세트
+                                                    • {ex.pt_name}: {ex.set_volume}kg × {ex.set_count}회 × {ex.set_num}세트
                                                     </Exercise>
                                                 ))}
                                                 </ul>

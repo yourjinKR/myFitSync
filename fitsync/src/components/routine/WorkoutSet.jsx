@@ -31,6 +31,7 @@ const SetTop = styled.div`
 const MemoInput = styled.input`
   padding: 5px 0;
   font-size: 1.8rem;
+  width:100%;
 `;
 const ListHeader = styled.div`
   display:flex;
@@ -106,7 +107,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
     setRoutineData(prev =>
       updateSets(prev, data.pt_idx, routineSet => [
         ...routineSet,
-        { id: Date.now(), set_kg: '', set_count: '' }
+        { id: Date.now(), set_volume: '', set_count: '' }
       ])
     );
   };
@@ -157,7 +158,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   React.useEffect(() => {
     if (setData && setData.routineSet.length === 0) {
       setRoutineData(prev =>
-        updateSets(prev, data.pt_idx, () => [{ id: Date.now(), set_kg: '', set_count: '' }])
+        updateSets(prev, data.pt_idx, () => [{ id: Date.now(), set_volume: '', set_count: '' }])
       );
     }
     // eslint-disable-next-line
@@ -192,8 +193,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
               <div>{index + 1}</div>
               <input
                 type="number"
-                value={set.set_kg}
-                onChange={e => handleSetChange(set.id, 'set_kg', e.target.value)}
+                value={set.set_volume}
+                onChange={e => handleSetChange(set.id, 'set_volume', e.target.value)}
                 placeholder="-"
               />
               <input

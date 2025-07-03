@@ -1,6 +1,6 @@
 package org.fitsync.filter;
 
-import java.io.IOException;
+import org.fitsync.util.JwtUtil;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -11,30 +11,23 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
-
-import org.fitsync.util.JwtUtil;
+import java.io.IOException;
 
 public class AuthTokenFilter implements Filter {
-
-    @Autowired
     private JwtUtil jwtUtil;
 
+    public void setJwtUtil(JwtUtil jwtUtil) { this.jwtUtil = jwtUtil; }
+
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
-    }
+    public void init(FilterConfig filterConfig) throws ServletException {}
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-
+        // JWT 검증 코드
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-
+        
         String token = null;
         Cookie[] cookies = httpRequest.getCookies();
         if (cookies != null) {
@@ -45,7 +38,9 @@ public class AuthTokenFilter implements Filter {
                 }
             }
         }
-
+        System.out.println("token : " + token);
+        System.out.println("jwtUtil : " + jwtUtil);
+        System.out.println("jwtUtil.validate(token) : " + jwtUtil.validate(token));
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
             chain.doFilter(request, response);
             return;
