@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.fitsync.domain.RoutineListVO;
+import org.fitsync.domain.RoutineMemberDTO;
 import org.fitsync.domain.RoutineSetVO;
 import org.fitsync.domain.RoutineVO;
 import org.fitsync.mapper.RoutineListMapper;
@@ -34,6 +35,11 @@ public class RoutineServiceImple implements RoutineService {
 		List<RoutineListVO> list = null; 
 		list = rlmapper.getRoutineList(member_idx);
 		return list;
+	}
+	
+	@Override
+	public RoutineListVO getRoutine(RoutineMemberDTO rmdto) {
+		return rlmapper.getRoutine(rmdto);
 	}
 	
 	// 루틴 등록
@@ -98,5 +104,10 @@ public class RoutineServiceImple implements RoutineService {
 	        throw e; // 예외를 다시 던져 트랜잭션 롤백을 강제
 	    }
 	    return result == 3;
+	}
+	
+	@Override
+	public boolean deleteRoutine(RoutineMemberDTO rmdto) {
+		return rlmapper.deleteRoutine(rmdto) > 0;
 	}
 }

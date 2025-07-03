@@ -3,25 +3,91 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.RoutineListMapper">
-	
-	<select id="getRoutineList" parameterType="int" resultType="org.fitsync.domain.RoutineListVO">
-		SELECT * 
+
+	<select id="getRoutineList" parameterType="int"
+		resultType="org.fitsync.domain.RoutineListVO">
+		SELECT *
 		FROM ROUTINELIST
 		WHERE MEMBER_IDX = #{member_idx}
 	</select>
+	
+	<!-- ResultMap 정의 -->
+    <resultMap id="routineListDetailMap" type="org.fitsync.domain.RoutineListVO">
+	    <id property="routine_list_idx" column="ROUTINE_LIST_IDX"/>
+	    <result property="member_idx" column="MEMBER_IDX"/>
+	    <result property="writer_idx" column="WRITER_IDX"/>
+	    <result property="routine_name" column="ROUTINE_NAME"/>
+	    
+	    <collection property="routines" ofType="org.fitsync.domain.RoutineVO">
+	        <id property="routine_idx" column="ROUTINE_IDX"/>
+	        <result property="routine_list_idx" column="ROUTINE_LIST_IDX"/>
+	        <result property="pt_idx" column="PT_IDX"/>
+	        <result property="routine_memo" column="ROUTINE_MEMO"/>
+	        
+	        <!-- PT 정보 추가 -->
+	        <association property="pt" javaType="org.fitsync.domain.PtVO">
+	            <id property="pt_idx" column="PT_IDX"/>
+	            <result property="pt_name" column="PT_NAME"/>
+	            <result property="pt_category" column="PT_CATEGORY"/>
+	            <result property="pt_image" column="PT_IMAGE"/>
+	            <result property="pt_content" column="PT_CONTENT"/>
+	            <result property="pt_writer" column="PT_WRITER"/>
+	        </association>
+	        
+	        <collection property="sets" ofType="org.fitsync.domain.RoutineSetVO">
+	            <result property="routine_idx" column="ROUTINE_IDX"/>
+	            <result property="set_num" column="SET_NUM"/>
+	            <result property="set_volume" column="SET_VOLUME"/>
+	            <result property="set_count" column="SET_COUNT"/>
+	        </collection>
+	    </collection>
+	</resultMap>
+
+	<select id="getRoutine" parameterType="org.fitsync.domain.RoutineMemberDTO" resultMap="routineListDetailMap">
+        SELECT
+		    RL.ROUTINE_LIST_IDX,
+		    RL.MEMBER_IDX,
+		    RL.WRITER_IDX,
+		    RL.ROUTINE_NAME,
+		    R.ROUTINE_IDX,
+		    R.PT_IDX,
+		    R.ROUTINE_MEMO,
+		    RS.SET_NUM,
+		    RS.SET_VOLUME,
+		    RS.SET_COUNT,
+		    PT.PT_NAME,
+		    PT.PT_CATEGORY,
+		    PT.PT_IMAGE,
+		    PT.PT_CONTENT,
+		    PT.PT_WRITER
+		FROM ROUTINELIST RL
+		LEFT JOIN ROUTINE R ON RL.ROUTINE_LIST_IDX = R.ROUTINE_LIST_IDX
+		LEFT JOIN ROUTINESET RS ON R.ROUTINE_IDX = RS.ROUTINE_IDX
+		LEFT JOIN PT PT ON R.PT_IDX = PT.PT_IDX
+		WHERE RL.MEMBER_IDX = #{member_idx}
+		AND RL.ROUTINE_LIST_IDX = #{routine_list_idx}
+		ORDER BY R.ROUTINE_IDX, RS.SET_NUM
+    </select>
 
 	<select id="getIdx" parameterType="int" resultType="int">
-		SELECT MAX(ROUTINE_LIST_IDX)
+		SELECT
+		MAX(ROUTINE_LIST_IDX)
 		FROM ROUTINELIST
 		WHERE MEMBER_IDX = #{member_idx}
 	</select>
 
 	<insert id="insert" parameterType="org.fitsync.domain.RoutineListVO">
 		INSERT INTO ROUTINELIST VALUES(
-			ROUTINE_LIST_SEQ.nextval, 
+		ROUTINE_LIST_SEQ.nextval,
 			#{member_idx},
 			#{routine_name},
 			#{writer_idx}
 		)
 	</insert>
+
+	<delete id="deleteRoutine" parameterType="org.fitsync.domain.RoutineMemberDTO">
+		DELETE FROM ROUTINELIST
+		WHERE MEMBER_IDX = #{member_idx}
+		AND ROUTINE_LIST_IDX = #{routine_list_idx}
+	</delete>
 </mapper>

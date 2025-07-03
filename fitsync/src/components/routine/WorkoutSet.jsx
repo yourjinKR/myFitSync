@@ -155,7 +155,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   );
 
   // 최초 1세트 없으면 1개 추가
-  React.useEffect(() => {
+  useEffect(() => {
     if (setData && setData.routineSet.length === 0) {
       setRoutineData(prev =>
         updateSets(prev, data.pt_idx, () => [{ id: Date.now(), set_volume: '', set_count: '' }])
@@ -213,4 +213,4 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   );
 };
 
-export default WorkoutSet;
+export default React.memo(WorkoutSet);

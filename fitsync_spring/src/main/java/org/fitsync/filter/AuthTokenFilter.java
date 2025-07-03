@@ -11,6 +11,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 public class AuthTokenFilter implements Filter {
@@ -40,10 +41,18 @@ public class AuthTokenFilter implements Filter {
         }
         System.out.println("token : " + token);
         System.out.println("jwtUtil : " + jwtUtil);
-        System.out.println("jwtUtil.validate(token) : " + jwtUtil.validate(token));
+        
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
-            chain.doFilter(request, response);
-            return;
+            try {
+                HttpSession session = httpRequest.getSession();
+                Long userIdxLong = jwtUtil.getUserIdx(token); // 토큰에서 사용자 idx 추출
+                int userIdx = userIdxLong.intValue();
+                session.setAttribute("member_idx", userIdx);
+                chain.doFilter(request, response);
+                return;
+            } catch (Exception e) {
+                System.out.println("토큰 처리 중 오류 발생: " + e.getMessage());
+            }
         }
 
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

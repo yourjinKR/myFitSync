@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import WorkoutSet from './WorkoutSet';
 import styled from 'styled-components';
@@ -8,17 +8,20 @@ const Wrapper = styled.div`
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-  padding: 0 15px 18px 15px; /* 좌우 15px, 아래 18px */
+  padding: 0 15px 18px 15px;
 `;
 
-const H3 = styled.h3`
+const H3Input = styled.input`
   font-size: 1.8rem;
   font-weight: 700;
-  padding: 14px 0 10px 0; /* 좌우 여백 제거 */
+  padding: 14px 0 10px 0;
+  border: none;
   border-bottom: 1px solid #e6e6e6;
   margin-bottom: 0;
   background: #f7f9fc;
   border-radius: 14px 14px 0 0;
+  width: 100%;
+  outline: none;
 `;
 
 const AddButton = styled.button`
@@ -43,26 +46,50 @@ const AddButton = styled.button`
 const RoutineSet = () => {
   const nav = useNavigate();
   const { routineData, setRoutineData } = useOutletContext();
-  console.log(" routineData.list.length", routineData.list.length)
+  // 입력값 별도 관리
+  const [title, setTitle] = useState(routineData.name || "");
 
-  useEffect(()=>{
-    if(routineData.list.length === 0){
+  useEffect(() => {
+    if (routineData.list.length === 0) {
       nav("/routine/add");
     }
-  },[])
-  
+  }, [routineData.list.length, nav]);
+
+  // 입력값만 변경
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
+  };
+
+  // 저장/이동 시에만 routineData에 반영
+  const handleAddWorkOut = () => {
+    setRoutineData(prev => ({
+      ...prev,
+      name: title
+    }));
+    nav("/routine/add");
+  };
+
   const list = routineData.list;
 
-  const handleAddWorkOut = () => {
-    nav("/routine/add");
-  }
+  // setRoutineData를 useCallback으로 감싸서 전달 (불필요한 리렌더 방지)
+  const memoSetRoutineData = useCallback(setRoutineData, []);
 
   return (
     <Wrapper>
-      <H3>{routineData.name}</H3>
+      <H3Input
+        type="text"
+        value={title}
+        onChange={handleTitleChange}
+        placeholder="루틴명을 입력하세요"
+      />
       <div>
         {list.map((data) =>
-          <WorkoutSet key={data.value} data={data} routineData={routineData} setRoutineData={setRoutineData}/>
+          <WorkoutSet
+            key={data.pt_idx}
+            data={data}
+            setRoutineData={memoSetRoutineData}
+            routineData={routineData}
+          />
         )}
       </div>
       <AddButton type="button" onClick={handleAddWorkOut}>운동 추가하기 +</AddButton>

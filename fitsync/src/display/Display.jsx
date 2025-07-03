@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Header from '../layout/Header';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Main from '../components/Main';
 import Test from '../components/Test';
 import styled from 'styled-components';
@@ -21,6 +21,7 @@ import ChatMain from '../components/chat/ChatMain';
 import ChatRoom from '../components/chat/ChatRoom';
 import AdminApiContainer from '../components/admin/AdminApiContainer';
 import AdminMain from '../components/admin/AdminMain';
+import RoutineDetail from '../components/routine/RoutineDetail';
 
 const DisplayWrapper = styled.div`
  max-width : 750px;
@@ -53,6 +54,7 @@ const Display = () => {
   };
   
   const isShow = 
+    location.pathname.includes("/routines/detail") &&
     location.pathname !== '/routine/add' && 
     location.pathname !== '/routine/set';
 
@@ -71,6 +73,7 @@ const Display = () => {
             <Route path='view' element={<RoutineView />}/>
             <Route path='add' element={<RoutineAdd />}/>
             <Route path='set' element={<RoutineSet />}/>
+            <Route path='detail/:routine_list_idx' element={<RoutineDetail />}/>
           </Route>
           <Route path='/mypage' element={<MyPage/>}/>
           <Route path='/chat' element={<ChatMain/>}/>

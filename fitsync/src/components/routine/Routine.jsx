@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 
 const RoutineWrapper = styled.div`
@@ -45,23 +46,41 @@ const ControlBox = styled.div`
   }
 `;
 
-const Routine = ({idx, name}) => {
+const Routine = ({ data, onDelete }) => {
   
   const nav = useNavigate();
 
   const handleGoRoutine = (e) => {
     if(e.target.tagName !== 'path' && e.target.tagName !== 'svg' && e.target.tagName !== 'button' && e.target.tagName !== 'BUTTON'){
-      nav(`/routine/${idx}`);
+      nav(`/routine/detail/${data.routine_list_idx}`);
     }
   }
   const handleRoutineEdit = (e) => {
     e.target.closest(RoutineWrapper).classList.add("on");
   }
 
+  const handleRoutineDelete = async (e) => {
+    if (window.confirm("정말로 루틴을 삭제하시겠습니까?")) {
+      try {
+        const response = await axios.delete(`/routine/delete/${data.routine_list_idx}`, {
+          withCredentials: true
+        });
+        const result = response.data;
+        if (result.success) {
+          alert(result.msg);
+          if (onDelete) onDelete(); // 삭제 후 목록 갱신
+        } else {
+          alert(result.msg);
+        }
+      } catch (error) {
+        console.error("루틴 삭제 중 오류 발생:", error);
+      }
+    }
+  }
   return (
     <RoutineWrapper onClick={handleGoRoutine}>
       <Inner>
-        <h3>{name}</h3>
+        <h3>{data.routine_name}</h3>
         <button onClick={handleRoutineEdit}>
           <MoreHorizIcon fontSize='large'/>
         </button>
@@ -69,7 +88,7 @@ const Routine = ({idx, name}) => {
       <p>운동하러가기</p>
       <ControlBox>
         <button>루틴편집</button>
-        <button>루틴삭제</button>
+        <button onClick={handleRoutineDelete}>루틴삭제</button>
       </ControlBox>
     </RoutineWrapper>
   );

@@ -9,9 +9,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoutineListVO {
-	private int routine_list_idx, member_idx, writer_idx;
-	private String routine_name;
-
-    private List<RoutineVO> routines;
+public class RoutineMemberDTO {
+	private int member_idx, routine_list_idx;
 }

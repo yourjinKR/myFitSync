@@ -8,6 +8,7 @@ import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.PtVO;
 import org.fitsync.domain.RoutineListVO;
+import org.fitsync.domain.RoutineMemberDTO;
 import org.fitsync.service.PtServiceImple;
 import org.fitsync.service.RoutineServiceImple;
 import org.fitsync.util.JwtUtil;
@@ -15,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,13 +53,34 @@ public class RoutineController {
 	public ResponseEntity<?> getRoutineList(HttpSession session){
 		Map<String, Object> result = new HashMap<>();
 		List<RoutineListVO> list = null;
-		System.out.println(session.getAttribute("member_idx"));
 		list = service.getRoutineList((int) session.getAttribute("member_idx"));
-		if(list != null) {
+		if(list != null && list.size() > 0) {
 			result.put("success", true);
 			result.put("vo", list);
 		}else {
 			result.put("success", false);
+		}
+		return ResponseEntity.ok(result); 
+		
+	}
+	@GetMapping("/{routine_list_idx}")
+	public ResponseEntity<?> getRoutineDetail(@PathVariable int routine_list_idx, HttpSession session){
+		Map<String, Object> result = new HashMap<>();
+		Object sessionIdx = session.getAttribute("member_idx");
+		System.out.println("sessionIdx : " + sessionIdx);
+		RoutineMemberDTO rmdto = new RoutineMemberDTO();
+		rmdto.setRoutine_list_idx(routine_list_idx);
+		rmdto.setMember_idx((int) sessionIdx);
+		
+		RoutineListVO rvo = null;
+		rvo = service.getRoutine(rmdto);
+		if(rvo != null) {
+			result.put("success", true);
+			result.put("vo", rvo);
+			result.put("msg", "루틴 호출에 성공하였습니다.");
+		}else {
+			result.put("success", false);
+			result.put("msg", "루틴 호출에 실패하였습니다.");
 		}
 		return ResponseEntity.ok(result); 
 		
@@ -81,6 +105,25 @@ public class RoutineController {
 		service.insertRoutine(body, (int) sessionIdx);
 		result.put("success", true);
 		result.put("msg", "루틴이 등록되었습니다.");
+		return ResponseEntity.ok(result);
+	}
+	
+	// 루틴 삭제
+	@DeleteMapping("/delete/{routine_list_idx}")
+	public ResponseEntity<?> deleteRoutine(@PathVariable int routine_list_idx, HttpSession session) {
+		Object sessionIdx = session.getAttribute("member_idx");
+		RoutineMemberDTO rmdto = new RoutineMemberDTO();
+		rmdto.setRoutine_list_idx(routine_list_idx);
+		rmdto.setMember_idx((int) sessionIdx);
+		
+		Map<String, Object> result = new HashMap<>();
+		if(service.deleteRoutine(rmdto)) {
+			result.put("success", true);
+			result.put("msg", "루틴이 삭제되었습니다.");
+		}else {
+			result.put("success", false);
+			result.put("msg", "루틴 삭제에 실패하였습니다.");
+		}
 		return ResponseEntity.ok(result);
 	}
 	

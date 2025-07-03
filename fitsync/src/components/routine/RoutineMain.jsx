@@ -1,6 +1,6 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import React, { use, useEffect, useState } from 'react';
+import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 const HeaderWrapper = styled.header`
@@ -31,7 +31,9 @@ const HeaderCTA = styled.button`
 
 const RoutineMain = () => {
   const location = useLocation();
+  const { routine_list_idx } = useParams();
   const changeHeader = 
+  location.pathname !== `/routine/detail/${routine_list_idx}` && 
   location.pathname !== '/routine/add' && 
   location.pathname !== '/routine/set';
   const init = {
@@ -67,15 +69,23 @@ const RoutineMain = () => {
   const handleDataSubmit = () => {
     handleRoutineResponse();
   }
+  const handleUpdateSubmit = () => {
+    
+  }
 
   return (
     <>
       {
         !changeHeader ? 
           <HeaderWrapper>
-            <button type="button">취소</button>
+            <button type="button" onClick={()=> nav("/routine/view")}>취소</button>
             <p>루틴 생성하기</p>
-            <HeaderCTA onClick={handleDataSubmit}>저장</HeaderCTA>
+            {
+              location.pathname !== `/routine/detail/${routine_list_idx}` ? 
+              <HeaderCTA onClick={handleDataSubmit}>저장</HeaderCTA>
+              :
+              <HeaderCTA onClick={handleUpdateSubmit}>마치기</HeaderCTA>
+            }
           </HeaderWrapper>
         :
         <>
