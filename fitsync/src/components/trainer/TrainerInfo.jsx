@@ -96,10 +96,10 @@ const TrainerInfo = ({idx, trainerData}) => {
 
   // 트레이너 상세보기
   const handleTrainerDetail = () => {
-    navigate('/trainer/view', {
+    navigate(`/trainer/view/${trainerData.member_idx}`, {
       state: { trainerData }
     });
-  };
+  };  
 
   // 기본값 처리
   const trainerName = trainerData?.member_name || `트레이너 ${idx + 1}`;

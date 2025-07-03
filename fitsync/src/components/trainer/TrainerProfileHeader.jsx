@@ -72,16 +72,19 @@ const TrainerProfileHeader = ({ trainer, isEdit, onChange }) => {
       <Name>{trainer.name} 선생님</Name>
       <ReviewCount>⭐ 후기 {trainer.reviews}개</ReviewCount>
 
-      {/* 🔽 한줄소개 영역 수정 */}
       {isEdit ? (
         <QuoteInput
           type="text"
-          value={trainer.intro || ''}
+          value={trainer.intro ?? ''}  // null도 대비
           onChange={(e) => onChange('intro', e.target.value)}
           placeholder="한줄소개를 입력하세요"
         />
       ) : (
-        <Quote>"{trainer.intro}"</Quote>
+        <Quote>
+          {trainer.intro && trainer.intro.trim() !== ''
+            ? `"${trainer.intro}"`
+            : '"한줄소개가 아직 등록되지 않았습니다."'}
+        </Quote>
       )}
 
       <SummaryBox>
