@@ -1,20 +1,7 @@
 import axios from 'axios';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, SectionContent, RoutineCard, Exercise } from '../../styles/chartStyle';
-
-// 버전 비교 함수
-function isVersionAtLeast(current, target) {
-  const currentParts = current.split('.').map(Number);
-  const targetParts = target.split('.').map(Number);
-
-  for (let i = 0; i < Math.max(currentParts.length, targetParts.length); i++) {
-    const cur = currentParts[i] || 0;
-    const tar = targetParts[i] || 0;
-    if (cur > tar) return true;
-    if (cur < tar) return false;
-  }
-  return true; // 동일한 경우 포함
-}
+import versionUtils from '../../util/utilFunc';
 
 /** 로그 JSON 파싱 함수 */
 function parseApiLogData(apiLogItem) {
@@ -29,9 +16,13 @@ function parseApiLogData(apiLogItem) {
         apiLogItem.apilog_time = (apiLogItem.apilog_response_time - apiLogItem.apilog_request_time) / 1000; // 초 단위로 변환
 
         let parsedUserMassage = null;
-        if (isVersionAtLeast(version, "0.0.7")) {
+        if (versionUtils.isVersionAtLeast(version, "0.0.7")) {
             // 0.0.7 이상이면 실행
             parsedUserMassage = JSON.parse(parsedPrompt.messages[1]?.content);
+            if(parsedUserMassage.split==parsedResponse.length) {
+                console.log('일치');
+                parsedUserMassage = {...parsedUserMassage, isSplit : true}
+            }
         }   
 
         return {
