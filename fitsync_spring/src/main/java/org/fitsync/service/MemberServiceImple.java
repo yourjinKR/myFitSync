@@ -85,11 +85,20 @@ public class MemberServiceImple implements MemberService {
     public List<ReviewVO> getReviewsByMemberIdx(int memberIdx) {
     	return mapper.selectReviewsByTrainerIdx(memberIdx);
     }
-    // 트레이너 프로필 수정
+    
     @Override
     @Transactional
     public void updateTrainerProfile(MemberVO member) {
-    	mapper.updateTrainerProfile(member);
+        System.out.println(">>> 서비스 메서드 진입 확인");
+        try {
+            System.out.println(">>> Try 블록 진입 확인");
+            mapper.updateTrainerProfile(member);
+            System.out.println(">>> 업데이트 성공");
+        } catch (Exception e) {
+            System.out.println(">>> 예외 발생");
+            e.printStackTrace();
+        }
+        System.out.println(">>> 메서드 종료");
     }
     
 	// 트레이너 목록 가져오기

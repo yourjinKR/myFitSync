@@ -29,7 +29,7 @@ const TrainerDetailView = ({ loginUserId, loginUserType }) => {
           availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
           priceBase: data.member_price,
           reviewList: data.reviews || [],
-          quote: data.member_quote || '',
+          intro: data.member_intro || '',
           specialties: data.specialties || [],
           reviews: data.reviewList?.length || 0
         };
@@ -40,8 +40,6 @@ const TrainerDetailView = ({ loginUserId, loginUserType }) => {
   }, [trainerIdx]);
 
   const isLoggedIn = !!loginUserId;
-  // const isOwner = loginUserId === trainer?.member_idx;
-  // const isTrainer = loginUserType === 'trainer';
 
   const handleConsultClick = () => {
     if (!isLoggedIn) {
@@ -53,22 +51,47 @@ const TrainerDetailView = ({ loginUserId, loginUserType }) => {
 
 const handleEditToggle = async () => {
   if (isEditMode) {
+    const payload = {
+      member_idx: trainerIdx,
+      member_intro: editedTrainer.intro || '',
+      member_info: editedTrainer.description || '',
+      member_price: editedTrainer.priceBase || 0,
+      member_info_image: editedTrainer.images?.join(',') || '',
+    };
+
+    console.log('[프론트] 수정 요청 데이터:', payload);
+
     try {
-      await axios.put(`/trainer/update/${trainerIdx}`, {
-        member_quote: editedTrainer.quote,
-        member_info: editedTrainer.description,
-        member_price: editedTrainer.priceBase,
-        member_info_image: editedTrainer.images.join(','),
-      });
+      const res = await axios.put(
+        `/trainer/update/${trainerIdx}`,
+        payload,
+        { withCredentials: true }
+      );
+
+      console.log('[프론트] 응답 수신:', res.data);
+
       alert('수정이 완료되었습니다.');
-      setTrainer(editedTrainer); // 기존 상태 갱신
+      setTrainer(editedTrainer);
+
     } catch (err) {
-      console.error('수정 실패:', err);
+      console.error('[프론트] 수정 실패:', err);
+
+      if (err.response) {
+        console.error('응답 상태:', err.response.status);
+        console.error('응답 데이터:', err.response.data);
+      } else {
+        console.error('네트워크 문제:', err.message);
+      }
+
       alert('수정 중 오류가 발생했습니다.');
     }
   }
+
   setIsEditMode(!isEditMode);
 };
+
+
+
 
   const handleChange = (field, value) => {
     setEditedTrainer(prev => ({

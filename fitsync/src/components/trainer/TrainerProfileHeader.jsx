@@ -76,12 +76,12 @@ const TrainerProfileHeader = ({ trainer, isEdit, onChange }) => {
       {isEdit ? (
         <QuoteInput
           type="text"
-          value={trainer.quote || ''}
-          onChange={(e) => onChange('quote', e.target.value)}
+          value={trainer.intro || ''}
+          onChange={(e) => onChange('intro', e.target.value)}
           placeholder="한줄소개를 입력하세요"
         />
       ) : (
-        <Quote>"{trainer.quote}"</Quote>
+        <Quote>"{trainer.intro}"</Quote>
       )}
 
       <SummaryBox>
