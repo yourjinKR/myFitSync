@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ButtonSubmit, Input } from '../../styles/FormStyles';
 import userMock from '../../mock/userMock';
+import { calculateAge } from '../../util/utilFunc';
 
 const initialMemberData = {
     member : {
@@ -41,6 +42,7 @@ const AItest = () => {
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
     const [resultText, setResultText] = useState('');
     const [memberData, setMemberData] = useState(initialMemberData);
+    const [memberIndex, setMemberIndex] = useState(0);
     // 추가 질문 나이, 분할 수... 등등
     const [additionalMemberData, setAdditionalMemberData] = useState({split : null});
 
@@ -53,6 +55,11 @@ const AItest = () => {
         const {name, value} = e.target;
 
         setAdditionalMemberData({...additionalMemberData, [name]: value});
+    }
+
+    const handlmemberIndex = (e) => {
+        const {value} = e.target;
+        setMemberIndex(value);
     }
 
     useEffect(() => {
@@ -86,14 +93,14 @@ const AItest = () => {
 
         const startTime = performance.now();
 
-        const infoParts = [];
-        const { member, body } = memberData || {};
+        // const infoParts = [];
+        // const { member, body } = memberData || {};
         // DUMMY USER DATA
-        // const { member, body } = userMock[20] || {};
-        // console.log('memberData:', userMock[20]);
+        const { member, body } = userMock[memberIndex] || {};
+        console.log('memberData:', userMock[memberIndex]);
 
         const userInfo = {
-            // name: member?.member_name || null,
+            name: member?.member_name || null,
             // type: member?.member_type || null,
             // activity_area: member?.member_activity_area || null,
             // day: member?.member_day || null,
@@ -104,8 +111,8 @@ const AItest = () => {
 
             height: body?.body_height || null,
             weight: body?.body_weight || null,
-            age: 26,  // 나이는 임시값이므로 수정 필요
-            gender : '남성',
+            age: calculateAge(member?.member_birth),  // 나이는 임시값이므로 수정 필요
+            gender : member?.member_gender, // 임시 입력
             bmi: body?.body_bmi || null,
             fat: body?.body_fat || null,
             fat_percentage: body?.body_fat_percentage || null,
@@ -152,6 +159,12 @@ const AItest = () => {
                 value={additionalMemberData.split}
                 placeholder="분할 수 (예: 4)"
                 onChange={handleAdditionalData} />
+            <Input 
+                type="number"
+                name="index"
+                value={memberIndex}
+                placeholder="멤버 인덱스"
+                onChange={handlmemberIndex} />
             <ButtonSubmit onClick={testAPI}>전송</ButtonSubmit>
         </div>
     );
