@@ -24,6 +24,11 @@ function parseApiLogData(apiLogItem) {
     try {
         const parsedPrompt = JSON.parse(apiLogItem.apilog_prompt);
         const parsedResponse = JSON.parse(apiLogItem.apilog_response);
+        // 응답 - 호출 = 답변 속도
+        const response_time = new Date(apiLogItem.apilog_response_time).getTime();
+        const apilog_request_time = new Date(apiLogItem.apilog_request_time).getTime();
+        apiLogItem.apilog_time = (apiLogItem.apilog_response_time - apiLogItem.apilog_request_time) / 1000; // 초 단위로 변환
+
         let parsedUserMassage = null;
         if (isVersionAtLeast(version, "0.0.7")) {
             // 0.0.7 이상이면 실행
@@ -34,7 +39,8 @@ function parseApiLogData(apiLogItem) {
             ...apiLogItem,
             parsed_prompt: parsedPrompt,
             parsed_response: parsedResponse,
-            parsed_userMassage: parsedUserMassage
+            parsed_userMassage: parsedUserMassage,
+            apilog_total_time: (response_time - apilog_request_time) / 1000 // 초 단위로 변환
         };
     } catch (error) {
         console.error('JSON 파싱 오류:', error);
@@ -176,7 +182,7 @@ const AdminApiContainer = () => {
                                             <Td>{log.apilog_version}</Td>
                                             <Td><StatusTag status={log.apilog_status}>{log.apilog_status}</StatusTag></Td>
                                             <Td>{(log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0)}</Td>
-                                            <Td>{new Date(log.apilog_request_time).toLocaleString()}</Td>
+                                            <Td>{log.apilog_total_time}초</Td>
                                             <Td>
                                                 <button onClick={() => setSelectedLog(log)} style={{ color: '#4f46e5' }}>상세보기</button>
                                             </Td>
@@ -226,7 +232,7 @@ const AdminApiContainer = () => {
                                                 <ul style={{ paddingLeft: '1rem' }}>
                                                 {routine.exercises.map((ex, i) => (
                                                     <Exercise key={i}>
-                                                    • {ex.pt_name}: {ex.set_volume}kg × {ex.set_count}회 × {ex.set_num}세트
+                                                    • {ex.pt_name}: {ex.set_volume} × {ex.set_count}회 × {ex.set_num}세트
                                                     </Exercise>
                                                 ))}
                                                 </ul>

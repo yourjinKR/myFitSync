@@ -105,6 +105,7 @@ const AItest = () => {
             height: body?.body_height || null,
             weight: body?.body_weight || null,
             age: 26,  // 나이는 임시값이므로 수정 필요
+            gender : '남성',
             bmi: body?.body_bmi || null,
             fat: body?.body_fat || null,
             fat_percentage: body?.body_fat_percentage || null,

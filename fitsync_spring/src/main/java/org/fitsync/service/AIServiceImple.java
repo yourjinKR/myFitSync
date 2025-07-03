@@ -42,10 +42,18 @@ public class AIServiceImple implements AIService {
 	        .collect(Collectors.joining(", ", "[", "]"));
 	    return jsonArray;
 	}
+	
+	public String getWorkoutNamesCommaSeparated() {
+	    List<String> names = ptMapper.getWorkOutName();
+	    return names.stream()
+	                .collect(Collectors.joining(", "));
+	}
+	
 
     @Override
     public String requestAIResponse(String userMessage) throws IOException {
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
+        String workoutList = getWorkoutNamesCommaSeparated();
 
         String content = "";
         String status = "success";
@@ -53,13 +61,14 @@ public class AIServiceImple implements AIService {
         int inputTokens = 0;
         int outputTokens = 0;
         Timestamp responseTime = null;
-        String apiModel = "gpt-3.5-turbo";
+        String apiModel = "gpt-4o";
 
         // 1. 메시지 구성
         String systemContent =
 		    "너는 퍼스널 트레이너야. 아래 사용자 정보(JSON)를 기반으로, 분할 루틴을 추천해.\n\n" +
 		    "사용자 정보는 다음 필드를 포함해:\n" +
 		    "- age: 사용자 나이 (정수)\n" +
+		    "- gender : 성별 (남성, 여성)" +
 		    "- height: 키 (cm)\n" +
 		    "- weight: 몸무게 (kg)\n" +
 		    "- bmi: 체질량지수\n" +
@@ -71,12 +80,13 @@ public class AIServiceImple implements AIService {
 		    "- day: 운동 가능한 요일 (예: 월, 수, 금)\n" +
 		    "- time: 운동 가능한 시간대 (예: 오전, 오후, 저녁)\n" +
 		    "- split: 사용자가 원하는 루틴 분할 수 (예: 3이면 3분할 루틴 생성)\n\n" +
-		    "이 정보들을 기반으로 루틴을 작성하고, 응답은 반드시 JSON 형식으로만 작성해. 설명은 포함하지 마.\n\n" +
+		    "이 정보들을 기반으로 루틴을 작성하고, 응답은 반드시 JSON 형식으로만 작성하고, 어떤 설명이나 텍스트도 포함 금지.\n" +
 		    "루틴은 분할 수에 맞춰 나눠야 하며, 각 루틴은 운동 4~6개, 1시간 분량으로 구성해.\n" +
-		    "복합운동은 제외하고, 전문가들이 사용하는 공식 운동명만 사용해.\n" +
-		    "각 운동은 아래 항목을 포함해야 해:\n" +
+		    "운동 목록은 다음과 같으며 아래 중에서만 선택해.\n" +
+		    "운동 목록  :" + workoutList +"\n" +
+		    "각 운동은 아래 항목을 포함해야 해:\n" + 
 		    "- pt_name: 운동 이름\n" +
-		    "- set_kg: 중량\n" +
+		    "- set_volume: 중량 또는 시간 (중량이 필요한 운동은 숫자만 입력하고 단위 없이 kg 기준, 유산소 운동과 같이 시간이 필요한 경우 초 단위로 입력하되 단위 생략. 반드시 숫자로만 출력.)\n" +
 		    "- set_count: 횟수\n" +
 		    "- set_num: 세트 수\n\n" +
 		    "형식 예시:\n" +
@@ -84,15 +94,15 @@ public class AIServiceImple implements AIService {
 		    "  {\n" +
 		    "    \"routine_name\": \"가슴 등 루틴\",\n" +
 		    "    \"exercises\": [\n" +
-		    "      {\"pt_name\": \"벤치프레스\", \"set_kg\": 60, \"set_count\": 10, \"set_num\": 4},\n" +
-		    "      {\"pt_name\": \"랫풀다운\", \"set_kg\": 50, \"set_count\": 10, \"set_num\": 4}\n" +
+		    "      {\"pt_name\": \"벤치프레스\", \"set_volume\": 60, \"set_count\": 10, \"set_num\": 4},\n" +
+		    "      {\"pt_name\": \"랫풀다운\", \"set_volume\": 50, \"set_count\": 10, \"set_num\": 4}\n" +
 		    "    ]\n" +
 		    "  },\n" +
 		    "  {\n" +
 		    "    \"routine_name\": \"하체 루틴\",\n" +
 		    "    \"exercises\": [\n" +
-		    "      {\"pt_name\": \"스쿼트\", \"set_kg\": 80, \"set_count\": 10, \"set_num\": 4},\n" +
-		    "      {\"pt_name\": \"레그프레스\", \"set_kg\": 100, \"set_count\": 10, \"set_num\": 4}\n" +
+		    "      {\"pt_name\": \"스쿼트\", \"set_volume\": 80, \"set_count\": 10, \"set_num\": 4},\n" +
+		    "      {\"pt_name\": \"레그프레스\", \"set_volume\": 100, \"set_count\": 10, \"set_num\": 4}\n" +
 		    "    ]\n" +
 		    "  }\n" +
 		    "]";
@@ -162,7 +172,7 @@ public class AIServiceImple implements AIService {
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.0.9");
+            apiLog.setApilog_version("0.0.13");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 
