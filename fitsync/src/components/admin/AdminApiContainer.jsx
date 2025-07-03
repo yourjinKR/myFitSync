@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, SectionContent, RoutineCard, Exercise } from '../../styles/chartStyle';
 
 // 버전 비교 함수
@@ -19,7 +19,6 @@ function isVersionAtLeast(current, target) {
 /** 로그 JSON 파싱 함수 */
 function parseApiLogData(apiLogItem) {
     const version = apiLogItem.apilog_version;
-    console.log(version);
     
     try {
         const parsedPrompt = JSON.parse(apiLogItem.apilog_prompt);
@@ -54,6 +53,22 @@ const AdminApiContainer = () => {
     const [selectedLog, setSelectedLog] = useState(null);
     const [filter, setFilter] = useState('all');
     const [dateRange, setDateRange] = useState('today');
+
+    const [rawData, setRawData] = useState(null); // 백엔드에서 받은 JSON 문자열
+
+    // 컴포넌트 최초 마운트 시 운동명 리스트 요청
+    useEffect(() => {
+        const fetchWorkoutNames = async () => {
+        try {
+            const response = await axios.get('/ai/getTextReact'); // 서버 주소에 맞게 조정
+            setRawData(response.data); // 문자열 형태의 JSON 배열: '["벤치프레스", "랫풀다운", ...]'
+        } catch (error) {
+            console.error('운동명 목록 요청 실패:', error);
+        }
+    };
+
+        fetchWorkoutNames();
+    }, []); // 최초 렌더링에 한 번만 실행    
 
     // 모든 API 로그를 가져오는 함수
     const getAllApi = async () => {
@@ -230,11 +245,15 @@ const AdminApiContainer = () => {
                                                 {routine.routine_name}
                                                 </h5>
                                                 <ul style={{ paddingLeft: '1rem' }}>
-                                                {routine.exercises.map((ex, i) => (
-                                                    <Exercise key={i}>
-                                                    • {ex.pt_name}: {ex.set_volume} × {ex.set_count}회 × {ex.set_num}세트
-                                                    </Exercise>
-                                                ))}
+                                                {routine.exercises.map((ex, i) => {
+                                                    const isValid = rawData.includes(ex.pt_name); // 이 위치에서 판단
+
+                                                    return (
+                                                        <Exercise key={i} style={{ color: isValid ? 'inherit' : 'red' }}>
+                                                            {isValid ? '✅' : '❌'} {ex.pt_name}: {ex.set_volume} × {ex.set_count}회 × {ex.set_num}세트
+                                                        </Exercise>
+                                                    );
+                                                })}
                                                 </ul>
                                             </RoutineCard>
                                             ))
