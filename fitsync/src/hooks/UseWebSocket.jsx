@@ -16,7 +16,10 @@ export const useWebSocket = () => {
       const stompClient = new Client({
         webSocketFactory: () => {
           console.log('SockJS 연결 생성');
-          return new SockJS('http://localhost:7070/chat');  // SockJS를 통한 WebSocket 연결 (폴백 지원)
+          // SockJS를 통한 WebSocket 연결 (폴백 지원)
+          return new SockJS('http://localhost:7070/chat', null, { 
+            withCredentials: true
+          });
         },
         connectHeaders: {},
         debug: function (str) {
@@ -135,6 +138,7 @@ export const useWebSocket = () => {
         body: JSON.stringify({
           message_idx,
           room_idx
+          // receiver_idx 제거 - 백엔드에서 세션으로 처리
         })
       });
       console.log('읽음 처리 완료');

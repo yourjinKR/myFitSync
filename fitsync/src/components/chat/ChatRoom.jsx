@@ -244,6 +244,7 @@ const ChatRoom = () => {
     // 메시지 데이터 구성
     const messageData = {
       room_idx: parseInt(roomId),
+      // sender_idx: user.member_idx,
       receiver_idx: otherMemberIdx,
       message_content: messageContent,
       message_type: messageType
