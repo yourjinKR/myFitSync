@@ -68,7 +68,7 @@ const MoreButton = styled.button`
   padding: 0;
 `;
 
-const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange }) => {
+const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, onLessonsChange }) => {
   return (
     <>
       {/* 소개 + 이미지 */}
@@ -116,9 +116,9 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange }) => {
 
       {/* 가격표 */}
       <TrainerPriceList
-        priceBase={trainer.priceBase}
+        lessons={lessons || []}
         isEdit={isEdit}
-        onChange={onChange}
+        onLessonsChange={onLessonsChange}
       />
     </>
   );

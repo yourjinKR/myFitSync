@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { MdEdit, MdCheck } from 'react-icons/md'; // 수정/저장 아이콘
 
 const ProfileHeader = styled.div`
   text-align: center;
@@ -15,12 +16,32 @@ const ProfileImage = styled.div`
   border-radius: 50%;
 `;
 
+const NameWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+`;
+
 const Name = styled.h2`
   font-size: 1.7rem;
   font-weight: bold;
   margin-bottom: 8px;
 `;
 
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.6rem;
+  color: #007aff;
+  padding: 0;
+  margin-bottom: 8px;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
 
 const ReviewCount = styled.p`
   color: #666;
@@ -65,17 +86,30 @@ const SummaryItem = styled.div`
   gap: 8px;
 `;
 
-const TrainerProfileHeader = ({ trainer, isEdit, onChange }) => {
+const TrainerProfileHeader = ({ trainer, isEdit, onChange, onEditToggle, loginUserId }) => {
   return (
     <ProfileHeader>
       <ProfileImage />
-      <Name>{trainer.name} 선생님</Name>
+
+      <NameWrapper>
+        <Name>{trainer.name} 선생님</Name>
+
+        {console.log('[디버그] loginUserId:', loginUserId)}
+        {console.log('[디버그] trainer.member_idx:', trainer?.member_email)}
+
+        {loginUserId && trainer?.member_email && loginUserId === trainer.member_email && (
+          <EditButton onClick={onEditToggle} title={isEdit ? '저장하기' : '수정하기'}>
+            {isEdit ? <MdCheck /> : <MdEdit />}
+          </EditButton>
+        )}
+      </NameWrapper>
+
       <ReviewCount>⭐ 후기 {trainer.reviews}개</ReviewCount>
 
       {isEdit ? (
         <QuoteInput
           type="text"
-          value={trainer.intro ?? ''}  // null도 대비
+          value={trainer.intro ?? ''}
           onChange={(e) => onChange('intro', e.target.value)}
           placeholder="한줄소개를 입력하세요"
         />

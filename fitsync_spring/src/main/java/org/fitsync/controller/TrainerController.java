@@ -48,7 +48,6 @@ public class TrainerController {
         return ResponseEntity.ok(profile);
     }
     
-    // 트레이너 프로필 수정
     @PutMapping("/update/{trainerIdx}")
     public ResponseEntity<Map<String, Object>> updateTrainer(
         @PathVariable int trainerIdx,
@@ -58,6 +57,9 @@ public class TrainerController {
         Map<String, Object> result = new HashMap<>();
 
         Object sessionIdx = session.getAttribute("member_idx");
+        System.out.println("[디버그] 세션 상태: " + session);
+        System.out.println("[디버그] 세션 member_idx: " + sessionIdx);
+
         if (sessionIdx == null) {
             result.put("success", false);
             result.put("msg", "인증 정보 없음");

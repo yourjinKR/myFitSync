@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import TrainerCalendarView from './TrainerCalendarView'; // 기존 TrainerMain 분리된 컴포넌트로 저장
-import MemberManageView from './MemberManageView'; // 너가 만든 회원 관리 UI 컴포넌트
+import MemberManageView from './MemberManageView';
 
 const Wrapper = styled.div`
   padding: 3rem;

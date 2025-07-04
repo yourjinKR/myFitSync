@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { MdChat } from 'react-icons/md';
+
 import TrainerProfileHeader from './TrainerProfileHeader';
 import TrainerIntroSection from './TrainerIntroSection';
 import TrainerReviewSection from './TrainerReviewSection';
 
-const TrainerDetailView = ({ loginUserId, loginUserType }) => {
+const TrainerDetailView = () => {
   const { trainerIdx } = useParams();
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.user);
+  const loginUserId = user?.member_email;
 
   const [trainer, setTrainer] = useState(null);
   const [editedTrainer, setEditedTrainer] = useState(null);
@@ -16,31 +20,33 @@ const TrainerDetailView = ({ loginUserId, loginUserType }) => {
   const [activeTab, setActiveTab] = useState('소개');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-useEffect(() => {
-  axios.get(`/trainer/profile/${trainerIdx}`)
-    .then((res) => {
-      console.log("새로고침 시 서버 응답:", res.data);
+  useEffect(() => {
+    axios.get(`/trainer/profile/${trainerIdx}`)
+      .then((res) => {
+        const data = res.data;
 
-      const data = res.data;
-      const trainerData = {
-        member_idx: data.member_idx,
-        name: data.member_name,
-        images: data.member_info_image ? data.member_info_image.split(',') : [],
-        description: data.member_info,
-        certifications: data.awards ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`) : [],
-        availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
-        priceBase: data.member_price,
-        reviewList: data.reviews || [],
-        intro: data.member_intro || '',
-        specialties: data.specialties || [],
-        reviews: data.reviewList?.length || 0
-      };
-
-      setTrainer(trainerData);
-      setEditedTrainer(trainerData);
-    })
-    .catch(console.error);
-}, [trainerIdx]);
+        const trainerData = {
+          member_idx: data.member_idx,
+          member_email: data.member_email,
+          name: data.member_name,
+          images: data.member_info_image ? data.member_info_image.split(',') : [],
+          description: data.member_info,
+          certifications: data.awards ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`) : [],
+          availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
+          priceBase: data.member_price,
+          reviewList: data.reviews || [],
+          intro: data.member_intro || '',
+          specialties: data.specialties || [],
+          lessons: data.lessons || []
+        };
+        console.log(data);
+        
+        
+        setTrainer(trainerData);
+        setEditedTrainer(trainerData);
+      })
+      .catch(console.error);
+  }, [trainerIdx]);
 
   const isLoggedIn = !!loginUserId;
 
@@ -52,42 +58,32 @@ useEffect(() => {
     }
   };
 
-const handleEditToggle = async () => {
-  if (isEditMode) {
-    const payload = {
-      member_idx: trainerIdx,
-      member_intro: editedTrainer.intro || '',
-      member_info: editedTrainer.description || '',
-      member_price: editedTrainer.priceBase || 0,
-      member_info_image: editedTrainer.images?.join(',') || '',
-    };
+  const handleEditToggle = async () => {
+    if (isEditMode) {
+      const payload = {
+        member_idx: trainerIdx,
+        member_intro: editedTrainer.intro || '',
+        member_info: editedTrainer.description || '',
+        member_price: editedTrainer.priceBase || 0,
+        member_info_image: editedTrainer.images?.join(',') || '',
+        lessons: editedTrainer.lessons || [],
+      };
 
-    try {
-      const res = await axios.put(
-        `/trainer/update/${trainerIdx}`,
-        payload,
-        { withCredentials: true }
-      );
-      console.log('[프론트] 수정 성공:', res.data);
-      alert('수정이 완료되었습니다.');
-      setTrainer(editedTrainer);
+      try {
+        const res = await axios.put(`/trainer/update/${trainerIdx}`, payload, {
+          withCredentials: true
+        });
 
-    } catch (err) {
-      console.error('[프론트] 수정 실패:', err);
-
-      if (err.response) {
-        console.error('응답 상태:', err.response.status);
-        console.error('응답 데이터:', err.response.data);
-      } else {
-        console.error('네트워크 문제:', err.message);
+        alert('수정이 완료되었습니다.');
+        setTrainer(editedTrainer);
+      } catch (err) {
+        alert('수정 중 오류가 발생했습니다.');
+        console.error('[프론트] 수정 실패:', err);
       }
-
-      alert('수정 중 오류가 발생했습니다.');
     }
-  }
 
-  setIsEditMode(!isEditMode);
-};
+    setIsEditMode(!isEditMode);
+  };
 
   const handleChange = (field, value) => {
     setEditedTrainer(prev => ({
@@ -104,48 +100,31 @@ const handleEditToggle = async () => {
         trainer={isEditMode ? editedTrainer : trainer}
         isEdit={isEditMode}
         onChange={handleChange}
+        onEditToggle={handleEditToggle}
+        loginUserId={loginUserId}
       />
-
-    <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
-      <button onClick={handleEditToggle}>
-        {isEditMode ? '저장하기' : '수정하기'}
-      </button>
-    </div>
 
       {/* 탭 메뉴 */}
       <div style={{ display: 'flex', borderBottom: '1px solid #ccc', marginTop: '2rem' }}>
-        <button
-          style={{
-            flex: 1,
-            padding: '1rem 0',
-            border: 'none',
-            background: 'none',
-            fontWeight: 600,
-            fontSize: '1.2rem',
-            color: activeTab === '소개' ? '#007aff' : '#999',
-            borderBottom: activeTab === '소개' ? '0.2rem solid #007aff' : 'transparent',
-            cursor: 'pointer',
-          }}
-          onClick={() => setActiveTab('소개')}
-        >
-          소개
-        </button>
-        <button
-          style={{
-            flex: 1,
-            padding: '1rem 0',
-            border: 'none',
-            background: 'none',
-            fontWeight: 600,
-            fontSize: '1.2rem',
-            color: activeTab === '후기' ? '#007aff' : '#999',
-            borderBottom: activeTab === '후기' ? '0.2rem solid #007aff' : 'transparent',
-            cursor: 'pointer',
-          }}
-          onClick={() => setActiveTab('후기')}
-        >
-          후기
-        </button>
+        {['소개', '후기'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              padding: '1rem 0',
+              border: 'none',
+              background: 'none',
+              fontWeight: 600,
+              fontSize: '1.2rem',
+              color: activeTab === tab ? '#007aff' : '#999',
+              borderBottom: activeTab === tab ? '0.2rem solid #007aff' : 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
       {/* 섹션 렌더링 */}
@@ -155,39 +134,41 @@ const handleEditToggle = async () => {
           isEdit={isEditMode}
           onChange={handleChange}
           onMoreClick={() => setActiveTab('후기')}
+          lessons={isEditMode ? editedTrainer.lessons : trainer.lessons}
+          onLessonsChange={(newLessons) => handleChange('lessons', newLessons)}
         />
       )}
-      {activeTab === '후기' && (
-        <TrainerReviewSection reviews={trainer.reviewList} />
+      {activeTab === '후기' && <TrainerReviewSection reviews={trainer.reviewList} />}
+
+      {/* 상담 버튼 */}
+      {loginUserId !== trainer.member_email && (
+        <button
+          onClick={handleConsultClick}
+          style={{
+            position: 'fixed',
+            bottom: '1.5rem',
+            right: '1.5rem',
+            width: '4rem',
+            height: '4rem',
+            borderRadius: '50%',
+            backgroundColor: '#007aff',
+            color: 'white',
+            border: 'none',
+            boxShadow: '0 0.2rem 0.6rem rgba(0,0,0,0.2)',
+            cursor: 'pointer',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '2rem',
+          }}
+          title="상담하기"
+        >
+          <MdChat />
+        </button>
       )}
 
-      {/* 고정 상담 버튼 */}
-      <button
-        onClick={handleConsultClick}
-        style={{
-          position: 'fixed',
-          bottom: '1.5rem',
-          right: '1.5rem',
-          width: '4rem',
-          height: '4rem',
-          borderRadius: '50%',
-          backgroundColor: '#007aff',
-          color: 'white',
-          border: 'none',
-          boxShadow: '0 0.2rem 0.6rem rgba(0,0,0,0.2)',
-          cursor: 'pointer',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '2rem',
-        }}
-        title="상담하기"
-      >
-        <MdChat />
-      </button>
-
-      {/* 로그인 유도 모달 */}
+      {/* 로그인 모달 */}
       {showLoginModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
