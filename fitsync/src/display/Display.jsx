@@ -54,7 +54,7 @@ const Display = () => {
   };
   
   const isShow = 
-    !location.pathname.includes("/routines/detail") &&
+    !location.pathname.includes("/routine/detail") &&
     location.pathname !== '/routine/add' && 
     location.pathname !== '/routine/set';
 

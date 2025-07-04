@@ -1,5 +1,7 @@
 package org.fitsync.mapper;
 
-public interface RecordSetMapper {
+import java.util.Map;
 
+public interface RecordSetMapper {
+	public int insertSetRecord(Map<String, Object> map);
 }

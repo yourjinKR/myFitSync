@@ -3,5 +3,14 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.RecordMapper">
-
+	<insert id="insertRecord" parameterType="org.fitsync.domain.RecordVO">
+		INSERT INTO RECORD VALUES(
+		    RECORD_SEQ.nextval,
+		    #{member_idx},
+		    sysdate,
+		    #{pt_idx},
+		    #{routine_memo},
+		    #{routine_name}
+		)
+	</insert>
 </mapper>

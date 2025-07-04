@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
 
@@ -36,12 +36,12 @@ const ListHeader = styled.div`
   display:flex;
   width:100%;
   div { 
-    flex: 3;
+    flex: 4;
     font-size: 1.8rem;
     font-weight:bold;
     text-align:center;
   }
-  div:first-child, div:last-child{
+  div:first-child{
     flex: 2;
   }
 `;
@@ -58,7 +58,7 @@ const ListBody = styled.div`
     font-size: 1.8rem;
   } 
   .swipeable-list-item__content > input {
-    flex:3;
+    flex:4;
     width:100%;
     padding: 5px 0;
     text-indent: 15px;
@@ -93,11 +93,15 @@ const RoutineTop = styled.div`
 
 const RoutineDetail = () => {
   const [data, setData] = useState(null);
+  const [init, setInit] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { routine_list_idx } = useParams();
- 
+  const { setNewData } = useOutletContext();
+  
   useEffect(() => {
-    console.log(" data", data)
+    if(init !== data){
+      setNewData(data);
+    }
   },[data]);
   
   useEffect(() => {
@@ -109,6 +113,7 @@ const RoutineDetail = () => {
         const routineData = response.data;
         if (routineData.success) {
           setData(routineData.vo);
+          setInit(routineData.vo);
         } else {
           alert(routineData.message);
         }
@@ -208,7 +213,6 @@ const RoutineDetail = () => {
             <div>번호</div>
             <div>KG</div>
             <div>횟수</div>
-            <div>완료</div>
           </ListHeader>
           <ListBody>
             <SwipeableList actionDelay={0}>
@@ -232,9 +236,6 @@ const RoutineDetail = () => {
                       handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
                     }
                   />
-                  <div>
-                    <input type="checkbox" name="" id="" />
-                  </div>
                 </SwipeableListItem>
               ))}
             </SwipeableList>

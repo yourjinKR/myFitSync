@@ -10,6 +10,7 @@ import org.fitsync.domain.PtVO;
 import org.fitsync.domain.RoutineListVO;
 import org.fitsync.domain.RoutineMemberDTO;
 import org.fitsync.service.PtServiceImple;
+import org.fitsync.service.RecordServiceImple;
 import org.fitsync.service.RoutineServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,8 @@ public class RoutineController {
 	private RoutineServiceImple service;
 	@Autowired
 	private PtServiceImple ptservice;
+	@Autowired
+	private RecordServiceImple rcservice;
 	@Autowired
 	private JwtUtil jwtUtil;
 	
@@ -125,6 +128,27 @@ public class RoutineController {
 			result.put("msg", "루틴 삭제에 실패하였습니다.");
 		}
 		return ResponseEntity.ok(result);
+	}
+	
+	// 루틴 기록
+	@PostMapping("/record/{routine_list_idx}")
+	public ResponseEntity<?> insertRecord(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
+		Map<String, Object> result = new HashMap<>();
+		int member_idx = (int) session.getAttribute("member_idx"); 
+		service.updateRoutine(body, member_idx);							
+//		if(rcservice.insertRecord(body, member_idx)) {
+//			if((boolean) body.get("update")) {
+//			}else {
+//				result.put("success", true);
+//				result.put("msg", "기록이 등록되었습니다.");				
+//			}
+//		}else {
+//			result.put("success", false);
+//			result.put("msg", "운동 기록이 실패하였습니다.");
+//		}
+		
+		return ResponseEntity.ok(result);
+		
 	}
 	
 }

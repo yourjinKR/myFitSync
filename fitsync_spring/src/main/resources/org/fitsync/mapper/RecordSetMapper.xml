@@ -3,5 +3,18 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.RecordSetMapper">
-
+    <insert id="insertSetRecord" parameterType="map">
+        INSERT INTO RECORDSET (
+            RECORD_IDX,
+            SET_NUM,
+            SET_VOLUME,
+            SET_COUNT
+        ) VALUES (
+            (SELECT Max(RECORD_IDX) FROM RECORD 
+             WHERE MEMBER_IDX = #{member_idx}),
+            ${vo.set_num},
+            ${vo.set_volume},
+            ${vo.set_count}
+        )
+    </insert>
 </mapper>

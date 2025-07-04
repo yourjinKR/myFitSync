@@ -1,5 +1,7 @@
 package org.fitsync.mapper;
 
-public interface RecordMapper {
+import org.fitsync.domain.RecordVO;
 
+public interface RecordMapper {
+	public int insertRecord(RecordVO vo);
 }
