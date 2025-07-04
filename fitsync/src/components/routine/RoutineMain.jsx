@@ -27,6 +27,9 @@ const HeaderCTA = styled.button`
   background:#9292ff;
   padding:5px 15px;
   font-size:1.4rem;
+  &:disabled {
+    background: #ccc; 
+  }
 `;
 
 const RoutineMain = () => {
@@ -82,7 +85,7 @@ const RoutineMain = () => {
             <p>루틴 생성하기</p>
             {
               location.pathname !== `/routine/detail/${routine_list_idx}` ? 
-              <HeaderCTA onClick={handleDataSubmit}>저장</HeaderCTA>
+              <HeaderCTA disabled={location.pathname !== '/routine/set' ? true : false} onClick={handleDataSubmit}>저장</HeaderCTA>
               :
               <HeaderCTA onClick={handleUpdateSubmit}>마치기</HeaderCTA>
             }

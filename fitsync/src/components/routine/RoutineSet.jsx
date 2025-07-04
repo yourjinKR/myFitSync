@@ -46,26 +46,26 @@ const AddButton = styled.button`
 const RoutineSet = () => {
   const nav = useNavigate();
   const { routineData, setRoutineData } = useOutletContext();
-  // 입력값 별도 관리
-  const [title, setTitle] = useState(routineData.name || "");
 
   useEffect(() => {
     if (routineData.list.length === 0) {
       nav("/routine/add");
     }
-  }, [routineData.list.length, nav]);
+  }, []);
 
   // 입력값만 변경
   const handleTitleChange = (e) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    
+    // routineData.routine_name도 함께 변경
+    setRoutineData(prevData => ({
+        ...prevData,
+        routine_name: newTitle
+    }));
   };
 
   // 저장/이동 시에만 routineData에 반영
   const handleAddWorkOut = () => {
-    setRoutineData(prev => ({
-      ...prev,
-      name: title
-    }));
     nav("/routine/add");
   };
 
@@ -78,9 +78,9 @@ const RoutineSet = () => {
     <Wrapper>
       <H3Input
         type="text"
-        value={title}
+        value={routineData.routine_name || ''}
         onChange={handleTitleChange}
-        placeholder="루틴명을 입력하세요"
+        placeholder="루틴 제목을 입력하세요"
       />
       <div>
         {list.map((data) =>
