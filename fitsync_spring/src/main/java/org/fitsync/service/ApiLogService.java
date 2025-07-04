@@ -10,4 +10,6 @@ public interface ApiLogService {
     ApiLogVO selectApiLogById(int apilog_idx);
     
     List<ApiLogVO> selectApiList();
+    
+    void updateExceptionReason(ApiLogVO log);
 }

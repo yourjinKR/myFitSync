@@ -154,7 +154,8 @@ const AdminApiContainer = () => {
                     <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
                         <option value="all">전체</option>
                         <option value="success">성공</option>
-                        <option value="fail">오류</option>
+                        <option value="error">오류</option>
+                        <option value="exception">예외</option>
                     </Select>
                 </div>
 
@@ -237,7 +238,7 @@ const AdminApiContainer = () => {
                                 </SectionContent>
                             </Section>
 
-                            {selectedLog.apilog_status === 'success' && selectedLog.parsed_response && (
+                            {(selectedLog.apilog_status === 'success' || selectedLog.apilog_status === 'exception') && selectedLog.parsed_response && (
                                 <Section>
                                     <SectionTitle>AI 응답 (운동 루틴):</SectionTitle>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -249,7 +250,7 @@ const AdminApiContainer = () => {
                                                 </h5>
                                                 <ul style={{ paddingLeft: '1rem' }}>
                                                 {routine.exercises.map((ex, i) => {
-                                                    const isValid = rawData.includes(ex.pt_name); // 이 위치에서 판단
+                                                    const isValid = rawData.includes(ex.pt_name.trim()); // 이 위치에서 판단
 
                                                     return (
                                                         <Exercise key={i} style={{ color: isValid ? 'inherit' : 'red' }}>

@@ -24,4 +24,5 @@ public class ApiLogVO {
     private String apilog_service_type;
     private String apilog_feedback;
     private String apilog_feedback_reason;
+    private String apilog_status_reason;
 }

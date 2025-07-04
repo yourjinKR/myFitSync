@@ -85,9 +85,22 @@ export const StatusTag = styled.span`
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 9999px;
-  background-color: ${props => props.status === 'success' ? '#d1fae5' : '#fee2e2'};
-  color: ${props => props.status === 'success' ? '#065f46' : '#991b1b'};
+
+  background-color: ${props =>
+    props.status === 'success'
+      ? '#d1fae5' // 연두색
+      : props.status === 'exception'
+      ? '#fef9c3' // 연노랑
+      : '#fee2e2'}; // 연분홍 (error)
+
+  color: ${props =>
+    props.status === 'success'
+      ? '#065f46' // 진녹
+      : props.status === 'exception'
+      ? '#92400e' // 진갈색/주황
+      : '#991b1b'}; // 진빨강
 `;
+
 
 export const ModalOverlay = styled.div`
   position: fixed;

@@ -13,11 +13,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.fitsync.domain.ApiLogVO;
+import org.fitsync.domain.ApiResponseDto;
 import org.fitsync.mapper.ApiLogMapper;
 import org.fitsync.mapper.PtMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +33,7 @@ public class AIServiceImple implements AIService {
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
 
     @Autowired
-    private ApiLogMapper aiLogMapper;
+    private ApiLogMapper apiLogMapper;
 	@Autowired
 	private PtMapper ptMapper;
 	
@@ -51,9 +53,10 @@ public class AIServiceImple implements AIService {
 	
 
     @Override
-    public String requestAIResponse(String userMessage) throws IOException {
+    public ApiResponseDto requestAIResponse(String userMessage) throws IOException {
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
         String workoutList = getWorkoutNamesCommaSeparated();
+        Integer logIdx = null;
 
         String content = "";
         String status = "success";
@@ -164,7 +167,7 @@ public class AIServiceImple implements AIService {
         // 로그 저장
         try {
             ApiLogVO apiLog = new ApiLogVO();
-            apiLog.setMember_idx(0); // 임시 ID
+
             apiLog.setApilog_prompt(requestBody);
             apiLog.setApilog_response(content);
             apiLog.setApilog_request_time(requestTime);
@@ -172,11 +175,14 @@ public class AIServiceImple implements AIService {
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.0.14");
+            apiLog.setApilog_version("0.1.0");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 
-            aiLogMapper.insertApiLog(apiLog);
+            apiLogMapper.insertApiLog(apiLog);
+            
+            logIdx = apiLog.getApilog_idx();
+            
         } catch (Exception logEx) {
             System.err.println("로그 저장 실패: " + logEx.getMessage());
         }
@@ -185,7 +191,7 @@ public class AIServiceImple implements AIService {
             throw new IOException("GPT 요청 실패: " + content);
         }
 
-        return content;
+        return new ApiResponseDto(content, logIdx);
     }
 
 }

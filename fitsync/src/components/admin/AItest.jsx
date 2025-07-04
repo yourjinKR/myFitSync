@@ -40,9 +40,10 @@ const AItest = () => {
     const initialValue = {content : '운동 루틴 추천해줘', token : 0};
 
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
-    const [resultText, setResultText] = useState('');
+    const [result, setResult] = useState({});
     const [memberData, setMemberData] = useState(initialMemberData);
     const [memberIndex, setMemberIndex] = useState(0);
+    const [rawData, setRawData] = useState([]);
     // 추가 질문 나이, 분할 수... 등등
     const [additionalMemberData, setAdditionalMemberData] = useState({split : null});
 
@@ -72,7 +73,77 @@ const AItest = () => {
         .catch(error => {
             console.error('Error fetching member data:', error);
         });
+
+        const fetchWorkoutNames = async () => {
+            try {
+                const response = await axios.get('/ai/getTextReact'); // 서버 주소에 맞게 조정
+                setRawData(response.data); // 문자열 형태의 JSON 배열: '["벤치프레스", "랫풀다운", ...]'
+            } catch (error) {
+                console.error('운동명 목록 요청 실패:', error);
+            }
+        }
+        fetchWorkoutNames();
     }, []);
+
+    useEffect(() => {
+        console.log('파싱된 결과 : ', result);
+        const exception = analyzeAIResult(result, additionalMemberData.split, rawData);
+        
+        // exception이 null 아닐 경우
+        if (exception !== null && result.logIdx) {
+            const apilog = {apilog_idx : result.logIdx, apilog_status_reason : exception};
+            updateLogException(apilog);
+            console.log(exception);
+        } else {
+            console.log('정상 처리 !!!');
+        }
+    },[result]);
+
+    /** 로그 업데이트 함수 */
+    const updateLogException = async (log) => {
+        try {
+            await axios.patch('/ai/updateExceptionReason', log)
+                .then((res) => console.log(res.data));
+        } catch (error) {
+            console.error('API 로그 업데이트 실패:', error);
+        }
+    };
+
+    /** AI 응답 결과에서 예외 상황을 분석하여 문자열로 반환 예외가 없으면 null 반환 */
+    function analyzeAIResult(result, userSplit, validWorkoutNames) {
+        console.log('검사 : ', result);
+
+        const errors = [];
+
+        // 1. JSON 구조 검증
+        if (!Array.isArray(result?.content)) {
+            return "invalid_json";
+        }
+
+        // 2. split 분할 수 불일치
+        if (result.content.length !== Number(userSplit)) {
+            errors.push("split_mismatch");
+        }
+
+        // 3. 운동명 유효성 검사
+        const invalidExercises = [];
+
+        result.content.forEach(routine => {
+            if (!Array.isArray(routine.exercises)) return;
+
+            routine.exercises.forEach(ex => {
+            if (!validWorkoutNames.includes(ex.pt_name)) {
+                invalidExercises.push(ex.pt_name);
+            }
+            });
+        });
+
+        if (invalidExercises.length > 0) {
+            errors.push("invalid_exercise: " + invalidExercises.join(", "));
+        }
+
+        return errors.length > 0 ? errors.join("; ") : null;
+    }
 
     const testAPI = () => {
         console.log('실행');
@@ -132,8 +203,11 @@ const AItest = () => {
             const endTime = performance.now();
             const elapsedSeconds = ((endTime - startTime) / 1000).toFixed(6);
             console.log(`응답 시간: ${elapsedSeconds}초`);
-            console.log('AI 응답:', response.data);
-            setResultText(response.data);
+
+            const parsedContent = JSON.parse(response.data.content);
+            const logIdx = response.data.logIdx;
+
+            setResult({content : parsedContent, logIdx : logIdx});
         })
         .catch(error => {
             const endTime = performance.now();

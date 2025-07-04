@@ -27,4 +27,9 @@ public class ApiLogServiceImple implements ApiLogService{
 	public List<ApiLogVO> selectApiList() {
 		return apiLogMapper.selectApiList();
 	}
+	
+	@Override
+	public void updateExceptionReason(ApiLogVO log) {
+		apiLogMapper.updateExceptionReason(log);
+	}
 }
