@@ -24,7 +24,6 @@ public class TrainerProfileDTO {
         this.member_name = vo.getMember_name();
         this.member_image = vo.getMember_image();
         this.member_info = vo.getMember_info();
-        this.member_price = vo.getMember_price();
         this.member_info_image = vo.getMember_info_image();
         this.member_time = vo.getMember_time();
         this.member_intro = vo.getMember_intro();
