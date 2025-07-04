@@ -77,7 +77,8 @@ const AItest = () => {
         const fetchWorkoutNames = async () => {
             try {
                 const response = await axios.get('/ai/getTextReact'); // 서버 주소에 맞게 조정
-                setRawData(response.data); // 문자열 형태의 JSON 배열: '["벤치프레스", "랫풀다운", ...]'
+                const parseList = response.data.map(name => name.replace(/\s+/g, '')); 
+                setRawData(parseList); // 문자열 형태의 JSON 배열: '["벤치프레스", "랫풀다운", ...]'
             } catch (error) {
                 console.error('운동명 목록 요청 실패:', error);
             }
@@ -132,9 +133,10 @@ const AItest = () => {
             if (!Array.isArray(routine.exercises)) return;
 
             routine.exercises.forEach(ex => {
-            if (!validWorkoutNames.includes(ex.pt_name)) {
-                invalidExercises.push(ex.pt_name);
-            }
+                const name = (ex.pt_name.replace(/\s+/g, ''));
+                if (!validWorkoutNames.includes(name)) {
+                    invalidExercises.push(ex.pt_name);
+                }
             });
         });
 

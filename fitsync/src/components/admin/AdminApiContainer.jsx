@@ -62,7 +62,8 @@ const AdminApiContainer = () => {
         const fetchWorkoutNames = async () => {
         try {
             const response = await axios.get('/ai/getTextReact'); // 서버 주소에 맞게 조정
-            setRawData(response.data); // 문자열 형태의 JSON 배열: '["벤치프레스", "랫풀다운", ...]'
+            const parseList = response.data.map(name => name.replace(/\s+/g, '')); 
+            setRawData(parseList); // 문자열 형태의 JSON 배열: '["벤치프레스", "랫풀다운", ...]'
         } catch (error) {
             console.error('운동명 목록 요청 실패:', error);
         }
@@ -250,7 +251,7 @@ const AdminApiContainer = () => {
                                                 </h5>
                                                 <ul style={{ paddingLeft: '1rem' }}>
                                                 {routine.exercises.map((ex, i) => {
-                                                    const isValid = rawData.includes(ex.pt_name.trim()); // 이 위치에서 판단
+                                                    const isValid = rawData.includes(ex.pt_name.replace(/\s+/g, ''));
 
                                                     return (
                                                         <Exercise key={i} style={{ color: isValid ? 'inherit' : 'red' }}>
