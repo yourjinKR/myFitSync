@@ -12,15 +12,14 @@ function parseApiLogData(apiLogItem) {
         const parsedResponse = JSON.parse(apiLogItem.apilog_response);
         // 응답 - 호출 = 답변 속도
         const response_time = new Date(apiLogItem.apilog_response_time).getTime();
-        const apilog_request_time = new Date(apiLogItem.apilog_request_time).getTime();
-        apiLogItem.apilog_time = (apiLogItem.apilog_response_time - apiLogItem.apilog_request_time) / 1000; // 초 단위로 변환
+        const request_time = new Date(apiLogItem.apilog_request_time).getTime();
 
         let parsedUserMassage = null;
         if (versionUtils.isVersionAtLeast(version, "0.0.7")) {
             // 0.0.7 이상이면 실행
             parsedUserMassage = JSON.parse(parsedPrompt.messages[1]?.content);
+            // 분할 수 체크
             if(parsedUserMassage.split==parsedResponse.length) {
-                console.log('일치');
                 parsedUserMassage = {...parsedUserMassage, isSplit : true}
             }
         }   
@@ -30,7 +29,7 @@ function parseApiLogData(apiLogItem) {
             parsed_prompt: parsedPrompt,
             parsed_response: parsedResponse,
             parsed_userMassage: parsedUserMassage,
-            apilog_total_time: (response_time - apilog_request_time) / 1000 // 초 단위로 변환
+            apilog_total_time: (response_time - request_time) / 1000 // 초 단위로 변환
         };
     } catch (error) {
         console.error('JSON 파싱 오류:', error);
@@ -155,7 +154,7 @@ const AdminApiContainer = () => {
                     <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
                         <option value="all">전체</option>
                         <option value="success">성공</option>
-                        <option value="error">오류</option>
+                        <option value="fail">오류</option>
                     </Select>
                 </div>
 
