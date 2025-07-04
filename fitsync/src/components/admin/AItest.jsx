@@ -4,44 +4,12 @@ import { ButtonSubmit, Input } from '../../styles/FormStyles';
 import userMock from '../../mock/userMock';
 import { calculateAge } from '../../util/utilFunc';
 
-const initialMemberData = {
-    member : {
-        gym_idx : 0, // 헬스장 인덱스
-        member_activity_area : null, // 활동 지역
-        member_day : null, // 운동 요일
-        member_disease : "허리 디스크", // 질병
-        member_email : "you720223721@gmail.com", // 이메일
-        member_idx : 1, // 회원 인덱스
-        member_image : "https://lh3.googleusercontent.com/a/ACg8ocI49MTJ7xlsarzH_vhDR_-zgZs37M0fZVOlPQHPcJICy2NPUA=s96-c", // 프로필 이미지
-        member_info : null, // 회원 정보
-        member_info_image : null, // 회원 정보 이미지
-        member_name : "유어진", // 회원 이름
-        member_num : null, // 회원 번호
-        member_price : 0, // pt 1회당 레슨 가격
-        member_purpose : "근육 증가", // 운동 목적
-        member_status : "active", // 회원 상태 (온라인 여부)
-        member_time : "20:00~23:00", // 운동 시간대
-        member_type : "user" // 회원 타입 (user, trainer 등)
-    },
-    body: {
-        body_bmi : 0, // BMI
-        body_fat : 0, // 체지방
-        body_fat_percentage : 0, // 체지방률
-        body_height : 186, // 키
-        body_idx : 1, // 인덱스
-        body_regdate : 1751250959000, // 등록일
-        body_skeletal_muscle : 0, // 골격근
-        body_weight : 72, // 체중
-        member_idx : 1 // 회원 인덱스
-    }
-}
-
 const AItest = () => {
     const initialValue = {content : '운동 루틴 추천해줘', token : 0};
 
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
     const [result, setResult] = useState({});
-    const [memberData, setMemberData] = useState(initialMemberData);
+    const [memberData, setMemberData] = useState(userMock[0]);
     const [memberIndex, setMemberIndex] = useState(0);
     const [rawData, setRawData] = useState([]);
     // 추가 질문 나이, 분할 수... 등등
