@@ -130,7 +130,6 @@
 	        member_type,
 	        member_time,
 	        member_activity_area,
-	        member_price,
 	        member_info,
 	        member_info_image
 	    FROM member 
