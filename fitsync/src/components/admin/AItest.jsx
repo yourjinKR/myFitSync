@@ -103,7 +103,7 @@ const AItest = () => {
     /** 로그 업데이트 함수 */
     const updateLogException = async (log) => {
         try {
-            await axios.patch('/ai/updateExceptionReason', log)
+            await axios.patch('/admin/updateExceptionReason', log)
                 .then((res) => console.log(res.data));
         } catch (error) {
             console.error('API 로그 업데이트 실패:', error);

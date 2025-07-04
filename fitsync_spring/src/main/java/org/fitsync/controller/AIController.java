@@ -71,13 +71,4 @@ public class AIController {
 	    }
 	}
 
-	@PatchMapping("/updateExceptionReason")
-	public ResponseEntity<String> updateExceptionReason(@RequestBody ApiLogVO log) {
-	    try {
-	    	apiLogService.updateExceptionReason(log);
-	        return ResponseEntity.ok("예외 사유 업데이트 완료");
-	    } catch (Exception e) {
-	        return ResponseEntity.status(500).body("업데이트 실패: " + e.getMessage());
-	    }
-	}
 }

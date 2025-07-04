@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,16 @@ public class AdminController {
     public ResponseEntity<List<ApiLogVO>> getAllApi() {
         return ResponseEntity.ok(apiLogService.selectApiList());
     }
+    
+	@PatchMapping("/updateExceptionReason")
+	public ResponseEntity<String> updateExceptionReason(@RequestBody ApiLogVO log) {
+	    try {
+	    	apiLogService.updateExceptionReason(log);
+	        return ResponseEntity.ok("예외 사유 업데이트 완료");
+	    } catch (Exception e) {
+	        return ResponseEntity.status(500).body("업데이트 실패: " + e.getMessage());
+	    }
+	}
 
 
 }
