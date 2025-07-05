@@ -80,7 +80,6 @@ const Display = () => {
           <Route path='/chat/:roomId' element={<ChatRoom/>}/>
           <Route path='/test' element={<Test/>}/>
 
-          {/* 관리자 페이지 라우트 */}
           <Route path='/admin' element={<AdminMain/>}>
             <Route path='ai' element={<AItest/>}/>
             <Route path='api' element={<AdminApiContainer/>}/>

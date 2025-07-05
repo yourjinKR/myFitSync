@@ -1,27 +1,9 @@
-// AdminApiContainer.jsx
 import axios from 'axios';
 import React, { useState, useEffect, useMemo } from 'react';
 import { disassemble, disassembleToGroups } from 'es-hangul';
-
-import {
-    Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue,
-    Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle,
-    SectionContent, RoutineCard, Exercise
-} from '../../styles/chartStyle';
+import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, SectionContent, RoutineCard, Exercise } from '../../styles/chartStyle';
 import versionUtils from '../../util/utilFunc';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    BarElement,
-    Title as ChartTitle,
-    Tooltip,
-    Legend,
-    ArcElement,
-    Filler
-} from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
 // Chart.js 컴포넌트 등록
@@ -157,15 +139,19 @@ function parseApiLogData(apiLogItem) {
 }
 
 const AdminApiContainer = () => {
+    // 상태값 관리
     const [apiLogs, setApiLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedLog, setSelectedLog] = useState(null);
+    // status filter
     const [filter, setFilter] = useState('all');
+    // 운동명 리스트
     const [rawData, setRawData] = useState([]);
     // 운동명, 자모음 분해 운동명, 길이
     const [rawDataObject, setRawDataObject] = useState([{name : '', name_dis : '', length: 0}]);
     // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
+    
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [modelFilter, setModelFilter] = useState('all');
     const [serviceFilter, setServiceFilter] = useState('all');
@@ -611,7 +597,7 @@ const AdminApiContainer = () => {
                             <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>검색어</label>
                             <input
                                 type="text"
-                                placeholder="ID, 사용자, 모델명 검색..."
+                                placeholder="ID, 모델명 검색..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 style={{
@@ -744,7 +730,7 @@ const AdminApiContainer = () => {
                     <>
                         {/* 현재 필터 상태 */}
                         {(filter !== 'all' || modelFilter !== 'all' || serviceFilter !== 'all' || versionFilter !== 'all' || 
-                          searchTerm || dateRange.start || dateRange.end) && (
+                        searchTerm || dateRange.start || dateRange.end) && (
                             <div style={{ 
                                 background: 'white', 
                                 padding: '1rem', 
@@ -1768,14 +1754,13 @@ const AdminApiContainer = () => {
                             <Table>
                                 <thead>
                                     <tr>
-                                        <Th>ID</Th><Th>사용자</Th><Th>모델</Th><Th>서비스</Th><Th>버전</Th><Th>상태</Th><Th>토큰</Th><Th>시간</Th><Th>피드백</Th><Th>액션</Th>
+                                        <Th>ID</Th><Th>모델</Th><Th>서비스</Th><Th>버전</Th><Th>상태</Th><Th>토큰</Th><Th>시간</Th><Th>피드백</Th><Th>액션</Th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredLogs.map(log => (
                                         <tr key={log.apilog_idx}>
                                             <Td>{log.apilog_idx}</Td>
-                                            <Td>{log.member_idx}</Td>
                                             <Td>
                                                 <span style={{ 
                                                     padding: '0.25rem 0.5rem', 
