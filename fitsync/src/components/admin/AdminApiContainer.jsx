@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useState, useEffect, useMemo } from 'react';
 import { disassemble, disassembleToGroups } from 'es-hangul';
-import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, SectionContent, RoutineCard, Exercise } from '../../styles/chartStyle';
+import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, RoutineCard, DetailModalHeader, DetailModalTitle, DetailModalSubtitle, DetailModalCloseButton, NavigationContainer, NavigationButton, NavigationInfo, FilteredResultInfo, MetaInfoGrid, MetaInfoItem, MetaInfoLabel, MetaInfoValue, MetaInfoSubValue, FeedbackContainer, FeedbackIcon, FeedbackText, FeedbackReason, UserRequestContainer, UserRequestGrid, UserRequestItem, UserRequestKey, UserRequestValue, SplitMatchBadge, MonospaceContent, RoutineContainer, RoutineHeader, RoutineTitle, RoutineBadge, ExerciseGrid, ExerciseItem, ExerciseIcon, ExerciseContent, ExerciseName, ExerciseDetails, SimilarExercise, InvalidExerciseBadge, ErrorContainer } from '../../styles/chartStyle';
 import versionUtils from '../../util/utilFunc';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
@@ -1839,277 +1839,175 @@ const AdminApiContainer = () => {
                 {selectedLog && (
                     <ModalOverlay>
                         <ModalContent style={{ maxWidth: '800px', maxHeight: '90vh', overflow: 'auto' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0 0 1rem 0', borderBottom: '1px solid #e5e7eb' }}>
+                            <DetailModalHeader>
                                 <div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>
+                                    <DetailModalTitle>
                                         🔍 API 로그 상세 - ID: {selectedLog.apilog_idx}
-                                    </h3>
-                                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                                    </DetailModalTitle>
+                                    <DetailModalSubtitle>
                                         {new Date(selectedLog.apilog_request_time).toLocaleString()} | 
                                         사용자: {selectedLog.member_idx} | 
                                         모델: {selectedLog.apilog_model}
-                                    </div>
+                                    </DetailModalSubtitle>
                                 </div>
-                                <button 
-                                    onClick={() => setSelectedLog(null)} 
-                                    style={{ 
-                                        color: '#6b7280', 
-                                        background: 'none', 
-                                        border: 'none', 
-                                        fontSize: '1.5rem', 
-                                        cursor: 'pointer',
-                                        padding: '0.25rem'
-                                    }}
-                                >
+                                <DetailModalCloseButton onClick={() => setSelectedLog(null)}>
                                     ✕
-                                </button>
-                            </div>
+                                </DetailModalCloseButton>
+                            </DetailModalHeader>
 
                             {/* 네비게이션 버튼 */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <button 
+                            <NavigationContainer>
+                                <NavigationButton 
                                     onClick={() => handleSelectedLog(-1)} 
                                     disabled={filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0}
-                                    style={{ 
-                                        fontSize: '1rem', 
-                                        padding: '0.5rem 1rem',
-                                        border: '1px solid #d1d5db',
-                                        background: 'white',
-                                        borderRadius: '0.375rem',
-                                        cursor: 'pointer',
-                                        opacity: filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0 ? 0.5 : 1
-                                    }}
                                 >
                                     ⬅️ 이전
-                                </button>
+                                </NavigationButton>
                                 
-                                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                <NavigationInfo>
                                     {filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) + 1} / {filteredLogs.length}
                                     {filteredLogs.length !== apiLogs.length && (
-                                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                                        <FilteredResultInfo>
                                             (필터링된 결과)
-                                        </div>
+                                        </FilteredResultInfo>
                                     )}
-                                </div>
+                                </NavigationInfo>
                                 
-                                <button 
+                                <NavigationButton 
                                     onClick={() => handleSelectedLog(1)} 
                                     disabled={filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= filteredLogs.length - 1}
-                                    style={{ 
-                                        fontSize: '1rem', 
-                                        padding: '0.5rem 1rem',
-                                        border: '1px solid #d1d5db',
-                                        background: 'white',
-                                        borderRadius: '0.375rem',
-                                        cursor: 'pointer',
-                                        opacity: filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= filteredLogs.length - 1 ? 0.5 : 1
-                                    }}
                                 >
                                     다음 ➡️
-                                </button>
-                            </div>
+                                </NavigationButton>
+                            </NavigationContainer>
 
                             {/* 로그 메타 정보 */}
-                            <div style={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-                                gap: '1rem', 
-                                marginBottom: '1.5rem',
-                                padding: '1rem',
-                                background: '#f9fafb',
-                                borderRadius: '0.5rem'
-                            }}>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>상태</div>
+                            <MetaInfoGrid>
+                                <MetaInfoItem>
+                                    <MetaInfoLabel>상태</MetaInfoLabel>
                                     <StatusTag status={selectedLog.apilog_status}>{selectedLog.apilog_status}</StatusTag>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>토큰 사용량</div>
-                                    <div style={{ fontWeight: '600' }}>
+                                </MetaInfoItem>
+                                <MetaInfoItem>
+                                    <MetaInfoLabel>토큰 사용량</MetaInfoLabel>
+                                    <MetaInfoValue>
                                         {(selectedLog.apilog_input_tokens || 0) + (selectedLog.apilog_output_tokens || 0)}
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                    </MetaInfoValue>
+                                    <MetaInfoSubValue>
                                         입력: {selectedLog.apilog_input_tokens || 0} | 출력: {selectedLog.apilog_output_tokens || 0}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>응답시간</div>
-                                    <div style={{ fontWeight: '600' }}>{selectedLog.apilog_total_time}초</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>서비스 타입</div>
-                                    <div style={{ fontWeight: '600' }}>{selectedLog.apilog_service_type || 'N/A'}</div>
-                                </div>
+                                    </MetaInfoSubValue>
+                                </MetaInfoItem>
+                                <MetaInfoItem>
+                                    <MetaInfoLabel>응답시간</MetaInfoLabel>
+                                    <MetaInfoValue>{selectedLog.apilog_total_time}초</MetaInfoValue>
+                                </MetaInfoItem>
+                                <MetaInfoItem>
+                                    <MetaInfoLabel>서비스 타입</MetaInfoLabel>
+                                    <MetaInfoValue>{selectedLog.apilog_service_type || 'N/A'}</MetaInfoValue>
+                                </MetaInfoItem>
                                 {selectedLog.apilog_feedback && (
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>사용자 피드백</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{ fontSize: '1.25rem' }}>
+                                    <MetaInfoItem>
+                                        <MetaInfoLabel>사용자 피드백</MetaInfoLabel>
+                                        <FeedbackContainer>
+                                            <FeedbackIcon>
                                                 {selectedLog.apilog_feedback.toLowerCase() === 'like' ? '👍' : '👎'}
-                                            </span>
-                                            <span style={{ fontWeight: '600' }}>{selectedLog.apilog_feedback}</span>
-                                        </div>
+                                            </FeedbackIcon>
+                                            <FeedbackText>{selectedLog.apilog_feedback}</FeedbackText>
+                                        </FeedbackContainer>
                                         {selectedLog.apilog_feedback_reason && (
-                                            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                                            <FeedbackReason>
                                                 이유: {selectedLog.apilog_feedback_reason}
-                                            </div>
+                                            </FeedbackReason>
                                         )}
-                                    </div>
+                                    </MetaInfoItem>
                                 )}
                                 {selectedLog.apilog_exception_reason && (
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>예외 원인</div>
-                                        <div style={{ fontWeight: '600', color: '#ef4444' }}>{selectedLog.apilog_exception_reason}</div>
-                                    </div>
+                                    <MetaInfoItem>
+                                        <MetaInfoLabel>예외 원인</MetaInfoLabel>
+                                        <MetaInfoValue color="#ef4444">{selectedLog.apilog_exception_reason}</MetaInfoValue>
+                                    </MetaInfoItem>
                                 )}
-                            </div>
+                            </MetaInfoGrid>
 
                             <Section>
                                 <SectionTitle>📝 사용자 요청:</SectionTitle>
-                                <SectionContent style={{ 
-                                    background: '#f8fafc', 
-                                    padding: '1rem', 
-                                    borderRadius: '0.5rem',
-                                    border: '1px solid #e2e8f0'
-                                }}>
+                                <UserRequestContainer>
                                     {selectedLog.parsed_userMassage ? (
-                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                        <UserRequestGrid>
                                             {Object.entries(selectedLog.parsed_userMassage).map(([key, value]) => (
-                                                <div key={key} style={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center',
-                                                    padding: '0.5rem',
-                                                    background: 'white',
-                                                    borderRadius: '0.375rem',
-                                                    border: '1px solid #e5e7eb'
-                                                }}>
-                                                    <strong style={{ minWidth: '100px', color: '#374151' }}>{key}:</strong> 
-                                                    <span style={{ marginLeft: '0.5rem' }}>{String(value)}</span>
+                                                <UserRequestItem key={key}>
+                                                    <UserRequestKey>{key}:</UserRequestKey> 
+                                                    <UserRequestValue>{String(value)}</UserRequestValue>
                                                     {key === 'isSplit' && value && (
-                                                        <span style={{ 
-                                                            marginLeft: '0.5rem',
-                                                            padding: '0.125rem 0.5rem',
-                                                            background: '#10b981',
-                                                            color: 'white',
-                                                            borderRadius: '0.375rem',
-                                                            fontSize: '0.75rem'
-                                                        }}>
+                                                        <SplitMatchBadge>
                                                             ✅ 분할 일치
-                                                        </span>
+                                                        </SplitMatchBadge>
                                                     )}
-                                                </div>
+                                                </UserRequestItem>
                                             ))}
-                                        </div>
+                                        </UserRequestGrid>
                                     ) : (
-                                        <div style={{ 
-                                            padding: '1rem',
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.875rem',
-                                            whiteSpace: 'pre-wrap',
-                                            background: 'white',
-                                            borderRadius: '0.375rem'
-                                        }}>
+                                        <MonospaceContent>
                                             {selectedLog.parsed_prompt?.messages?.[1]?.content || '파싱 오류'}
-                                        </div>
+                                        </MonospaceContent>
                                     )}
-                                </SectionContent>
+                                </UserRequestContainer>
                             </Section>
 
                             {(selectedLog.apilog_status === 'success' || selectedLog.apilog_status === 'exception') && selectedLog.parsed_response && (
                                 <Section>
                                     <SectionTitle>🤖 AI 응답 (운동 루틴):</SectionTitle>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <RoutineContainer>
                                         {Array.isArray(selectedLog.parsed_response) ? selectedLog.parsed_response.map((routine, idx) => (
                                             <RoutineCard key={idx} style={{ 
                                                 border: '1px solid #e5e7eb',
                                                 borderRadius: '0.5rem',
                                                 padding: '1rem'
                                             }}>
-                                                <div style={{ 
-                                                    display: 'flex', 
-                                                    justifyContent: 'space-between', 
-                                                    alignItems: 'center',
-                                                    marginBottom: '1rem',
-                                                    paddingBottom: '0.5rem',
-                                                    borderBottom: '1px solid #e5e7eb'
-                                                }}>
-                                                    <h5 style={{ 
-                                                        fontWeight: '600', 
-                                                        color: '#1e3a8a', 
-                                                        margin: 0,
-                                                        fontSize: '1.125rem'
-                                                    }}>
+                                                <RoutineHeader>
+                                                    <RoutineTitle>
                                                         🏋️ {routine.routine_name}
-                                                    </h5>
-                                                    <span style={{ 
-                                                        padding: '0.25rem 0.75rem',
-                                                        background: '#dbeafe',
-                                                        color: '#1e40af',
-                                                        borderRadius: '1rem',
-                                                        fontSize: '0.875rem'
-                                                    }}>
+                                                    </RoutineTitle>
+                                                    <RoutineBadge>
                                                         {routine.exercises?.length || 0}개 운동
-                                                    </span>
-                                                </div>
-                                                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                                    </RoutineBadge>
+                                                </RoutineHeader>
+                                                <ExerciseGrid>
                                                     {routine.exercises?.map((ex, i) => {
                                                         const isValid = rawData.includes(ex.pt_name?.replace(/\s+/g, ''));
                                                         return (
-                                                            <Exercise key={i} style={{ 
-                                                                color: isValid ? 'inherit' : '#dc2626',
-                                                                padding: '0.75rem',
-                                                                background: isValid ? '#f0fdf4' : '#fef2f2',
-                                                                border: `1px solid ${isValid ? '#bbf7d0' : '#fecaca'}`,
-                                                                borderRadius: '0.375rem',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.5rem'
-                                                            }}>
-                                                                <span style={{ fontSize: '1.25rem' }}>
+                                                            <ExerciseItem key={i} isValid={isValid}>
+                                                                <ExerciseIcon>
                                                                     {isValid ? '✅' : '❌'}
-                                                                </span>
-                                                                <div style={{ flex: 1 }}>
-                                                                    <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
+                                                                </ExerciseIcon>
+                                                                <ExerciseContent>
+                                                                    <ExerciseName>
                                                                         {/** 유사 운동명 추천 */}
                                                                         {isValid ? ex.pt_name : getSimilarNamesByMap(ex.pt_name, rawDataMap).map((item, index) => (
-                                                                            <div key={index} style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                                                            <SimilarExercise key={index}>
                                                                                 {ex.pt_name} 👉 {item.name}
-                                                                            </div>
+                                                                            </SimilarExercise>
                                                                         ))}     
-                                                                    </div>
-                                                                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                                                    </ExerciseName>
+                                                                    <ExerciseDetails>
                                                                         {ex.set_volume}kg × {ex.set_count}회 × {ex.set_num}세트
-                                                                    </div>
-                                                                </div>
+                                                                    </ExerciseDetails>
+                                                                </ExerciseContent>
                                                                 {!isValid && (
-                                                                    <span style={{ 
-                                                                        padding: '0.25rem 0.5rem',
-                                                                        background: '#dc2626',
-                                                                        color: 'white',
-                                                                        borderRadius: '0.375rem',
-                                                                        fontSize: '0.75rem'
-                                                                    }}>
+                                                                    <InvalidExerciseBadge>
                                                                         유효하지 않은 운동
-                                                                    </span>
+                                                                    </InvalidExerciseBadge>
                                                                 )}
-                                                            </Exercise>
+                                                            </ExerciseItem>
                                                         );
                                                     })}
-                                                </div>
+                                                </ExerciseGrid>
                                             </RoutineCard>
                                         )) : (
-                                            <div style={{ 
-                                                padding: '2rem',
-                                                textAlign: 'center',
-                                                background: '#fef2f2',
-                                                border: '1px solid #fecaca',
-                                                borderRadius: '0.5rem',
-                                                color: '#dc2626'
-                                            }}>
+                                            <ErrorContainer>
                                                 ⚠️ 루틴 정보가 없거나 형식이 잘못되었습니다.
-                                            </div>
+                                            </ErrorContainer>
                                         )}
-                                    </div>
+                                    </RoutineContainer>
                                 </Section>
                             )}
                         </ModalContent>
