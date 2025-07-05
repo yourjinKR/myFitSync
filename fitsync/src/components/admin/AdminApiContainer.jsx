@@ -226,10 +226,10 @@ const AdminApiContainer = () => {
     }, [apiLogs, filter, modelFilter, serviceFilter, versionFilter, searchTerm, dateRange, sortBy]);
 
     const handleSelectedLog = (direction) => {
-        const currentIndex = apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx);
+        const currentIndex = filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx);
         const newIndex = currentIndex + direction;
-        if (newIndex >= 0 && newIndex < apiLogs.length) {
-            setSelectedLog(apiLogs[newIndex]);
+        if (newIndex >= 0 && newIndex < filteredLogs.length) {
+            setSelectedLog(filteredLogs[newIndex]);
         }
     };
 
@@ -725,121 +725,122 @@ const AdminApiContainer = () => {
                     </div>
                 </div>
 
+                {/* 현재 적용된 필터 - 모든 탭에서 표시 */}
+                {(filter !== 'all' || modelFilter !== 'all' || serviceFilter !== 'all' || versionFilter !== 'all' || 
+                searchTerm || dateRange.start || dateRange.end) && (
+                    <div style={{ 
+                        background: 'white', 
+                        padding: '1rem', 
+                        borderRadius: '0.75rem', 
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
+                        marginBottom: '1.5rem',
+                        border: '1px solid #e5e7eb'
+                    }}>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            🔍 현재 적용된 필터
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {filter !== 'all' && (
+                                <span style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#dbeafe', 
+                                    color: '#1e40af', 
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                                    상태: {filter === 'success' ? '✅ 성공' : filter === 'error' ? '❌ 오류' : '⚠️ 예외'}
+                                </span>
+                            )}
+                            {modelFilter !== 'all' && (
+                                <span style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#dcfce7', 
+                                    color: '#166534', 
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                                    모델: {modelFilter}
+                                </span>
+                            )}
+                            {serviceFilter !== 'all' && (
+                                <span style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#fef3c7', 
+                                    color: '#92400e', 
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                                    서비스: {serviceFilter}
+                                </span>
+                            )}
+                            {versionFilter !== 'all' && (
+                                <span style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#ede9fe', 
+                                    color: '#7c3aed', 
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                                    버전: v{versionFilter}
+                                </span>
+                            )}
+                            {searchTerm && (
+                                <span style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#f3e8ff', 
+                                    color: '#6b21a8', 
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                                    검색: "{searchTerm}"
+                                </span>
+                            )}
+                            {(dateRange.start || dateRange.end) && (
+                                <span style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#fecaca', 
+                                    color: '#991b1b', 
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                                    기간: {dateRange.start || '처음'} ~ {dateRange.end || '마지막'}
+                                </span>
+                            )}
+                            <button 
+                                onClick={() => {
+                                    setFilter('all');
+                                    setModelFilter('all');
+                                    setServiceFilter('all');
+                                    setVersionFilter('all');
+                                    setSearchTerm('');
+                                    setDateRange({ start: '', end: '' });
+                                }}
+                                style={{ 
+                                    padding: '0.25rem 0.75rem', 
+                                    background: '#f3f4f6', 
+                                    color: '#374151', 
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '1rem', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                ❌ 모든 필터 제거
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* 탭별 컨텐츠 */}
                 {activeTab === 'overview' && stats && (
                     <>
-                        {/* 현재 필터 상태 */}
-                        {(filter !== 'all' || modelFilter !== 'all' || serviceFilter !== 'all' || versionFilter !== 'all' || 
-                        searchTerm || dateRange.start || dateRange.end) && (
-                            <div style={{ 
-                                background: 'white', 
-                                padding: '1rem', 
-                                borderRadius: '0.75rem', 
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
-                                marginBottom: '1.5rem',
-                                border: '1px solid #e5e7eb'
-                            }}>
-                                <h4 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    🔍 현재 적용된 필터
-                                </h4>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                    {filter !== 'all' && (
-                                        <span style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#dbeafe', 
-                                            color: '#1e40af', 
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500'
-                                        }}>
-                                            상태: {filter === 'success' ? '✅ 성공' : filter === 'error' ? '❌ 오류' : '⚠️ 예외'}
-                                        </span>
-                                    )}
-                                    {modelFilter !== 'all' && (
-                                        <span style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#dcfce7', 
-                                            color: '#166534', 
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500'
-                                        }}>
-                                            모델: {modelFilter}
-                                        </span>
-                                    )}
-                                    {serviceFilter !== 'all' && (
-                                        <span style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#fef3c7', 
-                                            color: '#92400e', 
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500'
-                                        }}>
-                                            서비스: {serviceFilter}
-                                        </span>
-                                    )}
-                                    {versionFilter !== 'all' && (
-                                        <span style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#ede9fe', 
-                                            color: '#7c3aed', 
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500'
-                                        }}>
-                                            버전: v{versionFilter}
-                                        </span>
-                                    )}
-                                    {searchTerm && (
-                                        <span style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#f3e8ff', 
-                                            color: '#6b21a8', 
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500'
-                                        }}>
-                                            검색: "{searchTerm}"
-                                        </span>
-                                    )}
-                                    {(dateRange.start || dateRange.end) && (
-                                        <span style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#fecaca', 
-                                            color: '#991b1b', 
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500'
-                                        }}>
-                                            기간: {dateRange.start || '처음'} ~ {dateRange.end || '마지막'}
-                                        </span>
-                                    )}
-                                    <button 
-                                        onClick={() => {
-                                            setFilter('all');
-                                            setModelFilter('all');
-                                            setServiceFilter('all');
-                                            setVersionFilter('all');
-                                            setSearchTerm('');
-                                            setDateRange({ start: '', end: '' });
-                                        }}
-                                        style={{ 
-                                            padding: '0.25rem 0.75rem', 
-                                            background: '#f3f4f6', 
-                                            color: '#374151', 
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '1rem', 
-                                            fontSize: '0.75rem',
-                                            fontWeight: '500',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        ❌ 모든 필터 제거
-                                    </button>
-                                </div>
-                            </div>
-                        )}
 
                         {/* 주요 지표 카드 */}
                         <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: '2rem' }}>
@@ -1868,7 +1869,7 @@ const AdminApiContainer = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                                 <button 
                                     onClick={() => handleSelectedLog(-1)} 
-                                    disabled={apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0}
+                                    disabled={filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0}
                                     style={{ 
                                         fontSize: '1rem', 
                                         padding: '0.5rem 1rem',
@@ -1876,19 +1877,24 @@ const AdminApiContainer = () => {
                                         background: 'white',
                                         borderRadius: '0.375rem',
                                         cursor: 'pointer',
-                                        opacity: apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0 ? 0.5 : 1
+                                        opacity: filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) <= 0 ? 0.5 : 1
                                     }}
                                 >
                                     ⬅️ 이전
                                 </button>
                                 
                                 <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                                    {apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) + 1} / {apiLogs.length}
+                                    {filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) + 1} / {filteredLogs.length}
+                                    {filteredLogs.length !== apiLogs.length && (
+                                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                                            (필터링된 결과)
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 <button 
                                     onClick={() => handleSelectedLog(1)} 
-                                    disabled={apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= apiLogs.length - 1}
+                                    disabled={filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= filteredLogs.length - 1}
                                     style={{ 
                                         fontSize: '1rem', 
                                         padding: '0.5rem 1rem',
@@ -1896,7 +1902,7 @@ const AdminApiContainer = () => {
                                         background: 'white',
                                         borderRadius: '0.375rem',
                                         cursor: 'pointer',
-                                        opacity: apiLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= apiLogs.length - 1 ? 0.5 : 1
+                                        opacity: filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx) >= filteredLogs.length - 1 ? 0.5 : 1
                                     }}
                                 >
                                     다음 ➡️
