@@ -5,6 +5,7 @@ export const Container = styled.div`
   padding: 1.5rem;
   background-color: #f9fafb;
   min-height: 100vh;
+  width 100%;
 `;
 
 export const Inner = styled.div`

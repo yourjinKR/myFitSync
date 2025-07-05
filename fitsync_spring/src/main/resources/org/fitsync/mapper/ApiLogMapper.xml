@@ -46,9 +46,11 @@
         WHERE apilog_idx = #{apilog_idx}
     </select>
     
-    <select id="selectApiList" resultType="org.fitsync.domain.ApiLogVO">
-        SELECT * FROM apilog
-    </select>
+	<select id="selectApiList" resultType="org.fitsync.domain.ApiLogVO">
+	    SELECT *
+	    FROM apilog
+	    ORDER BY apilog_idx
+	</select>
     
     <!-- 예외 사유 업데이트 쿼리 -->
     <update id="updateExceptionReason" parameterType="org.fitsync.domain.ApiLogVO">

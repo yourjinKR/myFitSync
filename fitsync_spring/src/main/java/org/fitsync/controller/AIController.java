@@ -45,8 +45,6 @@ public class AIController {
 	
 	@GetMapping(value = "/getTextReact", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String getText() {
-		log.info(getWorkoutNamesJsonArray());
-		
 		return getWorkoutNamesJsonArray();
 	}
 	

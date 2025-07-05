@@ -860,7 +860,7 @@ const AdminApiContainer = () => {
                             </StatCard>
                             
                             <StatCard style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}>
-                                <StatTitle style={{ color: 'white' }}>🪙 토큰 사용량</StatTitle>
+                                <StatTitle style={{ color: 'white' }}>💬 토큰 사용량</StatTitle>
                                 <StatValue color="white">{stats.totalTokens.toLocaleString()}</StatValue>
                                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem' }}>
                                     평균: {stats.avgTokens} | 입력: {stats.totalInputTokens.toLocaleString()} | 출력: {stats.totalOutputTokens.toLocaleString()}
@@ -1206,7 +1206,7 @@ const AdminApiContainer = () => {
                 )}
 
                 {activeTab === 'performance' && stats && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
                         {/* 1. 시간대별 API 사용량 - Line Chart */}
                         <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

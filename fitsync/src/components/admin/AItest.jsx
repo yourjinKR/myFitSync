@@ -42,8 +42,8 @@ const AItest = () => {
     const [memberData, setMemberData] = useState(userMock[0]);
     const [memberIndex, setMemberIndex] = useState(0);
     const [rawData, setRawData] = useState([]);
-    // 추가 질문 나이, 분할 수... 등등
-    const [additionalMemberData, setAdditionalMemberData] = useState({split : null});
+    // 추가 질문 : 분할 수... 등등
+    const [additionalMemberData, setAdditionalMemberData] = useState({split : 4});
 
     const handleInputText = (e) => {
         const {value} = e.target;
