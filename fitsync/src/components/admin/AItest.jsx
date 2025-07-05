@@ -2,7 +2,37 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ButtonSubmit, Input } from '../../styles/FormStyles';
 import userMock from '../../mock/userMock';
-import { calculateAge } from '../../util/utilFunc';
+import versionUtils, { calculateAge } from '../../util/utilFunc';
+
+// JSON 파싱 및 응답 시간 계산
+function parseApiLogData(apiLogItem) {
+    const version = apiLogItem.apilog_version;
+    try {
+        const parsedPrompt = JSON.parse(apiLogItem.apilog_prompt);
+        const parsedResponse = JSON.parse(apiLogItem.apilog_response);
+        const responseTime = new Date(apiLogItem.apilog_response_time).getTime();
+        const requestTime = new Date(apiLogItem.apilog_request_time).getTime();
+
+        let parsedUserMassage = null;
+        if (versionUtils.isVersionAtLeast(version, '0.0.7')) {
+            parsedUserMassage = JSON.parse(parsedPrompt.messages[1]?.content);
+            if (parsedUserMassage.split === parsedResponse.length) {
+                parsedUserMassage = { ...parsedUserMassage, isSplit: true };
+            }
+        }
+
+        return {
+            ...apiLogItem,
+            parsed_prompt: parsedPrompt,
+            parsed_response: parsedResponse,
+            parsed_userMassage: parsedUserMassage,
+            apilog_total_time: (responseTime - requestTime) / 1000
+        };
+    } catch (error) {
+        console.error('JSON 파싱 오류:', error);
+        return apiLogItem;
+    }
+}
 
 const AItest = () => {
     const initialValue = {content : '운동 루틴 추천해줘', token : 0};
@@ -70,9 +100,15 @@ const AItest = () => {
 
     /** 로그 업데이트 함수 */
     const updateLogException = async (log) => {
+        if (log.apilog_status_reason === null || log.apilog_status_reason === '') {
+            log.apilog_status = 'success';  // 예외 사유가 없으면 상태를 success로 설정
+        } else {
+            log.apilog_status = 'exception';  // 예외 사유가 있으면 상태를 exception으로 설정
+        }
+        console.log('업데이트할 로그:', log);
         try {
             await axios.patch('/admin/updateExceptionReason', log)
-                .then((res) => console.log(res.data));
+                .then((res) => console.log('API 로그 업데이트 결과:', res.data));
         } catch (error) {
             console.error('API 로그 업데이트 실패:', error);
         }
@@ -80,12 +116,13 @@ const AItest = () => {
 
     /** AI 응답 결과에서 예외 상황을 분석하여 문자열로 반환 예외가 없으면 null 반환 */
     function analyzeAIResult(result, userSplit, validWorkoutNames) {
-        console.log('검사 : ', result);
+        console.log('해당 결과를 분석 :', result);
 
         const errors = [];
 
         // 1. JSON 구조 검증
         if (!Array.isArray(result?.content)) {
+            console.warn('AI 응답이 유효한 JSON 배열이 아닙니다:', result);
             return "invalid_json";
         }
 
@@ -103,6 +140,7 @@ const AItest = () => {
             routine.exercises.forEach(ex => {
                 const name = (ex.pt_name.replace(/\s+/g, ''));
                 if (!validWorkoutNames.includes(name)) {
+                    console.warn(`유효하지 않은 운동명: ${name}`);
                     invalidExercises.push(ex.pt_name);
                 }
             });
@@ -114,6 +152,30 @@ const AItest = () => {
 
         return errors.length > 0 ? errors.join("; ") : null;
     }
+
+    // 모든 api log 재검증 함수
+    const recheckAllLogs = () => {
+        axios.get('/admin/getAllApi')
+            .then(response => {
+                const logs = response.data;
+                logs.forEach(log => {
+                    const parsedLog = parseApiLogData(log);
+
+                    const result = {
+                        content: parsedLog.parsed_response,
+                        logIdx: log.apilog_idx,
+                        split: parsedLog.parsed_userMassage?.split
+                    };
+
+                    const exception = analyzeAIResult(result, result.split, rawData);
+                    const apilog = {apilog_idx: result.logIdx, apilog_status_reason: exception};
+                    updateLogException(apilog);
+                });
+            })
+            .catch(error => {
+                console.error('모든 API 로그 재검증 실패:', error);
+            });
+    };
 
     const testAPI = () => {
         console.log('실행');
@@ -190,6 +252,7 @@ const AItest = () => {
 
     return (
         <div>
+            <ButtonSubmit type="button" onClick={recheckAllLogs}>모든 로그 재검증</ButtonSubmit>
             <h1>chapGPT 토큰 계산기</h1>
             <Input 
                 type="text" 

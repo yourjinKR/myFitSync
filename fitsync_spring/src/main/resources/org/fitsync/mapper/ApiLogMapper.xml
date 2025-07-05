@@ -53,7 +53,7 @@
     <!-- 예외 사유 업데이트 쿼리 -->
     <update id="updateExceptionReason" parameterType="org.fitsync.domain.ApiLogVO">
         UPDATE apilog 
-        	SET apilog_status = 'exception', 
+        	SET apilog_status = #{apilog_status}, 
         	apilog_status_reason = #{apilog_status_reason} 
         WHERE apilog_idx = #{apilog_idx}
     </update>

@@ -33,7 +33,7 @@ public class AdminController {
         return ResponseEntity.ok(apiLogService.selectApiList());
     }
     
-	@PatchMapping("/updateExceptionReason")
+	@PatchMapping(value = "/updateExceptionReason", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<String> updateExceptionReason(@RequestBody ApiLogVO log) {
 	    try {
 	    	apiLogService.updateExceptionReason(log);
