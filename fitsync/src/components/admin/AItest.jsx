@@ -85,6 +85,8 @@ const AItest = () => {
     }, []);
 
     useEffect(() => {
+        if (Object.keys(result).length === 0) return;
+
         console.log('파싱된 결과 : ', result);
         const exception = analyzeAIResult(result, additionalMemberData.split, rawData);
         
@@ -153,13 +155,13 @@ const AItest = () => {
         return errors.length > 0 ? errors.join("; ") : null;
     }
 
-    // 모든 api log 재검증 함수
+    /** 모든 api log 재검증 함수 */
     const recheckAllLogs = () => {
-        axios.get('/admin/getAllApi')
+        axios.get('/admin/getAllApi') // 모든 API 로그 가져오기
             .then(response => {
                 const logs = response.data;
                 logs.forEach(log => {
-                    const parsedLog = parseApiLogData(log);
+                    const parsedLog = parseApiLogData(log); // 로그 데이터 파싱
 
                     const result = {
                         content: parsedLog.parsed_response,
@@ -167,9 +169,9 @@ const AItest = () => {
                         split: parsedLog.parsed_userMassage?.split
                     };
 
-                    const exception = analyzeAIResult(result, result.split, rawData);
+                    const exception = analyzeAIResult(result, result.split, rawData); // 예외 분석
                     const apilog = {apilog_idx: result.logIdx, apilog_status_reason: exception};
-                    updateLogException(apilog);
+                    updateLogException(apilog); // 로그 업데이트
                 });
             })
             .catch(error => {
