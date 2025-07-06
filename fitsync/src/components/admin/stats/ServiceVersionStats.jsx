@@ -3,226 +3,226 @@ import styled from 'styled-components';
 
 // 서비스별 버전 통계 컴포넌트
 const ServiceVersionStats = ({ logs, isLoading }) => {
-  // 서비스별 버전 통계 계산
-  const getServiceVersionStats = () => {
-    if (!logs || logs.length === 0) return [];
+    // 서비스별 버전 통계 계산
+    const getServiceVersionStats = () => {
+        if (!logs || logs.length === 0) return [];
 
-    const serviceVersionMap = {};
-    
-    logs.forEach(log => {
-      const service = log.apilog_service_type || '기타';
-      const version = log.apilog_version || '알 수 없음';
-      
-      if (!serviceVersionMap[service]) {
-        serviceVersionMap[service] = {
-          service,
-          versions: {},
-          totalRequests: 0,
-          latestVersion: version
-        };
-      }
-      
-      if (!serviceVersionMap[service].versions[version]) {
-        serviceVersionMap[service].versions[version] = {
-          version,
-          requestCount: 0,
-          successCount: 0,
-          errorCount: 0,
-          avgResponseTime: 0,
-          totalResponseTime: 0,
-          firstSeen: log.apilog_timestamp,
-          lastSeen: log.apilog_timestamp
-        };
-      }
-      
-      const versionStat = serviceVersionMap[service].versions[version];
-      versionStat.requestCount++;
-      serviceVersionMap[service].totalRequests++;
-      
-      if (log.apilog_response_status === 'SUCCESS') {
-        versionStat.successCount++;
-      } else {
-        versionStat.errorCount++;
-      }
-      
-      if (log.apilog_response_time) {
-        versionStat.totalResponseTime += parseFloat(log.apilog_response_time);
-      }
-      
-      // 최신 버전 업데이트
-      if (version > serviceVersionMap[service].latestVersion) {
-        serviceVersionMap[service].latestVersion = version;
-      }
-      
-      // 타임스탬프 업데이트
-      if (log.apilog_timestamp < versionStat.firstSeen) {
-        versionStat.firstSeen = log.apilog_timestamp;
-      }
-      if (log.apilog_timestamp > versionStat.lastSeen) {
-        versionStat.lastSeen = log.apilog_timestamp;
-      }
-    });
-    
-    // 평균 응답시간 계산 및 정렬
-    return Object.values(serviceVersionMap).map(service => {
-      const sortedVersions = Object.values(service.versions)
-        .map(version => ({
-          ...version,
-          avgResponseTime: version.requestCount > 0 
-            ? (version.totalResponseTime / version.requestCount).toFixed(2)
-            : 0,
-          successRate: version.requestCount > 0
-            ? ((version.successCount / version.requestCount) * 100).toFixed(1)
-            : 0,
-          usage: ((version.requestCount / service.totalRequests) * 100).toFixed(1)
-        }))
-        .sort((a, b) => {
-          // 버전 번호로 정렬
-          const aVersion = a.version.split('.').map(Number);
-          const bVersion = b.version.split('.').map(Number);
-          for (let i = 0; i < Math.max(aVersion.length, bVersion.length); i++) {
-            const aPart = aVersion[i] || 0;
-            const bPart = bVersion[i] || 0;
-            if (aPart !== bPart) return bPart - aPart;
-          }
-          return 0;
+        const serviceVersionMap = {};
+
+        logs.forEach(log => {
+            const service = log.apilog_service_type || '기타';
+            const version = log.apilog_version || '알 수 없음';
+
+            if (!serviceVersionMap[service]) {
+                serviceVersionMap[service] = {
+                    service,
+                    versions: {},
+                    totalRequests: 0,
+                    latestVersion: version
+                };
+            }
+
+            if (!serviceVersionMap[service].versions[version]) {
+                serviceVersionMap[service].versions[version] = {
+                    version,
+                    requestCount: 0,
+                    successCount: 0,
+                    errorCount: 0,
+                    avgResponseTime: 0,
+                    totalResponseTime: 0,
+                    firstSeen: log.apilog_timestamp,
+                    lastSeen: log.apilog_timestamp
+                };
+            }
+
+            const versionStat = serviceVersionMap[service].versions[version];
+            versionStat.requestCount++;
+            serviceVersionMap[service].totalRequests++;
+
+            if (log.apilog_response_status === 'SUCCESS') {
+                versionStat.successCount++;
+            } else {
+                versionStat.errorCount++;
+            }
+
+            if (log.apilog_response_time) {
+                versionStat.totalResponseTime += parseFloat(log.apilog_response_time);
+            }
+
+            // 최신 버전 업데이트
+            if (version > serviceVersionMap[service].latestVersion) {
+                serviceVersionMap[service].latestVersion = version;
+            }
+
+            // 타임스탬프 업데이트
+            if (log.apilog_timestamp < versionStat.firstSeen) {
+                versionStat.firstSeen = log.apilog_timestamp;
+            }
+            if (log.apilog_timestamp > versionStat.lastSeen) {
+                versionStat.lastSeen = log.apilog_timestamp;
+            }
         });
-      
-      return {
-        ...service,
-        versions: sortedVersions
-      };
-    });
-  };
 
-  const serviceStats = getServiceVersionStats();
+        // 평균 응답시간 계산 및 정렬
+        return Object.values(serviceVersionMap).map(service => {
+            const sortedVersions = Object.values(service.versions)
+                .map(version => ({
+                    ...version,
+                    avgResponseTime: version.requestCount > 0
+                        ? (version.totalResponseTime / version.requestCount).toFixed(2)
+                        : 0,
+                    successRate: version.requestCount > 0
+                        ? ((version.successCount / version.requestCount) * 100).toFixed(1)
+                        : 0,
+                    usage: ((version.requestCount / service.totalRequests) * 100).toFixed(1)
+                }))
+                .sort((a, b) => {
+                    // 버전 번호로 정렬
+                    const aVersion = a.version.split('.').map(Number);
+                    const bVersion = b.version.split('.').map(Number);
+                    for (let i = 0; i < Math.max(aVersion.length, bVersion.length); i++) {
+                        const aPart = aVersion[i] || 0;
+                        const bPart = bVersion[i] || 0;
+                        if (aPart !== bPart) return bPart - aPart;
+                    }
+                    return 0;
+                });
 
-  if (isLoading) {
+            return {
+                ...service,
+                versions: sortedVersions
+            };
+        });
+    };
+
+    const serviceStats = getServiceVersionStats();
+
+    if (isLoading) {
+        return (
+            <Container>
+                <LoadingMessage>버전 통계를 계산 중...</LoadingMessage>
+            </Container>
+        );
+    }
+
+    if (serviceStats.length === 0) {
+        return (
+            <Container>
+                <EmptyState>
+                    <EmptyIcon>🔧</EmptyIcon>
+                    <EmptyTitle>서비스 버전 데이터가 없습니다</EmptyTitle>
+                    <EmptyDescription>서비스별 버전 정보가 수집되면 여기에 표시됩니다.</EmptyDescription>
+                </EmptyState>
+            </Container>
+        );
+    }
+
     return (
-      <Container>
-        <LoadingMessage>버전 통계를 계산 중...</LoadingMessage>
-      </Container>
-    );
-  }
+        <Container>
+            <Header>
+                <Title>🔧 서비스별 버전 현황</Title>
+                <ServiceCount>{serviceStats.length}개 서비스</ServiceCount>
+            </Header>
 
-  if (serviceStats.length === 0) {
-    return (
-      <Container>
-        <EmptyState>
-          <EmptyIcon>🔧</EmptyIcon>
-          <EmptyTitle>서비스 버전 데이터가 없습니다</EmptyTitle>
-          <EmptyDescription>서비스별 버전 정보가 수집되면 여기에 표시됩니다.</EmptyDescription>
-        </EmptyState>
-      </Container>
-    );
-  }
+            <Content>
+                {serviceStats.map((service) => (
+                    <ServiceSection key={service.service}>
+                        <ServiceHeader>
+                            <ServiceName>{service.service}</ServiceName>
+                            <ServiceInfo>
+                                <InfoItem>
+                                    <InfoLabel>총 요청</InfoLabel>
+                                    <InfoValue>{service.totalRequests.toLocaleString()}</InfoValue>
+                                </InfoItem>
+                                <InfoItem>
+                                    <InfoLabel>활성 버전</InfoLabel>
+                                    <InfoValue>{Object.keys(service.versions).length}개</InfoValue>
+                                </InfoItem>
+                                <InfoItem>
+                                    <InfoLabel>최신 버전</InfoLabel>
+                                    <LatestVersion>v{service.latestVersion}</LatestVersion>
+                                </InfoItem>
+                            </ServiceInfo>
+                        </ServiceHeader>
 
-  return (
-    <Container>
-      <Header>
-        <Title>🔧 서비스별 버전 현황</Title>
-        <ServiceCount>{serviceStats.length}개 서비스</ServiceCount>
-      </Header>
-      
-      <Content>
-        {serviceStats.map((service) => (
-          <ServiceSection key={service.service}>
-            <ServiceHeader>
-              <ServiceName>{service.service}</ServiceName>
-              <ServiceInfo>
-                <InfoItem>
-                  <InfoLabel>총 요청</InfoLabel>
-                  <InfoValue>{service.totalRequests.toLocaleString()}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>활성 버전</InfoLabel>
-                  <InfoValue>{Object.keys(service.versions).length}개</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>최신 버전</InfoLabel>
-                  <LatestVersion>v{service.latestVersion}</LatestVersion>
-                </InfoItem>
-              </ServiceInfo>
-            </ServiceHeader>
-            
-            <VersionList>
-              {service.versions.map((version, index) => (
-                <VersionItem 
-                  key={version.version} 
-                  isLatest={version.version === service.latestVersion}
-                  isOld={index >= 3} // 4번째 이후는 구버전으로 표시
-                >
-                  <VersionHeader>
-                    <VersionName isLatest={version.version === service.latestVersion}>
-                      v{version.version}
-                      {version.version === service.latestVersion && <LatestBadge>최신</LatestBadge>}
-                    </VersionName>
-                    <VersionUsage>{version.usage}%</VersionUsage>
-                  </VersionHeader>
-                  
-                  <VersionMetrics>
-                    <MetricItem>
-                      <MetricIcon>📊</MetricIcon>
-                      <MetricContent>
-                        <MetricLabel>요청 수</MetricLabel>
-                        <MetricValue>{version.requestCount.toLocaleString()}</MetricValue>
-                      </MetricContent>
-                    </MetricItem>
-                    
-                    <MetricItem>
-                      <MetricIcon success={parseFloat(version.successRate) >= 95}>
-                        {parseFloat(version.successRate) >= 95 ? '✅' : '⚠️'}
-                      </MetricIcon>
-                      <MetricContent>
-                        <MetricLabel>성공률</MetricLabel>
-                        <MetricValue success={parseFloat(version.successRate) >= 95}>
-                          {version.successRate}%
-                        </MetricValue>
-                      </MetricContent>
-                    </MetricItem>
-                    
-                    <MetricItem>
-                      <MetricIcon fast={parseFloat(version.avgResponseTime) <= 500}>
-                        {parseFloat(version.avgResponseTime) <= 500 ? '🚀' : '⏱️'}
-                      </MetricIcon>
-                      <MetricContent>
-                        <MetricLabel>평균 응답시간</MetricLabel>
-                        <MetricValue fast={parseFloat(version.avgResponseTime) <= 500}>
-                          {version.avgResponseTime}ms
-                        </MetricValue>
-                      </MetricContent>
-                    </MetricItem>
-                  </VersionMetrics>
-                  
-                  <VersionTimeline>
-                    <TimelineItem>
-                      <TimelineLabel>첫 사용</TimelineLabel>
-                      <TimelineValue>
-                        {new Date(version.firstSeen).toLocaleDateString('ko-KR')}
-                      </TimelineValue>
-                    </TimelineItem>
-                    <TimelineItem>
-                      <TimelineLabel>마지막 사용</TimelineLabel>
-                      <TimelineValue>
-                        {new Date(version.lastSeen).toLocaleDateString('ko-KR')}
-                      </TimelineValue>
-                    </TimelineItem>
-                  </VersionTimeline>
-                  
-                  <UsageBar>
-                    <UsageProgress 
-                      width={version.usage}
-                      isLatest={version.version === service.latestVersion}
-                    />
-                  </UsageBar>
-                </VersionItem>
-              ))}
-            </VersionList>
-          </ServiceSection>
-        ))}
-      </Content>
-    </Container>
-  );
+                        <VersionList>
+                            {service.versions.map((version, index) => (
+                                <VersionItem
+                                    key={version.version}
+                                    isLatest={version.version === service.latestVersion}
+                                    isOld={index >= 3} // 4번째 이후는 구버전으로 표시
+                                >
+                                    <VersionHeader>
+                                        <VersionName isLatest={version.version === service.latestVersion}>
+                                            v{version.version}
+                                            {version.version === service.latestVersion && <LatestBadge>최신</LatestBadge>}
+                                        </VersionName>
+                                        <VersionUsage>{version.usage}%</VersionUsage>
+                                    </VersionHeader>
+
+                                    <VersionMetrics>
+                                        <MetricItem>
+                                            <MetricIcon>📊</MetricIcon>
+                                            <MetricContent>
+                                                <MetricLabel>요청 수</MetricLabel>
+                                                <MetricValue>{version.requestCount.toLocaleString()}</MetricValue>
+                                            </MetricContent>
+                                        </MetricItem>
+
+                                        <MetricItem>
+                                            <MetricIcon success={parseFloat(version.successRate) >= 95}>
+                                                {parseFloat(version.successRate) >= 95 ? '✅' : '⚠️'}
+                                            </MetricIcon>
+                                            <MetricContent>
+                                                <MetricLabel>성공률</MetricLabel>
+                                                <MetricValue success={parseFloat(version.successRate) >= 95}>
+                                                    {version.successRate}%
+                                                </MetricValue>
+                                            </MetricContent>
+                                        </MetricItem>
+
+                                        <MetricItem>
+                                            <MetricIcon fast={parseFloat(version.avgResponseTime) <= 500}>
+                                                {parseFloat(version.avgResponseTime) <= 500 ? '🚀' : '⏱️'}
+                                            </MetricIcon>
+                                            <MetricContent>
+                                                <MetricLabel>평균 응답시간</MetricLabel>
+                                                <MetricValue fast={parseFloat(version.avgResponseTime) <= 500}>
+                                                    {version.avgResponseTime}ms
+                                                </MetricValue>
+                                            </MetricContent>
+                                        </MetricItem>
+                                    </VersionMetrics>
+
+                                    <VersionTimeline>
+                                        <TimelineItem>
+                                            <TimelineLabel>첫 사용</TimelineLabel>
+                                            <TimelineValue>
+                                                {new Date(version.firstSeen).toLocaleDateString('ko-KR')}
+                                            </TimelineValue>
+                                        </TimelineItem>
+                                        <TimelineItem>
+                                            <TimelineLabel>마지막 사용</TimelineLabel>
+                                            <TimelineValue>
+                                                {new Date(version.lastSeen).toLocaleDateString('ko-KR')}
+                                            </TimelineValue>
+                                        </TimelineItem>
+                                    </VersionTimeline>
+
+                                    <UsageBar>
+                                        <UsageProgress
+                                            width={version.usage}
+                                            isLatest={version.version === service.latestVersion}
+                                        />
+                                    </UsageBar>
+                                </VersionItem>
+                            ))}
+                        </VersionList>
+                    </ServiceSection>
+                ))}
+            </Content>
+        </Container>
+    );
 };
 
 // 스타일 컴포넌트
@@ -318,10 +318,10 @@ const VersionItem = styled.div`
   padding: 16px;
   border-bottom: 1px solid #f3f4f6;
   background: ${props => {
-    if (props.isLatest) return '#f0fdf4';
-    if (props.isOld) return '#fafafa';
-    return 'white';
-  }};
+        if (props.isLatest) return '#f0fdf4';
+        if (props.isOld) return '#fafafa';
+        return 'white';
+    }};
   
   &:last-child {
     border-bottom: none;
@@ -391,10 +391,10 @@ const MetricValue = styled.span`
   font-size: 13px;
   font-weight: 600;
   color: ${props => {
-    if (props.success) return '#059669';
-    if (props.fast) return '#2563eb';
-    return '#374151';
-  }};
+        if (props.success) return '#059669';
+        if (props.fast) return '#2563eb';
+        return '#374151';
+    }};
 `;
 
 const VersionTimeline = styled.div`

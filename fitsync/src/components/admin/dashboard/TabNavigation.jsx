@@ -11,7 +11,7 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
         { id: 'overview', label: '📊 개요', icon: '📊' },
         { id: 'analytics', label: '📈 분석', icon: '📈' },
         { id: 'logs', label: '📋 로그', icon: '📋' },
-        { id: 'performance', label: '⚡ 성능', icon: '⚡' }
+        // { id: 'performance', label: '⚡ 성능', icon: '⚡' }
     ];
 
     return (

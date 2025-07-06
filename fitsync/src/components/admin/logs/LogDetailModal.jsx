@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { getSimilarNamesByMap } from '../../../utils/KorUtil';
 import {
@@ -43,6 +43,10 @@ const LogDetailModal = ({
     rawData,
     rawDataMap
 }) => {
+    // 토글 상태 관리
+    const [isBasicInfoExpanded, setIsBasicInfoExpanded] = useState(false);
+    const [isUserInfoExpanded, setIsUserInfoExpanded] = useState(false);
+
     if (!isOpen || !log) return null;
 
     // 상태별 아이콘과 색상
@@ -426,11 +430,11 @@ const LogDetailModal = ({
                             ← 이전
                         </NavButton>
                         <NavInfo>
-                            {navigationInfo.currentIndex + 1} / {navigationInfo.totalCount}
+                            {navigationInfo.currentIndex + 1} / {navigationInfo.total}
                         </NavInfo>
                         <NavButton
                             onClick={() => onNavigate?.(1)}
-                            disabled={navigationInfo.currentIndex === navigationInfo.totalCount - 1}
+                            disabled={navigationInfo.currentIndex === navigationInfo.total - 1}
                         >
                             다음 →
                         </NavButton>
@@ -440,171 +444,191 @@ const LogDetailModal = ({
                 <ModalBody>
                     {/* 기본 정보 */}
                     <Section>
-                        <SectionTitle>📋 기본 정보</SectionTitle>
-                        <InfoGrid>
-                            <InfoItem>
-                                <InfoLabel>요청 시간</InfoLabel>
-                                <InfoValue>
-                                    {new Date(log.apilog_response_time).toLocaleString('ko-KR')}
-                                </InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>모델</InfoLabel>
-                                <InfoValue>{log.apilog_model || '-'}</InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>서비스 타입</InfoLabel>
-                                <InfoValue>{log.apilog_service_type || '-'}</InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>버전</InfoLabel>
-                                <InfoValue>v{log.apilog_version || '-'}</InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>응답 속도</InfoLabel>
-                                <InfoValue>
-                                    {log.apilog_total_time}초
-                                </InfoValue>
-                            </InfoItem>
-                            {log.apilog_total_time && (
-                                <InfoItem>
-                                    <InfoLabel>총 처리 시간</InfoLabel>
-                                    <InfoValue>{log.apilog_total_time.toFixed(3)}초</InfoValue>
-                                </InfoItem>
-                            )}
-                            <InfoItem>
-                                <InfoLabel>입력 토큰</InfoLabel>
-                                <InfoValue>{log.apilog_input_tokens?.toLocaleString() || '-'}</InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>출력 토큰</InfoLabel>
-                                <InfoValue>{log.apilog_output_tokens?.toLocaleString() || '-'}</InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>사용자 ID</InfoLabel>
-                                <InfoValue>{log.user_id || '-'}</InfoValue>
-                            </InfoItem>
-                        </InfoGrid>
+                        <ToggleSection>
+                            <ToggleSectionTitle 
+                                onClick={() => setIsBasicInfoExpanded(!isBasicInfoExpanded)}
+                                expanded={isBasicInfoExpanded}
+                            >
+                                <ToggleIcon expanded={isBasicInfoExpanded}>▶</ToggleIcon>
+                                📋 기본 정보
+                            </ToggleSectionTitle>
+                            <CollapsibleContent expanded={isBasicInfoExpanded}>
+                                <InfoGrid>
+                                    <InfoItem>
+                                        <InfoLabel>요청 시간</InfoLabel>
+                                        <InfoValue>
+                                            {new Date(log.apilog_response_time).toLocaleString('ko-KR')}
+                                        </InfoValue>
+                                    </InfoItem>
+                                    <InfoItem>
+                                        <InfoLabel>모델</InfoLabel>
+                                        <InfoValue>{log.apilog_model || '-'}</InfoValue>
+                                    </InfoItem>
+                                    <InfoItem>
+                                        <InfoLabel>서비스 타입</InfoLabel>
+                                        <InfoValue>{log.apilog_service_type || '-'}</InfoValue>
+                                    </InfoItem>
+                                    <InfoItem>
+                                        <InfoLabel>버전</InfoLabel>
+                                        <InfoValue>v{log.apilog_version || '-'}</InfoValue>
+                                    </InfoItem>
+                                    <InfoItem>
+                                        <InfoLabel>응답 속도</InfoLabel>
+                                        <InfoValue>
+                                            {log.apilog_total_time}초
+                                        </InfoValue>
+                                    </InfoItem>
+                                    {log.apilog_total_time && (
+                                        <InfoItem>
+                                            <InfoLabel>총 처리 시간</InfoLabel>
+                                            <InfoValue>{log.apilog_total_time.toFixed(3)}초</InfoValue>
+                                        </InfoItem>
+                                    )}
+                                    <InfoItem>
+                                        <InfoLabel>입력 토큰</InfoLabel>
+                                        <InfoValue>{log.apilog_input_tokens?.toLocaleString() || '-'}</InfoValue>
+                                    </InfoItem>
+                                    <InfoItem>
+                                        <InfoLabel>출력 토큰</InfoLabel>
+                                        <InfoValue>{log.apilog_output_tokens?.toLocaleString() || '-'}</InfoValue>
+                                    </InfoItem>
+                                    <InfoItem>
+                                        <InfoLabel>사용자 ID</InfoLabel>
+                                        <InfoValue>{log.user_id || '-'}</InfoValue>
+                                    </InfoItem>
+                                </InfoGrid>
+                            </CollapsibleContent>
+                        </ToggleSection>
                     </Section>
 
                     {/* 사용자 정보 및 요청 섹션 */}
                     {userInfo && (
                         <Section>
-                            <SectionTitle>👤 사용자 정보 및 요청</SectionTitle>
-                            <InfoGrid>
-                                <InfoItem>
-                                    <InfoLabel>사용자 이름</InfoLabel>
-                                    <InfoValue>{userInfo.name || userInfo.userId || log.user_id || '-'}</InfoValue>
-                                </InfoItem>
-                                {userInfo.age && (
-                                    <InfoItem>
-                                        <InfoLabel>나이</InfoLabel>
-                                        <InfoValue>{userInfo.age}세</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.gender && (
-                                    <InfoItem>
-                                        <InfoLabel>성별</InfoLabel>
-                                        <InfoValue>{userInfo.gender}</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.height && (
-                                    <InfoItem>
-                                        <InfoLabel>신장</InfoLabel>
-                                        <InfoValue>{userInfo.height}cm</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.weight && (
-                                    <InfoItem>
-                                        <InfoLabel>체중</InfoLabel>
-                                        <InfoValue>{userInfo.weight}kg</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.bmi && (
-                                    <InfoItem>
-                                        <InfoLabel>BMI</InfoLabel>
-                                        <InfoValue>{userInfo.bmi}</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.fat && (
-                                    <InfoItem>
-                                        <InfoLabel>체지방량</InfoLabel>
-                                        <InfoValue>{userInfo.fat}kg</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.fat_percentage && (
-                                    <InfoItem>
-                                        <InfoLabel>체지방률</InfoLabel>
-                                        <InfoValue>{userInfo.fat_percentage}%</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.skeletal_muscle && (
-                                    <InfoItem>
-                                        <InfoLabel>골격근량</InfoLabel>
-                                        <InfoValue>{userInfo.skeletal_muscle}kg</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {(userInfo.goal || userInfo.purpose) && (
-                                    <InfoItem>
-                                        <InfoLabel>운동 목표</InfoLabel>
-                                        <InfoValue>{userInfo.goal || userInfo.purpose}</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.split && (
-                                    <InfoItem>
-                                        <InfoLabel>분할 루틴</InfoLabel>
-                                        <InfoValue>
-                                            {userInfo.split}분할 
-                                            {userInfo.isSplit !== undefined && (
-                                                <span style={{ marginLeft: '8px' }}>
-                                                    {userInfo.isSplit ? '✅ 적용' : '❌ 미적용'}
-                                                </span>
-                                            )}
-                                        </InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.disease && (
-                                    <InfoItem>
-                                        <InfoLabel>질병/부상</InfoLabel>
-                                        <InfoValue>{userInfo.disease}</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.day && (
-                                    <InfoItem>
-                                        <InfoLabel>요청 요일</InfoLabel>
-                                        <InfoValue>{userInfo.day}</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.time && (
-                                    <InfoItem>
-                                        <InfoLabel>운동 시간</InfoLabel>
-                                        <InfoValue>{userInfo.time}</InfoValue>
-                                    </InfoItem>
-                                )}
-                                {userInfo.exercises && userInfo.exercises.length > 0 && (
-                                    <InfoItem style={{ gridColumn: '1 / -1' }}>
-                                        <InfoLabel>요청 운동</InfoLabel>
-                                        <ExerciseRequestList>
-                                            {userInfo.exercises.map((exercise, index) => (
-                                                <ExerciseRequestItem key={index}>
-                                                    <ExerciseCardName>{exercise.name || exercise}</ExerciseCardName>
-                                                    {exercise.sets && <ExerciseDetail>세트: {exercise.sets}</ExerciseDetail>}
-                                                    {exercise.reps && <ExerciseDetail>횟수: {exercise.reps}</ExerciseDetail>}
-                                                    {exercise.weight && <ExerciseDetail>무게: {exercise.weight}kg</ExerciseDetail>}
-                                                </ExerciseRequestItem>
-                                            ))}
-                                        </ExerciseRequestList>
-                                    </InfoItem>
-                                )}
-                                {userInfo.userPreferences && (
-                                    <InfoItem style={{ gridColumn: '1 / -1' }}>
-                                        <InfoLabel>사용자 선호도</InfoLabel>
-                                        <InfoValue>
-                                            <pre>{JSON.stringify(userInfo.userPreferences, null, 2)}</pre>
-                                        </InfoValue>
-                                    </InfoItem>
-                                )}
-                            </InfoGrid>
+                            <ToggleSection>
+                                <ToggleSectionTitle 
+                                    onClick={() => setIsUserInfoExpanded(!isUserInfoExpanded)}
+                                    expanded={isUserInfoExpanded}
+                                >
+                                    <ToggleIcon expanded={isUserInfoExpanded}>▶</ToggleIcon>
+                                    👤 사용자 정보 및 요청
+                                </ToggleSectionTitle>
+                                <CollapsibleContent expanded={isUserInfoExpanded}>
+                                    <InfoGrid>
+                                        <InfoItem>
+                                            <InfoLabel>사용자 이름</InfoLabel>
+                                            <InfoValue>{userInfo.name || userInfo.userId || log.user_id || '-'}</InfoValue>
+                                        </InfoItem>
+                                        {userInfo.age && (
+                                            <InfoItem>
+                                                <InfoLabel>나이</InfoLabel>
+                                                <InfoValue>{userInfo.age}세</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.gender && (
+                                            <InfoItem>
+                                                <InfoLabel>성별</InfoLabel>
+                                                <InfoValue>{userInfo.gender}</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.height && (
+                                            <InfoItem>
+                                                <InfoLabel>신장</InfoLabel>
+                                                <InfoValue>{userInfo.height}cm</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.weight && (
+                                            <InfoItem>
+                                                <InfoLabel>체중</InfoLabel>
+                                                <InfoValue>{userInfo.weight}kg</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.bmi && (
+                                            <InfoItem>
+                                                <InfoLabel>BMI</InfoLabel>
+                                                <InfoValue>{userInfo.bmi}</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.fat && (
+                                            <InfoItem>
+                                                <InfoLabel>체지방량</InfoLabel>
+                                                <InfoValue>{userInfo.fat}kg</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.fat_percentage && (
+                                            <InfoItem>
+                                                <InfoLabel>체지방률</InfoLabel>
+                                                <InfoValue>{userInfo.fat_percentage}%</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.skeletal_muscle && (
+                                            <InfoItem>
+                                                <InfoLabel>골격근량</InfoLabel>
+                                                <InfoValue>{userInfo.skeletal_muscle}kg</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {(userInfo.goal || userInfo.purpose) && (
+                                            <InfoItem>
+                                                <InfoLabel>운동 목표</InfoLabel>
+                                                <InfoValue>{userInfo.goal || userInfo.purpose}</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.split && (
+                                            <InfoItem>
+                                                <InfoLabel>분할 루틴</InfoLabel>
+                                                <InfoValue>
+                                                    {userInfo.split}분할 
+                                                    {userInfo.isSplit !== undefined && (
+                                                        <span style={{ marginLeft: '8px' }}>
+                                                            {userInfo.isSplit ? '✅ 적용' : '❌ 미적용'}
+                                                        </span>
+                                                    )}
+                                                </InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.disease && (
+                                            <InfoItem>
+                                                <InfoLabel>질병/부상</InfoLabel>
+                                                <InfoValue>{userInfo.disease}</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.day && (
+                                            <InfoItem>
+                                                <InfoLabel>요청 요일</InfoLabel>
+                                                <InfoValue>{userInfo.day}</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.time && (
+                                            <InfoItem>
+                                                <InfoLabel>운동 시간</InfoLabel>
+                                                <InfoValue>{userInfo.time}</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.exercises && userInfo.exercises.length > 0 && (
+                                            <InfoItem style={{ gridColumn: '1 / -1' }}>
+                                                <InfoLabel>요청 운동</InfoLabel>
+                                                <ExerciseRequestList>
+                                                    {userInfo.exercises.map((exercise, index) => (
+                                                        <ExerciseRequestItem key={index}>
+                                                            <ExerciseCardName>{exercise.name || exercise}</ExerciseCardName>
+                                                            {exercise.sets && <ExerciseDetail>세트: {exercise.sets}</ExerciseDetail>}
+                                                            {exercise.reps && <ExerciseDetail>횟수: {exercise.reps}</ExerciseDetail>}
+                                                            {exercise.weight && <ExerciseDetail>무게: {exercise.weight}kg</ExerciseDetail>}
+                                                        </ExerciseRequestItem>
+                                                    ))}
+                                                </ExerciseRequestList>
+                                            </InfoItem>
+                                        )}
+                                        {userInfo.userPreferences && (
+                                            <InfoItem style={{ gridColumn: '1 / -1' }}>
+                                                <InfoLabel>사용자 선호도</InfoLabel>
+                                                <InfoValue>
+                                                    <pre>{JSON.stringify(userInfo.userPreferences, null, 2)}</pre>
+                                                </InfoValue>
+                                            </InfoItem>
+                                        )}
+                                    </InfoGrid>
+                                </CollapsibleContent>
+                            </ToggleSection>
                         </Section>
                     )}
 
@@ -684,7 +708,7 @@ const LogDetailModal = ({
                                                                 </ExerciseCardIcon>
                                                                 <ExerciseCardContent>
                                                                     <ExerciseCardName isValid={isValid}>
-                                                                        {exerciseName}
+                                                                        <span style={{fontSize: '1.2em'}}>{exerciseName}</span>
                                                                         {!isValid && (
                                                                             <InvalidBadge>
                                                                                 유효하지 않은 운동명
@@ -831,14 +855,14 @@ const LogDetailModal = ({
                                 <InfoLabel>workoutResult 파싱 결과</InfoLabel>
                                 <InfoValue>{workoutResult ? '성공' : '실패'}</InfoValue>
                             </InfoItem>
-                            <InfoItem>
+                            {/* <InfoItem>
                                 <InfoLabel>similarExercises 매칭 결과</InfoLabel>
                                 <InfoValue>{similarExercises ? `${similarExercises.filter(ex => ex.matchType === 'similar').length}개` : '없음'}</InfoValue>
-                            </InfoItem>
+                            </InfoItem> */}
                             {/* 매칭 유형별 카운트 */}
                             {similarExercises && similarExercises.length > 0 && (
                                 <InfoItem>
-                                    <InfoLabel>매칭 유형별 분석</InfoLabel>
+                                    <InfoLabel>운동명 매칭 유형별 분석</InfoLabel>
                                     <InfoValue>
                                         정확: {similarExercises.filter(ex => ex.matchType === 'exact').length}개, 
                                         유사: {similarExercises.filter(ex => ex.matchType === 'similar').length}개, 
@@ -886,8 +910,8 @@ const LogDetailModal = ({
                                 <InfoLabel>로그 필드들</InfoLabel>
                                 <InfoValue>
                                     <pre>{JSON.stringify({
-                                        hasUserInput: !!log.apilog_user_input,
-                                        hasAiResponse: !!log.apilog_ai_response,
+                                        hasUserInput: !!log.parsed_userMassage,
+                                        hasResponse: !!log.apilog_response,
                                         hasParsedResponse: !!log.parsed_response,
                                         hasParsedUserMessage: !!log.parsed_userMassage,
                                         hasFeedback: !!log.apilog_user_feedback,
@@ -1133,6 +1157,47 @@ const StackTrace = styled.div`
     overflow-x: auto;
     font-family: 'Courier New', monospace;
   }
+`;
+
+// 토글 기능을 위한 스타일 컴포넌트들
+const ToggleSection = styled.div`
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+`;
+
+const ToggleSectionTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: ${props => props.expanded ? '#f9fafb' : '#ffffff'};
+  border-bottom: ${props => props.expanded ? '1px solid #e5e7eb' : 'none'};
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f9fafb;
+  }
+`;
+
+const ToggleIcon = styled.span`
+  display: inline-block;
+  transition: transform 0.2s ease;
+  transform: ${props => props.expanded ? 'rotate(90deg)' : 'rotate(0deg)'};
+  color: #6b7280;
+  font-size: 12px;
+`;
+
+const CollapsibleContent = styled.div`
+  max-height: ${props => props.expanded ? '2000px' : '0'};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: ${props => props.expanded ? '20px' : '0 20px'};
+  background: white;
 `;
 
 // 운동 결과 관련 스타일

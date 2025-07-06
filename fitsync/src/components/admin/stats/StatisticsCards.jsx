@@ -73,11 +73,11 @@ const StatisticsCards = ({ stats, isLoading }) => {
                 <CardContent>
                     <CardTitle>평균 응답시간</CardTitle>
                     <CardValue fast={avgResponseTimeNumber <= 500}>
-                        {avgResponseTime}ms
+                        {avgResponseTime}초
                     </CardValue>
                     <CardSubtext>
-                        {avgResponseTimeNumber <= 500 ? '매우 빠름' :
-                            avgResponseTimeNumber <= 1000 ? '보통' : '개선 필요'}
+                        {avgResponseTimeNumber <= 5 ? '매우 빠름' :
+                            avgResponseTimeNumber <= 10 ? '보통' : '개선 필요'}
                     </CardSubtext>
                 </CardContent>
             </StatCard>

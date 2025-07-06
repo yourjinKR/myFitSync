@@ -148,33 +148,76 @@ const ResponseTimeChart = ({ logs, isLoading, dateRange }) => {
 // 스타일 컴포넌트
 const ChartContainer = styled.div`
   background: white;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 6px;
+  padding: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   height: 100%;
+  
+  @media (min-width: 480px) {
+    padding: 16px;
+    border-radius: 7px;
+  }
+  
+  @media (min-width: 768px) {
+    padding: 20px;
+    border-radius: 8px;
+  }
 `;
 
 const ChartTitle = styled.h3`
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
+  
+  @media (min-width: 480px) {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
 `;
 
 const ChartContent = styled.div`
-  height: calc(100% - 50px);
+  height: calc(100% - 40px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+  
+  @media (min-width: 480px) {
+    height: calc(100% - 45px);
+    gap: 16px;
+  }
+  
+  @media (min-width: 768px) {
+    height: calc(100% - 50px);
+    gap: 20px;
+  }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  padding: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 10px;
   background: #f8f9fa;
-  border-radius: 6px;
+  border-radius: 4px;
+  
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 12px;
+    border-radius: 5px;
+  }
+  
+  @media (min-width: 768px) {
+    gap: 12px;
+    padding: 16px;
+    border-radius: 6px;
+  }
 `;
 
 const StatItem = styled.div`
@@ -182,60 +225,129 @@ const StatItem = styled.div`
 `;
 
 const StatLabel = styled.div`
-  font-size: 12px;
+  font-size: 10px;
   color: #666;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  
+  @media (min-width: 480px) {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 12px;
+  }
 `;
 
 const StatValue = styled.div`
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
   color: ${props => {
     if (props.fast) return '#27ae60';
     if (props.slow) return '#e74c3c';
     return '#2c3e50';
   }};
+  
+  @media (min-width: 480px) {
+    font-size: 14px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 16px;
+  }
 `;
 
 const DistributionChart = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  
+  @media (min-width: 480px) {
+    gap: 10px;
+  }
+  
+  @media (min-width: 768px) {
+    gap: 12px;
+  }
 `;
 
 const RangeItem = styled.div`
-  padding: 12px;
+  padding: 8px;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 4px;
   background: #fafafa;
+  
+  @media (min-width: 480px) {
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
+  @media (min-width: 768px) {
+    padding: 12px;
+    border-radius: 6px;
+  }
 `;
 
 const RangeHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  
+  @media (min-width: 480px) {
+    margin-bottom: 7px;
+  }
+  
+  @media (min-width: 768px) {
+    margin-bottom: 8px;
+  }
 `;
 
 const RangeLabel = styled.span`
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #333;
+  
+  @media (min-width: 480px) {
+    font-size: 13px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const RangeValue = styled.span`
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: ${props => props.color};
+  
+  @media (min-width: 480px) {
+    font-size: 13px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const RangeBarContainer = styled.div`
   width: 100%;
-  height: 6px;
+  height: 4px;
   background: #ecf0f1;
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
+  
+  @media (min-width: 480px) {
+    height: 5px;
+    border-radius: 2.5px;
+  }
+  
+  @media (min-width: 768px) {
+    height: 6px;
+    border-radius: 3px;
+  }
 `;
 
 const RangeBar = styled.div`
@@ -243,21 +355,30 @@ const RangeBar = styled.div`
   width: ${props => Math.max(props.width, 1)}%;
   background: ${props => props.color};
   transition: width 0.3s ease;
-  border-radius: 3px;
+  border-radius: inherit;
 `;
 
 const PerformanceIndicators = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  
+  @media (min-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  @media (min-width: 768px) {
+    gap: 12px;
+  }
 `;
 
 const Indicator = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
   background: ${props => {
     if (props.good) return '#d4edda';
     if (props.warning) return '#fff3cd';
@@ -268,14 +389,34 @@ const Indicator = styled.div`
     if (props.warning) return '#ffeaa7';
     return '#e0e0e0';
   }};
+  
+  @media (min-width: 480px) {
+    gap: 10px;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
+  @media (min-width: 768px) {
+    gap: 12px;
+    padding: 12px;
+    border-radius: 6px;
+  }
 `;
 
 const IndicatorIcon = styled.span`
-  font-size: 20px;
+  font-size: 16px;
+  
+  @media (min-width: 480px) {
+    font-size: 18px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 20px;
+  }
 `;
 
 const IndicatorText = styled.div`
-  font-size: 12px;
+  font-size: 10px;
   
   > div:first-child {
     color: #666;
@@ -286,33 +427,73 @@ const IndicatorText = styled.div`
     font-weight: 600;
     color: #333;
   }
+  
+  @media (min-width: 480px) {
+    font-size: 11px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 12px;
+  }
 `;
 
 const LoadingMessage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 150px;
   color: #666;
-  font-size: 14px;
+  font-size: 12px;
+  
+  @media (min-width: 480px) {
+    height: 180px;
+    font-size: 13px;
+  }
+  
+  @media (min-width: 768px) {
+    height: 200px;
+    font-size: 14px;
+  }
 `;
 
 const NoDataMessage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 150px;
   color: #999;
-  font-size: 14px;
+  font-size: 12px;
+  
+  @media (min-width: 480px) {
+    height: 180px;
+    font-size: 13px;
+  }
+  
+  @media (min-width: 768px) {
+    height: 200px;
+    font-size: 14px;
+  }
 `;
 
 const DateRangeInfo = styled.div`
   text-align: center;
-  font-size: 12px;
+  font-size: 10px;
   color: #666;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid #eee;
+  
+  @media (min-width: 480px) {
+    font-size: 11px;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+  }
 `;
 
 export default ResponseTimeChart;
