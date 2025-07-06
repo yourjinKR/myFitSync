@@ -893,3 +893,205 @@ export const ViewDetailsButton = styled.button`
     font-size: 0.9rem;
   }
 `;
+
+// LogDetailModal에서 필요한 새로운 컴포넌트들 (기존 컴포넌트와 중복되지 않는 것들만)
+export const WorkoutResultContainer = styled.div`
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+`;
+
+export const ResultSummary = styled.div`
+  background: #f8fafc;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+export const SummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+`;
+
+export const SummaryItem = styled.div`
+  text-align: center;
+`;
+
+export const SummaryIcon = styled.div`
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+`;
+
+export const SummaryLabel = styled.div`
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.125rem;
+`;
+
+export const SummaryValue = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+`;
+
+export const MuscleGroupContainer = styled.div`
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+export const ResultLabel = styled.div`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+export const MuscleGroupList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+export const MuscleGroupTag = styled.span`
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+`;
+
+export const RoutinesContainer = styled.div`
+  padding: 1rem;
+`;
+
+export const ExerciseList = styled.div`
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+export const ExerciseCard = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: ${props => props.isValid ? '#f0fdf4' : '#fef2f2'};
+  border: 1px solid ${props => props.isValid ? '#bbf7d0' : '#fecaca'};
+  border-radius: 0.5rem;
+  position: relative;
+`;
+
+export const ExerciseCardIcon = styled.div`
+  font-size: 1.25rem;
+  flex-shrink: 0;
+`;
+
+export const ExerciseCardContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+export const ExerciseCardName = styled.div`
+  font-weight: 600;
+  color: ${props => props.isValid ? '#065f46' : '#dc2626'};
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+`;
+
+export const ExerciseCardDetails = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+export const DetailChip = styled.span`
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+`;
+
+export const ExerciseDescription = styled.div`
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  font-style: italic;
+`;
+
+export const InvalidBadge = styled.span`
+  background: #dc2626;
+  color: white;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+`;
+
+export const EmptyExerciseMessage = styled.div`
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  padding: 2rem;
+`;
+
+export const ExerciseRequestList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+export const ExerciseRequestItem = styled.div`
+  background: #f1f5f9;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border-left: 3px solid #3b82f6;
+`;
+
+export const ExerciseRequestName = styled.div`
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+`;
+
+export const ExerciseDetail = styled.span`
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-right: 0.5rem;
+`;
+
+// RoutineCard 관련 추가 컴포넌트들 (LogDetailModal용)
+export const RoutineCardHeader = styled.div`
+  background: #f1f5f9;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+export const RoutineCardTitle = styled.h5`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+export const RoutineCardBadge = styled.span`
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+`;

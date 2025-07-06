@@ -117,6 +117,7 @@ export const useStatistics = (apiLogs, filteredLogs) => {
             errorCount,
             exceptionCount,
             successRate: total > 0 ? ((successCount / total) * 100).toFixed(1) : 0,
+            errorRate: total > 0 ? (((errorCount + exceptionCount) / total) * 100).toFixed(1) : 0,
             
             // 토큰 통계
             totalTokens,
