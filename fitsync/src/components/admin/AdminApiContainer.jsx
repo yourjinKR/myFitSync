@@ -1,8 +1,10 @@
-import axios from 'axios';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, RoutineCard, DetailModalHeader, DetailModalTitle, DetailModalSubtitle, DetailModalCloseButton, NavigationContainer, NavigationButton, NavigationInfo, FilteredResultInfo, MetaInfoGrid, MetaInfoItem, MetaInfoLabel, MetaInfoValue, MetaInfoSubValue, FeedbackContainer, FeedbackIcon, FeedbackText, FeedbackReason, UserRequestContainer, UserRequestGrid, UserRequestItem, UserRequestKey, UserRequestValue, SplitMatchBadge, MonospaceContent, RoutineContainer, RoutineHeader, RoutineTitle, RoutineBadge, ExerciseGrid, ExerciseItem, ExerciseIcon, ExerciseContent, ExerciseName, ExerciseDetails, SimilarExercise, InvalidExerciseBadge, ErrorContainer } from '../../styles/chartStyle';
-import versionUtils from '../../utils/utilFunc';
-import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../utils/KorUtil';
+import { getSimilarNamesByMap } from '../../utils/KorUtil';
+import { useApiLogs } from '../../hooks/admin/useApiLogs';
+import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
+import { useFilters } from '../../hooks/admin/useFilters';
+import { useStatistics } from '../../hooks/admin/useStatistics';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
@@ -20,115 +22,32 @@ ChartJS.register(
     Filler
 );
 
-/** JSON 파싱 및 응답 시간 계산 */
-function parseApiLogData(apiLogItem) {
-    const version = apiLogItem.apilog_version;
-    try {
-        const parsedPrompt = JSON.parse(apiLogItem.apilog_prompt);
-        const parsedResponse = JSON.parse(apiLogItem.apilog_response);
-        const responseTime = new Date(apiLogItem.apilog_response_time).getTime();
-        const requestTime = new Date(apiLogItem.apilog_request_time).getTime();
-
-        let parsedUserMassage = null;
-        if (versionUtils.isVersionAtLeast(version, '0.0.7')) {
-            parsedUserMassage = JSON.parse(parsedPrompt.messages[1]?.content);
-            if (parsedUserMassage.split === parsedResponse.length) {
-                parsedUserMassage = { ...parsedUserMassage, isSplit: true };
-            }
-        }
-
-        return {
-            ...apiLogItem,
-            parsed_prompt: parsedPrompt,
-            parsed_response: parsedResponse,
-            parsed_userMassage: parsedUserMassage,
-            apilog_total_time: (responseTime - requestTime) / 1000
-        };
-    } catch (error) {
-        console.error('JSON 파싱 오류:', error);
-        return apiLogItem;
-    }
-}
-
 const AdminApiContainer = () => {
-    // 상태값 관리
-    const [apiLogs, setApiLogs] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedLog, setSelectedLog] = useState(null);
-    // status filter
-    const [filter, setFilter] = useState('all');
-    // 운동명 리스트
-    const [rawData, setRawData] = useState([]);
-    // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
-    const [rawDataMap, setRawDataMap] = useState(new Map());
+    // API 로그 관련 상태 (커스텀 훅 사용)
+    const { apiLogs, loading, fetchApiLogs } = useApiLogs();
     
-    const [dateRange, setDateRange] = useState({ start: '', end: '' });
-    const [modelFilter, setModelFilter] = useState('all');
-    const [serviceFilter, setServiceFilter] = useState('all');
-    const [versionFilter, setVersionFilter] = useState('all');
-    const [sortBy, setSortBy] = useState('newest');
-    const [searchTerm, setSearchTerm] = useState('');
+    // 운동명 관련 상태 (커스텀 훅 사용)
+    const { rawData, rawDataMap } = useWorkoutNames();
+    
+    // 필터링 관련 상태 (커스텀 훅 사용)
+    const {
+        filter, setFilter,
+        dateRange, setDateRange,
+        modelFilter, setModelFilter,
+        serviceFilter, setServiceFilter,
+        versionFilter, setVersionFilter,
+        sortBy, setSortBy,
+        searchTerm, setSearchTerm,
+        filteredLogs
+    } = useFilters(apiLogs);
+    // 통계 계산 (커스텀 훅 사용)
+    const stats = useStatistics(apiLogs, filteredLogs);
+    
+    // 기타 상태값 관리
+    const [selectedLog, setSelectedLog] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [refreshInterval, setRefreshInterval] = useState(null);
-
-    const filteredLogs = useMemo(() => {
-        let filtered = apiLogs.filter(log => {
-            // 기본 상태 필터
-            if (filter !== 'all' && log.apilog_status !== filter) return false;
-            
-            // 모델 필터
-            if (modelFilter !== 'all' && log.apilog_model !== modelFilter) return false;
-            
-            // 서비스 타입 필터
-            if (serviceFilter !== 'all' && log.apilog_service_type !== serviceFilter) return false;
-            
-            // 버전 필터
-            if (versionFilter !== 'all' && log.apilog_version !== versionFilter) return false;
-            
-            // 검색어 필터
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                const searchableContent = `${log.apilog_idx} ${log.member_idx} ${log.apilog_model} ${log.apilog_version}`.toLowerCase();
-                if (!searchableContent.includes(term)) return false;
-            }
-            
-            // 날짜 범위 필터
-            if (dateRange.start) {
-                const logDate = new Date(log.apilog_request_time);
-                const startDate = new Date(dateRange.start);
-                if (logDate < startDate) return false;
-            }
-            if (dateRange.end) {
-                const logDate = new Date(log.apilog_request_time);
-                const endDate = new Date(dateRange.end);
-                endDate.setHours(23, 59, 59, 999); // 끝날의 마지막 시간까지 포함
-                if (logDate > endDate) return false;
-            }
-            
-            return true;
-        });
-
-        // 정렬
-        switch (sortBy) {
-            case 'newest':
-                filtered.sort((a, b) => new Date(b.apilog_request_time) - new Date(a.apilog_request_time));
-                break;
-            case 'oldest':
-                filtered.sort((a, b) => new Date(a.apilog_request_time) - new Date(b.apilog_request_time));
-                break;
-            case 'tokens':
-                filtered.sort((a, b) => ((b.apilog_input_tokens || 0) + (b.apilog_output_tokens || 0)) - ((a.apilog_input_tokens || 0) + (a.apilog_output_tokens || 0)));
-                break;
-            case 'time':
-                filtered.sort((a, b) => b.apilog_total_time - a.apilog_total_time);
-                break;
-            default:
-                break;
-        }
-
-        return filtered;
-    }, [apiLogs, filter, modelFilter, serviceFilter, versionFilter, searchTerm, dateRange, sortBy]);
 
     const handleSelectedLog = (direction) => {
         const currentIndex = filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx);
@@ -137,279 +56,6 @@ const AdminApiContainer = () => {
             setSelectedLog(filteredLogs[newIndex]);
         }
     };
-
-    const fetchWorkoutNames = async () => {
-        const groupedMap = new Map();
-
-        try {
-            const response = await axios.get('/ai/getTextReact');
-            setRawData(response.data.map(name => name.replace(/\s+/g, '')));
-
-            // 운동명과 자모음 분해 운동명을 길이별로 그룹화
-            response.data.forEach(originalName => {
-                const { normalized, length } = normalizeAndDisassemble(originalName);
-
-                const entry = { name: originalName, name_dis: normalized };
-
-                if (!groupedMap.has(length)) {
-                    groupedMap.set(length, []);
-                }
-                groupedMap.get(length).push(entry);
-            });
-
-            // set할 때는 새로운 Map 객체로 전달하여 리액트가 변경 감지하도록 함
-            setRawDataMap(new Map(groupedMap));
-
-        } catch (error) {
-            console.error('운동명 목록 요청 실패:', error);
-        }
-    };
-
-    const fetchApiLogs = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get('/admin/getAllApi');
-            setApiLogs(response.data.map(item => parseApiLogData(item)));
-        } catch (error) {
-            console.error('API 로그 가져오기 실패:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getStatistics = () => {
-        if (apiLogs.length === 0) return null;
-        
-        const total = filteredLogs.length;
-        const successCount = filteredLogs.filter(log => log.apilog_status === 'success').length;
-        const errorCount = filteredLogs.filter(log => log.apilog_status === 'error').length;
-        const exceptionCount = filteredLogs.filter(log => log.apilog_status === 'exception').length;
-        
-        const totalTokens = filteredLogs.reduce((sum, log) => sum + (log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0), 0);
-        const totalInputTokens = filteredLogs.reduce((sum, log) => sum + (log.apilog_input_tokens || 0), 0);
-        const totalOutputTokens = filteredLogs.reduce((sum, log) => sum + (log.apilog_output_tokens || 0), 0);
-        
-        const totalTime = filteredLogs.reduce((sum, log) => sum + (log.apilog_total_time || 0), 0);
-        
-        // 모델별 통계
-        const modelCounts = {};
-        const modelTokens = {};
-        const modelTimes = {};
-        
-        // 서비스별 통계
-        const serviceCounts = {};
-        const serviceSuccessRates = {};
-        
-        // 버전별 통계
-        const versionCounts = {};
-        const versionTokens = {};
-        const versionTimes = {};
-        const versionSuccessRates = {};
-        
-        // 시간대별 통계 (최근 24시간)
-        const hourlyData = Array(24).fill(0);
-        const now = new Date();
-        
-        // 피드백 통계
-        const feedbackStats = { like: 0, dislike: 0, total: 0 };
-        
-        filteredLogs.forEach(log => {
-            // 모델 통계
-            const model = log.apilog_model || '기타';
-            modelCounts[model] = (modelCounts[model] || 0) + 1;
-            modelTokens[model] = (modelTokens[model] || 0) + (log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0);
-            modelTimes[model] = (modelTimes[model] || 0) + (log.apilog_total_time || 0);
-            
-            // 서비스 통계
-            const service = log.apilog_service_type || '기타';
-            serviceCounts[service] = (serviceCounts[service] || 0) + 1;
-            if (!serviceSuccessRates[service]) {
-                serviceSuccessRates[service] = { total: 0, success: 0 };
-            }
-            serviceSuccessRates[service].total += 1;
-            if (log.apilog_status === 'success') {
-                serviceSuccessRates[service].success += 1;
-            }
-            
-            // 버전 통계
-            const version = log.apilog_version || '기타';
-            versionCounts[version] = (versionCounts[version] || 0) + 1;
-            versionTokens[version] = (versionTokens[version] || 0) + (log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0);
-            versionTimes[version] = (versionTimes[version] || 0) + (log.apilog_total_time || 0);
-            
-            // 버전별 성공률
-            if (!versionSuccessRates[version]) {
-                versionSuccessRates[version] = { total: 0, success: 0 };
-            }
-            versionSuccessRates[version].total += 1;
-            if (log.apilog_status === 'success') {
-                versionSuccessRates[version].success += 1;
-            }
-            
-            // 시간대별 통계
-            const logTime = new Date(log.apilog_request_time);
-            const hoursDiff = Math.floor((now - logTime) / (1000 * 60 * 60));
-            if (hoursDiff < 24 && hoursDiff >= 0) {
-                hourlyData[23 - hoursDiff] += 1;
-            }
-            // 피드백 통계
-            if (log.apilog_feedback) {
-                feedbackStats.total += 1;
-                if (log.apilog_feedback.toLowerCase() === 'like') {
-                    feedbackStats.like += 1;
-                } else if (log.apilog_feedback.toLowerCase() === 'dislike') {
-                    feedbackStats.dislike += 1;
-                }
-            }
-        });
-
-        // 평균 계산
-        const avgTokensPerModel = {};
-        const avgTimePerModel = {};
-        Object.keys(modelCounts).forEach(model => {
-            avgTokensPerModel[model] = Math.round(modelTokens[model] / modelCounts[model]);
-            avgTimePerModel[model] = (modelTimes[model] / modelCounts[model]).toFixed(2);
-        });
-
-        // 버전별 평균 계산
-        const avgTokensPerVersion = {};
-        const avgTimePerVersion = {};
-        Object.keys(versionCounts).forEach(version => {
-            avgTokensPerVersion[version] = Math.round(versionTokens[version] / versionCounts[version]);
-            avgTimePerVersion[version] = (versionTimes[version] / versionCounts[version]).toFixed(2);
-        });
-
-        return {
-            // 기본 통계
-            totalRequests: total,
-            totalApiCalls: apiLogs.length,
-            successCount,
-            errorCount,
-            exceptionCount,
-            successRate: total > 0 ? ((successCount / total) * 100).toFixed(1) : 0,
-            
-            // 토큰 통계
-            totalTokens,
-            totalInputTokens,
-            totalOutputTokens,
-            avgTokens: total > 0 ? (totalTokens / total).toFixed(0) : 0,
-            avgInputTokens: total > 0 ? (totalInputTokens / total).toFixed(0) : 0,
-            avgOutputTokens: total > 0 ? (totalOutputTokens / total).toFixed(0) : 0,
-            
-            // 시간 통계
-            totalTime: totalTime.toFixed(2),
-            avgResponseTime: total > 0 ? (totalTime / total).toFixed(2) : 0,
-            
-            // 상세 통계
-            modelCounts,
-            modelTokens,
-            avgTokensPerModel,
-            avgTimePerModel,
-            serviceCounts,
-            serviceSuccessRates,
-            versionCounts,
-            versionTokens,
-            versionTimes,
-            versionSuccessRates,
-            avgTokensPerVersion,
-            avgTimePerVersion,
-            hourlyData,
-            feedbackStats,
-            
-            // Chart.js용 추가 데이터
-            modelStats: Object.keys(modelCounts).reduce((acc, model) => {
-                acc[model] = {
-                    count: modelCounts[model],
-                    avgResponseTime: parseFloat(avgTimePerModel[model]) || 0,
-                    avgTokens: avgTokensPerModel[model] || 0
-                };
-                return acc;
-            }, {}),
-            
-            serviceStats: Object.keys(serviceSuccessRates).reduce((acc, service) => {
-                acc[service] = {
-                    count: serviceCounts[service],
-                    successRate: parseFloat(((serviceSuccessRates[service].success / serviceSuccessRates[service].total) * 100).toFixed(1))
-                };
-                return acc;
-            }, {}),
-            
-            // 버전별 상세 통계
-            versionStats: Object.keys(versionCounts).reduce((acc, version) => {
-                acc[version] = {
-                    count: versionCounts[version],
-                    avgResponseTime: parseFloat(avgTimePerVersion[version]) || 0,
-                    avgTokens: avgTokensPerVersion[version] || 0,
-                    successRate: parseFloat(((versionSuccessRates[version].success / versionSuccessRates[version].total) * 100).toFixed(1)),
-                    totalTokens: versionTokens[version] || 0,
-                    totalTime: versionTimes[version] || 0
-                };
-                return acc;
-            }, {}),
-            
-            // 응답시간 분포 (히스토그램용)
-            responseTimeDistribution: (() => {
-                const distribution = [0, 0, 0, 0, 0]; // 0-1초, 1-2초, 2-5초, 5-10초, 10초+
-                filteredLogs.forEach(log => {
-                    const time = log.apilog_total_time || 0;
-                    if (time <= 1) distribution[0]++;
-                    else if (time <= 2) distribution[1]++;
-                    else if (time <= 5) distribution[2]++;
-                    else if (time <= 10) distribution[3]++;
-                    else distribution[4]++;
-                });
-                return distribution;
-            })(),
-            
-            // 피드백 분포 (만족도용)
-            feedbackDistribution: (() => {
-                const distribution = [0, 0, 0, 0, 0]; // 매우 만족, 만족, 보통, 불만족, 매우 불만족
-                
-                // 실제 피드백이 있다면 그걸 사용하고, 없다면 샘플 데이터
-                if (feedbackStats.total > 0) {
-                    const likeRatio = feedbackStats.like / feedbackStats.total;
-                    const dislikeRatio = feedbackStats.dislike / feedbackStats.total;
-                    const neutralRatio = 1 - likeRatio - dislikeRatio;
-                    
-                    distribution[0] = Math.round(feedbackStats.total * likeRatio * 0.6); // 매우 만족
-                    distribution[1] = Math.round(feedbackStats.total * likeRatio * 0.4); // 만족
-                    distribution[2] = Math.round(feedbackStats.total * neutralRatio); // 보통
-                    distribution[3] = Math.round(feedbackStats.total * dislikeRatio * 0.6); // 불만족
-                    distribution[4] = Math.round(feedbackStats.total * dislikeRatio * 0.4); // 매우 불만족
-                } else {
-                    // 샘플 데이터 (실제 피드백이 없을 때)
-                    const sampleTotal = Math.max(20, Math.floor(total * 0.3));
-                    distribution[0] = Math.floor(sampleTotal * 0.35); // 35% 매우 만족
-                    distribution[1] = Math.floor(sampleTotal * 0.30); // 30% 만족
-                    distribution[2] = Math.floor(sampleTotal * 0.20); // 20% 보통
-                    distribution[3] = Math.floor(sampleTotal * 0.10); // 10% 불만족
-                    distribution[4] = Math.floor(sampleTotal * 0.05); // 5% 매우 불만족
-                }
-                
-                return distribution;
-            })(),
-            
-            // 평균 만족도 계산
-            averageSatisfaction: (() => {
-                if (feedbackStats.total > 0) {
-                    const likeRatio = feedbackStats.like / feedbackStats.total;
-                    return (3.5 + likeRatio * 1.5).toFixed(1); // 3.5 ~ 5.0 범위
-                }
-                return '4.2'; // 기본값
-            })(),
-            
-            // 최근 활동
-            recentLogs: filteredLogs.slice(0, 5),
-            
-            // 고유 사용자 수
-            uniqueUsers: new Set(filteredLogs.map(log => log.member_idx)).size
-        };
-    };
-
-    useEffect(() => {
-        fetchWorkoutNames();
-        fetchApiLogs();
-    }, []);
 
     // 자동 새로고침 기능
     useEffect(() => {
@@ -423,7 +69,7 @@ const AdminApiContainer = () => {
             clearInterval(refreshInterval);
             setRefreshInterval(null);
         }
-    }, [autoRefresh, refreshInterval]); // refreshInterval 의존성 추가
+    }, [autoRefresh, refreshInterval, fetchApiLogs]); // fetchApiLogs 의존성 추가
 
     // 컴포넌트 언마운트 시 인터벌 정리
     useEffect(() => {
@@ -433,8 +79,6 @@ const AdminApiContainer = () => {
             }
         };
     }, [refreshInterval]);
-
-    const stats = getStatistics();
 
     return (
         <Container>
