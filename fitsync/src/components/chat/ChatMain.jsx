@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import ChatApi from '../../util/ChatApi';
+import ChatApi from '../../utils/ChatApi';
 
 const Container = styled.div`
   padding: 20px;

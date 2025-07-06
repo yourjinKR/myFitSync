@@ -4,7 +4,7 @@ import KakaoLoginButton from './KakaoLoginButton';
 import GoogleLoginButton from './GoogleLoginButton';
 import NaverLoginButton from './NaverLoginButton';
 import axios from 'axios';
-import googleAuthManager from '../../util/googleAuth';
+import googleAuthManager from '../../utils/googleAuth';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 

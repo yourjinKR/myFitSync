@@ -11,7 +11,7 @@ import RoutineAdd from '../components/routine/RoutineAdd';
 import RoutineSet from '../components/routine/RoutineSet';
 import RoutineMain from '../components/routine/RoutineMain';
 import Login from '../components/member/Login';
-import googleAuthManager from '../util/googleAuth';
+import googleAuthManager from '../utils/googleAuth';
 import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
 import Register from '../components/member/Register';

@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import MoneyFormatter from '../../util/MoneyFormatter';
+import MoneyFormatter from '../../utils/MoneyFormatter';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import ChatApi from '../../util/ChatApi';
+import ChatApi from '../../utils/ChatApi';
 
 const InfoWrapper = styled.div`
   display:flex;

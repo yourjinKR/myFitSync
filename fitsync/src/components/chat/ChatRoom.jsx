@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useWebSocket } from '../../hooks/UseWebSocket';
-import chatApi from '../../util/ChatApi';
+import chatApi from '../../utils/ChatApi';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 

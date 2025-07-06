@@ -9,8 +9,8 @@ import {
     SimilarExercise, InvalidExerciseBadge, ErrorContainer, Section, SectionTitle
 } from '../../styles/chartStyle';
 import userMock from '../../mock/userMock';
-import versionUtils, { calculateAge } from '../../util/utilFunc';
-import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../util/KorUtil';
+import versionUtils, { calculateAge } from '../../utils/utilFunc';
+import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../utils/KorUtil';
 
 // JSON 파싱 및 응답 시간 계산
 function parseApiLogData(apiLogItem) {

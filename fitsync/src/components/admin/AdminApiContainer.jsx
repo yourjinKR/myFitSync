@@ -1,8 +1,8 @@
 import axios from 'axios';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, RoutineCard, DetailModalHeader, DetailModalTitle, DetailModalSubtitle, DetailModalCloseButton, NavigationContainer, NavigationButton, NavigationInfo, FilteredResultInfo, MetaInfoGrid, MetaInfoItem, MetaInfoLabel, MetaInfoValue, MetaInfoSubValue, FeedbackContainer, FeedbackIcon, FeedbackText, FeedbackReason, UserRequestContainer, UserRequestGrid, UserRequestItem, UserRequestKey, UserRequestValue, SplitMatchBadge, MonospaceContent, RoutineContainer, RoutineHeader, RoutineTitle, RoutineBadge, ExerciseGrid, ExerciseItem, ExerciseIcon, ExerciseContent, ExerciseName, ExerciseDetails, SimilarExercise, InvalidExerciseBadge, ErrorContainer } from '../../styles/chartStyle';
-import versionUtils from '../../util/utilFunc';
-import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../util/KorUtil';
+import versionUtils from '../../utils/utilFunc';
+import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../utils/KorUtil';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
