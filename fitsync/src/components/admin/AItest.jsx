@@ -10,7 +10,7 @@ import {
 } from '../../styles/chartStyle';
 import userMock from '../../mock/userMock';
 import versionUtils, { calculateAge } from '../../util/utilFunc';
-import { disassemble } from 'es-hangul';
+import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../util/KorUtil';
 
 // JSON 파싱 및 응답 시간 계산
 function parseApiLogData(apiLogItem) {
@@ -42,73 +42,13 @@ function parseApiLogData(apiLogItem) {
     }
 }
 
-// 자모음 분해 및 정규화 (AdminApiContainer에서 가져옴)
-const tenseConsonantMap = {
-    'ㄲ': 'ㄱ',
-    'ㄸ': 'ㄷ',
-    'ㅃ': 'ㅂ',
-    'ㅆ': 'ㅅ',
-    'ㅉ': 'ㅈ',
-};
-
-function normalizeAndDisassemble(name) {
-    const trimmed = name.replace(/\s+/g, '');
-    const dis = disassemble(trimmed);
-    const normalized = dis
-        .replace(/ㅐ/g, 'ㅔ')
-        .replace(/[ㄲㄸㅃㅆㅉ]/g, ch => tenseConsonantMap[ch] || ch);
-    return { normalized, length: normalized.length };
-}
-
-// 유사도 계산
-function levenshtein(a, b) {
-    const matrix = Array.from({ length: a.length + 1 }, (_, i) =>
-        Array(b.length + 1).fill(i === 0 ? 0 : i)
-    );
-    for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
-
-    for (let i = 1; i <= a.length; i++) {
-        for (let j = 1; j <= b.length; j++) {
-            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            matrix[i][j] = Math.min(
-                matrix[i - 1][j] + 1, // 삭제
-                matrix[i][j - 1] + 1, // 삽입
-                matrix[i - 1][j - 1] + cost // 치환
-            );
-        }
-    }
-    return matrix[a.length][b.length];
-}
-
-// 유사한 운동명 찾기 (맵 버전)
-function getSimilarNamesByMap(input, dataMap, maxLengthDiff = 1, maxDistance = 2) {
-    const { normalized: inputDis, length: inputLen } = normalizeAndDisassemble(input);
-
-    const candidates = Array.from(dataMap.entries())
-        .filter(([length, items]) => Math.abs(length - inputLen) <= maxLengthDiff)
-        .flatMap(([, items]) => items);
-
-    const result = candidates
-        .map(item => ({
-            name: item.name,
-            score: levenshtein(inputDis, item.name_dis)
-        }))
-        .filter(({ score }) => score <= maxDistance)
-        .sort((a, b) => a.score - b.score);
-
-    return result.length > 0 ? result : [{ name: '유사 운동명 찾지 못함', score: 0 }];
-}
-
 const AItest = () => {
     const initialValue = {content : '운동 루틴 추천해줘', token : 0};
 
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
     const [result, setResult] = useState({});
-    const [memberData, setMemberData] = useState(userMock[0]);
     const [memberIndex, setMemberIndex] = useState(0);
     const [rawData, setRawData] = useState([]);
-    // 운동명, 자모음 분해 운동명, 길이
-    const [rawDataObject, setRawDataObject] = useState([{name : '', name_dis : '', length: 0}]);
     // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
     // 추가 질문 : 분할 수... 등등
@@ -132,16 +72,6 @@ const AItest = () => {
     }
 
     useEffect(() => {
-        axios.get('/member/infoTemp?member_email=you720223721@gmail.com')
-        .then(response => {
-            setMemberData(response.data);
-            console.log('멤버 데이터:', response.data);
-            
-        })
-        .catch(error => {
-            console.error('Error fetching member data:', error);
-        });
-
         const fetchWorkoutNames = async () => {
             const groupedMap = new Map();
             
@@ -149,12 +79,6 @@ const AItest = () => {
                 const response = await axios.get('/ai/getTextReact');
                 const parseList = response.data.map(name => name.replace(/\s+/g, '')); 
                 setRawData(parseList);
-
-                // 운동명과 자모음 분해 운동명을 객체로 변환
-                setRawDataObject(response.data.map(name => {
-                    const { normalized, length } = normalizeAndDisassemble(name);
-                    return { name: name, name_dis: normalized, length: length };
-                }));
 
                 // 운동명과 자모음 분해 운동명을 길이별로 그룹화
                 response.data.forEach(originalName => {

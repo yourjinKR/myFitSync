@@ -1,8 +1,8 @@
 import axios from 'axios';
 import React, { useState, useEffect, useMemo } from 'react';
-import { disassemble, disassembleToGroups } from 'es-hangul';
 import { Container, Inner, Title, Button, Select, StatCard, StatTitle, StatValue, Table, Th, Td, StatusTag, ModalOverlay, ModalContent, Section, SectionTitle, RoutineCard, DetailModalHeader, DetailModalTitle, DetailModalSubtitle, DetailModalCloseButton, NavigationContainer, NavigationButton, NavigationInfo, FilteredResultInfo, MetaInfoGrid, MetaInfoItem, MetaInfoLabel, MetaInfoValue, MetaInfoSubValue, FeedbackContainer, FeedbackIcon, FeedbackText, FeedbackReason, UserRequestContainer, UserRequestGrid, UserRequestItem, UserRequestKey, UserRequestValue, SplitMatchBadge, MonospaceContent, RoutineContainer, RoutineHeader, RoutineTitle, RoutineBadge, ExerciseGrid, ExerciseItem, ExerciseIcon, ExerciseContent, ExerciseName, ExerciseDetails, SimilarExercise, InvalidExerciseBadge, ErrorContainer } from '../../styles/chartStyle';
 import versionUtils from '../../util/utilFunc';
+import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../util/KorUtil';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title as ChartTitle, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
@@ -19,94 +19,6 @@ ChartJS.register(
     ArcElement,
     Filler
 );
-
-const tenseConsonantMap = {
-    'ㄲ': 'ㄱ',
-    'ㄸ': 'ㄷ',
-    'ㅃ': 'ㅂ',
-    'ㅆ': 'ㅅ',
-    'ㅉ': 'ㅈ',
-};
-
-/** 자모음 분해 및 정규화 */
-function normalizeAndDisassemble(name) {
-    const trimmed = name.replace(/\s+/g, '');
-    const dis = disassemble(trimmed);
-    const normalized = dis
-        .replace(/ㅐ/g, 'ㅔ')
-        .replace(/[ㄲㄸㅃㅆㅉ]/g, ch => tenseConsonantMap[ch] || ch);
-    return { normalized, length: normalized.length };
-}
-
-/** 유사도 계산 */
-function levenshtein(a, b) {
-    const matrix = Array.from({ length: a.length + 1 }, (_, i) =>
-        Array(b.length + 1).fill(i === 0 ? 0 : i)
-    );
-    for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
-
-    for (let i = 1; i <= a.length; i++) {
-        for (let j = 1; j <= b.length; j++) {
-        matrix[i][j] = Math.min(
-            matrix[i - 1][j] + 1, // 삭제
-            matrix[i][j - 1] + 1, // 삽입
-            matrix[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1) // 치환
-        );
-        }
-    }
-    return matrix[a.length][b.length];
-}
-
-/**
- * 유사한 운동명 찾기 (배열)
- * @param {string} input - 입력된 운동명
- * @param {Array} dataList - 운동명 데이터 리스트
- * @param {number} maxLengthDiff - 최대 길이 차이
- * @param {number} maxDistance - 최대 편집 거리
- * @returns {Array} - 유사한 운동명 리스트
- */
-function getSimilarNamesByList(input, dataList, maxLengthDiff = 1, maxDistance = 2) {
-    const { normalized: inputDis, length: inputLen } = normalizeAndDisassemble(input);
-
-    const result = dataList
-        .filter(item => Math.abs(item.length - inputLen) <= maxLengthDiff) // 길이 차이 필터
-        .map(item => {
-            const score = levenshtein(inputDis, item.name_dis);
-            return { name: item.name, score };
-        })
-        .filter(({ score }) => score <= maxDistance)
-        .sort((a, b) => a.score - b.score);
-    
-    console.log(input, '과 유사한 운동명:', result);
-
-    return result.length > 0 ? result : [{ name: '유사 운동명 찾지 못함', score: 0 }];
-}
-
-/**
- * 유사한 운동명 찾기 (맵)
- * @param {string} input - 입력된 운동명
- * @param {Map} dataMap - 운동명 데이터 맵
- * @param {number} maxLengthDiff - 최대 길이 차이
- * @param {number} maxDistance - 최대 편집 거리
- * @returns {Array} - 유사한 운동명 리스트
- */
-function getSimilarNamesByMap(input, dataMap, maxLengthDiff = 1, maxDistance = 2) {
-    const { normalized: inputDis, length: inputLen } = normalizeAndDisassemble(input);
-
-    const candidates = Array.from(dataMap.entries())
-        .filter(([length, items]) => Math.abs(length - inputLen) <= maxLengthDiff)
-        .flatMap(([, items]) => items);
-
-    const result = candidates
-        .map(item => {
-            const score = levenshtein(inputDis, item.name_dis);
-            return { name: item.name, score };
-        })
-        .filter(({ score }) => score <= maxDistance)
-        .sort((a, b) => a.score - b.score);
-
-    return result.length > 0 ? result : [{ name: '유사 운동명 찾지 못함', score: 0 }];
-}
 
 /** JSON 파싱 및 응답 시간 계산 */
 function parseApiLogData(apiLogItem) {
@@ -147,8 +59,6 @@ const AdminApiContainer = () => {
     const [filter, setFilter] = useState('all');
     // 운동명 리스트
     const [rawData, setRawData] = useState([]);
-    // 운동명, 자모음 분해 운동명, 길이
-    const [rawDataObject, setRawDataObject] = useState([{name : '', name_dis : '', length: 0}]);
     // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
     
@@ -161,11 +71,6 @@ const AdminApiContainer = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [refreshInterval, setRefreshInterval] = useState(null);
-
-    function getListByString(input) {
-        const {length} = normalizeAndDisassemble(input);
-        return rawDataMap.get(length) || [];
-    }
 
     const filteredLogs = useMemo(() => {
         let filtered = apiLogs.filter(log => {
@@ -239,12 +144,6 @@ const AdminApiContainer = () => {
         try {
             const response = await axios.get('/ai/getTextReact');
             setRawData(response.data.map(name => name.replace(/\s+/g, '')));
-
-            // 운동명과 자모음 분해 운동명을 객체로 변환
-            setRawDataObject(response.data.map(name => {
-                const { normalized, length } = normalizeAndDisassemble(name);
-                return { name: name, name_dis: normalized, length: length };
-            }));
 
             // 운동명과 자모음 분해 운동명을 길이별로 그룹화
             response.data.forEach(originalName => {
