@@ -70,7 +70,7 @@ const Display = () => {
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>
           <Route path='/Register' element={<Register/>}/>
-          <Route path='/trainer' element={<TrainerMain/>}/>
+          <Route path='/trainer/:trainerIdx' element={<TrainerMain/>}/>
           <Route path='/trainer/view/:trainerIdx' element={<TrainerDetailView/>} />
           <Route path='/trainer/search' element={<TrainerSearch/>}/>
           <Route path='/routine' element={<RoutineMain/>}>

@@ -1,4 +1,3 @@
-// TrainerCalendarView.jsx
 import React, { useState, useEffect } from 'react';
 import {
   format,
@@ -13,6 +12,8 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import ScheduleInsertModal from './ScheduleInsertModal';
 import WorkoutInsert from './WorkoutInsert';
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
 
 const Wrapper = styled.div`
   padding: 2rem;
@@ -20,12 +21,18 @@ const Wrapper = styled.div`
   flex-direction: column;
   gap: 2rem;
   font-size: 1.4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 80vh;
 `;
 
 const TopBar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: var(--bg-secondary);
+  border-radius: 1rem;
+  padding: 1rem 2rem;
 `;
 
 const MonthTitle = styled.div`
@@ -41,9 +48,10 @@ const MonthTitle = styled.div`
     font-size: 1.8rem;
     cursor: pointer;
     padding: 0.4rem;
-
+    color: var(--primary-blue);
+    transition: color 0.2s;
     &:hover {
-      color: #666;
+      color: var(--primary-blue-hover);
     }
   }
 `;
@@ -57,30 +65,32 @@ const Toggle = styled.div`
     padding: 0.4rem 0.8rem;
     border: none;
     border-radius: 1.2rem;
-    background: #eee;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
     cursor: pointer;
     font-size: 1.2rem;
     transition: background 0.2s, color 0.2s;
   }
 
   button.active {
-    background: #222;
-    color: white;
+    background: var(--primary-blue);
+    color: var(--text-primary);
   }
 `;
 
 const ScheduleBox = styled.div`
-  background: #fff;
-  border-radius: 0.8rem;
+  background: var(--bg-secondary);
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.1rem 0.8rem rgba(0,0,0,0.10);
   font-size: 1.2rem;
+  border: 1px solid var(--border-light);
 `;
 
 const HeaderRow = styled.div`
   display: grid;
   grid-template-columns: 4rem repeat(7, 1fr);
-  background: #eee;
+  background: var(--bg-tertiary);
   font-weight: bold;
 
   div {
@@ -88,6 +98,7 @@ const HeaderRow = styled.div`
     font-size: 1.2rem;
     padding: 1rem 0;
     line-height: 1.2;
+    color: var(--primary-blue-light);
   }
 `;
 
@@ -102,10 +113,11 @@ const TimeLabel = styled.div`
   height: 3rem;
   line-height: 3rem;
   box-sizing: border-box;
+  color: var(--text-tertiary);
 `;
 
 const DayCell = styled.div`
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--border-light);
   height: 3rem;
   display: flex;
   align-items: center;
@@ -115,8 +127,8 @@ const DayCell = styled.div`
 `;
 
 const ScheduleItem = styled.div`
-  background-color: #5b6eff;
-  color: white;
+  background-color: var(--primary-blue);
+  color: var(--text-primary);
   font-size: 1.2rem;
   border-radius: 0.6rem;
   width: 100%;
@@ -131,6 +143,7 @@ const ScheduleItem = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  border: 1px solid var(--primary-blue-dark);
 `;
 
 const CalendarHeader = styled.div`
@@ -148,9 +161,10 @@ const CalendarHeader = styled.div`
     font-size: 1.6rem;
     cursor: pointer;
     padding: 0.3rem;
-
+    color: var(--primary-blue);
+    transition: color 0.2s;
     &:hover {
-      color: #666;
+      color: var(--primary-blue-hover);
     }
   }
 `;
@@ -160,71 +174,100 @@ const CalendarContainer = styled.div`
   flex-direction: column;
   border-radius: 1rem;
   overflow: hidden;
+  background: var(--bg-secondary);
 `;
 
 const WeekdaysRow = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   font-weight: bold;
-  background: #f0f0f0;
+  background: var(--bg-tertiary);
   padding: 0.8rem 0;
   text-align: center;
   font-size: 1.2rem;
+  color: var(--primary-blue-light);
 `;
 
 const CustomCalendar = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  background: #fff;
+  background: var(--bg-secondary);
   font-size: 1.2rem;
 `;
 
 const DayCellBox = styled.div`
-  background: ${({ isSelected }) => (isSelected ? '#5b6eff' : 'transparent')};
-  color: ${({ isSunday, isSaturday }) =>
-    isSunday ? 'red' : isSaturday ? 'blue' : '#000'};
+  background: ${({ isSelected }) => (isSelected ? 'var(--primary-blue)' : 'transparent')};
+  color: ${({ isSunday, isSaturday, isSelected }) =>
+    isSelected
+      ? 'var(--text-primary)'
+      : isSunday
+      ? '#F44336'
+      : isSaturday
+      ? '#4A90E2'
+      : 'var(--text-primary)'};
   padding: 0.8rem 0.2rem;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-light);
   border-top: none;
   border-left: none;
   cursor: ${({ isClickable }) => (isClickable ? 'pointer' : 'default')};
   font-size: 1.2rem;
   position: relative;
+  transition: background 0.2s;
 
   &:hover {
-    background: ${({ isSelected }) => (isSelected ? '#5b6eff' : '#f3f3f3')};
+    background: ${({ isSelected }) => (isSelected ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
   }
 `;
 const SlidePanel = styled(motion.div)`
   margin-top: 1rem;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 1rem;
   box-shadow: 0 0.1rem 0.5rem rgba(0, 0, 0, 0.1);
   z-index: 10;
   padding: 1rem;
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
 `;
 
 const SlidePanelHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 0.6rem;
+  
+  button {
+    background: var(--primary-blue);
+    color: var(--text-primary);
+    border-radius: 0.8rem;
+    padding: 0.4rem 1.2rem;
+    border: none;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+    &:hover {
+      background: var(--primary-blue-hover);
+    }
+  }
 `;
 
 const ScheduleIndicator = styled.div`
   width: 60%;
   height: 4px;
-  background: red;
+  background: var(--primary-blue);
   border-radius: 2px;
   margin: 2px auto 0;
 `;
 
 const TrainerCalendarView = () => {
+  const { trainerIdx } = useParams(); // ✅ 라우터 param 가져오기
+
   const [view, setView] = useState('month');
   const [selectedDate, setSelectedDate] = useState('');
   const [showPanel, setShowPanel] = useState(false);
@@ -232,30 +275,64 @@ const TrainerCalendarView = () => {
   const [showWorkoutInsert, setShowWorkoutInsert] = useState(false);
   const [selectedMember, setSelectedMember] = useState('');
 
+  const [members, setMembers] = useState([]); // 회원 리스트 상태 추가
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     return subDays(today, getDay(today));
   });
 
-  const [dummyScheduleWeek, setDummyScheduleWeek] = useState({
-    '1-06:00': '박회원',
-    '1-08:00': '김회원',
-    '3-13:00': '이회원',
-    '5-15:00': '최회원',
-  });
+  const [monthSchedules, setMonthSchedules] = useState({});
+  const [weekSchedules, setWeekSchedules] = useState({});
 
-  const [dummyScheduleMonth, setDummyScheduleMonth] = useState({
-    '2025-06-20': ['김회원 10:00', '이회원 13:00', '박회원 15:00'],
-    '2025-06-21': ['최회원 11:00'],
-    [format(new Date(), 'yyyy-MM-dd')]: ['홍길동 11:00'], // 오늘 스케줄 추가 (테스트용)
-  });
-
+  // ✅ 데이터 불러오기 - 스케줄 + 회원 리스트
   useEffect(() => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     setSelectedDate(todayStr);
     setShowPanel(true);
-  }, []);
+
+    if (trainerIdx) {
+      // 스케줄 데이터 가져오기
+      axios.get(`/trainer/${trainerIdx}/schedule`)
+        .then(res => {
+          const raw = res.data;
+
+          const monthMap = {};
+          const weekMap = {};
+
+          raw.forEach(schedule => {
+            const { schedule_date, schedule_stime, schedule_content } = schedule;
+            const nameTime = `${schedule_content} ${schedule_stime}`;
+            const dateKey = schedule_date;
+
+            // 월간용
+            if (!monthMap[dateKey]) monthMap[dateKey] = [];
+            monthMap[dateKey].push(nameTime);
+
+            // 주간용
+            const date = new Date(schedule_date);
+            const dayIndex = getDay(date);
+            const time = schedule_stime;
+            const weekKey = `${dayIndex}-${time}`;
+            weekMap[weekKey] = schedule_content;
+          });
+
+          setMonthSchedules(monthMap);
+          setWeekSchedules(weekMap);
+        })
+        .catch(err => console.error('스케줄 불러오기 실패', err));
+
+      // 회원 리스트 가져오기
+      axios.get(`/trainer/${trainerIdx}/members`)
+        .then(res => {
+          setMembers(res.data);
+        })
+        .catch(err => {
+          console.error('회원 리스트 불러오기 실패', err);
+        });
+    }
+  }, [trainerIdx]);
 
   const handleDayClick = (dateStr) => {
     setSelectedDate(dateStr);
@@ -267,7 +344,7 @@ const TrainerCalendarView = () => {
   const closeWorkoutModal = () => setShowWorkoutInsert(false);
 
   const handleDeleteSchedule = () => {
-    setDummyScheduleMonth((prev) => {
+    setMonthSchedules((prev) => {
       const prevArr = prev[selectedDate] || [];
       if (prevArr.length === 0) return prev;
       const newArr = prevArr.slice(0, prevArr.length - 1);
@@ -278,9 +355,9 @@ const TrainerCalendarView = () => {
     });
   };
 
-  const handleInsertSchedule = (dayIdx, time, memberName) => {
-    const key = `${dayIdx}-${time}`;
-    setDummyScheduleWeek((prev) => ({
+  // handleInsertSchedule에 params 순서 변경
+  const handleInsertSchedule = (key, memberName, startTime, endTime) => {
+    setWeekSchedules((prev) => ({
       ...prev,
       [key]: memberName,
     }));
@@ -336,7 +413,7 @@ const TrainerCalendarView = () => {
                 <TimeLabel>{hour}</TimeLabel>
                 {days.map((_, dayIdx) => {
                   const key = `${dayIdx}-${hour}`;
-                  const member = dummyScheduleWeek[key];
+                  const member = weekSchedules[key];
                   return (
                     <DayCell key={dayIdx}>
                       {member && (
@@ -366,7 +443,7 @@ const TrainerCalendarView = () => {
                   const isSelected = dateStr && selectedDate === dateStr;
                   const dayOfWeek = index % 7;
                   const isSunday = dayOfWeek === 0;
-                  const isSaturday = dayOfWeek === 6; 
+                  const isSaturday = dayOfWeek === 6;
 
                   return (
                     <DayCellBox
@@ -377,7 +454,7 @@ const TrainerCalendarView = () => {
                       isClickable={!!dateStr}
                       onClick={() => dateStr && handleDayClick(dateStr)}>
                       {day || ''}
-                      {dateStr && dummyScheduleMonth[dateStr] && dummyScheduleMonth[dateStr].length > 0 && (
+                      {dateStr && monthSchedules[dateStr] && monthSchedules[dateStr].length > 0 && (
                         <ScheduleIndicator />
                       )}
                     </DayCellBox>
@@ -397,9 +474,12 @@ const TrainerCalendarView = () => {
                 </ButtonGroup>
               </SlidePanelHeader>
               <ul>
-                {(dummyScheduleMonth[selectedDate] || ['일정 없음']).map((item, idx) => (
+                {(monthSchedules[selectedDate] || ['일정 없음']).map((item, idx) => (
                   <li key={idx}>
-                    <span style={{ cursor: 'pointer', color: '#5b6eff' }} onClick={() => handleMemberClick(item.split(' ')[0])}>{item}</span>
+                    <span style={{ cursor: 'pointer', color: '#5b6eff' }}
+                      onClick={() => handleMemberClick(item.split(' ')[0])}>
+                      {item}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -408,7 +488,13 @@ const TrainerCalendarView = () => {
           )}
 
           {showInsertModal && (
-            <ScheduleInsertModal onClose={closeInsertModal} onInsert={handleInsertSchedule} />
+          <ScheduleInsertModal
+            members={members}
+            trainerIdx={trainerIdx}
+            selectedDate={selectedDate}
+            onClose={closeInsertModal}
+            onInsert={handleInsertSchedule}
+          />
           )}
         </>
       )}

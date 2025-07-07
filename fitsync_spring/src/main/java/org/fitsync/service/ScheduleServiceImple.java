@@ -1,5 +1,8 @@
 package org.fitsync.service;
 
+import java.util.List;
+
+import org.fitsync.domain.ScheduleVO;
 import org.fitsync.mapper.ScheduleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,4 +16,18 @@ public class ScheduleServiceImple implements ScheduleService {
 	@Autowired
 	private ScheduleMapper mapper;
 	
+    @Override
+    public List<ScheduleVO> getSchedulesByTrainer(int trainerIdx) {
+        return mapper.selectByTrainerIdx(trainerIdx);
+    }
+
+    @Override
+    public int insertSchedule(ScheduleVO vo) {
+        return mapper.insertSchedule(vo);
+    }
+
+    @Override
+    public int deleteSchedule(int scheduleIdx) {
+        return mapper.deleteSchedule(scheduleIdx);
+    }
 }

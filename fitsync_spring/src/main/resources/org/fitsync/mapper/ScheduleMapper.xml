@@ -3,5 +3,35 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.ScheduleMapper">
+	<select id="selectByTrainerIdx" resultType="org.fitsync.domain.ScheduleVO">
+	    SELECT s.*
+	    FROM schedule s
+	    JOIN member m ON s.trainer_idx = m.member_idx
+	    WHERE m.member_type = 'trainer'
+	      AND s.trainer_idx = #{trainerIdx}
+    </select>
 
+    <insert id="insertSchedule" parameterType="org.fitsync.domain.ScheduleVO">
+        INSERT INTO schedule (
+            schedule_idx,
+            member_idx,
+            schedule_date,
+            schedule_stime,
+            schedule_etime,
+            schedule_content,
+            schedule_regdate
+        ) VALUES (
+            schedule_seq.NEXTVAL,
+            #{member_idx},
+            #{schedule_date},
+            #{schedule_stime},
+            #{schedule_etime},
+            #{schedule_content},
+            SYSDATE
+        )
+    </insert>
+
+    <delete id="deleteSchedule">
+        DELETE FROM schedule WHERE schedule_idx = #{scheduleIdx}
+    </delete>
 </mapper>

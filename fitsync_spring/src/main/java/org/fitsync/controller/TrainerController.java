@@ -10,13 +10,15 @@ import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.LessonVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
+import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
 import org.fitsync.service.LessonService;
 import org.fitsync.service.MemberService;
+import org.fitsync.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +35,9 @@ public class TrainerController {
     private MemberService memberService;
     @Autowired
     private LessonService lessonService;
-
+    @Autowired
+    private ScheduleService scheduleService; 
+    
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
     public ResponseEntity<?> getTrainerProfileById(@PathVariable int trainerIdx) {
@@ -62,8 +66,6 @@ public class TrainerController {
         Map<String, Object> result = new HashMap<>();
 
         Object sessionIdx = session.getAttribute("member_idx");
-        System.out.println("[디버그] 세션 상태: " + session);
-        System.out.println("[디버그] 세션 member_idx: " + sessionIdx);
 
         if (sessionIdx == null) {
             result.put("success", false);
@@ -124,8 +126,6 @@ public class TrainerController {
             return ResponseEntity.status(403).body(result);
         }
         
-        System.out.println("[디버그] memberIdx = " + memberIdx);
-        System.out.println("[디버그] lessons size = " + lessons.size());
         for (LessonVO l : lessons) {
             System.out.println("lesson: " + l);
         }
@@ -145,6 +145,22 @@ public class TrainerController {
         }
     }
     
+    // 트레이너 스케줄 조회
+    @GetMapping("/{trainerIdx}/schedule")
+    public List<ScheduleVO> getSchedulesByTrainer(@PathVariable int trainerIdx) {
+        return scheduleService.getSchedulesByTrainer(trainerIdx);
+    }
 
+    // 트레이너 스케줄 추가
+    @PostMapping("/schedule")
+    public int addSchedule(@RequestBody ScheduleVO vo) {
+        return scheduleService.insertSchedule(vo);
+    }
+
+    // 트레이너 스케줄 삭제
+    @DeleteMapping("/schedule/{scheduleIdx}")
+    public int deleteSchedule(@PathVariable int scheduleIdx) {
+        return scheduleService.deleteSchedule(scheduleIdx);
+    }
     
 }

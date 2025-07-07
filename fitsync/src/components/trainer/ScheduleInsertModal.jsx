@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import axios from 'axios';
 
 const Backdrop = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,36 +14,125 @@ const Backdrop = styled.div`
 `;
 
 const Modal = styled.div`
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  min-width: 300px;
+  background: var(--bg-secondary);
+  padding: 2rem 2.5rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.2rem 1rem rgba(0, 0, 0, 0.15);
+  color: var(--text-primary);
+  min-width: 340px;
+  width: 100%;
+  max-width: 420px;
 `;
 
-const ScheduleInsertModal = ({ onClose, onInsert }) => {
+const Title = styled.h3`
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 1.6rem;
+  color: var(--primary-blue);
+`;
+
+const Field = styled.div`
+  margin-bottom: 1.2rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  select, input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+  }
+
+  input::placeholder {
+    color: var(--text-tertiary);
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1.6rem;
+
+  button {
+    padding: 0.6rem 1.4rem;
+    border: none;
+    border-radius: 0.8rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button:first-child {
+    background: var(--primary-blue);
+    color: var(--text-primary);
+  }
+
+  button:first-child:hover {
+    background: var(--primary-blue-hover);
+  }
+
+  button:last-child {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+
+  button:last-child:hover {
+    background: var(--bg-hover);
+  }
+`;
+
+const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, onInsert }) => {
   const [selectedMember, setSelectedMember] = useState('');
   const [customMember, setCustomMember] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [startTime, setStartTime] = useState('06:00');
+  const [endTime, setEndTime] = useState('07:00');
+  const [useCustom, setUseCustom] = useState(false);
 
-  const members = ['김회원', '이회원', '박회원'];
+  const modalRef = useRef();
 
-  const handleSubmit = () => {
-    const member = customMember.trim() || selectedMember;
-    if (!member || !startTime) {
-      alert('회원과 시작시간을 입력해주세요.');
+  const hours = Array.from({ length: 19 }, (_, i) => {
+    const hour = (6 + i) % 24;
+    return `${hour.toString().padStart(2, '0')}:00`;
+  });
+
+  const handleSubmit = async () => {
+    const memberName = useCustom ? customMember.trim() : selectedMember;
+    if (!memberName || !startTime || !endTime) {
+      alert('모든 항목을 입력해주세요.');
       return;
     }
 
-    // 예: 1-08:00 형식의 키
-    const dayIndex = new Date().getDay(); // 오늘 요일 인덱스 (0~6)
-    const key = `${dayIndex}-${startTime}`;
+    try {
+      await axios.post(`/trainer/schedule`, {
+        trainer_idx: trainerIdx,
+        member_idx: null,
+        schedule_date: new Date().toISOString().split('T')[0],
+        schedule_stime: startTime,
+        schedule_etime: endTime,
+        schedule_content: memberName
+      });
 
-    onInsert(key, member);
-    onClose();
+      const dayIndex = new Date(selectedDate).getDay();
+      const key = `${dayIndex}-${startTime}`;
+      onInsert(key, memberName, startTime, endTime);
+      onClose();
+    } catch (err) {
+      alert('스케줄 추가 실패');
+      console.error(err);
+    }
   };
 
-  const modalRef = useRef();
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -58,42 +146,64 @@ const ScheduleInsertModal = ({ onClose, onInsert }) => {
   return (
     <Backdrop>
       <Modal ref={modalRef}>
-        <h3>일정 추가</h3>
+        <Title>일정 추가</Title>
 
-        <div>
-          <label>회원 선택:</label>
-          <select value={selectedMember} onChange={(e) => setSelectedMember(e.target.value)}>
+        <Field>
+          <label>회원 선택</label>
+          <select
+            value={useCustom ? 'custom' : selectedMember}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === 'custom') {
+                setUseCustom(true);
+                setSelectedMember('');
+              } else {
+                setUseCustom(false);
+                setSelectedMember(val);
+              }
+            }}>
             <option value="">-- 선택하세요 --</option>
-            {members.map((name, idx) => (
-              <option key={idx} value={name}>{name}</option>
+            {members.map((m, idx) => (
+              <option key={idx} value={m.name}>{m.name}</option>
+            ))}
+            <option value="custom">직접 입력</option>
+          </select>
+        </Field>
+
+        {useCustom && (
+          <Field>
+            <label>이름 입력</label>
+            <input
+              type="text"
+              placeholder="회원 이름을 입력하세요"
+              value={customMember}
+              onChange={(e) => setCustomMember(e.target.value)}
+            />
+          </Field>
+        )}
+
+        <Field>
+          <label>시작 시간</label>
+          <select value={startTime} onChange={(e) => setStartTime(e.target.value)}>
+            {hours.map((h) => (
+              <option key={h} value={h}>{h}</option>
             ))}
           </select>
-        </div>
+        </Field>
 
-        <div>
-          <label>직접 입력:</label>
-          <input
-            type="text"
-            value={customMember}
-            placeholder="회원 이름"
-            onChange={(e) => setCustomMember(e.target.value)}
-          />
-        </div>
+        <Field>
+          <label>종료 시간</label>
+          <select value={endTime} onChange={(e) => setEndTime(e.target.value)}>
+            {hours.map((h) => (
+              <option key={h} value={h}>{h}</option>
+            ))}
+          </select>
+        </Field>
 
-        <div>
-          <label>시작 시간:</label>
-          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        </div>
-
-        <div>
-          <label>종료 시간:</label>
-          <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-        </div>
-
-        <div style={{ marginTop: '1rem' }}>
+        <ButtonGroup>
           <button onClick={handleSubmit}>추가</button>
-          <button onClick={onClose} style={{ marginLeft: '0.5rem' }}>취소</button>
-        </div>
+          <button onClick={onClose}>취소</button>
+        </ButtonGroup>
       </Modal>
     </Backdrop>
   );

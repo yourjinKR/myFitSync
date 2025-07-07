@@ -1,5 +1,11 @@
 package org.fitsync.mapper;
 
-public interface ScheduleMapper {
+import java.util.List;
 
+import org.fitsync.domain.ScheduleVO;
+
+public interface ScheduleMapper {
+    public List<ScheduleVO> selectByTrainerIdx(int trainerIdx);
+    public int insertSchedule(ScheduleVO vo);
+    public int deleteSchedule(int scheduleIdx);
 }
