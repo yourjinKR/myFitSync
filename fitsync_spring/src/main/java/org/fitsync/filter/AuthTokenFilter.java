@@ -41,7 +41,7 @@ public class AuthTokenFilter implements Filter {
         }
         System.out.println("token : " + token);
         System.out.println("jwtUtil : " + jwtUtil);
-        
+        System.out.println("jwtUtil.validate(token) : " + jwtUtil.validate(token));
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
             try {
                 HttpSession session = httpRequest.getSession();

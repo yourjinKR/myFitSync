@@ -134,7 +134,8 @@ public class RoutineController {
 	@PostMapping("/record/{routine_list_idx}")
 	public ResponseEntity<?> insertRecord(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
 		Map<String, Object> result = new HashMap<>();
-		int member_idx = (int) session.getAttribute("member_idx"); 
+		int member_idx = (int) session.getAttribute("member_idx");
+		System.out.println("member_idx : " + member_idx);
 		service.updateRoutine(body, member_idx);							
 //		if(rcservice.insertRecord(body, member_idx)) {
 //			if((boolean) body.get("update")) {

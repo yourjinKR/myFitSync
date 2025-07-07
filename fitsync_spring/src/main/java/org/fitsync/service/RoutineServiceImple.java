@@ -62,7 +62,7 @@ public class RoutineServiceImple implements RoutineService {
 	        if (result != 1) {
 	            throw new RuntimeException("RoutineList insert failed");
 	        }
-
+	        
 	        List<Map<String, Object>> list = (List<Map<String, Object>>) body.get("list");
 	        int routineResult = 0;
 	        for (Map<String, Object> data : list) {
@@ -74,7 +74,7 @@ public class RoutineServiceImple implements RoutineService {
 	            
 	            routineResult += rmapper.insert(rvo); // 루틴 운동 등록
 	            int routine_idx = rmapper.getIdx(routine_list_idx);
-
+	            
 	            List<Map<String, Object>> sets = (List<Map<String, Object>>) data.get("routineSet");
 	            if (sets.size() > 0) {
 	                RoutineSetVO rsvo = new RoutineSetVO();
@@ -84,12 +84,10 @@ public class RoutineServiceImple implements RoutineService {
 	                	rsvo.setRoutine_idx(routine_idx);
 	                	rsvo.setSet_num(idx++);
 	                	Object setVolumeObj = set.get("set_volume");
-	                	rsvo.setSet_volume(setVolumeObj != null && !setVolumeObj.toString().trim().isEmpty() 
-	                	    ? (int) setVolumeObj : 0);
+	                	rsvo.setSet_volume(safeIntParse(setVolumeObj));
 	                	Object setCountObj = set.get("set_count");
-	                	rsvo.setSet_count(setCountObj != null && !setCountObj.toString().trim().isEmpty() 
-	                	    ? (int) setCountObj : 0);	                	
-						
+	                	rsvo.setSet_count(safeIntParse(setCountObj));	                	
+	                	
 	                	setResult += rsmapper.insert(rsvo); // 세트 등록
 					}
 	                // 세트 등록 실패 시 롤백
@@ -123,15 +121,50 @@ public class RoutineServiceImple implements RoutineService {
 		RoutineListVO prevData = rlmapper.getRoutine(rmdto);
 		List<Map<String, Object>> newRoutines = (List<Map<String, Object>>) body.get("routines");
 		
-		compareRoutines(prevData, newRoutines, body);
+		Map<String, Object> compareData = compareRoutines(prevData, newRoutines, body);
+		List<Map<String, Object>> routineComparisons = (List<Map<String, Object>>) compareData.get("routineComparisons");
+		for (Map<String, Object> routineComparison : routineComparisons) {
+			if(routineComparison.get("type") != null && (boolean) routineComparison.get("type").equals("MODIFIED")) {
+				Map<String, Object> differences = (Map<String, Object>) routineComparison.get("differences");
+				if((boolean) differences.get("sets_changed")) {
+					Map<String, Object> sets_differences = (Map<String, Object>) differences.get("sets_differences");
+					List<Map<String, Object>> set_comparisons = (List<Map<String, Object>>) sets_differences.get("set_comparisons");
+					for (Map<String, Object> set_comparison : set_comparisons) {
+						System.out.println("set_comparison : " + set_comparison);
+						RoutineSetVO rsvo = new RoutineSetVO();
+//						if((boolean)set_comparison.get("count_changed")) {
+////							rsvo.setSet_count(safeIntParse(set_comparison.get("new_set_count")));
+//						}
+//						if((boolean)set_comparison.get("volume_changed")) {
+////							rsvo.setSet_volume(safeIntParse(set_comparison.get("new_volume")));
+//						}
+					}
+					System.out.println("============================================================================================================");
+					
+//					for (Map<String, Object> sets_difference : sets_differences) {
+//						System.out.println(sets_difference);
+//						// 횟수 수정
+//						if((boolean) sets_difference.get("count_changed")) {
+//						}
+//						// 무게 수정
+//						if((boolean) sets_difference.get("volume_changed")) {
+//						}
+//						System.out.println(rsvo);
+//					}
+					
+				}
+			}	
+			
+		}
 		
-		return false;
+		
+		
+		return true;
 	}
 	
 	// 비교 메서드
 	private Map<String, Object> compareRoutines(RoutineListVO prevData, List<Map<String, Object>> newRoutines, Map<String, Object> body) {
 	    Map<String, Object> result = new HashMap<>();
-	    
 	    // 1. 루틴 이름 비교
 	    String prevName = prevData.getRoutine_name();
 	    String newName = (String) body.get("routine_name");
@@ -141,15 +174,13 @@ public class RoutineServiceImple implements RoutineService {
 	        result.put("prevName", prevName);
 	        result.put("newName", newName);
 	    }
-	    
 	    // 2. 루틴 개수 비교
 	    List<RoutineVO> prevRoutines = prevData.getRoutines();
 	    int prevCount = prevRoutines != null ? prevRoutines.size() : 0;
 	    int newCount = newRoutines != null ? newRoutines.size() : 0;
 	    result.put("routineCountChanged", prevCount != newCount);
-//	    result.put("prevRoutineCount", prevCount);
-//	    result.put("newRoutineCount", newCount);
-	    System.out.println(result);
+	    result.put("prevRoutineCount", prevCount);
+	    result.put("newRoutineCount", newCount);
 	    // 3. 각 루틴별 상세 비교
 	    List<Map<String, Object>> routineComparisons = new ArrayList<>();
 	    
@@ -206,7 +237,6 @@ public class RoutineServiceImple implements RoutineService {
 	        diff.put("prev_memo", prevMemo);
 	        diff.put("new_memo", newMemo);
 	    }
-	    
 	    // 세트 비교
 	    List<RoutineSetVO> prevSets = prevRoutine.getSets();
 	    List<Map<String, Object>> newSets = (List<Map<String, Object>>) newRoutine.get("sets");
@@ -216,7 +246,6 @@ public class RoutineServiceImple implements RoutineService {
 	        diff.put("sets_changed", true);
 	        diff.put("sets_differences", setsDiff);
 	    }
-	    
 	    return diff;
 	}
 

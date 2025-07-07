@@ -104,6 +104,7 @@ const RoutineDetail = () => {
     }
   },[data]);
   
+  // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
     const handleRoutineData = async () => {
       try {
@@ -112,8 +113,19 @@ const RoutineDetail = () => {
         });
         const routineData = response.data;
         if (routineData.success) {
-          setData(routineData.vo);
-          setInit(routineData.vo);
+          // 각 세트에 고유 ID 추가
+          const dataWithIds = {
+            ...routineData.vo,
+            routines: routineData.vo.routines.map(routine => ({
+              ...routine,
+              sets: routine.sets.map((set, index) => ({
+                ...set,
+                id: set.id || `${routine.pt_idx}-${index}-${Date.now()}`
+              }))
+            }))
+          };
+          setData(dataWithIds);
+          setInit(dataWithIds);
         } else {
           alert(routineData.message);
         }
@@ -143,27 +155,29 @@ const RoutineDetail = () => {
     }));
   };
 
-  // 세트 삭제
-  const handleDeleteSet = (routinePtIdx, setId) => {
+  // 세트 삭제 - setId 대신 setIndex 사용
+  const handleDeleteSet = (routinePtIdx, setIndex) => {
+    console.log('삭제 요청:', { routinePtIdx, setIndex });
+    
     setData(prev => ({
       ...prev,
       routines: prev.routines.map(r =>
         r.pt_idx === routinePtIdx
           ? {
               ...r,
-              sets: r.sets.filter(set => set.id !== setId)
+              sets: r.sets.filter((set, index) => index !== setIndex)
             }
           : r
       )
     }));
   };
 
-  // trailingActions에서 삭제 시 handleDeleteSet 호출
-  const trailingActions = (routinePtIdx, setId) => (
+  // trailingActions - setIndex 전달
+  const trailingActions = (routinePtIdx, setIndex) => (
     <TrailingActions>
       <SwipeAction
         destructive={true}
-        onClick={() => handleDeleteSet(routinePtIdx, setId)}
+        onClick={() => handleDeleteSet(routinePtIdx, setIndex)}
       >
         삭제
       </SwipeAction>
@@ -180,7 +194,11 @@ const RoutineDetail = () => {
               ...r,
               sets: [
                 ...r.sets,
-                { id: Date.now(), set_volume: '', set_count: '' }
+                { 
+                  id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`, 
+                  set_volume: '', 
+                  set_count: '' 
+                }
               ]
             }
           : r
@@ -218,20 +236,20 @@ const RoutineDetail = () => {
             <SwipeableList actionDelay={0}>
               {routine.sets && routine.sets.map((set, index) => (
                 <SwipeableListItem
-                  key={set.id}
-                  trailingActions={trailingActions(routine.pt_idx, set.id)}
+                  key={`${routine.pt_idx}-${index}-${set.id}`} // 더 안정적인 key
+                  trailingActions={trailingActions(routine.pt_idx, index)}
                 >
-                  <div>{index + 1}</div>
+                  <div>{index + 1}</div> {/* 이 부분이 자동으로 업데이트됨 */}
                   <input
                     type="number"
-                    value={set.set_volume}
+                    value={set.set_volume || ''}
                     onChange={e =>
                       handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
                     }
                   />
                   <input
                     type="number"
-                    value={set.set_count}
+                    value={set.set_count || ''}
                     onChange={e =>
                       handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
                     }
