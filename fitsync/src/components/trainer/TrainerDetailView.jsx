@@ -21,8 +21,9 @@ const TrainerDetailView = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
-    axios.get(`/trainer/profile/${trainerIdx}`)
-      .then((res) => {
+    async function fetchData() {
+      try {
+        const res = await axios.get(`/trainer/profile/${trainerIdx}`);
         const data = res.data;
 
         const trainerData = {
@@ -33,19 +34,25 @@ const TrainerDetailView = () => {
           description: data.member_info,
           certifications: data.awards ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`) : [],
           availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
-          priceBase: data.member_price,
+          priceBase: data.member_price || 0,
           reviewList: data.reviews || [],
           intro: data.member_intro || '',
           specialties: data.specialties || [],
-          lessons: data.lessons || []
         };
-        console.log(data);
-        
-        
-        setTrainer(trainerData);
-        setEditedTrainer(trainerData);
-      })
-      .catch(console.error);
+
+        // 레슨 데이터도 함께 불러오기
+        const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
+        const lessons = lessonRes.data || [];
+
+        // state 세팅
+        setTrainer({ ...trainerData, lessons });
+        setEditedTrainer({ ...trainerData, lessons });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchData();
   }, [trainerIdx]);
 
   const isLoggedIn = !!loginUserId;
@@ -60,20 +67,22 @@ const TrainerDetailView = () => {
 
   const handleEditToggle = async () => {
     if (isEditMode) {
+      // 저장 로직
       const payload = {
         member_idx: trainerIdx,
         member_intro: editedTrainer.intro || '',
         member_info: editedTrainer.description || '',
-        member_price: editedTrainer.priceBase || 0,
         member_info_image: editedTrainer.images?.join(',') || '',
-        lessons: editedTrainer.lessons || [],
       };
 
       try {
-        const res = await axios.put(`/trainer/update/${trainerIdx}`, payload, {
-          withCredentials: true
+        await axios.put(`/trainer/update/${trainerIdx}`, payload, {
+          withCredentials: true,
         });
 
+      await axios.post(`/trainer/lesson/${trainerIdx}`, editedTrainer.lessons, {
+        withCredentials: true,
+      });
         alert('수정이 완료되었습니다.');
         setTrainer(editedTrainer);
       } catch (err) {
@@ -88,11 +97,16 @@ const TrainerDetailView = () => {
   const handleChange = (field, value) => {
     setEditedTrainer(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   if (!trainer || !editedTrainer) return <div style={{ fontSize: '1.1rem' }}>로딩 중...</div>;
+
+  // 레슨 정렬: 횟수 적은 순으로
+  const sortedLessons = (isEditMode ? editedTrainer.lessons : trainer.lessons)
+    .slice()
+    .sort((a, b) => (a.lesson_num || 0) - (b.lesson_num || 0));
 
   return (
     <div style={{ margin: '0 auto', padding: '1.5rem', fontSize: '3rem' }}>
@@ -106,7 +120,7 @@ const TrainerDetailView = () => {
 
       {/* 탭 메뉴 */}
       <div style={{ display: 'flex', borderBottom: '1px solid #ccc', marginTop: '2rem' }}>
-        {['소개', '후기'].map((tab) => (
+        {['소개', '후기'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -134,10 +148,11 @@ const TrainerDetailView = () => {
           isEdit={isEditMode}
           onChange={handleChange}
           onMoreClick={() => setActiveTab('후기')}
-          lessons={isEditMode ? editedTrainer.lessons : trainer.lessons}
-          onLessonsChange={(newLessons) => handleChange('lessons', newLessons)}
+          lessons={sortedLessons}
+          onLessonsChange={newLessons => handleChange('lessons', newLessons)}
         />
       )}
+
       {activeTab === '후기' && <TrainerReviewSection reviews={trainer.reviewList} />}
 
       {/* 상담 버튼 */}
@@ -170,15 +185,27 @@ const TrainerDetailView = () => {
 
       {/* 로그인 모달 */}
       {showLoginModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <div style={{ background: '#fff', padding: '2rem', borderRadius: '1rem', fontSize: '1.1rem' }}>
             <p>로그인이 필요한 기능입니다.</p>
-            <button style={{ marginTop: '1rem' }} onClick={() => navigate('/login')}>로그인 하러가기</button>
-            <button style={{ marginLeft: '1rem' }} onClick={() => setShowLoginModal(false)}>닫기</button>
+            <button style={{ marginTop: '1rem' }} onClick={() => navigate('/login')}>
+              로그인 하러가기
+            </button>
+            <button style={{ marginLeft: '1rem' }} onClick={() => setShowLoginModal(false)}>
+              닫기
+            </button>
           </div>
         </div>
       )}

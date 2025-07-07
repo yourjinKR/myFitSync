@@ -3,5 +3,33 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.LessonMapper">
+    <!-- 전체 조회 -->
+    <select id="getLessonsByTrainer" resultType="org.fitsync.domain.LessonVO">
+        SELECT * FROM lesson WHERE member_idx = #{memberIdx}
+    </select>
 
+    <!-- 단건 조회 -->
+    <select id="getLessonByTrainerAndNum" resultType="org.fitsync.domain.LessonVO">
+        SELECT * FROM lesson 
+        WHERE member_idx = #{memberIdx} AND lesson_num = #{lesson_num}
+    </select>
+
+    <!-- 단건 삭제 -->
+    <delete id="deleteLessonByTrainerAndNum">
+        DELETE FROM lesson 
+        WHERE member_idx = #{memberIdx} AND lesson_num = #{lesson_num}
+    </delete>
+
+	<!-- 삽입 -->
+	<insert id="insertLesson" parameterType="org.fitsync.domain.LessonVO" keyProperty="lesson_idx" keyColumn="lesson_idx" useGeneratedKeys="true">
+	    INSERT INTO lesson (lesson_idx, member_idx, lesson_num, lesson_price, lesson_percent)
+	    VALUES (lesson_seq.nextval, #{member_idx}, #{lesson_num}, #{lesson_price}, #{lesson_percent})
+	</insert>
+
+    <!-- 수정 -->
+    <update id="updateLesson">
+        UPDATE lesson
+        SET lesson_price = #{lesson_price}, lesson_percent = #{lesson_percent}
+        WHERE member_idx = #{member_idx} AND lesson_num = #{lesson_num}
+    </update>
 </mapper>

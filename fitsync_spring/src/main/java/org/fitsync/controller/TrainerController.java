@@ -7,9 +7,11 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.AwardsVO;
+import org.fitsync.domain.LessonVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.TrainerProfileDTO;
+import org.fitsync.service.LessonService;
 import org.fitsync.service.MemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +31,8 @@ public class TrainerController {
 
     @Autowired
     private MemberService memberService;
+    @Autowired
+    private LessonService lessonService;
 
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
@@ -86,10 +91,60 @@ public class TrainerController {
             result.put("success", false);
             result.put("msg", "업데이트 중 오류 발생: " + e.getMessage());
             return ResponseEntity.status(500).body(result);
-        }
+	        }
+	    }
+
+    // 트레이너별 레슨 목록 조회
+    @GetMapping("/lesson/{memberIdx}")
+    public ResponseEntity<List<LessonVO>> getLessons(@PathVariable int memberIdx) {
+        List<LessonVO> lessons = lessonService.getLessonsByMemberIdx(memberIdx);
+        return ResponseEntity.ok(lessons);
     }
 
+    // 트레이너별 레슨 저장(등록/수정)
+    @PostMapping("/lesson/{memberIdx}")
+    public ResponseEntity<Map<String, Object>> saveLessons(
+            @PathVariable int memberIdx,
+            @RequestBody List<LessonVO> lessons,
+            HttpSession session) {
+    	
+        Map<String, Object> result = new HashMap<>();
 
+        Object sessionIdx = session.getAttribute("member_idx");
+        if (sessionIdx == null) {
+            result.put("success", false);
+            result.put("msg", "인증 정보 없음");
+            return ResponseEntity.status(401).body(result);
+        }
+
+        int sessionMemberIdx = Integer.parseInt(sessionIdx.toString());
+        if (sessionMemberIdx != memberIdx) {
+            result.put("success", false);
+            result.put("msg", "권한 없음");
+            return ResponseEntity.status(403).body(result);
+        }
+        
+        System.out.println("[디버그] memberIdx = " + memberIdx);
+        System.out.println("[디버그] lessons size = " + lessons.size());
+        for (LessonVO l : lessons) {
+            System.out.println("lesson: " + l);
+        }
+
+        try {
+            lessonService.saveLessons(memberIdx, lessons);
+
+            result.put("success", true);
+            result.put("msg", "레슨 저장 완료");
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("msg", "레슨 저장 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+    
 
     
 }

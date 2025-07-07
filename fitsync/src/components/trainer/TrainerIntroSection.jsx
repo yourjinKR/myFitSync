@@ -119,6 +119,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         lessons={lessons || []}
         isEdit={isEdit}
         onLessonsChange={onLessonsChange}
+        onChange={onChange}
       />
     </>
   );
