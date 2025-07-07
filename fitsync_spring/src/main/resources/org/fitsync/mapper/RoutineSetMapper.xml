@@ -7,7 +7,9 @@
 		INSERT INTO ROUTINESET
 		VALUES (
 		 	#{routine_idx},
-		 	#{set_num},
+	 		NVL((SELECT MAX(set_num) 
+	 		FROM ROUTINESET 
+	 		WHERE ROUTINE_IDX = #{routine_idx}),0) + 1,
 		 	#{set_volume},
 		 	#{set_count}
 		)

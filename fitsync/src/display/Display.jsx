@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Header from '../layout/Header';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Main from '../components/Main';
-import Test from '../components/Test';
+import IsLoading from '../components/IsLoading';
 import styled from 'styled-components';
 import Nav from '../layout/Nav';
 import TrainerSearch from '../components/trainer/TrainerSearch';
@@ -24,16 +24,20 @@ import AdminMain from '../components/admin/AdminMain';
 import RoutineDetail from '../components/routine/RoutineDetail';
 
 const DisplayWrapper = styled.div`
- max-width : 750px;
- width : 100%;
- margin: 0 auto;
- position: relative;
- height:100vh;
+  max-width: 750px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  height: 100vh;
+  background: var(--bg-primary); /* CSS 변수 사용 */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 `;
+
 const DisplayInnner = styled.div`
   position: relative;
   overflow: auto;
   height: calc(100% - 114px);
+  background: var(--bg-primary);
 `;
 
 const Display = () => {
@@ -78,7 +82,7 @@ const Display = () => {
           <Route path='/mypage' element={<MyPage/>}/>
           <Route path='/chat' element={<ChatMain/>}/>
           <Route path='/chat/:roomId' element={<ChatRoom/>}/>
-          <Route path='/test' element={<Test/>}/>
+          <Route path='/loading' element={<IsLoading/>}/>
 
           <Route path='/admin' element={<AdminMain/>}>
             <Route path='ai' element={<AItest/>}/>
