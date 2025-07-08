@@ -73,7 +73,8 @@ const WorkoutInsert = ({
   memberIdx,
   trainerIdx,
   date,
-  time,
+  stime,
+  etime,
   memo
 }) => {
   const navigate = useNavigate();
@@ -85,7 +86,8 @@ const WorkoutInsert = ({
         memberIdx,
         trainerIdx,
         date,
-        time,
+        stime,
+        etime,
         memo,
       },
     });
@@ -97,7 +99,7 @@ const WorkoutInsert = ({
       <ModalBox onClick={(e) => e.stopPropagation()}>
         <InfoRow><strong>{memberName}</strong>님</InfoRow>
         <InfoRow>날짜: {date}</InfoRow>
-        <InfoRow>시간: {time || '시간 없음'}</InfoRow>
+        <InfoRow>시간: {stime || '시간 없음'}~{etime || '시간 없음'}</InfoRow>
         <InfoRow>메모: {memo || '메모 없음'}</InfoRow>
 
         <ButtonGroup>
