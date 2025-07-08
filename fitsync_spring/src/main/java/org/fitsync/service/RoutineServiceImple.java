@@ -115,6 +115,7 @@ public class RoutineServiceImple implements RoutineService {
 	
 	@Override
 	public boolean updateRoutine(Map<String, Object> body, int member_idx) {
+		boolean result = false;
 		RoutineMemberDTO rmdto = new RoutineMemberDTO();
 		rmdto.setMember_idx(member_idx);
 		rmdto.setRoutine_list_idx((int) body.get("routine_list_idx"));
@@ -124,57 +125,49 @@ public class RoutineServiceImple implements RoutineService {
 		Map<String, Object> compareData = compareRoutines(prevData, newRoutines, body);
 		List<Map<String, Object>> routineComparisons = (List<Map<String, Object>>) compareData.get("routineComparisons");
 		for (Map<String, Object> routineComparison : routineComparisons) {
-			System.out.println("routineComparison : " + routineComparison);
 			if(routineComparison.get("type") != null && (boolean) routineComparison.get("type").equals("MODIFIED")) {
 				Map<String, Object> differences = (Map<String, Object>) routineComparison.get("differences");
 				if((boolean) differences.get("sets_changed")) {
 					Map<String, Object> sets_differences = (Map<String, Object>) differences.get("sets_differences");
 					List<Map<String, Object>> set_comparisons = (List<Map<String, Object>>) sets_differences.get("set_comparisons");
 					for (Map<String, Object> set_comparison : set_comparisons) {
-						System.out.println("set_comparison : " + set_comparison);
 						RoutineSetVO rsvo = new RoutineSetVO();
+						rsvo.setRoutine_idx(safeIntParse(set_comparison.get("routine_idx")));
 						if(set_comparison.get("type").equals("ADDED")) {
 							Map<String, Object> newSet = (Map<String, Object>)set_comparison.get("newSet");
-							rsvo.setRoutine_idx(safeIntParse(newSet.get("pt_idx")));
 							rsvo.setSet_count(safeIntParse(newSet.get("set_count")));
 							rsvo.setSet_volume(safeIntParse(newSet.get("set_volume")));
-//							rsmapper.insert(rsvo);
+							result = rsmapper.insert(rsvo) > 0;
 						}
 						
 						if(set_comparison.get("type").equals("DELETED")) {
-//							rsvo.set();
-//							rsvo.setSet_num(set_num);
-//							rsmapper.delete(rsvo);
+							rsvo = (RoutineSetVO) set_comparison.get("prevSet");
+							result = rsmapper.delete(rsvo) > 0;
 						}
 						
-//						if((boolean)set_comparison.get("count_changed")) {
-////							rsvo.setSet_count(safeIntParse(set_comparison.get("new_set_count")));
-//						}
-//						if((boolean)set_comparison.get("volume_changed")) {
-////							rsvo.setSet_volume(safeIntParse(set_comparison.get("new_volume")));
-//						}
+						if(set_comparison.get("type").equals("COMPARE")) {
+							if(set_comparison.get("count_changed") != null || set_comparison.get("volume_changed") != null) {
+								rsvo.setSet_count(
+									set_comparison.get("count_changed") != null && (boolean) set_comparison.get("count_changed") ? 
+									safeIntParse(set_comparison.get("new_count")) : 
+									safeIntParse(set_comparison.get("prev_count")) 
+								);
+								rsvo.setSet_volume(
+										set_comparison.get("volume_changed") != null && (boolean) set_comparison.get("volume_changed") ? 
+									safeIntParse(set_comparison.get("new_volume")) : 
+									safeIntParse(set_comparison.get("prev_volume")) 
+								);
+								rsvo.setSet_num(safeIntParse(set_comparison.get("set_num")));
+								result = rsmapper.update(rsvo) > 0;
+							}
+						}
+						
 					}
-					System.out.println("============================================================================================================");
-					
-//					for (Map<String, Object> sets_difference : sets_differences) {
-//						System.out.println(sets_difference);
-//						// 횟수 수정
-//						if((boolean) sets_difference.get("count_changed")) {
-//						}
-//						// 무게 수정
-//						if((boolean) sets_difference.get("volume_changed")) {
-//						}
-//						System.out.println(rsvo);
-//					}
-					
 				}
 			}	
 			
 		}
-		
-		
-		
-		return true;
+		return result;
 	}
 	
 	// 비교 메서드
@@ -256,7 +249,6 @@ public class RoutineServiceImple implements RoutineService {
 	    List<RoutineSetVO> prevSets = prevRoutine.getSets();
 	    int routine_idx = prevRoutine.getRoutine_idx();
 	    List<Map<String, Object>> newSets = (List<Map<String, Object>>) newRoutine.get("sets");
-	    
 	    Map<String, Object> setsDiff = compareSets(prevSets, newSets, routine_idx);
 	    if (!setsDiff.isEmpty()) {
 	        diff.put("sets_changed", true);
@@ -285,31 +277,32 @@ public class RoutineServiceImple implements RoutineService {
 	        
 	        RoutineSetVO prevSet = i < prevSetCount ? prevSets.get(i) : null;
 	        Map<String, Object> newSet = i < newSetCount ? newSets.get(i) : null;
-	        setComp.put("routine_idx", routine_idx);
 	        if (prevSet == null) {
+	        	setComp.put("routine_idx", routine_idx);
 	            setComp.put("type", "ADDED");
 	            setComp.put("newSet", newSet);
 	        } else if (newSet == null) {
 	            setComp.put("type", "DELETED");
 	            setComp.put("prevSet", prevSet);
 	        } else {
+        		setComp.put("set_num", newSet.get("set_num"));
+	        	setComp.put("routine_idx", routine_idx);
 	            setComp.put("type", "COMPARE");
-	            
 	            // 볼륨 비교
 	            int prevVolume = prevSet.getSet_volume();
 	            int newVolume = safeIntParse(newSet.get("set_volume"));
+	            setComp.put("prev_volume", prevVolume);
 	            if (prevVolume != newVolume) {
 	                setComp.put("volume_changed", true);
-	                setComp.put("prev_volume", prevVolume);
 	                setComp.put("new_volume", newVolume);
 	            }
 	            
 	            // 횟수 비교
 	            int prevCount = prevSet.getSet_count();
 	            int newCount = safeIntParse(newSet.get("set_count"));
+	            setComp.put("prev_count", prevCount);
 	            if (prevCount != newCount) {
 	                setComp.put("count_changed", true);
-	                setComp.put("prev_count", prevCount);
 	                setComp.put("new_count", newCount);
 	            }
 	        }

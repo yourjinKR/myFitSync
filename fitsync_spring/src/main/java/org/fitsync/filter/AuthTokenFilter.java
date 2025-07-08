@@ -47,7 +47,10 @@ public class AuthTokenFilter implements Filter {
                 HttpSession session = httpRequest.getSession();
                 Long userIdxLong = jwtUtil.getUserIdx(token); // 토큰에서 사용자 idx 추출
                 int userIdx = userIdxLong.intValue();
-                session.setAttribute("member_idx", userIdx);
+                
+                if(session.getAttribute("member_idx") == null) {
+                	session.setAttribute("member_idx", userIdx);
+                }
                 chain.doFilter(request, response);
                 return;
             } catch (Exception e) {

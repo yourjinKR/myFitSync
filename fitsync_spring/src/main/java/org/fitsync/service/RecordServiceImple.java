@@ -31,83 +31,54 @@ public class RecordServiceImple implements RecordService {
 			
 			for (Map<String, Object> routine : routines) {
 				RecordVO vo = new RecordVO();
-				
 				vo.setMember_idx(member_idx);
-				
-				// pt_idx 안전한 변환
+
+				// pt_idx 변환
 				Object ptIdxObj = routine.get("pt_idx");
 				int ptIdx = 0;
-				if (ptIdxObj instanceof Integer) {
-					ptIdx = (Integer) ptIdxObj;
-				} else if (ptIdxObj instanceof String) {
-					ptIdx = Integer.parseInt((String) ptIdxObj);
-				}
+				if (ptIdxObj != null) ptIdx = Integer.parseInt(ptIdxObj.toString());
 				vo.setPt_idx(ptIdx);
-				
+
+				// routine_memo 변환
 				Object setMemo = routine.get("routine_memo");
-				vo.setRoutine_memo(setMemo != null && !setMemo.toString().trim().isEmpty() 
-							? (String) setMemo : "");
-				Object setRoutineName = body.get("routine_name");
-				vo.setRoutine_name(setRoutineName != null && !setRoutineName.toString().trim().isEmpty() 
-						? (String) setRoutineName : "");
-				
+				vo.setRoutine_memo(setMemo != null ? setMemo.toString() : "");
+
+				// routine_name 변환 (routine에서 가져옴)
+				Object setRoutineName = routine.get("routine_name");
+				vo.setRoutine_name(setRoutineName != null ? setRoutineName.toString() : "");
+
 				// Record 삽입
 				int recordResult = mapper.insertRecord(vo);
 				if (recordResult != 1) {
-					return false; 
+					return false;
 				}
-				
+				int recordIdx = vo.getRecord_idx(); // insert 후 PK 획득
+
 				// Set 삽입
 				List<Map<String, Object>> sets = (List<Map<String, Object>>) routine.get("sets");
-				int setRecordResult = 0;
 				int idx = 1;
-				
 				for (Map<String, Object> set : sets) {
 					RecordSetVO setvo = new RecordSetVO();
 					setvo.setSet_num(idx++);
-					
-					// set_volume 안전한 변환
+
 					Object volumeObj = set.get("set_volume");
-					int volume = 0;
-					if (volumeObj != null && !volumeObj.toString().trim().isEmpty()) {
-						if (volumeObj instanceof Integer) {
-							volume = (Integer) volumeObj;
-						} else if (volumeObj instanceof String) {
-							try {
-								volume = Integer.parseInt((String) volumeObj);
-							} catch (NumberFormatException e) {
-								volume = 0;
-							}
-						}
-					}
+					int volume = (volumeObj != null && !volumeObj.toString().trim().isEmpty()) ? Integer.parseInt(volumeObj.toString()) : 0;
 					setvo.setSet_volume(volume);
-					
-					// set_count 안전한 변환
+
 					Object countObj = set.get("set_count");
-					int count = 0;
-					if (countObj != null && !countObj.toString().trim().isEmpty()) {
-						if (countObj instanceof Integer) {
-							count = (Integer) countObj;
-						} else if (countObj instanceof String) {
-							try {
-								count = Integer.parseInt((String) countObj);
-							} catch (NumberFormatException e) {
-								count = 0;
-							}
-						}
-					}
+					int count = (countObj != null && !countObj.toString().trim().isEmpty()) ? Integer.parseInt(countObj.toString()) : 0;
 					setvo.setSet_count(count);
-					
+
+					setvo.setRecord_idx(recordIdx); // ★ record_idx 할당
+
 					Map<String, Object> map = new HashMap<>();
 					map.put("vo", setvo);
 					map.put("member_idx", member_idx);
-					
-					setRecordResult += setmapper.insertSetRecord(map);
-				}
-				
-				// 모든 set이 정상 삽입되었는지 확인
-				if (setRecordResult != sets.size()) {
-					return false; // Set 삽입 실패
+
+					int setResult = setmapper.insertSetRecord(map);
+					if (setResult != 1) {
+						return false;
+					}
 				}
 			}
 			

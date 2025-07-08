@@ -51,7 +51,7 @@ public class RoutineController {
 			return ResponseEntity.ok(result);
 		}
 	}
-	
+	// 루틴 리스트
 	@GetMapping("/getList")
 	public ResponseEntity<?> getRoutineList(HttpSession session){
 		Map<String, Object> result = new HashMap<>();
@@ -66,6 +66,8 @@ public class RoutineController {
 		return ResponseEntity.ok(result); 
 		
 	}
+	
+	// 루틴 운동 VIEW
 	@GetMapping("/{routine_list_idx}")
 	public ResponseEntity<?> getRoutineDetail(@PathVariable int routine_list_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<>();
@@ -134,19 +136,25 @@ public class RoutineController {
 	@PostMapping("/record/{routine_list_idx}")
 	public ResponseEntity<?> insertRecord(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
 		Map<String, Object> result = new HashMap<>();
-		int member_idx = (int) session.getAttribute("member_idx");
-		System.out.println("member_idx : " + member_idx);
-		service.updateRoutine(body, member_idx);							
-//		if(rcservice.insertRecord(body, member_idx)) {
-//			if((boolean) body.get("update")) {
-//			}else {
-//				result.put("success", true);
-//				result.put("msg", "기록이 등록되었습니다.");				
-//			}
-//		}else {
-//			result.put("success", false);
-//			result.put("msg", "운동 기록이 실패하였습니다.");
-//		}
+		int member_idx = (int)(session.getAttribute("member_idx"));
+		boolean recordResult = rcservice.insertRecord(body, member_idx);
+		if(recordResult) {
+			if((boolean) (body.get("update"))) {
+				if(service.updateRoutine(body, member_idx)) {
+					result.put("success", true);
+					result.put("msg", "운동 기록 및 업데이트 되었습니다.");				
+				}else {
+					result.put("success", false);
+					result.put("msg", "루틴 업데이트에 실패하였습니다.");				
+				}
+			}else {
+				result.put("success", true);
+				result.put("msg", "기록이 등록되었습니다.");				
+			}
+		}else {
+			result.put("success", false);
+			result.put("msg", "운동 기록이 실패하였습니다.");
+		}
 		
 		return ResponseEntity.ok(result);
 		

@@ -219,34 +219,43 @@ const RoutineMain = () => {
         { withCredentials: true }
       );
       const result = response.data;
+      alertRef.current.style.display = "none";
+      setIsUpdate(false);
       if(result.success) {
         alert(result.msg);
         nav("/routine/view");
+      } else {
+        alert(result.msg);
       }
     } catch (error) {
       alert("루틴 기록에 실패했습니다.");
+      alertRef.current.style.display = "none";
+      setIsUpdate(false);
+      
     }
   }
   
   // 저장하기
   const handleRecordData = (isRecord) => {
     if(isRecord) {
-      if(newData) {
+      if(newData.update) {
         setIsUpdate(true);
       }else{
         handleRoutineRecord();
       }
     } else {
       alertRef.current.style.display = "none";
+      setIsUpdate(false);
     }
   }
 
   const handleUpdateData = (type) => {
-    setNewData({
-      ...newData,
-      update : type
-    })
-
+    setNewData(prev => ({
+      ...prev,
+      update: false
+    }));
+    setIsUpdate(false);
+    alertRef.current.style.display = "none";
     handleRoutineRecord();
   }    
 

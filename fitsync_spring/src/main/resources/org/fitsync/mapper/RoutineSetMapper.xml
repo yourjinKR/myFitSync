@@ -14,4 +14,15 @@
 		 	#{set_count}
 		)
 	</insert>
+	
+	<delete id="delete" parameterType="org.fitsync.domain.RoutineSetVO">
+		DELETE ROUTINESET 
+		WHERE ROUTINE_IDX = #{routine_idx} AND SET_NUM = #{set_num}
+	</delete>
+	
+	<update id="update" parameterType="org.fitsync.domain.RoutineSetVO">
+		UPDATE ROUTINESET 
+		SET SET_COUNT = #{set_count}, SET_VOLUME = #{set_volume} 
+		WHERE ROUTINE_IDX = #{routine_idx} AND SET_NUM = #{set_num}
+	</update>
 </mapper>

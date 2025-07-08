@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
@@ -78,16 +78,12 @@ const ListHeader = styled.div`
   border-bottom: 1px solid var(--border-light);
   
   div { 
-    flex: 4;
+    flex: 1;
     font-size: 1.6rem;
     font-weight: 600;
     text-align: center;
     padding: 12px 8px;
     color: var(--text-primary);
-  }
-  
-  div:first-child {
-    flex: 2;
   }
 `;
 const ListBody = styled.div`
@@ -106,15 +102,14 @@ const ListBody = styled.div`
   }
   
   .swipeable-list-item__content > div {
-    flex: 2;
+    flex: 1;
     text-align: center;
     font-size: 1.6rem;
     color: var(--text-primary);
     font-weight: 500;
   } 
   
-  .swipeable-list-item__content > input {
-    flex: 4;
+  .swipeable-list-item__content > div > input {
     width: 100%;
     padding: 8px 12px;
     text-align: center;
@@ -186,16 +181,18 @@ const LoadingWrapper = styled.div`
 `;
 
 const RoutineDetail = () => {
-  const [data, setData] = useState(null);
   const [init, setInit] = useState(null);
+  const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
   
   useEffect(() => {
-    if(init !== data){
-      setNewData(data);
-    }
+   setNewData({
+    ...data,
+    update : data !== init,
+
+   })
   },[data]);
   
   // 데이터 로드 시 고유 ID 생성
@@ -297,6 +294,15 @@ const RoutineDetail = () => {
     }));
   };
 
+  const ref = useRef();
+
+  // 세트 체크박스 처리
+  const handleSetCheck = (e) => {
+    ref.current.closest(".swipeable-list-item").classList.add("checked");
+    ref.current.checked = e.target.checked;
+  };
+
+
   // 로딩 처리
   if (isLoading || !data) {
     return (
@@ -322,12 +328,23 @@ const RoutineDetail = () => {
             type="text"
             placeholder="루틴에 대한 메모를 작성해주세요."
             value={routine.routine_memo || ""}
-            readOnly
+            onChange={e => {
+              const value = e.target.value;
+              setData(prev => ({
+                ...prev,
+                routines: prev.routines.map(r =>
+                  r.pt_idx === routine.pt_idx
+                    ? { ...r, routine_memo: value }
+                    : r
+                )
+              }));
+            }}
           />
           <ListHeader>
             <div>번호</div>
             <div>KG</div>
             <div>횟수</div>
+            <div>완료</div>
           </ListHeader>
           <ListBody>
             <SwipeableList actionDelay={0}>
@@ -337,22 +354,29 @@ const RoutineDetail = () => {
                   trailingActions={trailingActions(routine.pt_idx, index)}
                 >
                   <div>{index + 1}</div>
-                  <input
-                    type="number"
-                    value={set.set_volume || ''}
-                    placeholder="0"
-                    onChange={e =>
-                      handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
-                    }
-                  />
-                  <input
-                    type="number"
-                    value={set.set_count || ''}
-                    placeholder="0"
-                    onChange={e =>
-                      handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
-                    }
-                  />
+                  <div>
+                    <input
+                      type="number"
+                      value={set.set_volume || ''}
+                      placeholder="0"
+                      onChange={e =>
+                        handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      value={set.set_count || ''}
+                      placeholder="0"
+                      onChange={e =>
+                        handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <input type="checkbox" name="" id="" ref={ref} onChange={handleSetCheck} />
+                  </div>
                 </SwipeableListItem>
               ))}
             </SwipeableList>
