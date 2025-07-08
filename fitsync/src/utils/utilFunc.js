@@ -1,62 +1,61 @@
 /**
- * YYYYMMDD 형태의 생년월일을 현재 나이로 변환하는 함수
- * 
- * @param {string|number} memberBirth - YYYYMMDD 형태의 생년월일 (예: "19900315" 또는 19900315)
+ * 생년월일(YYYYMMDD 또는 timestamp)을 현재 나이로 변환하는 함수
+ *
+ * @param {string|number} memberBirth - YYYYMMDD (예: "19900315") 또는 밀리초 단위 timestamp (예: 953478000000)
  * @returns {number} 현재 나이
  * @throws {Error} 입력값이 올바르지 않을 때
  */
 export const calculateAge = (memberBirth) => {
     try {
-        // 입력값을 문자열로 변환
-        const birthStr = String(memberBirth);
-        
-        // 8자리가 아닌 경우 에러 처리
-        if (birthStr.length !== 8) {
-            throw new Error("생년월일은 8자리 YYYYMMDD 형태여야 합니다.");
+        let birthDate;
+
+        if (typeof memberBirth === 'number' && memberBirth > 100000000000) {
+            // timestamp (밀리초 단위)인 경우
+            birthDate = new Date(memberBirth);
+        } else {
+            // 문자열로 변환
+            const birthStr = String(memberBirth);
+
+            // 8자리가 아닌 경우 에러
+            if (!/^\d{8}$/.test(birthStr)) {
+                throw new Error("생년월일은 8자리 YYYYMMDD 또는 timestamp(밀리초)여야 합니다.");
+            }
+
+            const birthYear = parseInt(birthStr.slice(0, 4), 10);
+            const birthMonth = parseInt(birthStr.slice(4, 6), 10);
+            const birthDay = parseInt(birthStr.slice(6, 8), 10);
+
+            birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+
+            // 유효성 체크
+            if (
+                birthDate.getFullYear() !== birthYear ||
+                birthDate.getMonth() !== birthMonth - 1 ||
+                birthDate.getDate() !== birthDay
+            ) {
+                throw new Error("존재하지 않는 날짜입니다.");
+            }
         }
-        
-        // 년, 월, 일 분리
-        const birthYear = parseInt(birthStr.slice(0, 4));
-        const birthMonth = parseInt(birthStr.slice(4, 6));
-        const birthDay = parseInt(birthStr.slice(6, 8));
-        
-        // 생년월일 Date 객체 생성 (월은 0부터 시작하므로 -1)
-        const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
-        
-        // 유효한 날짜인지 확인
-        if (birthDate.getFullYear() !== birthYear || 
-            birthDate.getMonth() !== birthMonth - 1 || 
-            birthDate.getDate() !== birthDay) {
-            throw new Error("존재하지 않는 날짜입니다.");
-        }
-        
+
         // 현재 날짜
         const today = new Date();
-        
-        // 나이 계산
         let age = today.getFullYear() - birthDate.getFullYear();
-        
-        // 생일이 지나지 않았다면 나이에서 1을 뺌
-        const todayMonth = today.getMonth();
-        const todayDay = today.getDate();
-        const birthMonthIndex = birthDate.getMonth();
-        const birthDayOfMonth = birthDate.getDate();
-        
-        if (todayMonth < birthMonthIndex || 
-            (todayMonth === birthMonthIndex && todayDay < birthDayOfMonth)) {
+
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const dayDiff = today.getDate() - birthDate.getDate();
+
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
             age -= 1;
         }
-        
+
         return age;
-        
+
     } catch (error) {
-        if (error.message.includes("생년월일") || error.message.includes("존재하지")) {
-            throw error;
-        } else {
-            throw new Error(`올바르지 않은 날짜 형식입니다: ${memberBirth}`);
-        }
+        throw new Error(`나이 계산 실패: ${error.message}`);
     }
-}
+};
+
+
 
 const versionUtils = {
     /** 현재 버전이 target 이상인지 확인 */

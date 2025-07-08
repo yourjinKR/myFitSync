@@ -265,6 +265,27 @@ const AItest = () => {
 
         console.log('전송할 메시지:', fullMessage);
         
+        axios.post(
+            '/ai/createRoutine', 
+            { message: fullMessage },
+            { withCredentials: true }
+        )
+        .then(response => {
+            const endTime = performance.now();
+            const elapsedSeconds = ((endTime - startTime) / 1000).toFixed(6);
+            console.log(`응답 시간: ${elapsedSeconds}초`);
+            setResponseTime(parseFloat(elapsedSeconds));
+
+            const parsedContent = JSON.parse(response.data.content);
+            const logIdx = response.data.logIdx;
+
+            setResult({content : parsedContent, logIdx : logIdx});
+        })
+        .catch(error => {
+            const endTime = performance.now();
+            const elapsedSeconds = ((endTime - startTime) / 1000).toFixed(6);
+            console.error(`AI 요청 실패 (응답 시간: ${elapsedSeconds}초):`, error);
+        });
     };
 
     return (

@@ -53,7 +53,7 @@ public class AIServiceImple implements AIService {
 	
 
     @Override
-    public ApiResponseDto requestAIResponse(String userMessage) throws IOException {
+    public ApiResponseDto requestAIResponse(String userMessage, int memberIdx) throws IOException {
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
         String workoutList = getWorkoutNamesCommaSeparated();
         Integer logIdx = null;
@@ -167,7 +167,7 @@ public class AIServiceImple implements AIService {
         // 로그 저장
         try {
             ApiLogVO apiLog = new ApiLogVO();
-
+            apiLog.setMember_idx(memberIdx);
             apiLog.setApilog_prompt(requestBody);
             apiLog.setApilog_response(content);
             apiLog.setApilog_request_time(requestTime);

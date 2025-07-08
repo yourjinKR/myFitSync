@@ -53,7 +53,9 @@ public class AIController {
 
 
 	@PostMapping(value = "/getAiTest", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	public ResponseEntity<ApiResponseDto> askAI(@RequestBody Map<String, String> request) {
+	public ResponseEntity<ApiResponseDto> askAI(@RequestBody Map<String, String> request, HttpSession session) {
+		Object memberIdx = session.getAttribute("member_idx");
+		
 	    try {
 	        String userMessage = request.get("message");
 	        if (userMessage == null || userMessage.trim().isEmpty()) {
@@ -61,7 +63,7 @@ public class AIController {
 	                .body(new ApiResponseDto("메시지가 비어 있습니다.", null));
 	        }
 
-	        ApiResponseDto response = aiService.requestAIResponse(userMessage);
+	        ApiResponseDto response = aiService.requestAIResponse(userMessage, (int)memberIdx);
 	        return ResponseEntity.ok(response);
 
 	    } catch (Exception e) {
@@ -73,6 +75,8 @@ public class AIController {
 	
 	@PostMapping(value = "/createRoutine", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ApiResponseDto> createRoutine(@RequestBody Map<String, String> request, HttpSession session) {
+		Object memberIdx = session.getAttribute("member_idx");
+		
 	    try {
 	        String userMessage = request.get("message");
 	        if (userMessage == null || userMessage.trim().isEmpty()) {
@@ -80,7 +84,7 @@ public class AIController {
 	                .body(new ApiResponseDto("메시지가 비어 있습니다.", null));
 	        }
 
-	        ApiResponseDto response = aiService.requestAIResponse(userMessage);
+	        ApiResponseDto response = aiService.requestAIResponse(userMessage, (int)memberIdx);
 	        return ResponseEntity.ok(response);
 
 	    } catch (Exception e) {
