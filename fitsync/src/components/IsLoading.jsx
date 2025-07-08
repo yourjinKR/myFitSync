@@ -18,10 +18,10 @@ const pulse = keyframes`
 // 글로우 애니메이션
 const glow = keyframes`
   0%, 100% { 
-    text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 30px #00ff88;
+    text-shadow: 0 0 10px var(--primary-blue), 0 0 20px var(--primary-blue), 0 0 30px var(--primary-blue);
   }
   50% { 
-    text-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88, 0 0 40px #00ff88, 0 0 50px #00ff88;
+    text-shadow: 0 0 20px var(--primary-blue), 0 0 30px var(--primary-blue), 0 0 40px var(--primary-blue), 0 0 50px var(--primary-blue);
   }
 `;
 
@@ -46,7 +46,7 @@ const ExerciseIcon = styled.div`
   font-size: 8rem;
   margin-bottom: 2rem;
   animation: ${fadeInOut} 2s ease-in-out;
-  filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.8));
+  filter: drop-shadow(0 0 20px var(--primary-blue)) drop-shadow(0 0 30px var(--primary-blue-light));
   height: 120px;
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@ const LoadingTitle = styled.h1`
   font-size: 4rem;
   font-weight: 900;
   margin-bottom: 1rem;
-  color: #00ff88;
+  color: var(--primary-blue);
   animation: ${glow} 2s ease-in-out infinite;
   text-transform: uppercase;
   letter-spacing: 4px;
@@ -85,16 +85,16 @@ const Dot = styled.div`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #00ff88, #00cc66);
+  background: linear-gradient(45deg, var(--primary-blue), var(--primary-blue-light));
   animation: ${pulse} 1s ease-in-out infinite;
   animation-delay: ${props => props.delay}s;
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+  box-shadow: 0 0 15px var(--primary-blue);
 `;
 
 const ProgressText = styled.div`
   font-size: 1.5rem;
   font-weight: bold;
-  color: #00ff88;
+  color: var(--primary-blue);
   margin-top: 2rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 `;
