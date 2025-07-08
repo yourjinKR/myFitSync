@@ -3,9 +3,9 @@ import styled from 'styled-components';
 
 export const Container = styled.div`
   padding: 1.5rem;
-  background-color: #f9fafb;
+  background-color: var(--bg-primary);
   min-height: 100vh;
-  width 100%;
+  width: 100%;
 `;
 
 export const Inner = styled.div`
@@ -16,17 +16,21 @@ export const Inner = styled.div`
 export const Title = styled.h1`
   font-size: 1.875rem;
   font-weight: bold;
-  color: #1f2937;
+  color: var(--text-primary);
   margin-bottom: 1rem;
 `;
 
 export const Button = styled.button`
-  background-color: #2563eb;
-  color: white;
+  background-color: var(--primary-blue);
+  color: var(--text-primary);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
   &:hover {
-    background-color: #1d4ed8;
+    background-color: var(--primary-blue-hover);
   }
   &:disabled {
     opacity: 0.5;
@@ -34,33 +38,39 @@ export const Button = styled.button`
 `;
 
 export const Select = styled.select`
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 `;
 
 export const StatCard = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   padding: 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-light);
 `;
 
 export const StatTitle = styled.h3`
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
 `;
 
 export const StatValue = styled.p`
   font-size: 1.875rem;
   font-weight: bold;
-  color: ${props => props.color || '#111827'};
+  color: ${props => props.color || 'var(--text-primary)'};
 `;
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  overflow: hidden;
 `;
 
 export const Th = styled.th`
@@ -68,16 +78,18 @@ export const Th = styled.th`
   text-align: left;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  background-color: #f9fafb;
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
 `;
 
 export const Td = styled.td`
   padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
-  color: #111827;
+  color: var(--text-primary);
   white-space: nowrap;
+  border-bottom: 1px solid var(--border-light);
 `;
 
 export const StatusTag = styled.span`
@@ -89,24 +101,19 @@ export const StatusTag = styled.span`
 
   background-color: ${props =>
     props.status === 'success'
-      ? '#d1fae5' // 연두색
+      ? 'var(--success)'
       : props.status === 'exception'
-      ? '#fef9c3' // 연노랑
-      : '#fee2e2'}; // 연분홍 (error)
+      ? 'var(--warning)'
+      : 'var(--error)'};
 
-  color: ${props =>
-    props.status === 'success'
-      ? '#065f46' // 진녹
-      : props.status === 'exception'
-      ? '#92400e' // 진갈색/주황
-      : '#991b1b'}; // 진빨강
+  color: var(--text-primary);
+  opacity: 0.9;
 `;
-
 
 export const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,13 +121,14 @@ export const ModalOverlay = styled.div`
 `;
 
 export const ModalContent = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 0.75rem;
   max-width: 64rem;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   padding: 1.5rem;
+  border: 1px solid var(--border-light);
 `;
 
 export const Section = styled.div`
@@ -129,26 +137,28 @@ export const Section = styled.div`
 
 export const SectionTitle = styled.h4`
   font-weight: 500;
-  color: #111827;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 `;
 
 export const SectionContent = styled.div`
-  background-color: #f3f4f6;
+  background-color: var(--bg-tertiary);
   padding: 0.75rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  border: 1px solid var(--border-light);
 `;
 
 export const RoutineCard = styled.div`
-  background-color: #eff6ff;
+  background-color: var(--bg-secondary);
   padding: 0.75rem;
   border-radius: 0.5rem;
+  border: 1px solid var(--border-light);
 `;
 
 export const Exercise = styled.li`
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--text-primary);
 `;
 
 // AdminApiContainer용 추가 컴포넌트들
@@ -176,7 +186,7 @@ export const AutoRefreshLabel = styled.label`
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #374151;
+  color: var(--text-secondary);
   font-weight: 500;
   
   input {
@@ -192,7 +202,7 @@ export const TabContainer = styled.div`
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
   overflow-x: auto;
   
   @media (max-width: 768px) {
@@ -203,8 +213,8 @@ export const TabContainer = styled.div`
 export const TabButton = styled.button`
   padding: 0.75rem 1.5rem;
   border: none;
-  background: ${props => props.active ? '#4f46e5' : 'transparent'};
-  color: ${props => props.active ? 'white' : '#6b7280'};
+  background: ${props => props.active ? 'var(--primary-blue)' : 'transparent'};
+  color: ${props => props.active ? 'var(--text-primary)' : 'var(--text-secondary)'};
   border-radius: 0.5rem 0.5rem 0 0;
   cursor: pointer;
   font-size: 0.9rem;
@@ -213,8 +223,8 @@ export const TabButton = styled.button`
   white-space: nowrap;
   
   &:hover {
-    background: ${props => props.active ? '#4338ca' : '#f3f4f6'};
-    color: ${props => props.active ? 'white' : '#374151'};
+    background: ${props => props.active ? 'var(--primary-blue-hover)' : 'var(--bg-tertiary)'};
+    color: var(--text-primary);
   }
   
   @media (max-width: 768px) {
@@ -224,11 +234,12 @@ export const TabButton = styled.button`
 `;
 
 export const FilterContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   padding: 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   margin-bottom: 2rem;
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     padding: 1.25rem;
@@ -239,7 +250,7 @@ export const FilterTitle = styled.h3`
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: #374151;
+  color: var(--text-primary);
   
   @media (max-width: 768px) {
     font-size: 1.1rem;
@@ -260,7 +271,7 @@ export const FilterGrid = styled.div`
 export const FilterLabel = styled.label`
   display: block;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
   font-weight: 500;
   
@@ -272,20 +283,20 @@ export const FilterLabel = styled.label`
 export const Input = styled.input`
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-light);
   border-radius: 0.375rem;
   font-size: 0.875rem;
-  background-color: white;
-  color: #374151;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
   
   &:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
   }
   
   &::placeholder {
-    color: #9ca3af;
+    color: var(--text-tertiary);
   }
   
   @media (max-width: 768px) {
@@ -295,12 +306,12 @@ export const Input = styled.input`
 `;
 
 export const CurrentFiltersContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   padding: 1rem;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   margin-bottom: 1.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     padding: 1.25rem;
@@ -312,7 +323,7 @@ export const CurrentFiltersTitle = styled.h4`
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
-  color: #374151;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -335,8 +346,8 @@ export const FilterTagsContainer = styled.div`
 
 export const FilterTag = styled.span`
   padding: 0.25rem 0.75rem;
-  background-color: ${props => props.bgColor || '#dbeafe'};
-  color: ${props => props.textColor || '#1e40af'};
+  background-color: ${props => props.bgColor || 'var(--primary-blue-light)'};
+  color: ${props => props.textColor || 'var(--text-primary)'};
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -350,9 +361,9 @@ export const FilterTag = styled.span`
 
 export const ClearFiltersButton = styled.button`
   padding: 0.25rem 0.75rem;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -360,8 +371,8 @@ export const ClearFiltersButton = styled.button`
   transition: all 0.2s;
   
   &:hover {
-    background: #e5e7eb;
-    color: #1f2937;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
   }
   
   @media (max-width: 768px) {
@@ -384,10 +395,11 @@ export const StatsGrid = styled.div`
 `;
 
 export const ChartContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   padding: 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     padding: 1.25rem;
@@ -398,7 +410,7 @@ export const ChartTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: #1f2937;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -420,10 +432,10 @@ export const ChartWrapper = styled.div`
 
 export const ChartDescription = styled.div`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-align: center;
   margin-top: 1rem;
-  background: #f9fafb;
+  background: var(--bg-tertiary);
   padding: 0.5rem;
   border-radius: 0.375rem;
   
@@ -453,24 +465,24 @@ export const DetailModalHeader = styled.div`
   align-items: center;
   margin-bottom: 1rem;
   padding: 0 0 1rem 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
 `;
 
 export const DetailModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
-  color: #111827;
+  color: var(--text-primary);
 `;
 
 export const DetailModalSubtitle = styled.div`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-top: 0.25rem;
 `;
 
 export const DetailModalCloseButton = styled.button`
-  color: #6b7280;
+  color: var(--text-secondary);
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -479,7 +491,7 @@ export const DetailModalCloseButton = styled.button`
   transition: color 0.2s;
   
   &:hover {
-    color: #374151;
+    color: var(--text-primary);
   }
 `;
 
@@ -499,16 +511,17 @@ export const NavigationContainer = styled.div`
 export const NavigationButton = styled.button`
   font-size: 1rem;
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  background: white;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   border-radius: 0.375rem;
   cursor: pointer;
   opacity: ${props => props.disabled ? 0.5 : 1};
   transition: all 0.2s;
   
   &:hover:not(:disabled) {
-    background: #f3f4f6;
-    border-color: #9ca3af;
+    background: var(--bg-tertiary);
+    border-color: var(--border-medium);
   }
   
   &:disabled {
@@ -522,7 +535,7 @@ export const NavigationButton = styled.button`
 
 export const NavigationInfo = styled.div`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-align: center;
   
   @media (max-width: 768px) {
@@ -532,7 +545,7 @@ export const NavigationInfo = styled.div`
 
 export const FilteredResultInfo = styled.div`
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--text-tertiary);
   margin-top: 0.25rem;
 `;
 
@@ -542,8 +555,9 @@ export const MetaInfoGrid = styled.div`
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--bg-tertiary);
   border-radius: 0.5rem;
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -559,7 +573,7 @@ export const MetaInfoItem = styled.div`
 
 export const MetaInfoLabel = styled.div`
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
   font-weight: 500;
   
@@ -570,7 +584,7 @@ export const MetaInfoLabel = styled.div`
 
 export const MetaInfoValue = styled.div`
   font-weight: 600;
-  color: ${props => props.color || '#111827'};
+  color: ${props => props.color || 'var(--primary-blue)'};
   
   @media (max-width: 768px) {
     font-size: 0.9rem;
@@ -579,7 +593,7 @@ export const MetaInfoValue = styled.div`
 
 export const MetaInfoSubValue = styled.div`
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-top: 0.125rem;
   
   @media (max-width: 768px) {
@@ -603,15 +617,15 @@ export const FeedbackText = styled.span`
 
 export const FeedbackReason = styled.div`
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-top: 0.25rem;
 `;
 
 export const UserRequestContainer = styled.div`
-  background: #f8fafc;
+  background: var(--bg-tertiary);
   padding: 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     padding: 0.75rem;
@@ -627,9 +641,9 @@ export const UserRequestItem = styled.div`
   display: flex;
   align-items: center;
   padding: 0.5rem;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -640,7 +654,7 @@ export const UserRequestItem = styled.div`
 
 export const UserRequestKey = styled.strong`
   min-width: 100px;
-  color: #374151;
+  color: var(--text-primary);
   
   @media (max-width: 768px) {
     min-width: auto;
@@ -650,6 +664,7 @@ export const UserRequestKey = styled.strong`
 
 export const UserRequestValue = styled.span`
   margin-left: 0.5rem;
+  color: var(--text-secondary);
   
   @media (max-width: 768px) {
     margin-left: 0;
@@ -660,8 +675,8 @@ export const UserRequestValue = styled.span`
 export const SplitMatchBadge = styled.span`
   margin-left: 0.5rem;
   padding: 0.125rem 0.5rem;
-  background: #10b981;
-  color: white;
+  background: var(--success);
+  color: var(--text-primary);
   border-radius: 0.375rem;
   font-size: 0.75rem;
   white-space: nowrap;
@@ -678,8 +693,9 @@ export const MonospaceContent = styled.div`
   font-family: monospace;
   font-size: 0.875rem;
   white-space: pre-wrap;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 0.375rem;
+  color: var(--text-primary);
   
   @media (max-width: 768px) {
     padding: 0.75rem;
@@ -699,7 +715,7 @@ export const RoutineHeader = styled.div`
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -710,7 +726,7 @@ export const RoutineHeader = styled.div`
 
 export const RoutineTitle = styled.h5`
   font-weight: 600;
-  color: #1e3a8a;
+  color: var(--primary-blue);
   margin: 0;
   font-size: 1.125rem;
   
@@ -721,8 +737,8 @@ export const RoutineTitle = styled.h5`
 
 export const RoutineBadge = styled.span`
   padding: 0.25rem 0.75rem;
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--primary-blue-light);
+  color: var(--text-primary);
   border-radius: 1rem;
   font-size: 0.875rem;
   white-space: nowrap;
@@ -739,10 +755,10 @@ export const ExerciseGrid = styled.div`
 `;
 
 export const ExerciseItem = styled.div`
-  color: ${props => props.isValid ? 'inherit' : '#dc2626'};
+  color: ${props => props.isValid ? 'var(--text-primary)' : 'var(--error)'};
   padding: 0.75rem;
-  background: ${props => props.isValid ? '#f0fdf4' : '#fef2f2'};
-  border: 1px solid ${props => props.isValid ? '#bbf7d0' : '#fecaca'};
+  background: ${props => props.isValid ? 'var(--bg-tertiary)' : 'var(--bg-secondary)'};
+  border: 1px solid ${props => props.isValid ? 'var(--primary-blue-light)' : 'var(--error)'};
   border-radius: 0.375rem;
   display: flex;
   align-items: center;
@@ -780,12 +796,12 @@ export const ExerciseName = styled.div`
 
 export const ExerciseDetails = styled.div`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 `;
 
 export const SimilarExercise = styled.div`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   
   @media (max-width: 768px) {
     font-size: 0.8rem;
@@ -794,8 +810,8 @@ export const SimilarExercise = styled.div`
 
 export const InvalidExerciseBadge = styled.span`
   padding: 0.25rem 0.5rem;
-  background: #dc2626;
-  color: white;
+  background: var(--error);
+  color: var(--text-primary);
   border-radius: 0.375rem;
   font-size: 0.75rem;
   white-space: nowrap;
@@ -810,10 +826,10 @@ export const InvalidExerciseBadge = styled.span`
 export const ErrorContainer = styled.div`
   padding: 2rem;
   text-align: center;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--bg-secondary);
+  border: 1px solid var(--error);
   border-radius: 0.5rem;
-  color: #dc2626;
+  color: var(--error);
   
   @media (max-width: 768px) {
     padding: 1.5rem;
@@ -823,11 +839,12 @@ export const ErrorContainer = styled.div`
 
 // AItest에서 사용할 수 있는 결과 표시 컴포넌트
 export const AIResultContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   padding: 1.5rem;
   margin-top: 2rem;
+  border: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     padding: 1.25rem;
@@ -841,7 +858,7 @@ export const AIResultHeader = styled.div`
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -853,7 +870,7 @@ export const AIResultHeader = styled.div`
 export const AIResultTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -866,7 +883,7 @@ export const AIResultTitle = styled.h3`
 
 export const AIResultMeta = styled.div`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   
   @media (max-width: 768px) {
     font-size: 0.8rem;
@@ -874,8 +891,8 @@ export const AIResultMeta = styled.div`
 `;
 
 export const ViewDetailsButton = styled.button`
-  background: #2563eb;
-  color: white;
+  background: var(--primary-blue);
+  color: var(--text-primary);
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 0.375rem;
@@ -885,7 +902,7 @@ export const ViewDetailsButton = styled.button`
   transition: background-color 0.2s;
   
   &:hover {
-    background: #1d4ed8;
+    background: var(--primary-blue-hover);
   }
   
   @media (max-width: 768px) {
@@ -894,17 +911,18 @@ export const ViewDetailsButton = styled.button`
   }
 `;
 
-// LogDetailModal에서 필요한 새로운 컴포넌트들 (기존 컴포넌트와 중복되지 않는 것들만)
+// 나머지 컴포넌트들도 동일한 패턴으로 CSS 변수 적용...
 export const WorkoutResultContainer = styled.div`
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-light);
   border-radius: 0.75rem;
   overflow: hidden;
+  background: var(--bg-secondary);
 `;
 
 export const ResultSummary = styled.div`
-  background: #f8fafc;
+  background: var(--bg-tertiary);
   padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-light);
 `;
 
 export const SummaryGrid = styled.div`
@@ -924,25 +942,25 @@ export const SummaryIcon = styled.div`
 
 export const SummaryLabel = styled.div`
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 0.125rem;
 `;
 
 export const SummaryValue = styled.div`
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
 `;
 
 export const MuscleGroupContainer = styled.div`
   padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-light);
 `;
 
 export const ResultLabel = styled.div`
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
@@ -956,8 +974,8 @@ export const MuscleGroupList = styled.div`
 `;
 
 export const MuscleGroupTag = styled.span`
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--primary-blue-light);
+  color: var(--text-primary);
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -980,8 +998,8 @@ export const ExerciseCard = styled.div`
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: ${props => props.isValid ? '#f0fdf4' : '#fef2f2'};
-  border: 1px solid ${props => props.isValid ? '#bbf7d0' : '#fecaca'};
+  background: ${props => props.isValid ? 'var(--bg-tertiary)' : 'var(--bg-secondary)'};
+  border: 1px solid ${props => props.isValid ? 'var(--primary-blue-light)' : 'var(--error)'};
   border-radius: 0.5rem;
   position: relative;
 `;
@@ -998,7 +1016,7 @@ export const ExerciseCardContent = styled.div`
 
 export const ExerciseCardName = styled.div`
   font-weight: 600;
-  color: ${props => props.isValid ? '#065f46' : '#dc2626'};
+  color: ${props => props.isValid ? 'var(--text-primary)' : 'var(--error)'};
   margin-bottom: 0.5rem;
   word-break: break-word;
 `;
@@ -1010,8 +1028,8 @@ export const ExerciseCardDetails = styled.div`
 `;
 
 export const DetailChip = styled.span`
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
@@ -1020,14 +1038,14 @@ export const DetailChip = styled.span`
 
 export const ExerciseDescription = styled.div`
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-top: 0.5rem;
   font-style: italic;
 `;
 
 export const InvalidBadge = styled.span`
-  background: #dc2626;
-  color: white;
+  background: var(--error);
+  color: var(--text-primary);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-size: 0.625rem;
@@ -1037,7 +1055,7 @@ export const InvalidBadge = styled.span`
 
 export const EmptyExerciseMessage = styled.div`
   text-align: center;
-  color: #64748b;
+  color: var(--text-secondary);
   font-style: italic;
   padding: 2rem;
 `;
@@ -1049,29 +1067,29 @@ export const ExerciseRequestList = styled.div`
 `;
 
 export const ExerciseRequestItem = styled.div`
-  background: #f1f5f9;
+  background: var(--bg-tertiary);
   padding: 0.5rem;
   border-radius: 0.375rem;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid var(--primary-blue);
 `;
 
 export const ExerciseRequestName = styled.div`
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 `;
 
 export const ExerciseDetail = styled.span`
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-right: 0.5rem;
 `;
 
 // RoutineCard 관련 추가 컴포넌트들 (LogDetailModal용)
 export const RoutineCardHeader = styled.div`
-  background: #f1f5f9;
+  background: var(--bg-tertiary);
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1080,7 +1098,7 @@ export const RoutineCardHeader = styled.div`
 export const RoutineCardTitle = styled.h5`
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -1088,8 +1106,8 @@ export const RoutineCardTitle = styled.h5`
 `;
 
 export const RoutineCardBadge = styled.span`
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--primary-blue-light);
+  color: var(--text-primary);
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
   font-size: 0.75rem;

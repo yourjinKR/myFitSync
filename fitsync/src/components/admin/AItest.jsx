@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ButtonSubmit, Input } from '../../styles/FormStyles';
 import { 
+    Container, Title,
     AIResultContainer, AIResultHeader, AIResultTitle, AIResultMeta,
     MetaInfoGrid, MetaInfoItem, MetaInfoLabel, MetaInfoValue,
-    UserRequestContainer, MonospaceContent, RoutineContainer, RoutineHeader, RoutineTitle, RoutineBadge,
+    UserRequestContainer, MonospaceContent, 
+    RoutineContainer, RoutineCard, RoutineHeader, RoutineTitle, RoutineBadge,
     ExerciseGrid, ExerciseItem, ExerciseIcon, ExerciseContent, ExerciseName, ExerciseDetails,
     SimilarExercise, InvalidExerciseBadge, ErrorContainer, Section, SectionTitle
 } from '../../styles/chartStyle';
@@ -12,6 +14,83 @@ import userMock from '../../mock/userMock';
 import versionUtils, { calculateAge } from '../../utils/utilFunc';
 import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../utils/KorUtil';
 import { getMemberTotalData } from '../../utils/memberUtils';
+
+// 스타일 컴포넌트 추가
+import styled from 'styled-components';
+
+const PageContainer = styled(Container)`
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+`;
+
+const FormContainer = styled.div`
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-light);
+    margin-bottom: 2rem;
+    
+    h1 {
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+`;
+
+const InputGroup = styled.div`
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    margin-bottom: 1.5rem;
+    
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+const ButtonGroup = styled.div`
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+    
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
+`;
+
+const StyledInput = styled(Input)`
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    
+    &:focus {
+        border-color: var(--primary-blue);
+    }
+`;
+
+const StyledButton = styled(ButtonSubmit)`
+    background: var(--primary-blue);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: var(--primary-blue-hover);
+        transform: translateY(-1px);
+    }
+    
+    &:first-child {
+        background: var(--primary-blue);
+        
+        &:hover {
+            background: var(--primary-blue-hover);
+            opacity: 0.9;
+        }
+    }
+`;
 
 // JSON 파싱 및 응답 시간 계산
 function parseApiLogData(apiLogItem) {
@@ -50,11 +129,8 @@ const AItest = () => {
     const [result, setResult] = useState({});
     const [memberIndex, setMemberIndex] = useState(0);
     const [rawData, setRawData] = useState([]);
-    // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
-    // 멤버 데이터
     const [memberData, setMemberData] = useState(null);
-    // 추가 질문 : 분할 수... 등등
     const [additionalMemberData, setAdditionalMemberData] = useState({split : 4});
     const [responseTime, setResponseTime] = useState(0);
 
@@ -65,7 +141,6 @@ const AItest = () => {
 
     const handleAdditionalData = (e) => {
         const {name, value} = e.target;
-
         setAdditionalMemberData({...additionalMemberData, [name]: value});
     }
 
@@ -93,10 +168,8 @@ const AItest = () => {
                 const parseList = response.data.map(name => name.replace(/\s+/g, '')); 
                 setRawData(parseList);
 
-                // 운동명과 자모음 분해 운동명을 길이별로 그룹화
                 response.data.forEach(originalName => {
                     const { normalized, length } = normalizeAndDisassemble(originalName);
-
                     const entry = { name: originalName, name_dis: normalized };
 
                     if (!groupedMap.has(length)) {
@@ -105,7 +178,6 @@ const AItest = () => {
                     groupedMap.get(length).push(entry);
                 });
 
-                // set할 때는 새로운 Map 객체로 전달하여 리액트가 변경 감지하도록 함
                 setRawDataMap(new Map(groupedMap));
             } catch (error) {
                 console.error('운동명 목록 요청 실패:', error);
@@ -120,7 +192,6 @@ const AItest = () => {
         console.log('파싱된 결과 : ', result);
         const exception = analyzeAIResult(result, additionalMemberData.split, rawData);
         
-        // exception이 null 아닐 경우
         if (exception !== null && result.logIdx) {
             const apilog = {apilog_idx : result.logIdx, apilog_status_reason : exception};
             updateLogException(apilog);
@@ -130,12 +201,11 @@ const AItest = () => {
         }
     },[result, additionalMemberData.split, rawData]);
 
-    /** 로그 업데이트 함수 */
     const updateLogException = async (log) => {
         if (log.apilog_status_reason === null || log.apilog_status_reason === '') {
-            log.apilog_status = 'success';  // 예외 사유가 없으면 상태를 success로 설정
+            log.apilog_status = 'success';
         } else {
-            log.apilog_status = 'exception';  // 예외 사유가 있으면 상태를 exception으로 설정
+            log.apilog_status = 'exception';
         }
         console.log('업데이트할 로그:', log);
         try {
@@ -146,26 +216,21 @@ const AItest = () => {
         }
     };
 
-    /** AI 응답 결과에서 예외 상황을 분석하여 문자열로 반환 예외가 없으면 null 반환 */
     function analyzeAIResult(result, userSplit, validWorkoutNames) {
         console.log('해당 결과를 분석 :', result);
 
         const errors = [];
 
-        // 1. JSON 구조 검증
         if (!Array.isArray(result?.content)) {
             console.warn('AI 응답이 유효한 JSON 배열이 아닙니다:', result);
             return "invalid_json";
         }
 
-        // 2. split 분할 수 불일치
         if (result.content.length !== Number(userSplit)) {
             errors.push("split_mismatch");
         }
 
-        // 3. 운동명 유효성 검사
         const invalidExercises = [];
-
         result.content.forEach(routine => {
             if (!Array.isArray(routine.exercises)) return;
 
@@ -185,13 +250,12 @@ const AItest = () => {
         return errors.length > 0 ? errors.join("; ") : null;
     }
 
-    /** 모든 api log 재검증 함수 */
     const recheckAllLogs = () => {
-        axios.get('/admin/getAllApi') // 모든 API 로그 가져오기
+        axios.get('/admin/getAllApi')
             .then(response => {
                 const logs = response.data;
                 logs.forEach(log => {
-                    const parsedLog = parseApiLogData(log); // 로그 데이터 파싱
+                    const parsedLog = parseApiLogData(log);
 
                     const result = {
                         content: parsedLog.parsed_response,
@@ -199,9 +263,9 @@ const AItest = () => {
                         split: parsedLog.parsed_userMassage?.split
                     };
 
-                    const exception = analyzeAIResult(result, result.split, rawData); // 예외 분석
+                    const exception = analyzeAIResult(result, result.split, rawData);
                     const apilog = {apilog_idx: result.logIdx, apilog_status_reason: exception};
-                    updateLogException(apilog); // 로그 업데이트
+                    updateLogException(apilog);
                 });
             })
             .catch(error => {
@@ -225,35 +289,23 @@ const AItest = () => {
             alert('멤버 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
             return;
         }
-        // if (resultText) {
-        //     console.log('결과값 이미 존재');
-        //     return;
-        // }
 
         const startTime = performance.now();
-
         const { member, body } = memberData || {};
         console.log('memberData:', member, body);
 
         const userInfo = {
             name: member?.member_name || null,
-            // type: member?.member_type || null,
-            // activity_area: member?.member_activity_area || null,
-            // day: member?.member_day || null,
-            // time: member?.member_time || null,
             disease: member?.member_disease || null,
             purpose: member?.member_purpose || null,
-            // price: member?.member_price > 0 ? member.member_price : null,
-
             height: body?.body_height || null,
             weight: body?.body_weight || null,
-            age: calculateAge(member?.member_birth),  // 나이는 임시값이므로 수정 필요
-            gender : member?.member_gender, // 임시 입력
+            age: calculateAge(member?.member_birth),
+            gender : member?.member_gender,
             bmi: body?.body_bmi || null,
             fat: body?.body_fat || null,
             fat_percentage: body?.body_fat_percentage || null,
             skeletal_muscle: body?.body_skeletal_muscle || null,
-
             split: additionalMemberData?.split || null
         };
 
@@ -262,7 +314,6 @@ const AItest = () => {
         );
 
         const fullMessage = JSON.stringify(filteredUserInfo);
-
         console.log('전송할 메시지:', fullMessage);
         
         axios.post(
@@ -289,28 +340,46 @@ const AItest = () => {
     };
 
     return (
-        <div>
-            <ButtonSubmit type="button" onClick={recheckAllLogs}>모든 로그 재검증</ButtonSubmit>
-            <h1>chapGPT 토큰 계산기</h1>
-            <Input 
-                type="text" 
-                value={inputText.content}
-                placeholder="챗봇에게 질문할 내용을 입력하세요 (50자 이내)"
-                maxLength={50} 
-                onChange={handleInputText}/>
-            <Input 
-                type="number"
-                name="split"
-                value={additionalMemberData.split}
-                placeholder="분할 수 (예: 4)"
-                onChange={handleAdditionalData} />
-            <Input 
-                type="number"
-                name="index"
-                value={memberIndex}
-                placeholder="멤버 인덱스"
-                onChange={handlmemberIndex} />
-            <ButtonSubmit onClick={testAPI}>전송</ButtonSubmit>
+        <PageContainer>
+            <FormContainer>
+                <Title>🤖 AI 운동 루틴 생성기</Title>
+                
+                <ButtonGroup>
+                    <StyledButton type="button" onClick={recheckAllLogs}>
+                        모든 로그 재검증
+                    </StyledButton>
+                </ButtonGroup>
+                
+                <InputGroup>
+                    <StyledInput 
+                        type="text" 
+                        value={inputText.content}
+                        placeholder="챗봇에게 질문할 내용을 입력하세요 (50자 이내)"
+                        maxLength={50} 
+                        onChange={handleInputText}
+                    />
+                    <StyledInput 
+                        type="number"
+                        name="split"
+                        value={additionalMemberData.split}
+                        placeholder="분할 수 (예: 4)"
+                        onChange={handleAdditionalData} 
+                    />
+                    <StyledInput 
+                        type="number"
+                        name="index"
+                        value={memberIndex}
+                        placeholder="멤버 인덱스"
+                        onChange={handlmemberIndex} 
+                    />
+                </InputGroup>
+                
+                <ButtonGroup>
+                    <StyledButton onClick={testAPI}>
+                        🚀 AI 루틴 생성
+                    </StyledButton>
+                </ButtonGroup>
+            </FormContainer>
 
             {/* AI 응답 결과 표시 */}
             {result.content && (
@@ -329,26 +398,28 @@ const AItest = () => {
                     {/* 메타 정보 */}
                     <MetaInfoGrid>
                         <MetaInfoItem>
-                            <MetaInfoLabel>응답 시간</MetaInfoLabel>
+                            <MetaInfoLabel>⏱️ 응답 시간</MetaInfoLabel>
                             <MetaInfoValue>{responseTime}초</MetaInfoValue>
                         </MetaInfoItem>
                         <MetaInfoItem>
-                            <MetaInfoLabel>루틴 개수</MetaInfoLabel>
+                            <MetaInfoLabel>📋 루틴 개수</MetaInfoLabel>
                             <MetaInfoValue>{Array.isArray(result.content) ? result.content.length : 0}</MetaInfoValue>
                         </MetaInfoItem>
                         <MetaInfoItem>
-                            <MetaInfoLabel>분할 수</MetaInfoLabel>
+                            <MetaInfoLabel>🔄 분할 수</MetaInfoLabel>
                             <MetaInfoValue>{additionalMemberData.split}</MetaInfoValue>
                         </MetaInfoItem>
                         <MetaInfoItem>
-                            <MetaInfoLabel>사용자</MetaInfoLabel>
-                            <MetaInfoValue>{userMock[memberIndex]?.member?.member_name || 'Unknown'}</MetaInfoValue>
+                            <MetaInfoLabel>👤 사용자</MetaInfoLabel>
+                            <MetaInfoValue>
+                                {memberData?.member?.member_name || userMock[memberIndex]?.member?.member_name || 'Unknown'}
+                            </MetaInfoValue>
                         </MetaInfoItem>
                     </MetaInfoGrid>
 
                     {/* 사용자 요청 정보 */}
                     <Section>
-                        <SectionTitle>📝 사용자 요청:</SectionTitle>
+                        <SectionTitle>📝 사용자 요청</SectionTitle>
                         <UserRequestContainer>
                             <MonospaceContent>
                                 {inputText.content}
@@ -358,16 +429,10 @@ const AItest = () => {
 
                     {/* AI 응답 루틴 - 전체 상세 정보 */}
                     <Section>
-                        <SectionTitle>🤖 AI 응답 (운동 루틴):</SectionTitle>
+                        <SectionTitle>🤖 AI 응답 (운동 루틴)</SectionTitle>
                         <RoutineContainer>
                             {Array.isArray(result.content) ? result.content.map((routine, idx) => (
-                                <div key={idx} style={{ 
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '0.5rem',
-                                    padding: '1rem',
-                                    background: '#eff6ff',
-                                    marginBottom: '1rem'
-                                }}>
+                                <RoutineCard key={idx}>
                                     <RoutineHeader>
                                         <RoutineTitle>
                                             🏋️ {routine.routine_name}
@@ -410,7 +475,7 @@ const AItest = () => {
                                             );
                                         })}
                                     </ExerciseGrid>
-                                </div>
+                                </RoutineCard>
                             )) : (
                                 <ErrorContainer>
                                     ⚠️ 루틴 정보가 없거나 형식이 잘못되었습니다.
@@ -420,8 +485,7 @@ const AItest = () => {
                     </Section>
                 </AIResultContainer>
             )}
-
-        </div>
+        </PageContainer>
     );
 };
 
