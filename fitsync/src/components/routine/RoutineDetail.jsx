@@ -3,12 +3,12 @@ import React, { use, useEffect, useRef, useState } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
+import { CheckInput, Checklabel } from '../../styles/commonStyle';
 
 const WorkoutSetWrapper = styled.div`
   padding: 20px;
   background: var(--bg-primary);
-  min-height: 100vh;
-  
+
   h3 {
     font-size: 2.4rem;
     color: var(--text-primary);
@@ -82,7 +82,7 @@ const ListHeader = styled.div`
     font-size: 1.6rem;
     font-weight: 600;
     text-align: center;
-    padding: 12px 8px;
+    padding: 12px 0;
     color: var(--text-primary);
   }
 `;
@@ -92,7 +92,12 @@ const ListBody = styled.div`
   .swipeable-list-item:nth-child(2n) {
     background: var(--bg-tertiary);
   }
-  
+
+  .swipeable-list-item.checked{
+    background: var(--success);
+    color: var(--text-primary);
+  }
+    
   .swipeable-list-item__content {
     width: 100%;
     display: flex;
@@ -104,20 +109,24 @@ const ListBody = styled.div`
   .swipeable-list-item__content > div {
     flex: 1;
     text-align: center;
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     color: var(--text-primary);
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   } 
   
   .swipeable-list-item__content > div > input {
     width: 100%;
-    padding: 8px 12px;
+    padding: 8px 0;
     text-align: center;
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     background: transparent;
     color: var(--text-primary);
     border: none;
     outline: none;
+    text-indent: 2rem;
     
     &:focus {
       background: var(--bg-primary);
@@ -187,13 +196,24 @@ const RoutineDetail = () => {
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
   
-  useEffect(() => {
-   setNewData({
-    ...data,
-    update : data !== init,
+  // checked 필드를 제거한 새로운 객체 반환
+  const omitChecked = (obj) => {
+    if (!obj || !obj.routines) return obj;
+    return {
+      ...obj,
+      routines: obj.routines.map(routine => ({
+        ...routine,
+        sets: routine.sets.map(({ checked, ...setRest }) => setRest)
+      }))
+    };
+  };
 
-   })
-  },[data]);
+  useEffect(() => {
+    setNewData({
+      ...data,
+      update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
+    });
+  }, [data]);
   
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
@@ -283,9 +303,11 @@ const RoutineDetail = () => {
               sets: [
                 ...r.sets,
                 { 
+                  routins_idx : r.routine_idx,
+                  set_num : r.sets.length + 1,
+                  set_volume: 0, 
+                  set_count: 0,
                   id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`, 
-                  set_volume: '', 
-                  set_count: '' 
                 }
               ]
             }
@@ -294,14 +316,41 @@ const RoutineDetail = () => {
     }));
   };
 
-  const ref = useRef();
+  const checkedSetsRef = useRef({}); // { 'pt_idx-setIndex': true/false, ... }
 
-  // 세트 체크박스 처리
-  const handleSetCheck = (e) => {
-    ref.current.closest(".swipeable-list-item").classList.add("checked");
-    ref.current.checked = e.target.checked;
+  useEffect(() => {
+    // data.routines가 바뀔 때마다 체크 상태 초기화
+    if (data && data.routines) {
+      const newChecked = {};
+      data.routines.forEach(routine => {
+        routine.sets.forEach((set, idx) => {
+          const key = `${routine.pt_idx}-${idx}`;
+          newChecked[key] = checkedSetsRef.current[key] || false;
+        });
+      });
+      checkedSetsRef.current = newChecked;
+    }
+  }, [data]);
+
+  const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
+    const key = `${routinePtIdx}-${setIndex}`;
+    checkedSetsRef.current[key] = e.target.checked;
+    setData(
+      prev => ({ 
+        ...prev,
+        routines: prev.routines.map(r =>
+          r.pt_idx === routinePtIdx
+            ? {
+                ...r,
+                sets: r.sets.map((set, idx) =>
+                  idx === setIndex ? { ...set, checked: e.target.checked } : set
+                )
+              }
+            : r
+        )
+      })
+    );
   };
-
 
   // 로딩 처리
   if (isLoading || !data) {
@@ -348,37 +397,48 @@ const RoutineDetail = () => {
           </ListHeader>
           <ListBody>
             <SwipeableList actionDelay={0}>
-              {routine.sets && routine.sets.map((set, index) => (
-                <SwipeableListItem
-                  key={`${routine.pt_idx}-${index}-${set.id}`}
-                  trailingActions={trailingActions(routine.pt_idx, index)}
-                >
-                  <div>{index + 1}</div>
-                  <div>
-                    <input
-                      type="number"
-                      value={set.set_volume || ''}
-                      placeholder="0"
-                      onChange={e =>
-                        handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      value={set.set_count || ''}
-                      placeholder="0"
-                      onChange={e =>
-                        handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <input type="checkbox" name="" id="" ref={ref} onChange={handleSetCheck} />
-                  </div>
-                </SwipeableListItem>
-              ))}
+              {routine.sets && routine.sets.map((set, index) => {
+                const key = `${routine.pt_idx}-${index}`;
+                return (
+                  <SwipeableListItem className={checkedSetsRef.current[key] ? 'checked' : ''}
+                    key={`${routine.pt_idx}-${index}-${set.id}`}
+                    trailingActions={trailingActions(routine.pt_idx, index)}
+                  >
+                    <div>{index + 1}</div>
+                    <div>
+                      <input
+                        type="number"
+                        value={set.set_volume || ''}
+                        placeholder="0"
+                        onChange={e =>
+                          handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        value={set.set_count || ''}
+                        placeholder="0"
+                        onChange={e =>
+                          handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <CheckInput
+                        type="checkbox"
+                        id={`set-check-${routine.pt_idx}-${index}`}
+                        checked={checkedSetsRef.current[key] || false}
+                        onChange={handleSetCheck(routine.pt_idx, index)}
+                      />
+                      <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
+                        <span className="visually-hidden">세트 완료 체크</span>
+                      </Checklabel>
+                    </div>
+                  </SwipeableListItem>
+                );
+              })}
             </SwipeableList>
             <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt_idx)}>
               세트 추가 +

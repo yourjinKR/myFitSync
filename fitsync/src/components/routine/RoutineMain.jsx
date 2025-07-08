@@ -8,14 +8,16 @@ const HeaderWrapper = styled.header`
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 24px;
+  padding: 13px 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  position: sticky;
-  top: 0;
   z-index: 999;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
   min-height: 56px;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   
   button {
     background: transparent;
@@ -37,7 +39,7 @@ const HeaderWrapper = styled.header`
   }
   
   p {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     font-weight: bold;
     color: var(--text-primary);
   }
@@ -98,14 +100,6 @@ const AlertDiv = styled.div`
   border-radius: 16px;
   border: 1px solid var(--border-light);
   gap: 16px;
-
-  h4 {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: center;
-    margin-bottom: 8px;
-  }
   
   button {
     border: 1px solid var(--border-light);
@@ -148,6 +142,38 @@ const AlertDiv = styled.div`
   }
 `;
 
+// 경고 문구
+const WarrningText = styled.div`
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-align: left;
+  width: 100%;
+  line-height: 1.2;
+
+  p {
+    margin: 0;
+    padding: 4px 0;
+    font-size: 1.8rem;
+    color: var(--text-primary);
+  }
+  p:first-of-type {
+    margin-top: 15px;
+  }
+`;
+
+const H4 = styled.h4.withConfig({
+    shouldForwardProp: (prop) => prop !== 'isWarring'
+  })`
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin: 0;
+  padding: 8px 0;
+  text-align: center;
+  width: 100%;
+  border-bottom: 1px solid var(--border-light);
+  color: ${(props) => (props.isWarring ? 'var(--warning)' : 'var(--text-primary)')};
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -172,9 +198,11 @@ const RoutineMain = () => {
   const [routineData, setRoutineData] = useState(init);
   const [newData, setNewData] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
-  
+  const [unfinished, setUnfinished] = useState([]);
+  const [isSave, setIsSave] = useState(false);
+
   useEffect(() => {
-  },[routineData])
+  },[routineData, unfinished, isSave])
 
   const nav = useNavigate();
 
@@ -189,6 +217,7 @@ const RoutineMain = () => {
       const result = response.data;
       if(result.success) {
         alert(result.msg);
+        setIsSave(true);
         nav("/routine/view");
         setRoutineData(init);
       }
@@ -206,16 +235,49 @@ const RoutineMain = () => {
   // 루틴 기록
   const handleRocordSubmit = () => {
     alertRef.current.style.display = "flex";
-    console.log(" alertRef.current", alertRef)
+    const dataFilter = newData.routines;
+    dataFilter.map((routine) => {
+      const sets = routine.sets;
+      const filter = sets.filter((set) => set.checked === undefined || set.checked === false); 
+      filter.map((set,idx) => {
+        setUnfinished(prev => [
+          ...prev, 
+          `${routine.pt.pt_name} ${filter[idx].set_num}세트`
+        ]);
+      })
+    });
   }
 
   
   // 운동 기록
   const handleRoutineRecord = async () => {
+    let postData = newData;
+    let checkData = newData.routines;
+      checkData = checkData.filter((routine) => {
+      const chkSet = routine.sets.filter((set) => set.checked === true);
+      if(chkSet.length !== 0){
+        return {
+          ...routine,
+          sets : [...chkSet]
+        };
+      }
+    });
+
+    postData = {
+      ...newData,
+      routines: checkData,
+    }
+
+    if(postData.routines.length === 0) {
+      alert("완료된 운동이 없습니다.");
+      closeAlert();
+      return;
+    }
+    
     try {
       const response = await axios.post(
         `/routine/record/${routine_list_idx}`,
-        newData,
+        postData,
         { withCredentials: true }
       );
       const result = response.data;
@@ -229,14 +291,13 @@ const RoutineMain = () => {
       }
     } catch (error) {
       alert("루틴 기록에 실패했습니다.");
-      alertRef.current.style.display = "none";
-      setIsUpdate(false);
-      
+      closeAlert();
     }
   }
   
   // 저장하기
   const handleRecordData = (isRecord) => {
+
     if(isRecord) {
       if(newData.update) {
         setIsUpdate(true);
@@ -244,20 +305,26 @@ const RoutineMain = () => {
         handleRoutineRecord();
       }
     } else {
-      alertRef.current.style.display = "none";
-      setIsUpdate(false);
+      closeAlert();
     }
   }
 
   const handleUpdateData = (type) => {
     setNewData(prev => ({
       ...prev,
-      update: false
+      update: type
     }));
     setIsUpdate(false);
     alertRef.current.style.display = "none";
+    setUnfinished([]);
     handleRoutineRecord();
   }    
+
+  const closeAlert = () => {
+    alertRef.current.style.display = "none";
+    setUnfinished([]);
+    setIsUpdate(false);
+  }
 
   return (
     <>
@@ -279,14 +346,14 @@ const RoutineMain = () => {
       }
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
-        <Outlet context={{ routineData, setRoutineData }} /> :
+        <Outlet context={{ routineData, setRoutineData, isSave }} /> :
         <Outlet context={{setNewData}}/>
       }
       <AlertBg ref={alertRef}>
         {
           isUpdate ?
           <AlertDiv>
-            <h4>루틴 변경 내용이 있습니다</h4>
+            <H4>루틴 변경 내용이 있습니다</H4>
             <ButtonGroup>
               <button onClick={() => handleUpdateData(true)}>업데이트</button>
               <button onClick={() => handleUpdateData(false)}>유지하기</button>
@@ -294,7 +361,20 @@ const RoutineMain = () => {
           </AlertDiv>
         :
           <AlertDiv>
-            <h4>저장하시겠습니까?</h4>
+            <WarrningText>
+              {
+                unfinished.length === 0 ? <></> :
+                <div style={{ width: '100%', overflowY: 'auto', maxHeight: '200px' }}>
+                  <H4 isWarring={true}>완료되지 않은 운동 목록</H4>
+                  {unfinished.map((item, idx) => (
+                    <p key={idx}>
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              }
+            </WarrningText>
+            <H4>저장하시겠습니까?</H4>
             <ButtonGroup>
               <button onClick={() => handleRecordData(true)}>예</button>
               <button onClick={() => handleRecordData(false)}>아니오</button>

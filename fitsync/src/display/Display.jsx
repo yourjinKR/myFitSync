@@ -30,15 +30,19 @@ const DisplayWrapper = styled.div`
   margin: 0 auto;
   position: relative;
   height: 100vh;
+  overflow: hidden;
   background: var(--bg-primary); /* CSS 변수 사용 */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  `;
+`;
   
-  const DisplayInnner = styled.div`
+  const DisplayInnner = styled.div.withConfig({
+    shouldForwardProp: (prop) => prop !== 'isShow'
+  })`
   position: relative;
   overflow: auto;
-  height: calc( 100vh - 130px );
+  height: calc( 100vh - 150px );
   background: var(--bg-primary);
+  margin-top : ${(props) => (props.isShow ? '0' : '65px')};
 `;
 
 const Display = () => {
@@ -66,7 +70,7 @@ const Display = () => {
   return (
     <DisplayWrapper >
       {isShow && <Header/>}
-      <DisplayInnner>
+      <DisplayInnner isShow={isShow}>
         <Routes>
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>

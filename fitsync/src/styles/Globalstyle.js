@@ -21,15 +21,16 @@ const GlobalStyle = createGlobalStyle`
     --primary-blue-dark: #2C5F8A;  /* 다크 블루 */
     
     /* 상태 컬러 */
-    --success: #4CAF50;
-    --warning: #FF9800;
-    --error: #F44336;
+    --success: #2e8b57;
+    --warning: #F44336;
     --info: var(--primary-blue);
     
     /* 보더 컬러 */
     --border-light: #404040;
     --border-medium: #606060;
     --border-dark: #808080;
+
+    --check-green: #4CAF50; /* 체크박스 체크 색상 */
   }
 
   /* reset.css 기반 */

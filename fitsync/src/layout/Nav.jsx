@@ -10,6 +10,7 @@ const NavWrapper = styled.nav`
   display: flex;
   width: 100%;
   max-width: 750px;
+  max-height: 85px;
   margin: 0 auto;
   background: #232946;
   box-shadow: 0 -2px 12px rgba(44, 62, 80, 0.08);
@@ -17,6 +18,7 @@ const NavWrapper = styled.nav`
   bottom: 0;
   z-index: 999;
   padding: 0 8px;
+  height: 100%;
 
   @media (max-width: 750px) {
     padding: 0 2px;
@@ -29,7 +31,7 @@ const NavButton = styled.button`
   border: none;
   outline: none;
   color: #eebbc3;
-  font-size: 1.05rem;
+  font-size: 1.6rem;
   font-weight: 600;
   display: flex;
   flex-direction: column;
@@ -40,7 +42,7 @@ const NavButton = styled.button`
 
   svg {
     margin-bottom: 2px;
-    font-size: 1.7rem;
+    font-size: 4rem;
   }
 
 `;

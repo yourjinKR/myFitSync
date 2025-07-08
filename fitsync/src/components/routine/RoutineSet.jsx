@@ -65,10 +65,10 @@ const AddButton = styled.button`
 
 const RoutineSet = () => {
   const nav = useNavigate();
-  const { routineData, setRoutineData } = useOutletContext();
+  const { routineData, setRoutineData, isSave } = useOutletContext();
 
   useEffect(() => {
-    if (routineData.list.length === 0) {
+    if (!isSave && routineData.list.length === 0) {
       nav("/routine/add");
     }
   }, [routineData.list.length, nav]);

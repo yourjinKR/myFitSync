@@ -12,7 +12,7 @@ const HeaderWrapper = styled.header`
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 24px;
+  padding: 13px 24px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   position: sticky;
   top: 0;
@@ -20,11 +20,8 @@ const HeaderWrapper = styled.header`
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
   min-height: 56px;
-
-  @media (max-width: 600px) {
-    padding: 12px 10px;
-    min-height: 48px;
-  }
+  height: 100%;
+  max-height: 65px;
 `;
 
 const Logo = styled.h1`
@@ -39,10 +36,6 @@ const Logo = styled.h1`
   &:active {
     color: var(--primary-blue);
     transform: scale(0.98);
-  }
-
-  @media (max-width: 600px) {
-    font-size: 1.15rem;
   }
 `;
 
