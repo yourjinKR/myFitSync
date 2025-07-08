@@ -4,7 +4,7 @@ import styled from 'styled-components';
 // 메시지 컨테이너 - 내 메시지는 오른쪽, 상대방 메시지는 왼쪽 정렬
 const MessageContainer = styled.div`
   display: flex;
-  justify-content: ${props => props.isCurrentUser ? 'flex-end' : 'flex-start'};
+  justify-content: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
   margin-bottom: 8px;
 `;
 
@@ -13,7 +13,7 @@ const MessageBubble = styled.div`
   max-width: 60%;
   padding: 10px 14px;
   border-radius: 18px;
-  background-color: ${props => props.isCurrentUser ? '#7D93FF' : '#ffffff'};
+  background-color: ${props => props.$isCurrentUser ? '#7D93FF' : '#ffffff'};
   color: ${props => props.$isCurrentUser ? '#ffffff' : '#333333'};
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   position: relative;
@@ -91,8 +91,8 @@ const MessageItem = ({ message, isCurrentUser, attachments = [] }) => {
   };
 
   return (
-    <MessageContainer isCurrentUser={isCurrentUser}>
-      <MessageBubble isCurrentUser={isCurrentUser}>
+    <MessageContainer $isCurrentUser={isCurrentUser}>
+      <MessageBubble $isCurrentUser={isCurrentUser}>
         {/* 이미지 메시지 처리 */}
         {message.message_type === 'image' && attachments.length > 0 ? (
           <div>
@@ -118,12 +118,12 @@ const MessageItem = ({ message, isCurrentUser, attachments = [] }) => {
         
         {/* 메시지 하단 정보 (시간, 읽음 상태) */}
         <MessageInfo>
-          <MessageTime isCurrentUser={isCurrentUser}>
+          <MessageTime $isCurrentUser={isCurrentUser}>
             {formatTime(message.message_senddate)}
           </MessageTime>
           {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
           {getReadStatus() && (
-            <ReadStatus isCurrentUser={isCurrentUser}>
+            <ReadStatus $isCurrentUser={isCurrentUser}>
               {getReadStatus()}
             </ReadStatus>
           )}

@@ -82,6 +82,13 @@ public class ChatServiceImple implements ChatService {
         
         return vo;
 	}
+	
+	// 메시지 상세 조회
+	@Override
+	public MessageVO getMessage(int message_idx) {
+		log.info("getMessage..." + message_idx);
+		return messageMapper.getMessage(message_idx);
+	}
 
 	// 채팅방의 모든 메시지 조회
 	@Override

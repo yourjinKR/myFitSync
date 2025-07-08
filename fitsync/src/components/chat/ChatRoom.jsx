@@ -237,8 +237,16 @@ const ChatRoom = () => {
         (newMessage) => {
           console.log('새 메시지 수신:', newMessage);
           
-          // 메시지 목록에 추가
-          setMessages(prev => [...prev, newMessage]);
+          // 중복 메시지 방지
+          setMessages(prev => {
+            // 동일한 message_idx가 이미 존재하는지 확인
+            const existingMessage = prev.find(msg => msg.message_idx === newMessage.message_idx);
+            if (existingMessage) {
+              console.log('🔄 중복 메시지 무시:', newMessage.message_idx);
+              return prev; // 중복이면 기존 상태 유지
+            }
+            return [...prev, newMessage]; // 새 메시지만 추가
+          });
 
           // 세션스토리지에서 member_idx 가져와서 비교
           const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
@@ -269,7 +277,7 @@ const ChatRoom = () => {
       // 컴포넌트 언마운트 시 구독 해제
       return unsubscribe;
     }
-  }, [connected, roomId, subscribeToRoom, markAsRead, user?.member_idx]);
+  }, [connected, roomId, subscribeToRoom, markAsRead]);
 
   // 새 메시지 추가 시 자동 스크롤
   useEffect(() => {

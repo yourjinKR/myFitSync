@@ -18,6 +18,7 @@ public interface ChatService {
     
     // 메시지
     public MessageVO registerMessage(MessageVO vo);
+    public MessageVO getMessage(int message_idx);
     public List<MessageVO> readMessageList(int room_idx);
     public List<MessageVO> readMessageListPaging(int room_idx, int page, int size);
     public List<MessageVO> searchMessage(int room_idx, String keyword);

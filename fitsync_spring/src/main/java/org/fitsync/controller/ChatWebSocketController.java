@@ -1,6 +1,8 @@
 package org.fitsync.controller;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.fitsync.domain.MessageVO;
 import org.fitsync.service.ChatService;
@@ -12,7 +14,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 // WebSocket을 통한 실시간 채팅 기능을 처리하는 컨트롤러
-// STOMP 프로토콜을 사용하여 실시간 메시지 송수신 및 읽음 처리 담당
 @Controller
 public class ChatWebSocketController {
 
@@ -20,18 +21,22 @@ public class ChatWebSocketController {
     private ChatService chatService;
     
     @Autowired
-    private SimpMessagingTemplate messagingTemplate; // WebSocket을 통해 메시지를 전송하는 템플릿
+    private SimpMessagingTemplate messagingTemplate;
     
-    // 클라이언트에서 /app/chat.send로 메시지를 보내면 이 메서드가 처리하고 다른 참여자들에게 브로드캐스트
+    // 💡 중복 메시지 방지를 위한 처리된 메시지 ID 저장소
+    private final Set<String> processedMessages = ConcurrentHashMap.newKeySet();
+    
+    // 클라이언트에서 /app/chat.send로 메시지를 보내면 이 메서드가 처리
     @MessageMapping("/chat.send")
-    public void sendMessage(@Payload Map<String, Object> message, SimpMessageHeaderAccessor headerAccessor) {
-    	// 프론트엔드에서 전송한 sender_idx 직접 사용
+    public synchronized void sendMessage(@Payload Map<String, Object> message, SimpMessageHeaderAccessor headerAccessor) {
+        // 기본 정보 추출
         Integer sender_idx = extractIntegerFromMessage(message, "sender_idx");
         Integer receiver_idx = extractIntegerFromMessage(message, "receiver_idx");
         Integer room_idx = extractIntegerFromMessage(message, "room_idx");
         String message_content = (String) message.get("message_content");
         String message_type = message.containsKey("message_type") ? 
             (String) message.get("message_type") : "text";
+        String unique_id = (String) message.get("unique_id");
         
         // 필수 값 검증
         if (sender_idx == null || receiver_idx == null || room_idx == null || message_content == null) {
@@ -42,7 +47,29 @@ public class ChatWebSocketController {
             System.err.println("   message_content: " + message_content);
             return;
         }
-    	
+        
+        // 💡 중복 메시지 검사 및 방지
+        if (unique_id != null) {
+            if (processedMessages.contains(unique_id)) {
+                System.out.println("🛑 중복 메시지 감지 및 차단 - unique_id: " + unique_id);
+                return; // 중복 메시지는 처리하지 않음
+            }
+            
+            // 처리된 메시지로 등록
+            processedMessages.add(unique_id);
+            
+            // 💡 메모리 누수 방지: 1000개 이상이면 오래된 것부터 제거
+            if (processedMessages.size() > 1000) {
+                // ConcurrentHashMap.newKeySet()은 insertion order를 보장하지 않으므로
+                // 간단하게 일정 개수 이상이면 전체 클리어
+                processedMessages.clear();
+                processedMessages.add(unique_id); // 현재 메시지는 다시 추가
+                System.out.println("🧹 처리된 메시지 캐시 정리 완료");
+            }
+        }
+        
+        System.out.println("🔵 메시지 처리 시작 - unique_id: " + unique_id + ", content: " + message_content);
+        
         // 메시지 객체 생성
         MessageVO vo = new MessageVO();
         vo.setRoom_idx(room_idx);
@@ -51,24 +78,30 @@ public class ChatWebSocketController {
         vo.setMessage_content(message_content);
         vo.setMessage_type(message_type);
         
-        // 메시지 타입이 있는 경우 설정 (text, image, file)
-        if (message.containsKey("message_type")) {
-            vo.setMessage_type(message.get("message_type").toString());
-        }
-        
         // 메시지 저장
         MessageVO savedMessage = chatService.registerMessage(vo);
         
-        // 수신자에게 메시지 전송
-        // 해당 채팅방을 구독하고 있는 모든 클라이언트에게 메시지 브로드캐스트
-        // /topic/room/{room_idx}를 구독하고 있는 클라이언트들이 메시지를 받음
-        messagingTemplate.convertAndSend("/topic/room/" + vo.getRoom_idx(), savedMessage);
+        System.out.println("✅ 메시지 저장 완료 - message_idx: " + savedMessage.getMessage_idx());
+        
+        // 저장된 메시지의 완전한 정보를 다시 조회하여 전송
+        try {
+            MessageVO completeMessage = chatService.getMessage(savedMessage.getMessage_idx());
+            if (completeMessage != null) {
+                System.out.println("📤 완전한 메시지 정보로 브로드캐스트: " + completeMessage.getMessage_senddate());
+                messagingTemplate.convertAndSend("/topic/room/" + room_idx, completeMessage);
+            } else {
+                System.err.println("❌ 저장된 메시지 조회 실패");
+                messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 메시지 조회 중 오류: " + e.getMessage());
+            messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
+        }
     }
     
     // 클라이언트에서 /app/chat.read로 읽음 정보를 보내면 이 메서드가 처리
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload Map<String, Object> readData) {
-    	// 프론트엔드에서 전송한 receiver_idx 직접 사용
         Integer receiver_idx = extractIntegerFromMessage(readData, "receiver_idx");
         Integer message_idx = extractIntegerFromMessage(readData, "message_idx");
         Integer room_idx = extractIntegerFromMessage(readData, "room_idx");
@@ -116,5 +149,4 @@ public class ChatWebSocketController {
         
         return null;
     }
-	
 }
