@@ -12,7 +12,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #b2c7da; /* 카카오톡 스타일 배경색 */
+  background-color: #b2c7da; /* 배경색 */
 `;
 
 const Header = styled.div`
@@ -84,15 +84,6 @@ const LoadingMessage = styled.div`
   height: 100%;
   color: #666;
   font-size: 1.4rem;
-`;
-
-const ConnectionStatus = styled.div`
-  background: ${props => props.connected ? '#4CAF50' : '#f44336'};
-  color: white;
-  padding: 8px 16px;
-  text-align: center;
-  font-size: 1.2rem;
-  transition: all 0.3s;
 `;
 
 // 개별 채팅방 화면 컴포넌트
@@ -362,23 +353,45 @@ const ChatRoom = () => {
 
   // 채팅방 표시 이름 생성
   const getRoomDisplayName = () => {
+    // 현재 로그인한 사용자의 member_idx 가져오기
+    const currentMemberIdx = user.member_idx;
+    
     // 1순위: 채팅방 이름
-    if (roomData?.room_name) return roomData.room_name;
+    if (roomData?.room_name) {
+      // "양태양님과의 상담" 형태에서 이름 추출
+      const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
+      if (nameMatch) {
+        // 현재 사용자가 트레이너인지 일반 사용자인지 확인
+        if (roomData.trainer_idx === currentMemberIdx) {
+          // 내가 트레이너인 경우 → 회원님과의 상담으로 표시
+          return `회원님과의 상담`;
+        } else {
+          // 내가 일반 사용자인 경우 → 트레이너 이름 표시 (기존 로직)
+          const trainerName = nameMatch[1];
+          return `${trainerName}님과의 상담`;
+        }
+      }
+      
+      // 다른 형태의 room_name이면 그대로 반환
+      return roomData.room_name;
+    }
     
     // 2순위: 트레이너 정보에서 이름
     if (location.state?.trainerInfo?.member_name) {
-      return location.state.trainerInfo.member_name;
+      const trainerName = location.state.trainerInfo.member_name;
+      
+      if (roomData?.trainer_idx === currentMemberIdx) {
+        return `회원님과의 상담`; // 내가 트레이너인 경우
+      } else {
+        return `${trainerName}님과의 상담`; // 내가 일반 사용자인 경우
+      }
     }
 
-    // 세션스토리지에서 member_idx 가져와서 비교
-    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
-    const currentMemberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
-    
     // 3순위: 기본 표시명
     if (roomData?.trainer_idx === currentMemberIdx) {
-      return `회원`; // 내가 트레이너인 경우
+      return `회원님과의 상담`; // 내가 트레이너인 경우
     } else {
-      return `트레이너`; // 내가 일반 사용자인 경우
+      return `트레이너님과의 상담`; // 내가 일반 사용자인 경우
     }
   };
 
@@ -398,13 +411,6 @@ const ChatRoom = () => {
 
   return (
     <Container>
-      {/* 연결 상태 표시 (개발 중에만 표시) */}
-      {process.env.NODE_ENV === 'development' && (
-        <ConnectionStatus $connected={connected}>
-          {connected ? 'WebSocket 연결됨' : 'WebSocket 연결 중...'}
-        </ConnectionStatus>
-      )}
-      
       {/* 채팅방 헤더 */}
       <Header>
         <BackButton onClick={handleBackClick}>
@@ -413,6 +419,7 @@ const ChatRoom = () => {
         
         <UserInfo>
           <UserName>{getRoomDisplayName()}</UserName>
+          {/* 온라인/오프라인 상태 - 일단 간단히 처리 */}
           <UserStatus>{connected ? '온라인' : '연결 중...'}</UserStatus>
         </UserInfo>
       </Header>

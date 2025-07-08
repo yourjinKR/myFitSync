@@ -91,7 +91,7 @@ const TextAreaContainer = styled.div`
   position: relative;
 `;
 
-// 메시지 입력창 자동 높이 조절 및 최대 높이 제한
+// 메시지 입력창 - outline과 border 스타일 수정
 const MessageTextArea = styled.textarea`
   width: 100%;
   border: 1px solid #ddd;
@@ -109,10 +109,24 @@ const MessageTextArea = styled.textarea`
   
   &:focus {
     border-color: #7D93FF;
+    outline: none; /* 포커스 시 outline 완전 제거 */
   }
   
   &::placeholder {
     color: #999;
+  }
+
+  /* 브라우저별 outline 완전 제거 */
+  &:focus-visible {
+    outline: none;
+  }
+  
+  /* 모든 상황에서 outline 제거 */
+  &:active,
+  &:focus,
+  &:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
   }
 `;
 
@@ -129,6 +143,7 @@ const SendButton = styled.button`
   padding: 4px;
   border-radius: 4px;
   transition: color 0.2s;
+  outline: none; /* 전송 버튼 outline 제거 */
   
   &:disabled {
     color: #ccc;
@@ -137,6 +152,12 @@ const SendButton = styled.button`
   
   &:hover:not(:disabled) {
     color: #5e72e4;
+  }
+
+  /* 포커스 시에도 outline 제거 */
+  &:focus,
+  &:focus-visible {
+    outline: none;
   }
 `;
 

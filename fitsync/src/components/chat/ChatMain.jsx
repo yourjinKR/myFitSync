@@ -113,6 +113,7 @@ const ChatMain = () => {
   // 상태 관리
   const [rooms, setRooms] = useState([]);       // 채팅방 목록
   const [loading, setLoading] = useState(true); // 로딩 상태
+  const [unreadCounts, setUnreadCounts] = useState({}); // 읽지 않은 메시지 개수 저장
 
   // 컴포넌트 마운트시 초기화
   useEffect(() => {
@@ -133,6 +134,20 @@ const ChatMain = () => {
       
       console.log('채팅방 목록 로드 성공:', roomList);
       setRooms(roomList);
+
+      // 각 채팅방의 읽지 않은 메시지 개수 조회
+      const unreadData = {};
+      for (const room of roomList) {
+        try {
+          const unreadResponse = await ChatApi.unreadCount(room.room_idx);
+          unreadData[room.room_idx] = unreadResponse.unreadCount || 0;
+        } catch (error) {
+          console.error(`채팅방 ${room.room_idx} 읽지 않은 메시지 조회 실패:`, error);
+          unreadData[room.room_idx] = 0;
+        }
+      }
+      setUnreadCounts(unreadData);
+      
     } catch (error) {
       console.error('채팅방 목록 로드 실패:', error);
       
@@ -173,16 +188,47 @@ const ChatMain = () => {
     }
   };
 
-  // 채팅방 표시 이름 생성
+  // 채팅방 표시 이름 생성 (수정된 부분)
   const getRoomDisplayName = (room) => {
-    // 1순위: 설정된 채팅방 이름
-    if (room.room_name) return room.room_name;
+    // 현재 로그인한 사용자의 member_idx 가져오기
+    const currentMemberIdx = user.member_idx;
     
-    // 2순위: 상대방 구분하여 표시
-    if (room.trainer_idx === user.member_idx) {
-      return `회원 ${room.user_idx}`; // 내가 트레이너인 경우
+    // 1순위: 설정된 채팅방 이름이 있고, 그 이름에서 상대방 이름 추출
+    if (room.room_name) {
+      // "트레이너님과의 상담" 형태에서 이름 추출
+      const nameMatch = room.room_name.match(/^(.+)님과의 상담$/);
+      if (nameMatch) {
+        // 현재 사용자가 트레이너인지 일반 사용자인지 확인
+        if (room.trainer_idx === currentMemberIdx) {
+          // 내가 트레이너인 경우 → 회원님과의 상담으로 표시
+          return `회원님과의 상담`;
+        } else {
+          // 내가 일반 사용자인 경우 → 트레이너 이름 표시 (기존 로직)
+          const trainerName = nameMatch[1];
+          return `${trainerName}님과의 상담`;
+        }
+      }
+      
+      // 다른 형태의 room_name이면 그대로 반환
+      return room.room_name;
+    }
+    
+    // 2순위: room_name이 없는 경우 기본 표시명
+    if (room.trainer_idx === currentMemberIdx) {
+      return `회원님과의 상담`; // 내가 트레이너인 경우
     } else {
-      return `트레이너 ${room.trainer_idx}`; // 내가 일반 사용자인 경우
+      return `트레이너님과의 상담`; // 내가 일반 사용자인 경우
+    }
+  };
+
+  // 마지막 메시지 상태 텍스트 생성 (수정된 부분)
+  const getLastMessageText = (room) => {
+    const unreadCount = unreadCounts[room.room_idx] || 0;
+    
+    if (unreadCount > 0) {
+      return `새 메시지 ${unreadCount}개가 있습니다`;
+    } else {
+      return '메시지 기록이 있습니다';
     }
   };
 
@@ -245,7 +291,7 @@ const ChatMain = () => {
               <RoomInfo>
                 <RoomName>{getRoomDisplayName(room)}</RoomName>
                 <LastMessage>
-                  {room.room_msgdate ? '새 메시지가 있습니다' : '채팅을 시작해보세요'}
+                  {getLastMessageText(room)}
                 </LastMessage>
               </RoomInfo>
               
