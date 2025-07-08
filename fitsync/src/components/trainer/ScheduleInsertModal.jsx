@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import styled from 'styled-components';
-import axios from 'axios';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -10,7 +10,7 @@ const Backdrop = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 9999; /* 좀 더 높게 */
 `;
 
 const Modal = styled.div`
@@ -112,7 +112,7 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
     return `${hour.toString().padStart(2, '0')}:00`;
   });
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const scheduleName = useCustom ? customMember.trim() : selectedMember;
 
     if (!scheduleName || !startTime || !endTime) {
@@ -124,27 +124,12 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
     const userIdxToSend = useCustom ? null : (member?.member_idx || null);
     const userNameToSend = useCustom ? customMember.trim() : selectedMember;
 
-    try {
-      await axios.post(`/trainer/${trainerIdx}/schedule`, {
-        trainer_idx: trainerIdx,
-        user_idx: userIdxToSend,
-        schedule_date: selectedDate,
-        schedule_stime: startTime,
-        schedule_etime: endTime,
-        schedule_content: memo,
-        user_name: userNameToSend,
-      });
+    const dayIndex = new Date(selectedDate).getDay();
+    const key = `${dayIndex}-${startTime}`;
 
-      // 주간 보기용 key 계산 후 프론트 상태 갱신
-      const dayIndex = new Date(selectedDate).getDay();
-      const key = `${dayIndex}-${startTime}`;
-
-      onInsert(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
-      onClose();
-    } catch (err) {
-      alert('스케줄 추가 실패');
-      console.error(err);
-    }
+    // 부모 컴포넌트에 입력값만 전달
+    onInsert(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
+    onClose();
   };
 
   useEffect(() => {
@@ -157,7 +142,7 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
-  return (
+  return ReactDOM.createPortal(
     <Backdrop>
       <Modal ref={modalRef}>
         <Title>일정 추가</Title>
@@ -235,7 +220,8 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
           <button onClick={onClose}>취소</button>
         </ButtonGroup>
       </Modal>
-    </Backdrop>
+    </Backdrop>,
+    document.body
   );
 };
 

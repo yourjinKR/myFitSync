@@ -151,6 +151,7 @@ public class TrainerController {
         return scheduleService.getSchedulesByTrainer(trainerIdx);
     }
 
+    // 스케줄 등록(매칭X)
     @PostMapping("/{trainerIdx}/schedule")
     public ResponseEntity<?> addSchedule(
         @PathVariable int trainerIdx,
@@ -167,10 +168,15 @@ public class TrainerController {
             return ResponseEntity.status(500).body("스케줄 추가 실패");
         }
     }
-    // 트레이너 스케줄 삭제
-    @DeleteMapping("/schedule/{scheduleIdx}")
-    public int deleteSchedule(@PathVariable int scheduleIdx) {
-        return scheduleService.deleteSchedule(scheduleIdx);
+    
+    // 스케줄 삭제
+    @DeleteMapping("/{trainerIdx}/schedule/{scheduleIdx}")
+    public ResponseEntity<?> deleteSchedule(
+            @PathVariable int trainerIdx, 
+            @PathVariable int scheduleIdx) {
+        scheduleService.deleteSchedule(scheduleIdx);
+        return ResponseEntity.ok("삭제 성공");
     }
+
     
 }

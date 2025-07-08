@@ -33,7 +33,7 @@
             SYSDATE,
             #{user_idx},
             0,
-            #{user_name}
+            #{user_name, jdbcType=VARCHAR}
         )
     </insert>
 

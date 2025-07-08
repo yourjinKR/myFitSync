@@ -144,11 +144,10 @@ const dummyMembers = {
   expired: [],
 };
 
-/* ---------- 메인 컴포넌트 ---------- */
 const MemberManageView = () => {
   const [tab, setTab] = useState('active');
   const [keyword, setKeyword] = useState('');
-  const [showInsertForm, setShowInsertForm] = useState(false); // ✅ 삽입폼 on/off
+  const [showInsertForm, setShowInsertForm] = useState(false);
 
   const members = dummyMembers[tab].filter((m) =>
     m.name.toLowerCase().includes(keyword.toLowerCase())
@@ -203,8 +202,6 @@ const MemberManageView = () => {
       ))}
 
       {members.length === 0 && <p>해당 회원이 없습니다.</p>}
-
-      {/* ✅ 회원 추가 폼 (모달처럼 하단에 표시) */}
       {showInsertForm && <UserInsetForTrainer />}
     </Wrapper>
   );
