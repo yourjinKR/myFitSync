@@ -12,7 +12,7 @@ import oracle.sql.DATE;
 @NoArgsConstructor
 public class MatchingVO {
 	
-	private int matching_idx, trainer_idx, user_idx, matching_total, matching_remain;
+	private int matching_idx, trainer_idx, user_idx, matching_total, matching_remain, matching_complete;
 	private DATE matching_start, matching_end;
 	
 }

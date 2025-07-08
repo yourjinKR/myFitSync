@@ -21,6 +21,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ public class KakaoAuthController {
     
     // 카카오 콜백 처리
     @GetMapping("/kakao/callback")
-    public ResponseEntity<Map<String, Object>> kakaoCallback(@RequestParam String code) {
+    public ResponseEntity<Map<String, Object>> kakaoCallback(@RequestParam String code, HttpSession session) {
         try {
             // 1. 액세스 토큰 요청
             String accessToken = getAccessToken(code);
