@@ -22,6 +22,7 @@ import ChatRoom from '../components/chat/ChatRoom';
 import AdminApiContainer from '../components/admin/AdminApiContainer';
 import AdminMain from '../components/admin/AdminMain';
 import RoutineDetail from '../components/routine/RoutineDetail';
+import IsLoading2 from '../components/IsLoading2';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -83,6 +84,7 @@ const Display = () => {
           <Route path='/chat' element={<ChatMain/>}/>
           <Route path='/chat/:roomId' element={<ChatRoom/>}/>
           <Route path='/loading' element={<IsLoading/>}/>
+          <Route path='/loading2' element={<IsLoading2/>}/>
 
           <Route path='/admin' element={<AdminMain/>}>
             <Route path='ai' element={<AItest/>}/>
