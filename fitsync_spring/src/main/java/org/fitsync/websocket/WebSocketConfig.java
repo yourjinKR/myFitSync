@@ -1,6 +1,8 @@
 package org.fitsync.websocket;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -10,7 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
+	
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
     	// 메시지 브로커를 등록하고 목적지 prefix를 설정
@@ -46,4 +48,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
          *    클라이언트 → ws://localhost:7070/chat 연결 → STOMP 프로토콜 사용 → 구독: /topic/room/1 → 메시지 전송: /app/chat.send
          */
     }
+    
 }

@@ -114,7 +114,7 @@ const ChatRoom = () => {
   const messagesEndRef = useRef(null);
 
   // WebSocket 연결 및 기능들
-  const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket();
+  const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket(user);
 
   // 컴포넌트 마운트 시 초기화
   useEffect(() => {
@@ -244,7 +244,7 @@ const ChatRoom = () => {
     // 메시지 데이터 구성
     const messageData = {
       room_idx: parseInt(roomId),
-      // sender_idx: user.member_idx,
+      // sender_idx: user.member_idx, - useWebSocket에서 자동으로 추가
       receiver_idx: otherMemberIdx,
       message_content: messageContent,
       message_type: messageType

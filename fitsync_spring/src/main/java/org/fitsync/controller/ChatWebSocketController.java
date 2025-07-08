@@ -25,13 +25,31 @@ public class ChatWebSocketController {
     // 클라이언트에서 /app/chat.send로 메시지를 보내면 이 메서드가 처리하고 다른 참여자들에게 브로드캐스트
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload Map<String, Object> message, SimpMessageHeaderAccessor headerAccessor) {
+    	// 프론트엔드에서 전송한 sender_idx 직접 사용
+        Integer sender_idx = extractIntegerFromMessage(message, "sender_idx");
+        Integer receiver_idx = extractIntegerFromMessage(message, "receiver_idx");
+        Integer room_idx = extractIntegerFromMessage(message, "room_idx");
+        String message_content = (String) message.get("message_content");
+        String message_type = message.containsKey("message_type") ? 
+            (String) message.get("message_type") : "text";
         
+        // 필수 값 검증
+        if (sender_idx == null || receiver_idx == null || room_idx == null || message_content == null) {
+            System.err.println("❌ 필수 메시지 데이터 누락:");
+            System.err.println("   sender_idx: " + sender_idx);
+            System.err.println("   receiver_idx: " + receiver_idx);
+            System.err.println("   room_idx: " + room_idx);
+            System.err.println("   message_content: " + message_content);
+            return;
+        }
+    	
         // 메시지 객체 생성
         MessageVO vo = new MessageVO();
-        vo.setRoom_idx(Integer.valueOf(message.get("room_idx").toString()));
-        vo.setSender_idx(Integer.valueOf(message.get("sender_idx").toString()));
-        vo.setReceiver_idx(Integer.valueOf(message.get("receiver_idx").toString()));
-        vo.setMessage_content(message.get("message_content").toString());
+        vo.setRoom_idx(room_idx);
+        vo.setSender_idx(sender_idx);
+        vo.setReceiver_idx(receiver_idx);
+        vo.setMessage_content(message_content);
+        vo.setMessage_type(message_type);
         
         // 메시지 타입이 있는 경우 설정 (text, image, file)
         if (message.containsKey("message_type")) {
@@ -50,26 +68,53 @@ public class ChatWebSocketController {
     // 클라이언트에서 /app/chat.read로 읽음 정보를 보내면 이 메서드가 처리
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload Map<String, Object> readData) {
-        int message_idx = Integer.valueOf(readData.get("message_idx").toString());
-        int receiver_idx = Integer.valueOf(readData.get("receiver_idx").toString());
+    	// 프론트엔드에서 전송한 receiver_idx 직접 사용
+        Integer receiver_idx = extractIntegerFromMessage(readData, "receiver_idx");
+        Integer message_idx = extractIntegerFromMessage(readData, "message_idx");
+        Integer room_idx = extractIntegerFromMessage(readData, "room_idx");
+        
+        // 필수 값 검증
+        if (receiver_idx == null || message_idx == null || room_idx == null) {
+            System.err.println("❌ 읽음 처리 데이터 누락:");
+            System.err.println("   receiver_idx: " + receiver_idx);
+            System.err.println("   message_idx: " + message_idx);
+            System.err.println("   room_idx: " + room_idx);
+            return;
+        }
         
         // 읽음 처리
         chatService.readMark(message_idx, receiver_idx);
         
         // 읽음 확인 전송
-        MessageVO message = chatService.readMessageList(
-            Integer.valueOf(readData.get("room_idx").toString())
-        ).stream()
-         .filter(m -> m.getMessage_idx()==message_idx) // 해당 메시지 ID와 일치하는 메시지 찾기
-         .findFirst()
-         .orElse(null); // 찾지 못하면 null 반환
+        String readTopic = "/topic/room/" + room_idx + "/read";
+        Map<String, Object> readNotification = Map.of(
+            "message_idx", message_idx, 
+            "receiver_idx", receiver_idx
+        );
         
-        // 메시지가 존재하는 경우에만 읽음 확인을 다른 클라이언트들에게 전송
-        if (message != null) {
-        	// /topic/room/{room_idx}/read를 구독하고 있는 클라이언트들에게 읽음 확인 정보 전송
-            // 다른 사용자들이 메시지가 읽혔음을 알 수 있도록 함
-            messagingTemplate.convertAndSend("/topic/room/" + message.getRoom_idx() + "/read", Map.of("message_idx", message_idx, "receiver_idx", receiver_idx));
+        messagingTemplate.convertAndSend(readTopic, readNotification);
+    }
+    
+    // 메시지에서 Integer 값 안전하게 추출
+    private Integer extractIntegerFromMessage(Map<String, Object> message, String key) {
+        Object value = message.get(key);
+        if (value == null) {
+            return null;
         }
+        
+        try {
+            if (value instanceof Integer) {
+                return (Integer) value;
+            } else if (value instanceof String) {
+                return Integer.valueOf((String) value);
+            } else if (value instanceof Number) {
+                return ((Number) value).intValue();
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("❌ " + key + " 변환 실패: " + value);
+        }
+        
+        return null;
     }
 	
 }

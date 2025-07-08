@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import axios from 'axios';
 
-export const useWebSocket = () => {
+export const useWebSocket = (currentUser) => {
   const [client, setClient] = useState(null);       // STOMP 클라이언트 객체
   const [connected, setConnected] = useState(false);// 연결 상태
   const clientRef = useRef(null);                   // 클라이언트 참조 (컴포넌트 언마운트 시 정리용)
-
+  
   // WebSocket 연결 초기화 및 관리
   useEffect(() => {
     // STOMP 클라이언트 연결 설정 및 시작
-    const connect = () => {
+    const connect = async () => {
       console.log('WebSocket 연결 시도 중...');
       
       const stompClient = new Client({
@@ -117,35 +118,50 @@ export const useWebSocket = () => {
   const sendMessage = useCallback((messageData) => {
     console.log('메시지 전송 시도:', messageData, '연결 상태:', connected);
     
-    if (client && connected) {
+    if (client && connected && currentUser?.member_idx) {
+      // ✅ Redux에서 가져온 member_idx를 sender_idx로 추가
+      const messageWithSender = {
+        ...messageData,
+        sender_idx: currentUser.member_idx
+      };
+      
+      console.log('📤 최종 전송 데이터:', messageWithSender);
+      
       client.publish({
         destination: '/app/chat.send',
-        body: JSON.stringify(messageData)
+        body: JSON.stringify(messageWithSender)
       });
-      console.log('메시지 전송 완료');
+      console.log('✅ 메시지 전송 완료');
     } else {
-      console.warn('WebSocket 연결되지 않음 - 메시지 전송 불가');
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 사용자 정보 없음');
+      console.warn('   connected:', connected);
+      console.warn('   currentUser:', currentUser);
     }
-  }, [client, connected]);
+  }, [client, connected, currentUser]);
 
   // 읽음 처리
   const markAsRead = useCallback((message_idx, room_idx) => {
     console.log('읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
     
-    if (client && connected) {
+    if (client && connected && currentUser?.member_idx) {
+      // ✅ Redux에서 가져온 member_idx를 receiver_idx로 추가
+      const readData = {
+        message_idx,
+        room_idx,
+        receiver_idx: currentUser.member_idx
+      };
+      
+      console.log('👁️ 최종 읽음 처리 데이터:', readData);
+      
       client.publish({
         destination: '/app/chat.read',
-        body: JSON.stringify({
-          message_idx,
-          room_idx
-          // receiver_idx 제거 - 백엔드에서 세션으로 처리
-        })
+        body: JSON.stringify(readData)
       });
-      console.log('읽음 처리 완료');
+      console.log('✅ 읽음 처리 완료');
     } else {
-      console.warn('WebSocket 연결되지 않음 - 읽음 처리 불가');
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 사용자 정보 없음');
     }
-  }, [client, connected]);
+  }, [client, connected, currentUser?.member_idx]);
 
   return {
     connected,
