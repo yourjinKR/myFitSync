@@ -39,7 +39,7 @@
 	
 	<!-- WebSocket Configuration -->
     <websocket:message-broker application-destination-prefix="/app">
-        <websocket:stomp-endpoint path="/chat" allowed-origins="*">
+        <websocket:stomp-endpoint path="/chat" allowed-origins="http://localhost:3000">
             <websocket:sockjs/>
         </websocket:stomp-endpoint>
         <websocket:simple-broker prefix="/topic,/queue"/>
