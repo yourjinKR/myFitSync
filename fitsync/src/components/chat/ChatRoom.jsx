@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useWebSocket } from '../../hooks/UseWebSocket';
 import chatApi from '../../utils/ChatApi';
+import axios from 'axios';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 
@@ -114,24 +115,71 @@ const ChatRoom = () => {
   const messagesEndRef = useRef(null);
 
   // WebSocket 연결 및 기능들
-  const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket(user);
+  const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket();
+
+  // 채팅용 member_idx 조회 및 세션스토리지 저장
+  const getMemberIdxForChat = async () => {
+    try {
+      console.log('🔍 채팅용 member_idx 조회 중...');
+      
+      const response = await axios.get('/api/chat/member-info', { 
+        withCredentials: true 
+      });
+      
+      if (response.data.success) {
+        const memberIdx = response.data.member_idx.toString();
+        sessionStorage.setItem('chat_member_idx', memberIdx);
+        console.log('✅ member_idx 세션스토리지 저장 성공:', memberIdx);
+        return parseInt(memberIdx);
+      } else {
+        console.error('❌ member_idx 조회 실패:', response.data.message);
+        if (response.data.message.includes('로그인')) {
+          navigate('/login');
+        }
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ member_idx 조회 중 오류:', error);
+      if (error.response?.status === 401) {
+        console.error('🚨 인증 실패 - 로그인 페이지로 이동');
+        navigate('/login');
+      }
+      return null;
+    }
+  };
 
   // 컴포넌트 마운트 시 초기화
   useEffect(() => {
-    // 로그인하지 않은 사용자는 로그인 페이지로 리다이렉트
-    if (!user || !user.isLogin) {
-      navigate('/login');
-      return;
-    }
+    const initializeChatRoom = async () => {
+      // 로그인 확인 (Redux 사용)
+      if (!user || !user.isLogin) {
+        navigate('/login');
+        return;
+      }
 
-    // 이전 페이지에서 전달된 채팅방 데이터 설정
-    if (location.state?.roomData) {
-      setRoomData(location.state.roomData);
-      console.log('채팅방 데이터 설정:', location.state.roomData);
-    }
+      // 채팅용 member_idx 조회 및 세션스토리지 저장
+      const memberIdx = await getMemberIdxForChat();
+      if (!memberIdx) {
+        return; // 실패 시 이미 navigate 처리됨
+      }
 
-    // 메시지 목록 로드
-    loadMessages();
+      // 이전 페이지에서 전달된 채팅방 데이터 설정
+      if (location.state?.roomData) {
+        setRoomData(location.state.roomData);
+        console.log('채팅방 데이터 설정:', location.state.roomData);
+      }
+
+      // 메시지 목록 로드
+      await loadMessages();
+    };
+
+    initializeChatRoom();
+
+    // 채팅방 퇴장 시 세션스토리지 정리
+    return () => {
+      sessionStorage.removeItem('chat_member_idx');
+      console.log('🗑️ 채팅방 퇴장 - member_idx 세션스토리지 삭제');
+    };
   }, [roomId, user, navigate, location.state]);
 
   // 메시지 목록 로드
@@ -191,11 +239,15 @@ const ChatRoom = () => {
           
           // 메시지 목록에 추가
           setMessages(prev => [...prev, newMessage]);
+
+          // 세션스토리지에서 member_idx 가져와서 비교
+          const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
+          const currentMemberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
           
           // 받은 메시지인 경우 자동으로 읽음 처리
-          if (newMessage.receiver_idx === user.member_idx) {
+          if (newMessage.receiver_idx === currentMemberIdx) {
             console.log('받은 메시지 자동 읽음 처리');
-            markAsRead(newMessage.message_idx, parseInt(roomId), user.member_idx);
+            markAsRead(newMessage.message_idx, parseInt(roomId));
           }
         },
         
@@ -236,6 +288,15 @@ const ChatRoom = () => {
       return;
     }
 
+    // 세션스토리지에서 member_idx 가져오기
+    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
+    const currentMemberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
+    
+    if (!currentMemberIdx) {
+      console.error('세션스토리지에서 member_idx를 찾을 수 없습니다.');
+      return;
+    }
+
     // 상대방 인덱스 계산
     const otherMemberIdx = roomData?.trainer_idx === user.member_idx 
       ? roomData?.user_idx 
@@ -266,7 +327,7 @@ const ChatRoom = () => {
           const messageList = await chatApi.readMessageList(parseInt(roomId));
           const latestMessage = messageList[messageList.length - 1];
           
-          if (latestMessage && latestMessage.sender_idx === user.member_idx) {
+          if (latestMessage && latestMessage.sender_idx === currentMemberIdx) {
             console.log('파일 업로드 시작:', latestMessage.message_idx);
             
             // 백엔드 API 호출 (uploadFile 메서드와 정확히 일치)
@@ -300,9 +361,13 @@ const ChatRoom = () => {
     if (location.state?.trainerInfo?.member_name) {
       return location.state.trainerInfo.member_name;
     }
+
+    // 세션스토리지에서 member_idx 가져와서 비교
+    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
+    const currentMemberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
     
     // 3순위: 기본 표시명
-    if (roomData?.trainer_idx === user?.member_idx) {
+    if (roomData?.trainer_idx === currentMemberIdx) {
       return `회원`; // 내가 트레이너인 경우
     } else {
       return `트레이너`; // 내가 일반 사용자인 경우

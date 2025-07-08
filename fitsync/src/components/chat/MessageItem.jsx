@@ -14,7 +14,7 @@ const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
   background-color: ${props => props.isCurrentUser ? '#7D93FF' : '#ffffff'};
-  color: ${props => props.isCurrentUser ? '#ffffff' : '#333'};
+  color: ${props => props.$isCurrentUser ? '#ffffff' : '#333333'};
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   position: relative;
   word-wrap: break-word;
@@ -24,6 +24,7 @@ const MessageText = styled.div`
   line-height: 1.4;
   white-space: pre-wrap; /* 줄바꿈 보존 */
   font-size: 1.4rem;
+  color: inherit;
 `;
 
 // 메시지 내 이미지 스타일
@@ -52,11 +53,11 @@ const MessageInfo = styled.div`
 `;
 
 const MessageTime = styled.span`
-  color: ${props => props.isCurrentUser ? '#ffffff' : '#666'};
+  color: ${props => props.$isCurrentUser ? '#ffffff' : '#666666'};
 `;
 
 const ReadStatus = styled.span`
-  color: ${props => props.isCurrentUser ? '#ffffff' : '#666'};
+  color: ${props => props.$isCurrentUser ? '#ffffff' : '#666666'};
   font-size: 1rem;
 `;
 

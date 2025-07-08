@@ -30,6 +30,28 @@ public class ChatRestController {
 	@Autowired
     private ChatService chatService;
 	
+	// 채팅용 member_idx 조회 API (세션스토리지 전용)
+	@GetMapping("/member-info")
+    public ResponseEntity<Map<String, Object>> getChatMemberInfo(HttpSession session) {
+        Integer member_idx = (Integer) session.getAttribute("member_idx");
+        
+        System.out.println("채팅용 member_idx 조회 요청 - 세션 member_idx: " + member_idx);
+        
+        if (member_idx != null) {
+            System.out.println("member_idx 조회 성공: " + member_idx);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "member_idx", member_idx
+            ));
+        } else {
+            System.out.println("세션에 member_idx 없음 - 로그인 필요");
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "로그인이 필요합니다."
+            ));
+        }
+    }
+	
 	// 채팅방 생성 또는 조회 POST /api/chat/room
 	@PostMapping("/room")
     public ResponseEntity<RoomVO> registerRoom(@RequestBody Map<String, Object> request, HttpSession session) {

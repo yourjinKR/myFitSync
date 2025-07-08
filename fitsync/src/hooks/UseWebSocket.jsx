@@ -3,7 +3,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axios from 'axios';
 
-export const useWebSocket = (currentUser) => {
+export const useWebSocket = () => {
   const [client, setClient] = useState(null);       // STOMP 클라이언트 객체
   const [connected, setConnected] = useState(false);// 연결 상태
   const clientRef = useRef(null);                   // 클라이언트 참조 (컴포넌트 언마운트 시 정리용)
@@ -118,11 +118,17 @@ export const useWebSocket = (currentUser) => {
   const sendMessage = useCallback((messageData) => {
     console.log('메시지 전송 시도:', messageData, '연결 상태:', connected);
     
-    if (client && connected && currentUser?.member_idx) {
-      // ✅ Redux에서 가져온 member_idx를 sender_idx로 추가
+    // 세션스토리지에서 member_idx 가져오기
+    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
+    const memberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
+    
+    console.log('🔍 세션스토리지에서 member_idx 추출:', memberIdx);
+    
+    if (client && connected && memberIdx) {
+      // 세션스토리지에서 가져온 member_idx를 sender_idx로 추가
       const messageWithSender = {
         ...messageData,
-        sender_idx: currentUser.member_idx
+        sender_idx: memberIdx
       };
       
       console.log('📤 최종 전송 데이터:', messageWithSender);
@@ -133,22 +139,29 @@ export const useWebSocket = (currentUser) => {
       });
       console.log('✅ 메시지 전송 완료');
     } else {
-      console.warn('⚠️ WebSocket 연결되지 않음 또는 사용자 정보 없음');
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 세션스토리지에 member_idx 없음');
       console.warn('   connected:', connected);
-      console.warn('   currentUser:', currentUser);
+      console.warn('   sessionMemberIdx:', sessionMemberIdx);
+      console.warn('   memberIdx:', memberIdx);
     }
-  }, [client, connected, currentUser]);
+  }, [client, connected]); // 의존성 배열 단순화
 
   // 읽음 처리
   const markAsRead = useCallback((message_idx, room_idx) => {
     console.log('읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
     
-    if (client && connected && currentUser?.member_idx) {
-      // ✅ Redux에서 가져온 member_idx를 receiver_idx로 추가
+    // 세션스토리지에서 member_idx 가져오기
+    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
+    const memberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
+    
+    console.log('🔍 세션스토리지에서 member_idx 추출:', memberIdx);
+    
+    if (client && connected && memberIdx) {
+      // 세션스토리지에서 가져온 member_idx를 receiver_idx로 추가
       const readData = {
         message_idx,
         room_idx,
-        receiver_idx: currentUser.member_idx
+        receiver_idx: memberIdx
       };
       
       console.log('👁️ 최종 읽음 처리 데이터:', readData);
@@ -159,9 +172,12 @@ export const useWebSocket = (currentUser) => {
       });
       console.log('✅ 읽음 처리 완료');
     } else {
-      console.warn('⚠️ WebSocket 연결되지 않음 또는 사용자 정보 없음');
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 세션스토리지에 member_idx 없음');
+      console.warn('   connected:', connected);
+      console.warn('   sessionMemberIdx:', sessionMemberIdx);
+      console.warn('   memberIdx:', memberIdx);
     }
-  }, [client, connected, currentUser?.member_idx]);
+  }, [client, connected]); // 의존성 배열 단순화
 
   return {
     connected,

@@ -125,6 +125,9 @@ public class NaverAuthController {
             	// JWT 생성
             	String jwt = jwtUtil.generateToken(vo.getMember_idx());
             	
+            	// 세션에 member_idx 저장
+            	session.setAttribute("member_idx", vo.getMember_idx());
+            	
             	// HttpOnly 쿠키 생성
             	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
             			.httpOnly(true)
