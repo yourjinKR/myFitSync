@@ -17,6 +17,7 @@ import { getMemberTotalData } from '../../utils/memberUtils';
 
 // 스타일 컴포넌트 추가
 import styled from 'styled-components';
+import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
 
 const PageContainer = styled(Container)`
     padding: 2rem;
@@ -134,6 +135,8 @@ const AItest = () => {
     const [additionalMemberData, setAdditionalMemberData] = useState({split : 4});
     const [responseTime, setResponseTime] = useState(0);
 
+    const {rawDataIdx, fetchWorkoutNames} = useWorkoutNames();
+
     const handleInputText = (e) => {
         const {value} = e.target;
         setInputText({...inputText, content : value});
@@ -189,17 +192,17 @@ const AItest = () => {
     useEffect(() => {
         if (Object.keys(result).length === 0) return;
 
-        console.log('파싱된 결과 : ', result);
+        // console.log('파싱된 결과 : ', result);
         const exception = analyzeAIResult(result, additionalMemberData.split, rawData);
         
         if (exception !== null && result.logIdx) {
             const apilog = {apilog_idx : result.logIdx, apilog_status_reason : exception};
             updateLogException(apilog);
-            console.log(exception);
+            // console.log(exception);
         } else {
-            console.log('정상 처리 !!!');
+            // console.log('정상 처리 !!!');
         }
-    },[result, additionalMemberData.split, rawData]);
+    },[result]);
 
     const updateLogException = async (log) => {
         if (log.apilog_status_reason === null || log.apilog_status_reason === '') {
@@ -339,14 +342,89 @@ const AItest = () => {
         });
     };
 
-    // 루틴 추천 결과 DB에 저장
-    const saveResult = () => {
+    // 해당 구조로 바뀌어야 함
+    const sendDataType = { 
+        routine_name : 'AI 추천 루틴',
+        member_idx : null,
+        writer_idx : 0, // 컨트롤러에 수정 필요
+        list : [
+            {pt_idx: 0, pt_name: '운동명', routineSet : [{set_num: 0, set_volume: 0, set_count: 0}]},
+            {pt_idx: 0, pt_name: '운동명', routineSet : [{set_num: 0, set_volume: 0, set_count: 0}]},
+        ]
+    }
+
+    // 결과 파싱
+    const parseResult = (result) => {
         if (!result.content || !result.logIdx) {
             alert('결과가 없습니다. AI 루틴 생성을 먼저 실행해주세요.');
             return;
         }
+
+        /** 응답결과를 DB 구조에 맞게 파싱 */ 
+        const parsedResult = result.content.map((routine, idx) => {
+            // routine_name
+            const routine_name = routine.routine_name || `AI 추천 루틴 ${idx + 1}`;
+            
+            // list
+            const parsedExerciseList = routine.exercises.map(ex => {
+                // rawDataIdx.pt_name에 이름이 있다면 pt_idx를 가져오고, 없다면 null로 설정
+                let exIdx = rawDataIdx.find(item => item.pt_name === ex.pt_name.replace(/\s+/g, ''))?.pt_idx || null;
+                if (exIdx === null) {
+                    // 유사한 운동명을 찾기
+                    const similarList = getSimilarNamesByMap(ex.pt_name, rawDataMap);
+                    // 유사한 운동명이 있다면 첫 번째 것을 사용
+                    const similarName = similarList.length > 0 ? similarList[0].name : null;
+
+                    if (similarName) {
+                        exIdx = rawDataIdx.find(item => item.pt_name === similarName)?.pt_idx || null;
+                    } else {
+                        console.warn(`유효하지 않은 운동명: ${ex.pt_name}`);
+                    }
+                }
+                // 운동 세트 정보 파싱
+                const routineSet = Array.from({ length: ex.set_num }, () => ({
+                    set_volume: ex.set_volume,
+                    set_count: ex.set_count
+                }));
+                
+                let finalName = null;
+                return {pt_idx : exIdx, name : null, routine_memo : null, routineSet : routineSet};
+            });
+
+            const parseData = {
+                routine_name : routine_name, 
+                member_idx : null, 
+                writer_idx : 0, // 컨트롤러에 수정 필요
+                list : parsedExerciseList,
+            };
+            console.log('파싱된 데이터:', parseData);
+            return parseData;
+        }); 
         
         console.log(result.content, result.logIdx);
+        console.log('파싱된 결과:', parsedResult);
+        return parsedResult;
+    }
+        
+    // 루틴 추천 결과 DB에 저장
+    const saveResult = () => {
+        const parsedResult = parseResult(result);
+
+        parsedResult.forEach(routineData => {
+            // 하나씩 넣기
+            axios.post('/routine/add', routineData, { withCredentials: true })
+                .then(response => {
+                    if (response.data.success) {
+                        alert('루틴이 성공적으로 저장되었습니다.');
+                    } else {
+                        alert('루틴 저장에 실패했습니다: ' + response.data.msg);
+                    }
+                })
+                .catch(error => {
+                    console.error('루틴 저장 중 오류 발생:', error);
+                    alert('루틴 저장 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+                });
+        })
     }
 
     return (

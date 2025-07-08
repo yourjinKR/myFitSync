@@ -7,8 +7,10 @@ import { normalizeAndDisassemble } from '../../utils/KorUtil';
  * @returns {Object} 운동명 상태와 관련 함수들
  */
 export const useWorkoutNames = () => {
-    // 운동명 리스트
+    // 공백 제거 운동명 리스트
     const [rawData, setRawData] = useState([]);
+    // idx, 공백 제거 운동명 리스트
+    const [rawDataIdx, setRawDataIdx] = useState([{}]);
     // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
 
@@ -18,12 +20,20 @@ export const useWorkoutNames = () => {
         try {
             const response = await axios.get('/ai/getTextReact');
             setRawData(response.data.map(name => name.replace(/\s+/g, '')));
+            const responseIdx = await axios.get('/routine/workout');
+            setRawDataIdx(responseIdx.data.list.map(item => {
+                return {
+                    pt_idx: item.pt_idx,
+                    pt_name: item.pt_name.replace(/\s+/g, '')
+                };
+            }));
 
             // 운동명과 자모음 분해 운동명을 길이별로 그룹화
-            response.data.forEach(originalName => {
+            responseIdx.data.list.forEach(item => {
+                const originalName = item.pt_name;
                 const { normalized, length } = normalizeAndDisassemble(originalName);
 
-                const entry = { name: originalName, name_dis: normalized };
+                const entry = { name: originalName, name_dis: normalized, idx : item.pt_idx };
 
                 if (!groupedMap.has(length)) {
                     groupedMap.set(length, []);
@@ -46,9 +56,11 @@ export const useWorkoutNames = () => {
 
     return {
         rawData,
+        rawDataIdx,
         rawDataMap,
         fetchWorkoutNames,
         setRawData,
+        setRawDataIdx,
         setRawDataMap
     };
 };

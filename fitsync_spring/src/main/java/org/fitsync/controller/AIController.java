@@ -49,7 +49,6 @@ public class AIController {
 	public String getText() {
 		return getWorkoutNamesJsonArray();
 	}
-	
 
 
 	@PostMapping(value = "/getAiTest", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
