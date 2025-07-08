@@ -104,4 +104,11 @@ public class MemberServiceImple implements MemberService {
 	    return mapper.getTrainerList();
 	}
 	
+	// AI 요청시 필요 정보
+	@Override
+	public MemberVO getMemberForAIRecommendation(int memberIdx) {
+		log.info(mapper.getMemberForAIRecommendation(memberIdx));
+		return mapper.getMemberForAIRecommendation(memberIdx);
+	}
+	
 }

@@ -11,6 +11,7 @@ import {
 import userMock from '../../mock/userMock';
 import versionUtils, { calculateAge } from '../../utils/utilFunc';
 import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../utils/KorUtil';
+import { getMemberTotalData } from '../../utils/memberUtils';
 
 // JSON 파싱 및 응답 시간 계산
 function parseApiLogData(apiLogItem) {
@@ -51,6 +52,8 @@ const AItest = () => {
     const [rawData, setRawData] = useState([]);
     // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
+    // 멤버 데이터
+    const [memberData, setMemberData] = useState(null);
     // 추가 질문 : 분할 수... 등등
     const [additionalMemberData, setAdditionalMemberData] = useState({split : 4});
     const [responseTime, setResponseTime] = useState(0);
@@ -72,6 +75,16 @@ const AItest = () => {
     }
 
     useEffect(() => {
+        const fetchMemberData = async () => {
+            try {
+                const memberData = await getMemberTotalData();
+                setMemberData(memberData);
+            } catch (error) {
+                console.error('Member data fetch failed:', error);
+            }
+        };
+        fetchMemberData();
+
         const fetchWorkoutNames = async () => {
             const groupedMap = new Map();
             
@@ -208,6 +221,10 @@ const AItest = () => {
             alert('50자 내외로 작성 바랍니다');
             return;
         }
+        if (memberData === null) {
+            alert('멤버 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
         // if (resultText) {
         //     console.log('결과값 이미 존재');
         //     return;
@@ -215,11 +232,8 @@ const AItest = () => {
 
         const startTime = performance.now();
 
-        // const infoParts = [];
-        // const { member, body } = memberData || {};
-        // DUMMY USER DATA
-        const { member, body } = userMock[memberIndex] || {};
-        console.log('memberData:', userMock[memberIndex]);
+        const { member, body } = memberData || {};
+        console.log('memberData:', member, body);
 
         const userInfo = {
             name: member?.member_name || null,
@@ -242,30 +256,15 @@ const AItest = () => {
 
             split: additionalMemberData?.split || null
         };
+
         const filteredUserInfo = Object.fromEntries(
             Object.entries(userInfo).filter(([_, value]) => value !== null)
         );
+
         const fullMessage = JSON.stringify(filteredUserInfo);
 
-        axios.post('/ai/getAiTest', {
-            message: fullMessage
-        })
-        .then(response => {
-            const endTime = performance.now();
-            const elapsedSeconds = ((endTime - startTime) / 1000).toFixed(6);
-            console.log(`응답 시간: ${elapsedSeconds}초`);
-            setResponseTime(parseFloat(elapsedSeconds));
-
-            const parsedContent = JSON.parse(response.data.content);
-            const logIdx = response.data.logIdx;
-
-            setResult({content : parsedContent, logIdx : logIdx});
-        })
-        .catch(error => {
-            const endTime = performance.now();
-            const elapsedSeconds = ((endTime - startTime) / 1000).toFixed(6);
-            console.error(`AI 요청 실패 (응답 시간: ${elapsedSeconds}초):`, error);
-        });
+        console.log('전송할 메시지:', fullMessage);
+        
     };
 
     return (

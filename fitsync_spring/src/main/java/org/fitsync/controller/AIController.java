@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +54,25 @@ public class AIController {
 
 	@PostMapping(value = "/getAiTest", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ApiResponseDto> askAI(@RequestBody Map<String, String> request) {
+	    try {
+	        String userMessage = request.get("message");
+	        if (userMessage == null || userMessage.trim().isEmpty()) {
+	            return ResponseEntity.badRequest()
+	                .body(new ApiResponseDto("메시지가 비어 있습니다.", null));
+	        }
+
+	        ApiResponseDto response = aiService.requestAIResponse(userMessage);
+	        return ResponseEntity.ok(response);
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(500)
+	            .body(new ApiResponseDto("AI 처리 중 오류 발생: " + e.getMessage(), null));
+	    }
+	}
+	
+	@PostMapping(value = "/createRoutine", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	public ResponseEntity<ApiResponseDto> createRoutine(@RequestBody Map<String, String> request, HttpSession session) {
 	    try {
 	        String userMessage = request.get("message");
 	        if (userMessage == null || userMessage.trim().isEmpty()) {

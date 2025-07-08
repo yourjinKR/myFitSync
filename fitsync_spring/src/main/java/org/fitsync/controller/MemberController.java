@@ -91,17 +91,20 @@ public class MemberController {
     }
 	
 	// 유저 정보 불러오기 임시
-	@GetMapping(value = "/infoTemp")
-    public ResponseEntity<Map<String, Object>> getMemberInfoWithBody(@RequestParam String member_email) {
-		MemberVO member = service.getFindUser(member_email);
-		BodyVO body = bodyService.getLatestBodyByMemberIdx(member.getMember_idx());
+	@GetMapping(value = "/getMemberInfoWithBody")
+    public ResponseEntity<Map<String, Object>> getMemberInfoWithBody(HttpSession session) {
+		Object memberIdx = session.getAttribute("member_idx");
+		
+		MemberVO member = service.getMemberForAIRecommendation((int) memberIdx);
+		log.info("Member Info: " + member);
+		BodyVO body = bodyService.getLatestBodyByMemberIdx((int) memberIdx);
 		
 		Map<String, Object> result = new HashMap<>();
 		result.put("member", member);
 		result.put("body", body);
 		return ResponseEntity.ok(result);
     }
-	
+
 	// 트레이너 목록 가져오기
 	@GetMapping("/trainers")
 	public ResponseEntity<List<MemberVO>> getTrainerList() {

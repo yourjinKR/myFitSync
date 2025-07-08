@@ -23,4 +23,6 @@ public interface MemberService {
 	public void updateTrainerProfile(MemberVO member);
     // 트레이너 목록 가져오기
 	public List<MemberVO> getTrainerList();
+	// AI 요청시 필요 정보
+	public MemberVO getMemberForAIRecommendation(int memberIdx);
 }

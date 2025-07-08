@@ -136,5 +136,12 @@
 	    AND member_status = 'active'
 	    ORDER BY member_idx DESC
 	</select>
+
+	<!-- 루틴 추천을 위한  유저 정보 불러오기 -->
+	<select id="getMemberForAIRecommendation" parameterType="int" resultType="org.fitsync.domain.MemberVO">
+		SELECT *
+		FROM MEMBER
+		WHERE MEMBER_IDX = #{MEMBER_IDX}
+	</select>
 	
 </mapper>
