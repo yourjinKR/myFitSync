@@ -339,6 +339,16 @@ const AItest = () => {
         });
     };
 
+    // 루틴 추천 결과 DB에 저장
+    const saveResult = () => {
+        if (!result.content || !result.logIdx) {
+            alert('결과가 없습니다. AI 루틴 생성을 먼저 실행해주세요.');
+            return;
+        }
+        
+        console.log(result.content, result.logIdx);
+    }
+
     return (
         <PageContainer>
             <FormContainer>
@@ -483,6 +493,12 @@ const AItest = () => {
                             )}
                         </RoutineContainer>
                     </Section>
+                    <StyledButton type="button" onClick={() => saveResult()}>
+                        저장
+                    </StyledButton>
+                    <StyledButton type="button" onClick={() => setResult({})}>
+                        취소
+                    </StyledButton>
                 </AIResultContainer>
             )}
         </PageContainer>
