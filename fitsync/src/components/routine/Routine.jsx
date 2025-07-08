@@ -4,66 +4,110 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-
 const RoutineWrapper = styled.div`
-  border:1px solid #ccc;
-  margin-top:15px;
-  padding: 15px 15px 30px;
-  position:relative;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  margin-top: 15px;
+  padding: 18px 18px 32px;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s;
   & > p {
-    width:100%;
-    text-align:center;
-    font-size:1.8rem;
+    width: 100%;
+    text-align: center;
+    font-size: 1.8rem;
     padding-top: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
   }
 `;
+
 const Inner = styled.div`
-  display:flex;
+  display: flex;
   justify-content: space-between;
-  & > h3{
-    font-size:1.6rem;
+  align-items: center;
+  & > h3 {
+    font-size: 1.6rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+  }
+  & > button {
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+    &:active {
+      background: var(--primary-blue);
+    }
+    svg {
+      color: var(--text-secondary);
+      font-size: 2.2rem;
+    }
   }
 `;
 
 const ControlBox = styled.div`
-  position:absolute;
-  right:10px;
-  top:40px;
-  display:flex;
+  position: absolute;
+  right: 10px;
+  top: 40px;
+  display: none;
   flex-direction: column;
-  border:1px solid #ccc;
-  border-radius:5px;
-  display:none;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  z-index: 10;
   .on & {
     display: flex;
   }
   & > button {
-    padding: 5px;
-    border-bottom:1px solid #ccc;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
     &:last-child {
-      border-bottom:0;
+      border-bottom: 0;
+    }
+    &:active {
+      background: var(--primary-blue);
+      color: #fff;
     }
   }
 `;
 
 const Routine = ({ data, onDelete }) => {
-  
   const nav = useNavigate();
 
   const handleGoRoutine = (e) => {
-    if(e.target.tagName !== 'path' && e.target.tagName !== 'svg' && e.target.tagName !== 'button' && e.target.tagName !== 'BUTTON'){
+    if (
+      e.target.tagName !== 'path' &&
+      e.target.tagName !== 'svg' &&
+      e.target.tagName !== 'button' &&
+      e.target.tagName !== 'BUTTON'
+    ) {
       nav(`/routine/detail/${data.routine_list_idx}`);
     }
-  }
+  };
+
   const handleRoutineEdit = (e) => {
-    e.target.closest(RoutineWrapper).classList.add("on");
-  }
+    e.target.closest('div[data-routine-wrapper]').classList.add('on');
+  };
 
   const handleRoutineDelete = async (e) => {
-    if (window.confirm("정말로 루틴을 삭제하시겠습니까?")) {
+    if (window.confirm('정말로 루틴을 삭제하시겠습니까?')) {
       try {
         const response = await axios.delete(`/routine/delete/${data.routine_list_idx}`, {
-          withCredentials: true
+          withCredentials: true,
         });
         const result = response.data;
         if (result.success) {
@@ -73,16 +117,17 @@ const Routine = ({ data, onDelete }) => {
           alert(result.msg);
         }
       } catch (error) {
-        console.error("루틴 삭제 중 오류 발생:", error);
+        console.error('루틴 삭제 중 오류 발생:', error);
       }
     }
-  }
+  };
+
   return (
-    <RoutineWrapper onClick={handleGoRoutine}>
+    <RoutineWrapper data-routine-wrapper onClick={handleGoRoutine}>
       <Inner>
         <h3>{data.routine_name}</h3>
-        <button onClick={handleRoutineEdit}>
-          <MoreHorizIcon fontSize='large'/>
+        <button type="button" onClick={handleRoutineEdit}>
+          <MoreHorizIcon fontSize="large" />
         </button>
       </Inner>
       <p>운동하러가기</p>

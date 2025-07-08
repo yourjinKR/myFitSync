@@ -4,17 +4,19 @@ import Routine from './Routine';
 import axios from 'axios';
 
 const EmptyData = styled.div`
-  font-weight:bold;
-  color:#d9d9d9;
-  font-size:2rem;
-  border:1px solid #ccc;
-  border-radius:5px;
+  font-weight: bold;
+  color: var(--text-tertiary);
+  font-size: 2rem;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
   padding: 50px 0;
-  text-align:center;
-  margin-top:5px;
+  text-align: center;
+  margin-top: 12px;
+  background: var(--bg-secondary);
 `;
 
-
+const RoutineListWrapper = styled.div`
+`;
 
 const RoutineList = () => {
   const [routinelist, setRoutinelist] = useState([]);
@@ -30,7 +32,7 @@ const RoutineList = () => {
   }, []);
 
   return (
-    <div>
+    <RoutineListWrapper>
       {
         routinelist && routinelist.length > 0 ?
           <>
@@ -49,7 +51,7 @@ const RoutineList = () => {
             데이터가 없습니다.
           </EmptyData>
       }
-    </div>
+    </RoutineListWrapper>
   );
 };
 

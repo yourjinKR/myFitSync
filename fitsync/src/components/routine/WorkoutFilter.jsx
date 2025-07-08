@@ -3,40 +3,48 @@ import styled from 'styled-components';
 import MuscleGroup from './MuscleGroup';
 
 const FilterWrapper = styled.div`
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  z-index:1001;
-  height:0;
-  display:flex;
-  align-items:flex-end;
-  transition:0.25s ease;
-  overflow:hidden;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1001;
+  height: 0;
+  display: flex;
+  align-items: flex-end;
+  transition: 0.25s ease;
+  overflow: hidden;
+  background: rgba(0,0,0,0.4);
+
   h3 {
-    text-align:center;
-    font-size:1.8rem;
+    text-align: center;
+    font-size: 1.8rem;
+    color: var(--text-primary);
+    margin-bottom: 12px;
   }
   &.on {
-    height:100%;
+    height: 100%;
   }
 `;
 const FilterInner = styled.div`
-  padding:15px;
-  background:#d9d9d9;
-  height:70%;
+  padding: 18px 16px 16px 16px;
+  background: var(--bg-secondary);
+  height: 70%;
   width: 100%;
-  border-radius:10px;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
 `;
 
 const MuscleList = styled.div`
-  border: 1px solid #ccc;
-  margin-top:10px;
-  background:#fff;
-  border-radius:10px;
-  height:92%;
-  overflow-x:hidden;
-  overflow-y:auto;
+  border: 1px solid var(--border-light);
+  margin-top: 10px;
+  background: var(--bg-primary);
+  border-radius: 12px;
+  height: 92%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px 0;
 `;
 
 

@@ -31,12 +31,12 @@ const DisplayWrapper = styled.div`
   height: 100vh;
   background: var(--bg-primary); /* CSS 변수 사용 */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-`;
-
-const DisplayInnner = styled.div`
+  `;
+  
+  const DisplayInnner = styled.div`
   position: relative;
   overflow: auto;
-  height: calc(100% - 114px);
+  height: calc( 100vh - 130px );
   background: var(--bg-primary);
 `;
 

@@ -3,35 +3,60 @@ import styled from 'styled-components';
 import CheckIcon from '@mui/icons-material/Check';
 
 const WorkoutWrapper = styled.div`
-  & {
-    input {
-      position:absolute;
-      left:-9999px;
-      overflow:hidden;
-      height:0;
-    }
-    label{
-      display:flex;
-      align-items:center;
-      border-bottom:1px solid #ccc;
-      padding:15px;
-      gap:10px;
+  input {
+    position: absolute;
+    left: -9999px;
+    overflow: hidden;
+    height: 0;
+  }
+  label {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+    padding: 15px;
+    gap: 10px;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: background 0.2s;
+    &:active {
+      background: var(--bg-tertiary);
     }
   }
 `;
+
 const ImgBox = styled.div`
-  border:1px solid #ccc;
-  width:60px;
-  height:60px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    background: var(--bg-primary);
+  }
 `;
+
 const InfoBox = styled.div`
-  width:calc(100% - 112px);
+  width: calc(100% - 112px);
+  dl {
+    margin: 0;
+  }
   dt {
-    font-size:1.6rem;
-    font-weight:bold;
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--text-primary);
   }
   dd {
-      font-size:1.4rem;
+    font-size: 1.4rem;
+    color: var(--text-secondary);
+    margin: 0;
   }
 `;
 
@@ -105,7 +130,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
             <dd>{data.pt_category}</dd>
           </dl>
         </InfoBox>
-        {chk && <CheckIcon style={{ color: 'green', fontSize: '32px' }} />}
+        {chk && <CheckIcon style={{ color: 'var(--primary-blue)', fontSize: '32px' }} />}
       </label>
     </WorkoutWrapper>
   );

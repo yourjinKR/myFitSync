@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import {
   SwipeableList,
@@ -9,82 +9,139 @@ import {
 import 'react-swipeable-list/dist/styles.css';
 
 const WorkoutSetWrapper = styled.div`
-  padding: 15px;
-  border-bottom: 1px solid #ccc;
+  padding: 0;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  overflow: hidden;
 `;
 
 const SetTop = styled.div`
-  display:flex;
-  align-items:center;
+  display: flex;
+  align-items: center;
   gap: 15px;
-  h4{
-    font-size:1.8rem;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  h4 {
+    font-size: 1.8rem;
+    color: var(--text-primary);
+    font-weight: 500;
   }
-  
   img {
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    border:1px solid #ccc;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--border-medium);
+    object-fit: cover;
   }
 `;
 const MemoInput = styled.input`
-  padding: 5px 0;
-  font-size: 1.8rem;
-  width:100%;
+  padding: 16px 20px;
+  font-size: 1.6rem;
+  width: 100%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: none;
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+  &:focus {
+    background: var(--bg-primary);
+    outline: none;
+  }
 `;
 const ListHeader = styled.div`
-  display:flex;
-  width:100%;
-  div { 
-    flex: 3;
-    font-size: 1.8rem;
-    font-weight:bold;
-    text-align:center;
+  display: flex;
+  width: 100%;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
+  div {
+    flex: 4;
+    font-size: 1.6rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px 8px;
+    color: var(--text-primary);
   }
-  div:first-child, div:last-child{
+  div:first-child {
     flex: 2;
   }
 `;
 const ListBody = styled.div`
-  .swipeable-list-item:nth-child(2n){
-    background:#d9d9d9;
+  background: var(--bg-secondary);
+
+  .swipeable-list-item:nth-child(2n) {
+    background: var(--bg-tertiary);
   }
-  .swipeable-list-item__content{
-    width:100%;
+  .swipeable-list-item__content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
   }
   .swipeable-list-item__content > div {
-    flex:2;
-    text-align:center;
-    font-size: 1.8rem;Z
-  } 
-  .swipeable-list-item__content > input {
-    flex:3;
-    width:100%;
-    padding:5px;
-    text-align:center;
-    font-size: 1.8rem;
-    background:none;
-  } 
-  .swipe-action__trailing{
-    background:#f00;
-    color:#fff;
-    font-weight:bold;
-    font-size:1.4rem;
-    width:100%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    flex: 2;
+    text-align: center;
+    font-size: 1.6rem;
+    color: var(--text-primary);
+    font-weight: 500;
   }
-  .swipeable-list-item__trailing-actions{
-    max-width:75px;
+  .swipeable-list-item__content > input {
+    flex: 4;
+    width: 100%;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 1.6rem;
+    background: transparent;
+    color: var(--text-primary);
+    border: none;
+    outline: none;
+    &:focus {
+      background: var(--bg-primary);
+      border-radius: 4px;
+    }
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
+  }
+  .swipe-action__trailing {
+    background: var(--error);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.4rem;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    &:active {
+      background: #d32f2f;
+    }
+  }
+  .swipeable-list-item__trailing-actions {
+    max-width: 75px;
   }
 `;
 
 const SetAddCTA = styled.button`
-  width:100%; 
-  font-size: 1.8rem;
-  padding:15px 0;
+  width: 100%;
+  font-size: 1.6rem;
+  padding: 16px 0;
+  background: var(--primary-blue);
+  color: #fff;
+  border: none;
+  font-weight: 500;
+  border-radius: 15px 15px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin: 0;
+  box-shadow: none;
+  &:active {
+    background: var(--primary-blue-hover);
+    transform: scale(0.98);
+  }
 `;
 
 // 공통적으로 list의 특정 운동의 routineSet 변경하는 함수

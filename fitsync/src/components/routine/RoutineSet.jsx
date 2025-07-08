@@ -1,46 +1,66 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import WorkoutSet from './WorkoutSet';
 import styled from 'styled-components';
 
-const Wrapper = styled.div`
-  margin: 0 auto;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-  padding: 0 15px 18px 15px;
+// RoutineDetail 스타일 참고
+const WorkoutSetWrapper = styled.div`
+  padding: 20px;
+  background: var(--bg-primary);
+  min-height: 100vh;
+`;
+
+const RoutineTop = styled.div`
+  margin-bottom: 24px;
 `;
 
 const H3Input = styled.input`
-  font-size: 1.8rem;
-  font-weight: 700;
-  padding: 14px 0 10px 0;
+  font-size: 2.4rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  background: transparent;
   border: none;
-  border-bottom: 1px solid #e6e6e6;
-  margin-bottom: 0;
-  background: #f7f9fc;
-  border-radius: 14px 14px 0 0;
-  width: 100%;
   outline: none;
+  width: 100%;
+  &::placeholder {
+    color: var(--text-tertiary);
+    font-weight: 400;
+  }
+`;
+
+const ExerciseSection = styled.div`
+  margin-bottom: 32px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  &:active {
+    border-color: var(--border-medium);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const AddButton = styled.button`
-  display: block;
-  max-width: 700px;
-  width: 90%;
-  padding: 15px 0;
-  background: #7D93FF;
+  width: 100%;
+  font-size: 1.6rem;
+  padding: 16px 0;
+  background: var(--primary-blue);
   color: #fff;
-  font-size: 2.4rem;
-  font-weight: 600;
   border: none;
-  border-radius: 10px;
+  font-weight: 500;
+  border-radius: 5px;
+  transition: all 0.2s ease;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(125,147,255,0.07);
-  position:fixed;
-  bottom: 15px;
-  left:50%;
-  transform:translateX(-50%);
+  margin: 0; /* 카드와 버튼 사이 간격 제거 */
+  box-shadow: none;
+  &:active {
+    background: var(--primary-blue-hover);
+    transform: scale(0.98);
+  }
 `;
 
 const RoutineSet = () => {
@@ -51,49 +71,45 @@ const RoutineSet = () => {
     if (routineData.list.length === 0) {
       nav("/routine/add");
     }
-  }, []);
+  }, [routineData.list.length, nav]);
 
-  // 입력값만 변경
   const handleTitleChange = (e) => {
-    const newTitle = e.target.value;
-    
-    // routineData.routine_name도 함께 변경
     setRoutineData(prevData => ({
-        ...prevData,
-        routine_name: newTitle
+      ...prevData,
+      routine_name: e.target.value
     }));
   };
 
-  // 저장/이동 시에만 routineData에 반영
   const handleAddWorkOut = () => {
     nav("/routine/add");
   };
 
   const list = routineData.list;
-
-  // setRoutineData를 useCallback으로 감싸서 전달 (불필요한 리렌더 방지)
   const memoSetRoutineData = useCallback(setRoutineData, []);
 
   return (
-    <Wrapper>
-      <H3Input
-        type="text"
-        value={routineData.routine_name || ''}
-        onChange={handleTitleChange}
-        placeholder="루틴 제목을 입력하세요"
-      />
-      <div>
-        {list.map((data) =>
+    <WorkoutSetWrapper>
+      <RoutineTop>
+        <H3Input
+          type="text"
+          value={routineData.routine_name || ''}
+          onChange={handleTitleChange}
+          placeholder="루틴 제목을 입력하세요"
+        />
+      </RoutineTop>
+      {list.map((data, idx) =>
+        <ExerciseSection key={data.pt_idx}>
           <WorkoutSet
-            key={data.pt_idx}
             data={data}
             setRoutineData={memoSetRoutineData}
             routineData={routineData}
           />
-        )}
-      </div>
-      <AddButton type="button" onClick={handleAddWorkOut}>운동 추가하기 +</AddButton>
-    </Wrapper>
+        </ExerciseSection>
+      )}
+      <AddButton type="button" onClick={handleAddWorkOut}>
+        운동 추가하기 +
+      </AddButton>
+    </WorkoutSetWrapper>
   );
 };
 
