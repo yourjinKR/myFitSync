@@ -723,7 +723,8 @@ const TrainerCalendarView = () => {
               memberIdx={selectedSchedule.user_idx}
               trainerIdx={trainerIdx}
               date={format(new Date(selectedSchedule.schedule_date), 'yyyy-MM-dd')}
-              time={selectedSchedule.schedule_stime}
+              stime={selectedSchedule.schedule_stime}
+              etime={selectedSchedule.schedule_etime}
               memo={selectedSchedule.schedule_content}
             />
           )}
