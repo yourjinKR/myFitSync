@@ -14,20 +14,26 @@
     <insert id="insertSchedule" parameterType="org.fitsync.domain.ScheduleVO">
         INSERT INTO schedule (
             schedule_idx,
-            member_idx,
+            trainer_idx,
             schedule_date,
             schedule_stime,
             schedule_etime,
             schedule_content,
-            schedule_regdate
+            schedule_regdate,
+            user_idx,
+            schedule_check,
+            user_name
         ) VALUES (
             schedule_seq.NEXTVAL,
-            #{member_idx},
+            #{trainer_idx},
             #{schedule_date},
             #{schedule_stime},
             #{schedule_etime},
             #{schedule_content},
-            SYSDATE
+            SYSDATE,
+            #{user_idx},
+            0,
+            #{user_name}
         )
     </insert>
 

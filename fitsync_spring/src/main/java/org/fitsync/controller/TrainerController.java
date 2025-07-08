@@ -151,12 +151,22 @@ public class TrainerController {
         return scheduleService.getSchedulesByTrainer(trainerIdx);
     }
 
-    // 트레이너 스케줄 추가
-    @PostMapping("/schedule")
-    public int addSchedule(@RequestBody ScheduleVO vo) {
-        return scheduleService.insertSchedule(vo);
-    }
+    @PostMapping("/{trainerIdx}/schedule")
+    public ResponseEntity<?> addSchedule(
+        @PathVariable int trainerIdx,
+        @RequestBody ScheduleVO vo) {
 
+        // 스케줄에 trainerIdx 설정 (필요하면)
+        vo.setTrainer_idx(trainerIdx);
+
+        int result = scheduleService.insertSchedule(vo);
+
+        if (result > 0) {
+            return ResponseEntity.ok("스케줄 추가 성공");
+        } else {
+            return ResponseEntity.status(500).body("스케줄 추가 실패");
+        }
+    }
     // 트레이너 스케줄 삭제
     @DeleteMapping("/schedule/{scheduleIdx}")
     public int deleteSchedule(@PathVariable int scheduleIdx) {

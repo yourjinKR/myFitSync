@@ -257,82 +257,154 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const ScheduleIndicator = styled.div`
-  width: 60%;
-  height: 4px;
-  background: var(--primary-blue);
-  border-radius: 2px;
-  margin: 2px auto 0;
+const ScheduleDot = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin: 1px;
+`;
+
+const DotWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  min-height: 10px;
+`;
+
+const Legend = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .green { background: #4CAF50; }
+  .red { background: #F44336; }
+  .yellow { background: #FFC107; }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
 `;
 
 const TrainerCalendarView = () => {
-  const { trainerIdx } = useParams(); // ✅ 라우터 param 가져오기
+  const { trainerIdx } = useParams();
 
   const [view, setView] = useState('month');
   const [selectedDate, setSelectedDate] = useState('');
   const [showPanel, setShowPanel] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [showWorkoutInsert, setShowWorkoutInsert] = useState(false);
-  const [selectedMember, setSelectedMember] = useState('');
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  const [members, setMembers] = useState([]); // 회원 리스트 상태 추가
+  const [members, setMembers] = useState([]);
+  const [memberMap, setMemberMap] = useState({});
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const today = new Date();
-    return subDays(today, getDay(today));
+    const now = new Date();
+    const start = subDays(now, getDay(now));
+    return start;
   });
 
   const [monthSchedules, setMonthSchedules] = useState({});
   const [weekSchedules, setWeekSchedules] = useState({});
 
-  // ✅ 데이터 불러오기 - 스케줄 + 회원 리스트
+  // 월별 일정 가져오기
+  const fetchSchedules = () => {
+    axios.get(`/trainer/${trainerIdx}/schedule`).then((res) => {
+      const raw = res.data;
+      const monthMap = {};
+
+      raw.forEach((schedule) => {
+        const dateKey = format(new Date(schedule.schedule_date), 'yyyy-MM-dd');
+        if (!monthMap[dateKey]) monthMap[dateKey] = [];
+        monthMap[dateKey].push(schedule);
+      });
+
+      setMonthSchedules(monthMap);
+    }).catch((err) => {
+      console.error('스케줄 불러오기 실패', err);
+    });
+  };
+
+  // 주간 일정 필터링
+  useEffect(() => {
+    if (!currentWeekStart || !monthSchedules) return;
+
+    const newWeekSchedules = {};
+    const start = currentWeekStart;
+    const end = addDays(currentWeekStart, 6);
+
+    Object.entries(monthSchedules).forEach(([dateStr, schedules]) => {
+      const date = new Date(dateStr);
+      if (date >= start && date <= end) {
+        schedules.forEach(schedule => {
+          const dayIndex = getDay(date);
+          const key = `${dayIndex}-${schedule.schedule_stime}`;
+          newWeekSchedules[key] = schedule;
+        });
+      }
+    });
+
+    setWeekSchedules(newWeekSchedules);
+  }, [currentWeekStart, monthSchedules]);
+
+  // 초기 설정
   useEffect(() => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     setSelectedDate(todayStr);
     setShowPanel(true);
 
     if (trainerIdx) {
-      // 스케줄 데이터 가져오기
-      axios.get(`/trainer/${trainerIdx}/schedule`)
-        .then(res => {
-          const raw = res.data;
+      fetchSchedules();
 
-          const monthMap = {};
-          const weekMap = {};
-
-          raw.forEach(schedule => {
-            const { schedule_date, schedule_stime, schedule_content } = schedule;
-            const nameTime = `${schedule_content} ${schedule_stime}`;
-            const dateKey = schedule_date;
-
-            // 월간용
-            if (!monthMap[dateKey]) monthMap[dateKey] = [];
-            monthMap[dateKey].push(nameTime);
-
-            // 주간용
-            const date = new Date(schedule_date);
-            const dayIndex = getDay(date);
-            const time = schedule_stime;
-            const weekKey = `${dayIndex}-${time}`;
-            weekMap[weekKey] = schedule_content;
-          });
-
-          setMonthSchedules(monthMap);
-          setWeekSchedules(weekMap);
-        })
-        .catch(err => console.error('스케줄 불러오기 실패', err));
-
-      // 회원 리스트 가져오기
-      axios.get(`/trainer/${trainerIdx}/members`)
-        .then(res => {
-          setMembers(res.data);
-        })
-        .catch(err => {
-          console.error('회원 리스트 불러오기 실패', err);
-        });
+      axios.get(`/trainer/${trainerIdx}/members`).then((res) => {
+        setMembers(res.data);
+        const map = {};
+        res.data.forEach((m) => { map[m.member_idx] = m.member_name });
+        setMemberMap(map);
+      }).catch((err) => {
+        console.error('회원 리스트 불러오기 실패', err);
+      });
     }
   }, [trainerIdx]);
+
+  const handleInsertSchedule = async (key, schedule_name, schedule_stime, schedule_etime, schedule_content, user_idx = null) => {
+    try {
+      await axios.post(`/trainer/${trainerIdx}/schedule`, {
+        schedule_name,
+        schedule_stime,
+        schedule_etime,
+        schedule_content,
+        user_idx,
+        schedule_date: selectedDate,
+      });
+      fetchSchedules();
+      setShowInsertModal(false);
+    } catch (error) {
+      console.error('일정 추가 실패:', error);
+    }
+  };
+
+  const handleDeleteSchedule = () => {
+    setMonthSchedules((prev) => {
+      const prevArr = prev[selectedDate] || [];
+      if (prevArr.length === 0) return prev;
+      const newArr = prevArr.slice(0, -1);
+      return { ...prev, [selectedDate]: newArr };
+    });
+  };
 
   const handleDayClick = (dateStr) => {
     setSelectedDate(dateStr);
@@ -340,34 +412,13 @@ const TrainerCalendarView = () => {
   };
 
   const handleAddSchedule = () => setShowInsertModal(true);
-  const closeInsertModal = () => setShowInsertModal(false);
-  const closeWorkoutModal = () => setShowWorkoutInsert(false);
 
-  const handleDeleteSchedule = () => {
-    setMonthSchedules((prev) => {
-      const prevArr = prev[selectedDate] || [];
-      if (prevArr.length === 0) return prev;
-      const newArr = prevArr.slice(0, prevArr.length - 1);
-      return {
-        ...prev,
-        [selectedDate]: newArr,
-      };
-    });
-  };
-
-  // handleInsertSchedule에 params 순서 변경
-  const handleInsertSchedule = (key, memberName, startTime, endTime) => {
-    setWeekSchedules((prev) => ({
-      ...prev,
-      [key]: memberName,
-    }));
-    closeInsertModal();
-  };
-
-  const handleMemberClick = (memberName) => {
-    setSelectedMember(memberName);
+  const handleMemberClick = (schedule) => {
+    setSelectedSchedule(schedule);
     setShowWorkoutInsert(true);
   };
+
+  const closeWorkoutModal = () => setShowWorkoutInsert(false);
 
   const hours = Array.from({ length: 19 }, (_, i) => `${(6 + i).toString().padStart(2, '0')}:00`);
   const days = ['Su', 'Mo', 'Tu', 'Wd', 'Th', 'Fr', 'Sa'];
@@ -376,11 +427,8 @@ const TrainerCalendarView = () => {
   const month = currentMonth.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
   const firstDayOffset = getDay(startOfMonth(currentMonth));
-  const dates = [
-    ...Array.from({ length: firstDayOffset }, () => null),
-    ...Array.from({ length: lastDate }, (_, i) => i + 1),
-  ];
-  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+  const dates = [...Array.from({ length: firstDayOffset }, () => null), ...Array.from({ length: lastDate }, (_, i) => i + 1)];
+  const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(currentWeekStart, i), 'yyyy-MM-dd'));
 
   return (
     <Wrapper>
@@ -388,10 +436,16 @@ const TrainerCalendarView = () => {
         {view === 'week' ? (
           <MonthTitle>
             <button onClick={() => setCurrentWeekStart(subDays(currentWeekStart, 7))}>{'<'}</button>
-            {format(currentWeekStart, 'MMMM')}
+            {format(currentWeekStart, 'MMMM yyyy')}
             <button onClick={() => setCurrentWeekStart(addDays(currentWeekStart, 7))}>{'>'}</button>
           </MonthTitle>
-        ) : <div />}
+        ) : (
+          <MonthTitle>
+            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>{'<'}</button>
+            {format(currentMonth, 'MMMM yyyy')}
+            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>{'>'}</button>
+          </MonthTitle>
+        )}
 
         <Toggle>
           <button className={`toggle-btn ${view === 'week' ? 'active' : ''}`} onClick={() => setView('week')}>주간 보기</button>
@@ -400,107 +454,147 @@ const TrainerCalendarView = () => {
       </TopBar>
 
       {view === 'week' ? (
-        <ScheduleBox>
-          <HeaderRow>
-            <div></div>
-            {days.map((day, idx) => (
-              <div key={idx}>{day} <br /><small>{format(weekDates[idx], 'MM/dd')}</small></div>
-            ))}
-          </HeaderRow>
-          <WeekGrid>
-            {hours.map((hour, idx) => (
-              <React.Fragment key={idx}>
-                <TimeLabel>{hour}</TimeLabel>
-                {days.map((_, dayIdx) => {
-                  const key = `${dayIdx}-${hour}`;
-                  const member = weekSchedules[key];
-                  return (
-                    <DayCell key={dayIdx}>
-                      {member && (
-                        <ScheduleItem onClick={() => handleMemberClick(member)}>{member}</ScheduleItem>
-                      )}
-                    </DayCell>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </WeekGrid>
-        </ScheduleBox>
+        <>
+          <ScheduleBox>
+            <HeaderRow>
+              <div></div>
+              {days.map((day, idx) => (
+                <div key={idx}>{day} <br /><small>{format(new Date(weekDates[idx]), 'MM/dd')}</small></div>
+              ))}
+            </HeaderRow>
+            <WeekGrid>
+              {hours.map((hour, idx) => (
+                <React.Fragment key={idx}>
+                  <TimeLabel>{hour}</TimeLabel>
+                  {days.map((_, dayIdx) => {
+                    const key = `${dayIdx}-${hour}`;
+                    const schedule = weekSchedules[key];
+                    return (
+                      <DayCell key={dayIdx}>
+                        {schedule && (
+                          <ScheduleItem onClick={() => handleMemberClick(schedule)}>
+                            {schedule.user_idx ? memberMap[schedule.user_idx] : schedule.user_name || schedule.schedule_content}
+                          </ScheduleItem>
+                        )}
+                      </DayCell>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </WeekGrid>
+          </ScheduleBox>
+
+          <ButtonGroup>
+            <button onClick={handleAddSchedule}>일정 추가</button>
+          </ButtonGroup>
+        </>
       ) : (
         <>
           <ScheduleBox>
-            <CalendarHeader>
-              <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>←</button>
-              {format(currentMonth, 'MMMM yyyy')}
-              <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>→</button>
-            </CalendarHeader>
             <CalendarContainer>
+              <CalendarHeader>
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>{'<'}</button>
+                {format(currentMonth, 'MMMM yyyy')}
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>{'>'}</button>
+              </CalendarHeader>
+
               <WeekdaysRow>{days.map((day, idx) => <div key={idx}>{day}</div>)}</WeekdaysRow>
+
               <CustomCalendar>
                 {dates.map((day, index) => {
-                  const dateStr =
-                    day != null ? `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}` : null;
+                  const dateStr = day != null ? `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}` : null;
                   const isSelected = dateStr && selectedDate === dateStr;
                   const dayOfWeek = index % 7;
-                  const isSunday = dayOfWeek === 0;
-                  const isSaturday = dayOfWeek === 6;
+                  const schedules = dateStr ? monthSchedules[dateStr] || [] : [];
+
+                  // 카테고리별 존재 여부 확인
+                  const hasGreen = schedules.some(s => s.user_idx);
+                  const hasRed = schedules.some(s => !s.user_idx && !s.user_name);
+                  const hasYellow = schedules.some(s => !s.user_idx && s.user_name);
 
                   return (
                     <DayCellBox
                       key={index}
                       isSelected={isSelected}
-                      isSunday={isSunday}
-                      isSaturday={isSaturday}
+                      isSunday={dayOfWeek === 0}
+                      isSaturday={dayOfWeek === 6}
                       isClickable={!!dateStr}
-                      onClick={() => dateStr && handleDayClick(dateStr)}>
+                      onClick={() => dateStr && handleDayClick(dateStr)}
+                    >
                       {day || ''}
-                      {dateStr && monthSchedules[dateStr] && monthSchedules[dateStr].length > 0 && (
-                        <ScheduleIndicator />
-                      )}
+                      <DotWrapper>
+                        {hasGreen && <ScheduleDot style={{ background: '#4CAF50' }} />}
+                        {hasRed && <ScheduleDot style={{ background: '#F44336' }} />}
+                        {hasYellow && <ScheduleDot style={{ background: '#FFC107' }} />}
+                      </DotWrapper>
                     </DayCellBox>
                   );
                 })}
               </CustomCalendar>
             </CalendarContainer>
+
+            <Legend style={{ justifyContent: 'flex-end', paddingRight: '1rem' }}>
+              <div><span className="dot green" /> 내 운동기록</div>
+              <div><span className="dot red" /> 스케줄</div>
+              <div><span className="dot yellow" /> 외부 스케줄</div>
+            </Legend>
+
           </ScheduleBox>
-
-          {showPanel && (
-            <SlidePanel initial={{ y: 50 }} animate={{ y: 0 }} exit={{ y: 50 }}>
-              <SlidePanelHeader>
-                <h3>{selectedDate} 일정</h3>
-                <ButtonGroup>
-                  <button onClick={handleAddSchedule}>일정 추가</button>
-                  <button onClick={handleDeleteSchedule}>일정 삭제</button>
-                </ButtonGroup>
-              </SlidePanelHeader>
-              <ul>
-                {(monthSchedules[selectedDate] || ['일정 없음']).map((item, idx) => (
-                  <li key={idx}>
-                    <span style={{ cursor: 'pointer', color: '#5b6eff' }}
-                      onClick={() => handleMemberClick(item.split(' ')[0])}>
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <button onClick={() => setShowPanel(false)}>닫기</button>
-            </SlidePanel>
-          )}
-
-          {showInsertModal && (
-          <ScheduleInsertModal
-            members={members}
-            trainerIdx={trainerIdx}
-            selectedDate={selectedDate}
-            onClose={closeInsertModal}
-            onInsert={handleInsertSchedule}
-          />
-          )}
         </>
       )}
 
-      {showWorkoutInsert && (
-        <WorkoutInsert memberName={selectedMember} onClose={closeWorkoutModal} date={selectedDate} />
+      {view === 'month' && showPanel && (
+        <SlidePanel initial={{ y: 50 }} animate={{ y: 0 }} exit={{ y: 50 }}>
+          <SlidePanelHeader>
+            <h3>{selectedDate} 일정</h3>
+            <ButtonGroup>
+              <button onClick={handleAddSchedule}>일정 추가</button>
+              <button onClick={handleDeleteSchedule}>일정 삭제</button>
+            </ButtonGroup>
+          </SlidePanelHeader>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+            <div style={{ minWidth: '3rem', height: '3rem', borderRadius: '50%', background: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 'bold' }}>
+              {selectedDate.split('-')[2]}
+            </div>
+            <div>
+              {monthSchedules[selectedDate] && monthSchedules[selectedDate].length > 0 ? (
+                monthSchedules[selectedDate]
+                  .slice()
+                  .sort((a, b) => a.schedule_stime.localeCompare(b.schedule_stime)) // 오름차순 정렬
+                  .map((schedule) => (
+                    <div key={schedule.schedule_idx} style={{ marginBottom: '0.6rem' }}>
+                      {schedule.user_idx ? memberMap[schedule.user_idx] : schedule.user_name || '일정 없음'} - {schedule.schedule_stime} ~ {schedule.schedule_etime} <br />
+                      {schedule.schedule_content}
+                    </div>
+                  ))
+              ) : (
+                <div>일정이 없습니다.</div>
+              )}
+            </div>
+          </div>
+        </SlidePanel>
+      )}
+
+      {showInsertModal && (
+        <ScheduleInsertModal
+          onClose={() => setShowInsertModal(false)}
+          onInsert={handleInsertSchedule}
+          members={members}
+          selectedDate={selectedDate}
+        />
+      )}
+
+      {showWorkoutInsert && selectedSchedule && (
+        <WorkoutInsert
+          onClose={closeWorkoutModal}
+          memberName={selectedSchedule.user_name || memberMap[selectedSchedule.user_idx]}
+          memberIdx={selectedSchedule.user_idx}
+          trainerIdx={trainerIdx}
+          date={format(new Date(selectedSchedule.schedule_date), 'yyyy-MM-dd')}
+          time={selectedSchedule.schedule_stime}
+          memo={selectedSchedule.schedule_content}
+        />
       )}
     </Wrapper>
   );

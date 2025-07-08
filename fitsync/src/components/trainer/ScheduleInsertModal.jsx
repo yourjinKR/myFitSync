@@ -42,7 +42,7 @@ const Field = styled.div`
     color: var(--text-secondary);
   }
 
-  select, input {
+  select, input, textarea {
     width: 100%;
     padding: 0.6rem 1rem;
     border-radius: 0.8rem;
@@ -52,8 +52,13 @@ const Field = styled.div`
     font-size: 1.2rem;
   }
 
-  input::placeholder {
+  input::placeholder, textarea::placeholder {
     color: var(--text-tertiary);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 60px;
   }
 `;
 
@@ -98,6 +103,7 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
   const [startTime, setStartTime] = useState('06:00');
   const [endTime, setEndTime] = useState('07:00');
   const [useCustom, setUseCustom] = useState(false);
+  const [memo, setMemo] = useState('');
 
   const modalRef = useRef();
 
@@ -107,25 +113,33 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
   });
 
   const handleSubmit = async () => {
-    const memberName = useCustom ? customMember.trim() : selectedMember;
-    if (!memberName || !startTime || !endTime) {
+    const scheduleName = useCustom ? customMember.trim() : selectedMember;
+
+    if (!scheduleName || !startTime || !endTime) {
       alert('모든 항목을 입력해주세요.');
       return;
     }
 
+    const member = members.find((m) => m.member_name === selectedMember);
+    const userIdxToSend = useCustom ? null : (member?.member_idx || null);
+    const userNameToSend = useCustom ? customMember.trim() : selectedMember;
+
     try {
-      await axios.post(`/trainer/schedule`, {
+      await axios.post(`/trainer/${trainerIdx}/schedule`, {
         trainer_idx: trainerIdx,
-        member_idx: null,
-        schedule_date: new Date().toISOString().split('T')[0],
+        user_idx: userIdxToSend,
+        schedule_date: selectedDate,
         schedule_stime: startTime,
         schedule_etime: endTime,
-        schedule_content: memberName
+        schedule_content: memo,
+        user_name: userNameToSend,
       });
 
+      // 주간 보기용 key 계산 후 프론트 상태 갱신
       const dayIndex = new Date(selectedDate).getDay();
       const key = `${dayIndex}-${startTime}`;
-      onInsert(key, memberName, startTime, endTime);
+
+      onInsert(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
       onClose();
     } catch (err) {
       alert('스케줄 추가 실패');
@@ -161,10 +175,13 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
                 setUseCustom(false);
                 setSelectedMember(val);
               }
-            }}>
+            }}
+          >
             <option value="">-- 선택하세요 --</option>
             {members.map((m, idx) => (
-              <option key={idx} value={m.name}>{m.name}</option>
+              <option key={idx} value={m.member_name}>
+                {m.member_name}
+              </option>
             ))}
             <option value="custom">직접 입력</option>
           </select>
@@ -186,7 +203,9 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
           <label>시작 시간</label>
           <select value={startTime} onChange={(e) => setStartTime(e.target.value)}>
             {hours.map((h) => (
-              <option key={h} value={h}>{h}</option>
+              <option key={h} value={h}>
+                {h}
+              </option>
             ))}
           </select>
         </Field>
@@ -195,9 +214,20 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
           <label>종료 시간</label>
           <select value={endTime} onChange={(e) => setEndTime(e.target.value)}>
             {hours.map((h) => (
-              <option key={h} value={h}>{h}</option>
+              <option key={h} value={h}>
+                {h}
+              </option>
             ))}
           </select>
+        </Field>
+
+        <Field>
+          <label>메모</label>
+          <textarea
+            placeholder="추가 메모를 입력하세요"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+          />
         </Field>
 
         <ButtonGroup>

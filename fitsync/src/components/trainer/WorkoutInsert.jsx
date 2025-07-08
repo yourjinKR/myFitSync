@@ -14,12 +14,14 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalBox = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 1rem;
   padding: 2rem;
   width: 90%;
   max-width: 500px;
   font-size: 1.4rem;
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
 `;
 
 const ButtonGroup = styled.div`
@@ -34,20 +36,46 @@ const ButtonGroup = styled.div`
     border-radius: 0.6rem;
     font-size: 1.3rem;
     cursor: pointer;
+    transition: background 0.2s;
   }
 
   .go {
-    background: #5b6eff;
-    color: white;
+    background: var(--primary-blue);
+    color: var(--text-primary);
+
+    &:hover {
+      background: var(--primary-blue-hover);
+    }
   }
 
   .cancel {
-    background: #ccc;
-    color: black;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+
+    &:hover {
+      background: var(--border-medium);
+    }
   }
 `;
 
-const WorkoutInsert = ({ onClose, memberName, memberIdx, trainerIdx, date, time }) => {
+const InfoRow = styled.div`
+  margin-bottom: 1rem;
+  line-height: 1.6;
+
+  strong {
+    color: var(--primary-blue);
+  }
+`;
+
+const WorkoutInsert = ({
+  onClose,
+  memberName,
+  memberIdx,
+  trainerIdx,
+  date,
+  time,
+  memo
+}) => {
   const navigate = useNavigate();
 
   const handleGoToRoutineAdd = () => {
@@ -58,6 +86,7 @@ const WorkoutInsert = ({ onClose, memberName, memberIdx, trainerIdx, date, time 
         trainerIdx,
         date,
         time,
+        memo,
       },
     });
     onClose();
@@ -66,12 +95,11 @@ const WorkoutInsert = ({ onClose, memberName, memberIdx, trainerIdx, date, time 
   return (
     <ModalOverlay onClick={onClose}>
       <ModalBox onClick={(e) => e.stopPropagation()}>
-        <h3>운동 추가</h3>
-        <p>
-          <strong>{memberName}</strong>님<br />
-          날짜: {date}<br />
-          시간: {time || '시간 없음'}
-        </p>
+        <InfoRow><strong>{memberName}</strong>님</InfoRow>
+        <InfoRow>날짜: {date}</InfoRow>
+        <InfoRow>시간: {time || '시간 없음'}</InfoRow>
+        <InfoRow>메모: {memo || '메모 없음'}</InfoRow>
+
         <ButtonGroup>
           <button className="cancel" onClick={onClose}>취소</button>
           <button className="go" onClick={handleGoToRoutineAdd}>운동 추가하러 가기</button>
