@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
-  background-color: #ffffff;
-  border-top: 1px solid #e1e1e1;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-medium);
   padding: 15px 20px;
 `;
 
@@ -12,10 +12,10 @@ const FilePreview = styled.div`
   display: flex;
   align-items: center;
   padding: 10px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-tertiary);
   border-radius: 8px;
   margin-bottom: 10px;
-  border: 1px solid #e1e1e1;
+  border: 1px solid var(--border-light);
 `;
 
 const PreviewImage = styled.img`
@@ -33,19 +33,19 @@ const FileInfo = styled.div`
 const FileName = styled.div`
   font-size: 1.3rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 `;
 
 const FileSize = styled.div`
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 2px;
 `;
 
 const RemoveButton = styled.button`
   background: none;
   border: none;
-  color: #999;
+  color: var(--text-primary);
   font-size: 1.6rem;
   cursor: pointer;
   padding: 4px;
@@ -53,8 +53,8 @@ const RemoveButton = styled.button`
   transition: color 0.2s;
   
   &:hover {
-    color: #666;
-    background-color: #e9ecef;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
   }
 `;
 
@@ -66,17 +66,20 @@ const InputContainer = styled.div`
 `;
 
 const AttachButton = styled.button`
-  background: none;
-  border: 1px solid #ddd;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-medium);
   border-radius: 20px;
   padding: 8px 10px;
   cursor: pointer;
   font-size: 1.6rem;
-  color: #666;
-  transition: background 0.2s;
+  color: var(--text-primary);
+  transition: all 0.2s;
+  transform: translateY(-1.5px);
   
   &:hover {
-    background-color: #f8f9fa;
+    background-color: var(--bg-tertiary);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
   }
   
   &:disabled {
@@ -94,7 +97,7 @@ const TextAreaContainer = styled.div`
 // 메시지 입력창 자동 높이 조절 및 최대 높이 제한
 const MessageTextArea = styled.textarea`
   width: 100%;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-medium);
   border-radius: 20px;
   padding: 10px 45px 10px 15px;
   resize: none;
@@ -108,14 +111,15 @@ const MessageTextArea = styled.textarea`
   transition: border-color 0.2s;
   overflow: hidden !important;
   max-height: 105px; 
-  
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
   
   &:focus {
-    border-color: #7D93FF;
+    border-color: var(--primary-blue);
   }
   
   &::placeholder {
-    color: #999;
+    color: var(--text-tertiary);
   }
 `;
 
@@ -126,7 +130,7 @@ const SendButton = styled.button`
   bottom: 8px;
   background: none;
   border: none;
-  color: #7D93FF;
+  color: var(--primary-blue);
   font-size: 2rem;
   cursor: pointer;
   padding: 4px;
@@ -134,12 +138,12 @@ const SendButton = styled.button`
   transition: color 0.2s;
   
   &:disabled {
-    color: #ccc;
+    color: var(--text-tertiary);
     cursor: not-allowed;
   }
   
   &:hover:not(:disabled) {
-    color: #5e72e4;
+    color: var(--primary-blue-hover);
   }
 `;
 

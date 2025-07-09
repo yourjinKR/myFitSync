@@ -12,7 +12,7 @@ const MessageContainer = styled.div`
 // 사용자 이름 표시 (상대방 메시지에만)
 const SenderName = styled.div`
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 4px;
   margin-left: 4px;
 `;
@@ -24,22 +24,24 @@ const MessageGroup = styled.div`
   max-width: 70%;
 `;
 
-// 메시지 말풍선 - 내 메시지는 노란색, 상대방은 흰색
+// 메시지 말풍선 - 내 메시지는 메인 블루, 상대방은 흰색
 const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
-  background-color: ${props => props.$isCurrentUser ? '#FFE66D' : '#ffffff'};
-  color: #333333;
+  background-color: ${props => props.$isCurrentUser ? 'var(--primary-blue)' : 'var(--text-primary)'};
+  color: ${props => props.$isCurrentUser ? 'var(--text-primary)' : 'var(--bg-primary)'};
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   position: relative;
   word-wrap: break-word;
+  
+  /* 말풍선 꼬리 제거 - 깔끔한 디자인을 위해 */
 `;
 
 const MessageText = styled.div`
   line-height: 1.4;
   white-space: pre-wrap; /* 줄바꿈 보존 */
   font-size: 1.4rem;
-  color: #333333;
+  color: inherit; /* 부모 색상 상속 */
 `;
 
 // 메시지 내 이미지 스타일
@@ -79,13 +81,13 @@ const MessageInfo = styled.div`
 `;
 
 const MessageTime = styled.span`
-  color: #666666;
+  color: var(--text-secondary);
   font-size: 1rem;
 `;
 
 // 읽음 상태를 시간 아래에 표시
 const ReadStatus = styled.div`
-  color: #999999;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   display: flex;
   align-items: center;

@@ -7,27 +7,28 @@ import chatApi from '../../utils/ChatApi';
 import axios from 'axios';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
+import IsLoading3 from '../../components/IsLoading3';
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #b2c7da; /* 배경색 */
+  background-color: var(--bg-primary);
 `;
 
 const Header = styled.div`
   display: flex;
   align-items: center;
   padding: 15px 20px;
-  background-color: #7D93FF;
-  color: white;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
 const BackButton = styled.button`
   background: none;
   border: none;
-  color: white;
+  color: var(--text-primary);
   font-size: 2rem;
   cursor: pointer;
   margin-right: 15px;
@@ -59,7 +60,7 @@ const MessagesContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  background-color: #b2c7da;
+  background-color: var(--bg-primary);
   
   /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
@@ -67,23 +68,14 @@ const MessagesContainer = styled.div`
   }
   
   &::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.1);
+    background: var(--bg-secondary);
     border-radius: 3px;
   }
   
   &::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
+    background: var(--border-medium);
     border-radius: 3px;
   }
-`;
-
-const LoadingMessage = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: #666;
-  font-size: 1.4rem;
 `;
 
 // 개별 채팅방 화면 컴포넌트
@@ -112,7 +104,6 @@ const ChatRoom = () => {
   // 채팅용 member_idx 조회 및 세션스토리지 저장
   const getMemberIdxForChat = async () => {
     try {
-      console.log('🔍 채팅용 member_idx 조회 중...');
       
       const response = await axios.get('/api/chat/member-info', { 
         withCredentials: true 
@@ -121,20 +112,16 @@ const ChatRoom = () => {
       if (response.data.success) {
         const memberIdx = response.data.member_idx.toString();
         sessionStorage.setItem('chat_member_idx', memberIdx);
-        console.log('✅ member_idx 세션스토리지 저장 성공:', memberIdx);
         setCurrentMemberIdx(parseInt(memberIdx)); // 상태에도 저장
         return parseInt(memberIdx);
       } else {
-        console.error('❌ member_idx 조회 실패:', response.data.message);
         if (response.data.message.includes('로그인')) {
           navigate('/login');
         }
         return null;
       }
     } catch (error) {
-      console.error('❌ member_idx 조회 중 오류:', error);
       if (error.response?.status === 401) {
-        console.error('🚨 인증 실패 - 로그인 페이지로 이동');
         navigate('/login');
       }
       return null;
@@ -159,7 +146,6 @@ const ChatRoom = () => {
       // 이전 페이지에서 전달된 채팅방 데이터 설정
       if (location.state?.roomData) {
         setRoomData(location.state.roomData);
-        console.log('채팅방 데이터 설정:', location.state.roomData);
       }
 
       // 메시지 목록 로드
@@ -171,7 +157,6 @@ const ChatRoom = () => {
     // 채팅방 퇴장 시 세션스토리지 정리
     return () => {
       sessionStorage.removeItem('chat_member_idx');
-      console.log('🗑️ 채팅방 퇴장 - member_idx 세션스토리지 삭제');
     };
   }, [roomId, user, navigate, location.state]);
 
@@ -179,12 +164,10 @@ const ChatRoom = () => {
   const loadMessages = async () => {
     try {
       setLoading(true);
-      console.log('메시지 목록 로드 시작:', roomId);
       
       // 백엔드 API 호출 (readMessageList 메서드와 정확히 일치)
       const messageList = await chatApi.readMessageList(parseInt(roomId));
       setMessages(messageList);
-      console.log('메시지 목록 로드 성공:', messageList);
       
       // 각 이미지 메시지의 첨부파일 정보 로드
       const attachmentsMap = {};
@@ -221,21 +204,18 @@ const ChatRoom = () => {
   // WebSocket 구독 설정(실시간 새메시지 읽음확인)
   useEffect(() => {
     if (connected && roomId && currentMemberIdx) {
-      console.log('WebSocket 채팅방 구독 시작:', roomId);
       
       const unsubscribe = subscribeToRoom(
         parseInt(roomId),
         
         // 새 메시지 수신 콜백
         async (newMessage) => {
-          console.log('새 메시지 수신:', newMessage);
           
           // 중복 메시지 방지
           setMessages(prev => {
             // 동일한 message_idx가 이미 존재하는지 확인
             const existingMessage = prev.find(msg => msg.message_idx === newMessage.message_idx);
             if (existingMessage) {
-              console.log('🔄 중복 메시지 무시:', newMessage.message_idx);
               return prev; // 중복이면 기존 상태 유지
             }
             return [...prev, newMessage]; // 새 메시지만 추가
@@ -264,15 +244,12 @@ const ChatRoom = () => {
 
           // 받은 메시지인 경우 자동으로 읽음 처리
           if (newMessage.receiver_idx === currentMemberIdx) {
-            console.log('받은 메시지 자동 읽음 처리');
             markAsRead(newMessage.message_idx, parseInt(roomId));
           }
         },
         
         // 읽음 확인 수신 콜백
         (readData) => {
-          console.log('읽음 확인 수신:', readData);
-          
           // 해당 메시지의 읽음 상태 업데이트
           setMessages(prev => 
             prev.map(msg => 
@@ -320,14 +297,11 @@ const ChatRoom = () => {
       message_type: messageType
     };
 
-    console.log('메시지 전송:', messageData);
-
     // WebSocket으로 메시지 전송 (실시간 전송)
     sendMessage(messageData);
 
     // 파일 업로드 처리 (이미지인 경우)
     if (file && messageType === 'image') {
-      console.log('파일 업로드 처리 시작:', file.name);
       
       // 메시지가 서버에 저장될 때까지 잠시 대기 후 파일 업로드
       setTimeout(async () => {
@@ -337,7 +311,6 @@ const ChatRoom = () => {
           const latestMessage = messageList[messageList.length - 1];
           
           if (latestMessage && latestMessage.sender_idx === currentMemberIdx) {
-            console.log('파일 업로드 시작:', latestMessage.message_idx);
             
             // 백엔드 API 호출 (uploadFile 메서드와 정확히 일치)
             await chatApi.uploadFile(file, latestMessage.message_idx);
@@ -411,7 +384,16 @@ const ChatRoom = () => {
   if (loading) {
     return (
       <Container>
-        <LoadingMessage>메시지를 불러오는 중...</LoadingMessage>
+        <Header>
+          <BackButton onClick={handleBackClick}>
+            ←
+          </BackButton>
+          
+          <UserInfo>
+            <UserName>채팅방</UserName>
+          </UserInfo>
+        </Header>
+        <IsLoading3 />
       </Container>
     );
   }

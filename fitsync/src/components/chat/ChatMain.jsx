@@ -3,11 +3,12 @@ import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ChatApi from '../../utils/ChatApi';
+import IsLoading3 from '../../components/IsLoading3';
 
 const Container = styled.div`
   padding: 20px;
   height: 100%;
-  background-color: #f8faff;
+  background-color: var(--bg-primary);
 `;
 
 const Header = styled.div`
@@ -16,32 +17,33 @@ const Header = styled.div`
 
 const Title = styled.h2`
   font-size: 2.4rem;
-  color: #232946;
+  color: var(--text-primary);
   margin-bottom: 8px;
 `;
 
 const Subtitle = styled.p`
   font-size: 1.4rem;
-  color: #666;
+  color: var(--text-secondary);
 `;
 
 const RoomList = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-light);
 `;
 
 const RoomItem = styled.div`
   display: flex;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background-color: #f8faff;
+    background-color: var(--bg-tertiary);
   }
 
   &:last-child {
@@ -53,7 +55,7 @@ const Avatar = styled.div`
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: linear-gradient(135deg, #7D93FF 0%, #5e72e4 100%);
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,24 +72,24 @@ const RoomInfo = styled.div`
 const RoomName = styled.div`
   font-size: 1.6rem;
   font-weight: 600;
-  color: #232946;
+  color: var(--text-primary);
   margin-bottom: 4px;
 `;
 
 const LastMessage = styled.div`
   font-size: 1.3rem;
-  color: #666;
+  color: var(--text-secondary);
 `;
 
 const TimeStamp = styled.div`
   font-size: 1.2rem;
-  color: #999;
+  color: var(--text-tertiary);
 `;
 
 const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  color: #666;
+  color: var(--text-secondary);
 `;
 
 const EmptyIcon = styled.div`
@@ -102,7 +104,7 @@ const EmptyText = styled.p`
 
 const EmptySubtext = styled.p`
   font-size: 1.3rem;
-  color: #999;
+  color: var(--text-tertiary);
 `;
 
 // 채팅 메인 화면 컴포넌트
@@ -131,8 +133,6 @@ const ChatMain = () => {
     try {
       // 백엔드 API 호출
       const roomList = await ChatApi.readRoomList();
-      
-      console.log('채팅방 목록 로드 성공:', roomList);
       setRooms(roomList);
 
       // 각 채팅방의 읽지 않은 메시지 개수 조회
@@ -239,8 +239,6 @@ const ChatMain = () => {
 
   // 채팅방 정보 클릭
   const handleRoomClick = (room) => {
-    console.log('채팅방 선택:', room);
-    
     navigate(`/chat/${room.room_idx}`, {
       state: { roomData: room } // 채팅방 정보를 state로 전달
     });
@@ -252,8 +250,8 @@ const ChatMain = () => {
       <Container>
         <Header>
           <Title>채팅</Title>
-          <Subtitle>로딩 중...</Subtitle>
         </Header>
+        <IsLoading3 />
       </Container>
     );
   }

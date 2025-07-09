@@ -22,18 +22,19 @@ const DateSeparator = styled.div`
     left: 0;
     right: 0;
     height: 1px;
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: var(--border-light);
   }
 `;
 
 const DateText = styled.span`
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--bg-secondary);
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
   position: relative;
   z-index: 1;
+  border: 1px solid var(--border-light);
 `;
 
 // 메시지 목록 컴포넌트
