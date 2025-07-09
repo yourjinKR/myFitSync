@@ -405,7 +405,6 @@ const AItest = () => {
                 writer_idx : 0, // 컨트롤러에 수정 필요
                 list : parsedExerciseList,
             };
-            console.log('파싱된 데이터:', parseData);
             return parseData;
         }); 
         
@@ -415,25 +414,27 @@ const AItest = () => {
     }
         
     // 루틴 추천 결과 DB에 저장
-    const saveResult = () => {
+    const saveResult = async () => {
         const parsedResult = parseResult(result);
 
-        parsedResult.forEach(routineData => {
-            // 하나씩 넣기
-            axios.post('/routine/add', routineData, { withCredentials: true })
-                .then(response => {
-                    if (response.data.success) {
-                        alert('루틴이 성공적으로 저장되었습니다.');
-                    } else {
-                        alert('루틴 저장에 실패했습니다: ' + response.data.msg);
-                    }
-                })
-                .catch(error => {
-                    console.error('루틴 저장 중 오류 발생:', error);
-                    alert('루틴 저장 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+        for (const routineData of parsedResult) {
+            try {
+                const response = await axios.post('/routine/add', routineData, {
+                    withCredentials: true
                 });
-        })
-    }
+
+                if (response.data.success) {
+                    alert('루틴이 성공적으로 저장되었습니다.');
+                } else {
+                    alert('루틴 저장에 실패했습니다: ' + response.data.msg);
+                }
+            } catch (error) {
+                console.error('루틴 저장 중 오류 발생:', error);
+                alert('루틴 저장 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+                break; // 에러 발생 시 이후 저장 중단 (필요시 제거 가능)
+            }
+        }
+    };
 
     return (
         <PageContainer>
