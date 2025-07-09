@@ -37,7 +37,7 @@ const DateText = styled.span`
 `;
 
 // 메시지 목록 컴포넌트
-const MessageList = ({ messages, currentUser, attachments }) => {
+const MessageList = ({ messages, currentUser, attachments, roomData }) => {
   
   // 날짜를 한국어 형식으로 포맷
   const formatDate = (timestamp) => {
@@ -61,25 +61,74 @@ const MessageList = ({ messages, currentUser, attachments }) => {
     return currentDate !== previousDate;
   };
 
+  // 발신자 이름 생성 (상대방 메시지에만 필요)
+  const getSenderName = (message) => {
+    // 내 메시지인 경우 이름 불필요
+    if (message.sender_idx === currentUser.member_idx) {
+      return null;
+    }
+    
+    // 상대방 메시지인 경우
+    // roomData에서 상대방 정보 확인
+    if (roomData) {
+      // 현재 사용자가 트레이너인지 일반 사용자인지 확인
+      if (roomData.trainer_idx === currentUser.member_idx) {
+        // 내가 트레이너면 상대방은 회원
+        return '회원';
+      } else {
+        // 내가 일반 사용자면 상대방은 트레이너
+        // roomData.room_name에서 트레이너 이름 추출
+        if (roomData.room_name) {
+          const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
+          if (nameMatch) {
+            return nameMatch[1]; // 트레이너 이름
+          }
+        }
+        return '트레이너';
+      }
+    }
+    
+    // 기본값
+    return '상대방';
+  };
+
+  // 연속 메시지 체크 (같은 발신자의 연속 메시지인지 확인)
+  const isConsecutiveMessage = (currentMessage, previousMessage) => {
+    if (!previousMessage) return false;
+    
+    // 같은 발신자이고, 시간 차이가 5분 이내인 경우
+    const timeDiff = new Date(currentMessage.message_senddate) - new Date(previousMessage.message_senddate);
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    return currentMessage.sender_idx === previousMessage.sender_idx && timeDiff < fiveMinutes;
+  };
+
   return (
     <Container>
-      {messages.map((message, index) => (
-        <React.Fragment key={message.message_idx}>
-          {/* 날짜 구분선 (필요한 경우에만 표시) */}
-          {shouldShowDateSeparator(message, messages[index - 1]) && (
-            <DateSeparator>
-              <DateText>{formatDate(message.message_senddate)}</DateText>
-            </DateSeparator>
-          )}
-          
-          {/* 개별 메시지 컴포넌트 */}
-          <MessageItem
-            message={message}
-            isCurrentUser={message.sender_idx === currentUser.member_idx}
-            attachments={attachments[message.message_idx] || []}
-          />
-        </React.Fragment>
-      ))}
+      {messages.map((message, index) => {
+        const previousMessage = messages[index - 1];
+        const isConsecutive = isConsecutiveMessage(message, previousMessage);
+        const senderName = getSenderName(message);
+        
+        return (
+          <React.Fragment key={message.message_idx}>
+            {/* 날짜 구분선 (필요한 경우에만 표시) */}
+            {shouldShowDateSeparator(message, previousMessage) && (
+              <DateSeparator>
+                <DateText>{formatDate(message.message_senddate)}</DateText>
+              </DateSeparator>
+            )}
+            
+            {/* 개별 메시지 컴포넌트 */}
+            <MessageItem
+              message={message}
+              isCurrentUser={message.sender_idx === currentUser.member_idx}
+              attachments={attachments[message.message_idx] || []}
+              senderName={isConsecutive ? null : senderName} // 연속 메시지가 아닐 때만 이름 표시
+            />
+          </React.Fragment>
+        );
+      })}
     </Container>
   );
 };

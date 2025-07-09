@@ -297,9 +297,9 @@ const ChatRoom = () => {
     }
 
     // 상대방 인덱스 계산
-    const otherMemberIdx = roomData?.trainer_idx === user.member_idx 
-      ? roomData?.user_idx 
-      : roomData?.trainer_idx;
+    const otherMemberIdx = roomData?.trainer_idx === currentMemberIdx 
+      ? roomData?.user_idx      // 내가 트레이너면 → 상대방은 회원
+      : roomData?.trainer_idx;  // 내가 회원이면 → 상대방은 트레이너
 
     // 메시지 데이터 구성
     const messageData = {
@@ -419,8 +419,6 @@ const ChatRoom = () => {
         
         <UserInfo>
           <UserName>{getRoomDisplayName()}</UserName>
-          {/* 온라인/오프라인 상태 - 일단 간단히 처리 */}
-          <UserStatus>{connected ? '온라인' : '연결 중...'}</UserStatus>
         </UserInfo>
       </Header>
       
@@ -430,6 +428,7 @@ const ChatRoom = () => {
           messages={messages}
           currentUser={user}
           attachments={attachments}
+          roomData={roomData} // roomData 전달 추가
         />
         {/* 자동 스크롤을 위한 더미 요소 */}
         <div ref={messagesEndRef} />
