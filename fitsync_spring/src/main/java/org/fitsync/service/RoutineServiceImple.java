@@ -63,9 +63,9 @@ public class RoutineServiceImple implements RoutineService {
 	            throw new RuntimeException("RoutineList insert failed");
 	        }
 	        
-	        List<Map<String, Object>> list = (List<Map<String, Object>>) body.get("list");
+	        List<Map<String, Object>> routines = (List<Map<String, Object>>) body.get("routines");
 	        int routineResult = 0;
-	        for (Map<String, Object> data : list) {
+	        for (Map<String, Object> data : routines) {
 	            // RoutineVO 등록
 	            RoutineVO rvo = new RoutineVO();
 	            rvo.setPt_idx((int) data.get("pt_idx"));
@@ -98,7 +98,7 @@ public class RoutineServiceImple implements RoutineService {
 	        }
 
 	        // 루틴 등록 실패 시 롤백
-	        if (routineResult != list.size()) {
+	        if (routineResult != routines.size()) {
 	            throw new RuntimeException("Routine insert failed for some routines");
 	        }
 

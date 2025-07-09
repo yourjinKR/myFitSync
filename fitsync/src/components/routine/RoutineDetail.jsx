@@ -190,6 +190,8 @@ const LoadingWrapper = styled.div`
 `;
 
 const RoutineDetail = () => {
+  const {routineData, setRoutineData} = useOutletContext();
+
   const [init, setInit] = useState(null);
   const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
@@ -213,6 +215,7 @@ const RoutineDetail = () => {
       ...data,
       update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
+    setRoutineData(data);
   }, [data]);
   
   // 데이터 로드 시 고유 ID 생성
@@ -222,12 +225,12 @@ const RoutineDetail = () => {
         const response = await axios.get(`/routine/${routine_list_idx}`, {
           withCredentials: true
         });
-        const routineData = response.data;
-        if (routineData.success) {
+        const result = response.data;
+        if (result.success) {
           // 각 세트에 고유 ID 추가
           const dataWithIds = {
-            ...routineData.vo,
-            routines: routineData.vo.routines.map(routine => ({
+            ...result.vo,
+            routines: result.vo.routines.map(routine => ({
               ...routine,
               sets: routine.sets.map((set, index) => ({
                 ...set,
@@ -237,8 +240,9 @@ const RoutineDetail = () => {
           };
           setData(dataWithIds);
           setInit(dataWithIds);
+          setRoutineData(dataWithIds);
         } else {
-          alert(routineData.message);
+          alert(result.message);
         }
       } catch (e) {
         alert("루틴 정보를 불러오지 못했습니다.");

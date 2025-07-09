@@ -86,11 +86,6 @@ const GlobalStyle = createGlobalStyle`
     padding: 12px;
     border: 1px solid var(--border-light);
     
-    &:focus {
-      border-color: var(--primary-blue);
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-    }
-    
     &::placeholder {
       color: var(--text-tertiary);
     }

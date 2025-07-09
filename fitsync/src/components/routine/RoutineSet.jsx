@@ -1,7 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import React, { useEffect, useCallback, useState } from 'react';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import WorkoutSet from './WorkoutSet';
 import styled from 'styled-components';
+import { useDebounce } from 'use-debounce';
 
 // RoutineDetail 스타일 참고
 const WorkoutSetWrapper = styled.div`
@@ -14,20 +15,25 @@ const RoutineTop = styled.div`
   margin-bottom: 24px;
 `;
 
-const H3Input = styled.input`
+// 스타일 개선된 루틴 제목 입력란
+const RoutineTitleInput = styled.input`
   font-size: 2.4rem;
   color: var(--text-primary);
+  border: none;
   border-bottom: 1px solid var(--border-light);
-  padding-bottom: 12px;
   margin-bottom: 20px;
   font-weight: 600;
   background: transparent;
-  border: none;
-  outline: none;
   width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+  border-radius: 0;
+  padding-left: 0;
+
   &::placeholder {
     color: var(--text-tertiary);
     font-weight: 400;
+    opacity: 0.8;
   }
 `;
 
@@ -44,34 +50,49 @@ const ExerciseSection = styled.div`
   }
 `;
 
-const AddButton = styled.button`
-  width: 100%;
-  font-size: 1.6rem;
-  padding: 16px 0;
-  background: var(--primary-blue);
-  color: #fff;
-  border: none;
-  font-weight: 500;
-  border-radius: 5px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  margin: 0; /* 카드와 버튼 사이 간격 제거 */
-  box-shadow: none;
-  &:active {
-    background: var(--primary-blue-hover);
-    transform: scale(0.98);
-  }
-`;
+// 디바운스 적용된 입력 컴포넌트
+const RoutineTitleInputBox = React.memo(({ value, onChange }) => {
+  const [localValue, setLocalValue] = useState(value || "");
+  const [debouncedValue] = useDebounce(localValue, 300);
+
+  // value prop이 바뀌면 localValue도 동기화
+  useEffect(() => {
+    setLocalValue(value || "");
+  }, [value]);
+
+  // 로컬 상태 변경 처리
+  const handleLocalChange = (e) => {
+    setLocalValue(e.target.value);
+  };
+
+  // 디바운스된 값이 바뀔 때만 부모 컴포넌트에 알림
+  useEffect(() => {
+    if (debouncedValue !== value) {
+      onChange({ target: { value: debouncedValue } });
+    }
+  }, [debouncedValue, onChange, value]);
+
+  return (
+    <RoutineTitleInput
+      type="text"
+      value={localValue}
+      onChange={handleLocalChange}
+      placeholder="루틴명 입력"
+      autoComplete="off"
+    />
+  );
+});
+
 
 const RoutineSet = () => {
   const nav = useNavigate();
-  const { routineData, setRoutineData, isSave } = useOutletContext();
+  const { routineData, setRoutineData } = useOutletContext();
 
   useEffect(() => {
-    if (!isSave && routineData.list.length === 0) {
+    if (routineData.routines.length === 0) {
       nav("/routine/add");
     }
-  }, [routineData.list.length, nav]);
+  }, [routineData.routines.length, nav]);
 
   const handleTitleChange = (e) => {
     setRoutineData(prevData => ({
@@ -84,18 +105,21 @@ const RoutineSet = () => {
     nav("/routine/add");
   };
 
-  const list = routineData.list;
+  const list = routineData.routines;
   const memoSetRoutineData = useCallback(setRoutineData, []);
+
+  // 루틴 제목 변경 핸들러
+  const handleRoutineTitle = useCallback((e) => {
+    setRoutineData(prev => ({
+      ...prev,
+      routine_name: e.target.value
+    }));
+  }, [setRoutineData]);
 
   return (
     <WorkoutSetWrapper>
       <RoutineTop>
-        <H3Input
-          type="text"
-          value={routineData.routine_name || ''}
-          onChange={handleTitleChange}
-          placeholder="루틴 제목을 입력하세요"
-        />
+        <RoutineTitleInputBox value={routineData.routine_name || ""} onChange={handleRoutineTitle} />
       </RoutineTop>
       {list.map((data, idx) =>
         <ExerciseSection key={data.pt_idx}>
@@ -106,9 +130,6 @@ const RoutineSet = () => {
           />
         </ExerciseSection>
       )}
-      <AddButton type="button" onClick={handleAddWorkOut}>
-        운동 추가하기 +
-      </AddButton>
     </WorkoutSetWrapper>
   );
 };

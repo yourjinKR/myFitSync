@@ -182,9 +182,37 @@ const ButtonGroup = styled.div`
   margin-top: 8px;
 `;
 
+// 루틴 추가 버튼
+const RoutineFooter = styled.div`
+  position: fixed;
+  bottom: 17px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+`;
+const RoutineAddCTA = styled.button`
+  width: 100%;
+  font-size: 1.6rem;
+  padding: 16px 0;
+  background: var(--primary-blue);
+  color: #fff;
+  border: none;
+  font-weight: 500;
+  border-radius: 10px;
+
+`;
+
 const RoutineMain = () => {
-  const location = useLocation();
+  const nav = useNavigate();
   const { routine_list_idx } = useParams();
+  
+  // 이전 페이지 정보
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const prev = query.get("prev");
+  
+
+  // 헤더 변경 여부
   const changeHeader = 
   location.pathname !== `/routine/detail/${routine_list_idx}` && 
   location.pathname !== '/routine/add' && 
@@ -193,7 +221,7 @@ const RoutineMain = () => {
   const init = {
     routine_name: '',
     member_idx : '',
-    list: [],
+    routines: [],
   };
   const [routineData, setRoutineData] = useState(init);
   const [newData, setNewData] = useState(null);
@@ -201,13 +229,29 @@ const RoutineMain = () => {
   const [unfinished, setUnfinished] = useState([]);
   const [isSave, setIsSave] = useState(false);
 
-  useEffect(() => {
-  },[routineData, unfinished, isSave])
+  const [pendingNav, setPendingNav] = useState(false);  // 상태 반영 후 이동 예약
 
-  const nav = useNavigate();
+  
+  useEffect(() => {
+    if(isSave) {
+      nav("/routine/view");
+      setIsSave(false);
+    }
+  },[routineData, unfinished, isSave , nav]);
+  useEffect(() => {
+    if(prev !== null && routineData === init) {
+      nav(prev);
+    }
+  },[])
+
+ 
 
   // 루틴 추가
   const handleRoutineResponse = async () => {
+    if(!routineData.routine_name || routineData.routine_name === "") {
+      alert("루틴명을 작성해주세요.");
+      return;
+    }
     try {
       const response = await axios.post(
         "/routine/add",
@@ -326,10 +370,41 @@ const RoutineMain = () => {
     setIsUpdate(false);
   }
 
+
+  useEffect(() => {
+    if (pendingNav) {
+      const path = prev !== null ? prev : 
+          location.pathname === '/routine/set' ?
+          '/routine/add?prev=/routine/set' :
+          "/routine/set";
+      nav(path);
+      setPendingNav(false);
+    }
+    // eslint-disable-next-line
+  }, [pendingNav, nav]);
+
+  // 루틴 운동 등록
+  const handleButton = () => {
+    // if (!routineData.routine_name || routineData.routine_name === "") {
+    //   alert("루틴명을 작성해주세요.");
+    //   return;
+    // }
+
+    if(routineData.routines.length > 0){
+      setPendingNav(true); // 상태 반영 후 이동 예약
+    }else{
+      alert("하나 이상의 운동을 선택해주세요.");
+    }
+  }
+
+  const handleAddWorkOut = () => {
+    nav("/routine/add?prev=/routine/detail/" + routine_list_idx);
+  }
+
   return (
     <>
-      {
-        !changeHeader ? 
+      {/* 루틴 헤더 */}
+      {!changeHeader ? 
           <HeaderWrapper>
             <button type="button" onClick={()=> nav("/routine/view")}>취소</button>
             <p>루틴 생성하기</p>
@@ -339,16 +414,24 @@ const RoutineMain = () => {
               :
               <HeaderCTA onClick={handleRocordSubmit}>마치기</HeaderCTA>
             }
-          </HeaderWrapper>
-        :
-        <>
-        </>
-      }
+          </HeaderWrapper> : <></>}
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
-        <Outlet context={{ routineData, setRoutineData, isSave }} /> :
-        <Outlet context={{setNewData}}/>
+        <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev}} /> :
+        <Outlet context={{setNewData, setRoutineData}}/>
       }
+
+      {/* 루틴 하단 버튼 */}
+      {
+        <RoutineFooter>
+          <RoutineAddCTA onClick={
+            location.pathname !== `/routine/detail/${routine_list_idx}` ? handleButton :
+            handleAddWorkOut
+          }>운동 추가하기</RoutineAddCTA>
+        </RoutineFooter>  
+      }
+
+      {/* 알림 모달 */} 
       <AlertBg ref={alertRef}>
         {
           isUpdate ?

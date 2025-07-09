@@ -133,7 +133,7 @@ const SetAddCTA = styled.button`
   color: #fff;
   border: none;
   font-weight: 500;
-  border-radius: 15px 15px;
+  border-radius: 0 0 12px 12px;
   transition: all 0.2s ease;
   cursor: pointer;
   margin: 0;
@@ -148,7 +148,7 @@ const SetAddCTA = styled.button`
 function updateSets(routineData, pt_idx, updateFn) {
   return {
     ...routineData,
-    list: routineData.list.map(item =>
+    routines: routineData.routines.map(item =>
       item.pt_idx === pt_idx
         ? { ...item, routineSet: updateFn(item.routineSet) }
         : item
@@ -157,7 +157,7 @@ function updateSets(routineData, pt_idx, updateFn) {
 }
 
 const WorkoutSet = ({ data, routineData, setRoutineData }) => {
-  const setData = routineData.list.find((item) => item.pt_idx === data.pt_idx);
+  const setData = routineData.routines.find((item) => item.pt_idx === data.pt_idx);
 
   // 세트 추가
   const handleAddSet = () => {
@@ -184,7 +184,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
     setRoutineData(prev =>
       ({
         ...prev,
-        list: prev.list.map(item =>
+        routines: prev.list.map(item =>
           item.pt_idx === data.pt_idx
             ? { ...item, routine_memo: memo }
             : item
