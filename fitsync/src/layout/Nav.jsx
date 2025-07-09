@@ -5,6 +5,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PersonIcon from '@mui/icons-material/Person';
 import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const NavWrapper = styled.nav`
   display: flex;
@@ -44,10 +45,8 @@ const NavButton = styled.button`
     margin-bottom: 2px;
     font-size: 4rem;
   }
-
 `;
 
-// 버튼 사이 구분선
 const Divider = styled.div`
   width: 1px;
   background: #393e53;
@@ -58,10 +57,17 @@ const Divider = styled.div`
 
 const Nav = () => {
   const nav = useNavigate();
+
+  // 로그인 정보 가져오기
+  const { user } = useSelector((state) => state.user);
+
+  const isTrainer = user.member_type === 'trainer';
+  const memberIdx = user.member_idx;
+  
   const handleNav = (type) => {
     switch (type) {
       case 'home':
-        nav('/');
+        isTrainer ? nav(`/trainer/${memberIdx}`) : nav('/');
         break;
       case 'routine':
         nav('/routine/view');
@@ -70,7 +76,7 @@ const Nav = () => {
         nav('/chat');
         break;
       case 'mypage':
-        nav('/mypage');
+        isTrainer ? nav(`/trainer/view/${memberIdx}`) : nav('/mypage');
         break;
       default:
         nav('/');

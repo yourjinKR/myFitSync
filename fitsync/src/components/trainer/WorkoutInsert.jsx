@@ -148,7 +148,7 @@ const handleEditSubmit = async () => {
   }
 
   try {
-    await axios.put(`/trainer/schedule`, {
+    await axios.put(`/trainer/schedule/update`, {
       schedule_idx: scheduleIdx,
       schedule_date: editDate,
       schedule_stime: editStime,
