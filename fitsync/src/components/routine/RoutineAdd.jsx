@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import WorkoutList from './WorkoutList';
 import WorkoutFilter from './WorkoutFilter';
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
-import { useDebounce } from 'use-debounce';
 
 const RoutineAddWrapper = styled.div`
   padding:15px;

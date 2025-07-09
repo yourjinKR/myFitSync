@@ -30,6 +30,10 @@ const ExerciseSection = styled.div`
     border-color: var(--border-medium);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
+  &:last-child {
+    margin-bottom: 0;
+  }
+    
 `;
 const SetTop = styled.div`
   display: flex;
@@ -215,7 +219,7 @@ const RoutineDetail = () => {
       ...data,
       update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
-    setRoutineData(data);
+
   }, [data]);
   
   // 데이터 로드 시 고유 ID 생성
@@ -373,7 +377,7 @@ const RoutineDetail = () => {
       {data.routines && data.routines.map((routine) => (
         <ExerciseSection key={routine.pt_idx}>
           <SetTop>
-            <img src={routine.imageUrl} alt={routine.pt.pt_name} />
+            {/* <img src={routine.imageUrl} alt={routine.pt.pt_name} /> */}
             <h4>{routine.pt.pt_name}</h4>
           </SetTop>
           <MemoInput

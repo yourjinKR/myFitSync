@@ -157,6 +157,9 @@ function updateSets(routineData, pt_idx, updateFn) {
 }
 
 const WorkoutSet = ({ data, routineData, setRoutineData }) => {
+  console.log(" data", data)
+  console.log(routineData.routines);
+  
   const setData = routineData.routines.find((item) => item.pt_idx === data.pt_idx);
 
   // 세트 추가
@@ -184,7 +187,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
     setRoutineData(prev =>
       ({
         ...prev,
-        routines: prev.list.map(item =>
+        routines: prev.routines.map(item =>
           item.pt_idx === data.pt_idx
             ? { ...item, routine_memo: memo }
             : item
@@ -213,7 +216,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
 
   // 최초 1세트 없으면 1개 추가
   useEffect(() => {
-    if (setData && setData.routineSet.length === 0) {
+    if (setData && (!setData.routineSet || setData.routineSet.length === 0)) {
       setRoutineData(prev =>
         updateSets(prev, data.pt_idx, () => [{ id: Date.now(), set_volume: '', set_count: '' }])
       );
@@ -221,11 +224,19 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
     // eslint-disable-next-line
   }, []);
 
+  // setData가 없거나 routineSet이 없는 경우 처리
+  if (!setData) {
+    return null;
+  }
+
+  // routineSet이 없는 경우 빈 배열로 처리
+  const routineSet = setData.routineSet || [];
+
   return (
     <WorkoutSetWrapper>
       <SetTop>
         <img src="" alt="" />
-        <h4>{data.name}</h4>
+        <h4>{data.pt.pt_name}</h4>
       </SetTop>
       <MemoInput
         name="memo"
@@ -242,7 +253,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
       </ListHeader>
       <ListBody>
         <SwipeableList actionDelay={0}>
-          {setData.routineSet.map((set, index) => (
+          {routineSet.map((set, index) => (
             <SwipeableListItem
               key={set.id}
               trailingActions={trailingActions(set.id)}

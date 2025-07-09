@@ -15,8 +15,6 @@ import org.fitsync.service.RoutineServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -138,8 +136,9 @@ public class RoutineController {
 		Map<String, Object> result = new HashMap<>();
 		int member_idx = (int)(session.getAttribute("member_idx"));
 		boolean recordResult = rcservice.insertRecord(body, member_idx);
+		System.out.println("body : " + body);
 		if(recordResult) {
-			if((boolean) (body.get("update"))) {
+			if(body.get("update") != null && (boolean) (body.get("update"))) {
 				if(service.updateRoutine(body, member_idx)) {
 					result.put("success", true);
 					result.put("msg", "운동 기록 및 업데이트 되었습니다.");				

@@ -62,19 +62,20 @@ public class RoutineServiceImple implements RoutineService {
 	        if (result != 1) {
 	            throw new RuntimeException("RoutineList insert failed");
 	        }
-	        
+	        System.out.println(body);
 	        List<Map<String, Object>> routines = (List<Map<String, Object>>) body.get("routines");
+	        
 	        int routineResult = 0;
 	        for (Map<String, Object> data : routines) {
 	            // RoutineVO 등록
 	            RoutineVO rvo = new RoutineVO();
 	            rvo.setPt_idx((int) data.get("pt_idx"));
 	            rvo.setRoutine_list_idx(routine_list_idx);
-	            rvo.setRoutine_memo(!data.get("routine_memo").equals("") ? (String) data.get("routine_memo") : "");
+	            rvo.setRoutine_memo(data.get("routine_memo") != null && !data.get("routine_memo").equals("") ? (String) data.get("routine_memo") : "");
 	            
 	            routineResult += rmapper.insert(rvo); // 루틴 운동 등록
 	            int routine_idx = rmapper.getIdx(routine_list_idx);
-	            
+	            System.out.println("data : " + data);
 	            List<Map<String, Object>> sets = (List<Map<String, Object>>) data.get("routineSet");
 	            if (sets.size() > 0) {
 	                RoutineSetVO rsvo = new RoutineSetVO();
@@ -101,7 +102,6 @@ public class RoutineServiceImple implements RoutineService {
 	        if (routineResult != routines.size()) {
 	            throw new RuntimeException("Routine insert failed for some routines");
 	        }
-
 	    } catch (Exception e) {
 	        throw e; // 예외를 다시 던져 트랜잭션 롤백을 강제
 	    }

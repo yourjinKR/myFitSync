@@ -188,6 +188,7 @@ const RoutineFooter = styled.div`
   bottom: 17px;
   left: 50%;
   transform: translateX(-50%);
+  max-width: 700px;
   width: calc(100% - 32px);
 `;
 const RoutineAddCTA = styled.button`
@@ -198,7 +199,7 @@ const RoutineAddCTA = styled.button`
   color: #fff;
   border: none;
   font-weight: 500;
-  border-radius: 10px;
+  border-radius: 5px;
 
 `;
 
@@ -233,10 +234,12 @@ const RoutineMain = () => {
 
   
   useEffect(() => {
+    if (routineData === null) return;
     if(isSave) {
       nav("/routine/view");
       setIsSave(false);
     }
+    
   },[routineData, unfinished, isSave , nav]);
   useEffect(() => {
     if(prev !== null && routineData === init) {
@@ -306,42 +309,44 @@ const RoutineMain = () => {
         };
       }
     });
-
+    
     postData = {
       ...newData,
       routines: checkData,
     }
-
+    
+    console.log(" postData", postData)
     if(postData.routines.length === 0) {
       alert("완료된 운동이 없습니다.");
       closeAlert();
       return;
     }
     
-    try {
-      const response = await axios.post(
-        `/routine/record/${routine_list_idx}`,
-        postData,
-        { withCredentials: true }
-      );
-      const result = response.data;
-      alertRef.current.style.display = "none";
-      setIsUpdate(false);
-      if(result.success) {
-        alert(result.msg);
-        nav("/routine/view");
-      } else {
-        alert(result.msg);
-      }
-    } catch (error) {
-      alert("루틴 기록에 실패했습니다.");
-      closeAlert();
-    }
+    // try {
+    //   const response = await axios.post(
+    //     `/routine/record/${routine_list_idx}`,
+    //     postData,
+    //     { withCredentials: true }
+    //   );
+    //   const result = response.data;
+    //   alertRef.current.style.display = "none";
+    //   setIsUpdate(false);
+    //   if(result.success) {
+    //     alert(result.msg);
+    //     nav("/routine/view");
+    //   } else {
+    //     alert(result.msg);
+    //   }
+    // } catch (error) {
+    //   alert("루틴 기록에 실패했습니다.");
+    //   closeAlert();
+    // }
   }
   
   // 저장하기
   const handleRecordData = (isRecord) => {
 
+    console.log(" newData", newData)
     if(isRecord) {
       if(newData.update) {
         setIsUpdate(true);
@@ -418,7 +423,7 @@ const RoutineMain = () => {
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
         <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev}} /> :
-        <Outlet context={{setNewData, setRoutineData}}/>
+        <Outlet context={{ routineData, setRoutineData, newData, setNewData }}/>
       }
 
       {/* 루틴 하단 버튼 */}

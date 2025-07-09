@@ -6,9 +6,8 @@ import { useDebounce } from 'use-debounce';
 
 // RoutineDetail 스타일 참고
 const WorkoutSetWrapper = styled.div`
-  padding: 20px;
+  padding: 0 20px;
   background: var(--bg-primary);
-  min-height: 100vh;
 `;
 
 const RoutineTop = styled.div`
@@ -93,17 +92,6 @@ const RoutineSet = () => {
       nav("/routine/add");
     }
   }, [routineData.routines.length, nav]);
-
-  const handleTitleChange = (e) => {
-    setRoutineData(prevData => ({
-      ...prevData,
-      routine_name: e.target.value
-    }));
-  };
-
-  const handleAddWorkOut = () => {
-    nav("/routine/add");
-  };
 
   const list = routineData.routines;
   const memoSetRoutineData = useCallback(setRoutineData, []);

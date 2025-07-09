@@ -71,41 +71,55 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
   useEffect(() => {
     const selectedValue = parseInt(workoutRef.current.value);
     const selectedName = workoutRef.current.dataset['pt'];
+    const selectedCategory = workoutRef.current.dataset['category'];
 
     if (chk) {
-      // 이미 추가된 운동인지 확인
-      const exists = routineData.routines.some(item => item.pt_idx === selectedValue);
+      // 이미 추가된 운동인지 확인 (더 정확한 비교)
+      const exists = routineData.routines.some(item => 
+        item.pt_idx === selectedValue || 
+        (item.pt && item.pt.pt_idx === selectedValue)
+      );
       if (!exists) {
         setRoutineData({
           ...routineData,
           routines: [
             ...routineData.routines,
             {
+              pt : {pt_idx: selectedValue, pt_name: selectedName, pt_category: selectedCategory},
               pt_idx: selectedValue,
-              name: selectedName,
-              routine_memo: "",
-              routineSet: []
+              routine_list_idx : routineData.routine_list_idx,
+              routine_memo: null,
             }
           ]
         });
       }
     } else {
-      // 체크 해제된 경우: 해당 운동 제거
+      // 체크 해제된 경우: 해당 운동 제거 (더 정확한 비교)
       setRoutineData({
         ...routineData,
-        routines: routineData.routines.filter(item => item.pt_idx !== selectedValue)
+        routines: routineData.routines.filter(item => 
+          item.pt_idx !== selectedValue && 
+          !(item.pt && item.pt.pt_idx === selectedValue)
+        )
       });
     }
+
     // eslint-disable-next-line
   }, [chk]);
 
   // 체크박스의 checked 상태를 routineData.routines와 동기화
   useEffect(() => {
     const selectedValue = parseInt(data.pt_idx);
-    const checked = routineData.routines.some(item => item.pt_idx === selectedValue);
+    const checked = routineData.routines.some(item => 
+      item.pt_idx === selectedValue || 
+      (item.pt && item.pt.pt_idx === selectedValue)
+    );
     setChk(checked);
+    if (workoutRef.current) {
+      workoutRef.current.checked = checked;
+    }
     // eslint-disable-next-line
-  }, [routineData.routines]);
+  }, [routineData.routines, data.pt_idx]);
 
   return (
     <WorkoutWrapper>
@@ -114,6 +128,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
         onChange={handleWorkOut}
         ref={workoutRef}
         data-pt={data.pt_name}
+        data-category={data.pt_category}
         name='workout[]'
         value={data.pt_idx}
         id={`workout${data.pt_idx}`}
