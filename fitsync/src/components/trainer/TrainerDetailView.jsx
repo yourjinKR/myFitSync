@@ -8,6 +8,107 @@ import TrainerProfileHeader from './TrainerProfileHeader';
 import TrainerIntroSection from './TrainerIntroSection';
 import TrainerReviewSection from './TrainerReviewSection';
 
+// 스타일 컴포넌트 추가
+import styled from 'styled-components';
+
+const Container = styled.div`
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-size: 1.4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+`;
+
+const TabMenu = styled.div`
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+  margin-top: 2rem;
+  background: var(--bg-secondary);
+  border-radius: 1rem 1rem 0 0;
+  overflow: hidden;
+`;
+
+const TabButton = styled.button`
+  flex: 1;
+  padding: 1rem 0;
+  border: none;
+  background: ${({ $active }) => ($active ? 'var(--bg-tertiary)' : 'transparent')};
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: ${({ $active }) => ($active ? 'var(--primary-blue)' : 'var(--text-secondary)')};
+  border-bottom: ${({ $active }) => ($active ? '0.2rem solid var(--primary-blue)' : 'transparent')};
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+`;
+
+const FloatingButton = styled.button`
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  color: var(--text-primary);
+  border: none;
+  box-shadow: 0 0.2rem 0.6rem rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  transition: background 0.2s;
+  &:hover {
+    background: var(--primary-blue-hover);
+  }
+`;
+
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+`;
+
+const ModalBox = styled.div`
+  background: var(--bg-secondary);
+  padding: 2rem;
+  border-radius: 1rem;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  min-width: 260px;
+  box-shadow: 0 0.2rem 1rem rgba(0,0,0,0.15);
+  text-align: center;
+`;
+
+const ModalButton = styled.button`
+  margin: 1rem 0.5rem 0 0;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.6rem;
+  border: none;
+  background: var(--primary-blue);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover {
+    background: var(--primary-blue-hover);
+  }
+  &:last-child {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    &:hover {
+      background: var(--border-medium);
+    }
+  }
+`;
+
 const TrainerDetailView = () => {
   const { trainerIdx } = useParams();
   const navigate = useNavigate();
@@ -80,9 +181,9 @@ const TrainerDetailView = () => {
           withCredentials: true,
         });
 
-      await axios.post(`/trainer/lesson/${trainerIdx}`, editedTrainer.lessons, {
-        withCredentials: true,
-      });
+        await axios.post(`/trainer/lesson/${trainerIdx}`, editedTrainer.lessons, {
+          withCredentials: true,
+        });
         alert('수정이 완료되었습니다.');
         setTrainer(editedTrainer);
       } catch (err) {
@@ -109,7 +210,7 @@ const TrainerDetailView = () => {
     .sort((a, b) => (a.lesson_num || 0) - (b.lesson_num || 0));
 
   return (
-    <div style={{ margin: '0 auto', padding: '1.5rem', fontSize: '3rem' }}>
+    <Container>
       <TrainerProfileHeader
         trainer={isEditMode ? editedTrainer : trainer}
         isEdit={isEditMode}
@@ -119,27 +220,18 @@ const TrainerDetailView = () => {
       />
 
       {/* 탭 메뉴 */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #ccc', marginTop: '2rem' }}>
+      <TabMenu>
         {['소개', '후기'].map(tab => (
-          <button
+          <TabButton
             key={tab}
+            $active={activeTab === tab}
             onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: '1rem 0',
-              border: 'none',
-              background: 'none',
-              fontWeight: 600,
-              fontSize: '1.2rem',
-              color: activeTab === tab ? '#007aff' : '#999',
-              borderBottom: activeTab === tab ? '0.2rem solid #007aff' : 'transparent',
-              cursor: 'pointer',
-            }}
+            type="button"
           >
             {tab}
-          </button>
+          </TabButton>
         ))}
-      </div>
+      </TabMenu>
 
       {/* 섹션 렌더링 */}
       {activeTab === '소개' && (
@@ -157,59 +249,22 @@ const TrainerDetailView = () => {
 
       {/* 상담 버튼 */}
       {loginUserId !== trainer.member_email && (
-        <button
-          onClick={handleConsultClick}
-          style={{
-            position: 'fixed',
-            bottom: '1.5rem',
-            right: '1.5rem',
-            width: '4rem',
-            height: '4rem',
-            borderRadius: '50%',
-            backgroundColor: '#007aff',
-            color: 'white',
-            border: 'none',
-            boxShadow: '0 0.2rem 0.6rem rgba(0,0,0,0.2)',
-            cursor: 'pointer',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '2rem',
-          }}
-          title="상담하기"
-        >
+        <FloatingButton onClick={handleConsultClick} title="상담하기">
           <MdChat />
-        </button>
+        </FloatingButton>
       )}
 
       {/* 로그인 모달 */}
       {showLoginModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div style={{ background: '#fff', padding: '2rem', borderRadius: '1rem', fontSize: '1.1rem' }}>
+        <ModalBackdrop>
+          <ModalBox>
             <p>로그인이 필요한 기능입니다.</p>
-            <button style={{ marginTop: '1rem' }} onClick={() => navigate('/login')}>
-              로그인 하러가기
-            </button>
-            <button style={{ marginLeft: '1rem' }} onClick={() => setShowLoginModal(false)}>
-              닫기
-            </button>
-          </div>
-        </div>
+            <ModalButton onClick={() => navigate('/login')}>로그인 하러가기</ModalButton>
+            <ModalButton onClick={() => setShowLoginModal(false)}>닫기</ModalButton>
+          </ModalBox>
+        </ModalBackdrop>
       )}
-    </div>
+    </Container>
   );
 };
 

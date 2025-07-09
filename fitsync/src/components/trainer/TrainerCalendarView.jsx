@@ -297,7 +297,7 @@ const TrainerCalendarView = () => {
     }
 
     // 내 이메일 외 모두 차단
-    if (!user.member_email) {
+    if (!user.member_email ) {
       alert('다른 트레이너 페이지는 접근할 수 없습니다.');
       navigate('/');
     }
