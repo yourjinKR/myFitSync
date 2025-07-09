@@ -37,7 +37,7 @@ const DateText = styled.span`
 `;
 
 // 메시지 목록 컴포넌트
-const MessageList = ({ messages, currentUser, attachments, roomData }) => {
+const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
   
   // 날짜를 한국어 형식으로 포맷
   const formatDate = (timestamp) => {
@@ -64,15 +64,15 @@ const MessageList = ({ messages, currentUser, attachments, roomData }) => {
   // 발신자 이름 생성 (상대방 메시지에만 필요)
   const getSenderName = (message) => {
     // 내 메시지인 경우 이름 불필요
-    if (message.sender_idx === currentUser.member_idx) {
+    if (message.sender_idx === currentMemberIdx) {
       return null;
     }
     
     // 상대방 메시지인 경우
     // roomData에서 상대방 정보 확인
-    if (roomData) {
+    if (roomData && currentMemberIdx) {
       // 현재 사용자가 트레이너인지 일반 사용자인지 확인
-      if (roomData.trainer_idx === currentUser.member_idx) {
+      if (roomData.trainer_idx === currentMemberIdx) {
         // 내가 트레이너면 상대방은 회원
         return '회원';
       } else {
@@ -122,7 +122,7 @@ const MessageList = ({ messages, currentUser, attachments, roomData }) => {
             {/* 개별 메시지 컴포넌트 */}
             <MessageItem
               message={message}
-              isCurrentUser={message.sender_idx === currentUser.member_idx}
+              isCurrentUser={message.sender_idx === currentMemberIdx}
               attachments={attachments[message.message_idx] || []}
               senderName={isConsecutive ? null : senderName} // 연속 메시지가 아닐 때만 이름 표시
             />

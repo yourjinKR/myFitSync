@@ -101,6 +101,7 @@ const ChatRoom = () => {
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [roomData, setRoomData] = useState(null); // 채팅방 정보
   const [attachments, setAttachments] = useState({}); // 첨부파일 정보 (message_idx를 key로 하는 객체)
+  const [currentMemberIdx, setCurrentMemberIdx] = useState(null); // 현재 사용자의 member_idx
   
   // 자동 스크롤을 위한 ref
   const messagesEndRef = useRef(null);
@@ -121,6 +122,7 @@ const ChatRoom = () => {
         const memberIdx = response.data.member_idx.toString();
         sessionStorage.setItem('chat_member_idx', memberIdx);
         console.log('✅ member_idx 세션스토리지 저장 성공:', memberIdx);
+        setCurrentMemberIdx(parseInt(memberIdx)); // 상태에도 저장
         return parseInt(memberIdx);
       } else {
         console.error('❌ member_idx 조회 실패:', response.data.message);
@@ -218,14 +220,14 @@ const ChatRoom = () => {
 
   // WebSocket 구독 설정(실시간 새메시지 읽음확인)
   useEffect(() => {
-    if (connected && roomId) {
+    if (connected && roomId && currentMemberIdx) {
       console.log('WebSocket 채팅방 구독 시작:', roomId);
       
       const unsubscribe = subscribeToRoom(
         parseInt(roomId),
         
         // 새 메시지 수신 콜백
-        (newMessage) => {
+        async (newMessage) => {
           console.log('새 메시지 수신:', newMessage);
           
           // 중복 메시지 방지
@@ -239,10 +241,27 @@ const ChatRoom = () => {
             return [...prev, newMessage]; // 새 메시지만 추가
           });
 
-          // 세션스토리지에서 member_idx 가져와서 비교
-          const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
-          const currentMemberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
-          
+          // 이미지 메시지인 경우 첨부파일 정보도 로드
+          if (newMessage.message_type === 'image') {
+            try {
+              // 약간의 딜레이 후 첨부파일 정보 로드 (서버에서 파일 처리 완료 대기)
+              setTimeout(async () => {
+                try {
+                  const attachList = await chatApi.readFile(newMessage.message_idx);
+                  setAttachments(prev => ({
+                    ...prev,
+                    [newMessage.message_idx]: attachList
+                  }));
+                  console.log(`실시간 메시지 ${newMessage.message_idx} 첨부파일 로드 완료:`, attachList);
+                } catch (error) {
+                  console.error(`실시간 메시지 ${newMessage.message_idx} 첨부파일 로드 실패:`, error);
+                }
+              }, 1000); // 1초 대기
+            } catch (error) {
+              console.error('실시간 이미지 메시지 첨부파일 로드 실패:', error);
+            }
+          }
+
           // 받은 메시지인 경우 자동으로 읽음 처리
           if (newMessage.receiver_idx === currentMemberIdx) {
             console.log('받은 메시지 자동 읽음 처리');
@@ -268,7 +287,7 @@ const ChatRoom = () => {
       // 컴포넌트 언마운트 시 구독 해제
       return unsubscribe;
     }
-  }, [connected, roomId, subscribeToRoom, markAsRead]);
+  }, [connected, roomId, subscribeToRoom, markAsRead, currentMemberIdx]);
 
   // 새 메시지 추가 시 자동 스크롤
   useEffect(() => {
@@ -282,17 +301,8 @@ const ChatRoom = () => {
 
   // 메시지 전송 핸들러
   const handleSendMessage = async (messageContent, messageType = 'text', file = null) => {
-    if (!connected || !roomId) {
+    if (!connected || !roomId || !currentMemberIdx) {
       console.warn('WebSocket 연결이 되어있지 않거나 채팅방 ID가 없습니다.');
-      return;
-    }
-
-    // 세션스토리지에서 member_idx 가져오기
-    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
-    const currentMemberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
-    
-    if (!currentMemberIdx) {
-      console.error('세션스토리지에서 member_idx를 찾을 수 없습니다.');
       return;
     }
 
@@ -304,7 +314,7 @@ const ChatRoom = () => {
     // 메시지 데이터 구성
     const messageData = {
       room_idx: parseInt(roomId),
-      // sender_idx: user.member_idx, - useWebSocket에서 자동으로 추가
+      // sender_idx: currentMemberIdx, - useWebSocket에서 자동으로 추가
       receiver_idx: otherMemberIdx,
       message_content: messageContent,
       message_type: messageType
@@ -353,9 +363,6 @@ const ChatRoom = () => {
 
   // 채팅방 표시 이름 생성
   const getRoomDisplayName = () => {
-    // 현재 로그인한 사용자의 member_idx 가져오기
-    const currentMemberIdx = user.member_idx;
-    
     // 1순위: 채팅방 이름
     if (roomData?.room_name) {
       // "양태양님과의 상담" 형태에서 이름 추출
@@ -426,7 +433,7 @@ const ChatRoom = () => {
       <MessagesContainer>
         <MessageList
           messages={messages}
-          currentUser={user}
+          currentMemberIdx={currentMemberIdx} // currentUser 대신 currentMemberIdx 전달
           attachments={attachments}
           roomData={roomData} // roomData 전달 추가
         />

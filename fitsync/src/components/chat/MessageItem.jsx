@@ -29,30 +29,10 @@ const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
   background-color: ${props => props.$isCurrentUser ? '#FFE66D' : '#ffffff'};
-  color: ${props => props.$isCurrentUser ? '#333333' : '#333333'};
+  color: #333333;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   position: relative;
   word-wrap: break-word;
-  
-  /* 말풍선 꼬리 효과 추가 */
-  &::before {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 0;
-    ${props => props.$isCurrentUser ? `
-      right: -8px;
-      border-left: 8px solid #FFE66D;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-    ` : `
-      left: -8px;
-      border-right: 8px solid #ffffff;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-    `}
-    bottom: 8px;
-  }
 `;
 
 const MessageText = styled.div`
@@ -77,15 +57,25 @@ const MessageImage = styled.img`
   }
 `;
 
-// 메시지 하단 정보 (시간, 읽음 상태) - 내 메시지는 왼쪽에, 상대방은 오른쪽에
+// 시간과 읽음 상태를 메시지 옆에 표시하는 컨테이너
+const MessageWithInfo = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  ${props => props.$isCurrentUser ? 'flex-direction: row-reverse;' : 'flex-direction: row;'}
+`;
+
+// 메시지 하단 정보 (시간, 읽음 상태)
 const MessageInfo = styled.div`
   display: flex;
-  align-items: center;
-  margin-top: 4px;
+  flex-direction: column;
+  align-items: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
   font-size: 1.1rem;
   opacity: 0.7;
-  gap: 4px;
-  ${props => props.$isCurrentUser ? 'justify-content: flex-start;' : 'justify-content: flex-end;'}
+  gap: 2px;
+  white-space: nowrap; /* 시간이 줄바꿈되지 않도록 */
+  min-width: fit-content; /* 최소 너비 보장 */
+  flex-shrink: 0; /* 축소되지 않도록 */
 `;
 
 const MessageTime = styled.span`
@@ -93,17 +83,13 @@ const MessageTime = styled.span`
   font-size: 1rem;
 `;
 
-const ReadStatus = styled.span`
-  color: #666666;
-  font-size: 1rem;
-`;
-
-// 시간과 읽음 상태를 메시지 옆에 표시하는 컨테이너
-const MessageWithInfo = styled.div`
+// 읽음 상태를 시간 아래에 표시
+const ReadStatus = styled.div`
+  color: #999999;
+  font-size: 0.9rem;
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  ${props => props.$isCurrentUser ? 'flex-direction: row-reverse;' : 'flex-direction: row;'}
+  align-items: center;
+  gap: 4px;
 `;
 
 // 개별 메시지 아이템 컴포넌트
@@ -117,16 +103,22 @@ const MessageItem = ({ message, isCurrentUser, attachments = [], senderName = nu
     });
   };
 
-  // 읽음 상태 텍스트 생성
-  const getReadStatus = () => {
+  // 읽음 상태 정보 생성
+  const getReadStatusInfo = () => {
     // 상대방 메시지인 경우 읽음 상태 표시하지 않음
     if (!isCurrentUser) return null;
     
-    // 읽음 시간이 있으면 "읽음", 없으면 "1" 표시
+    // 읽음 시간이 있으면 읽은시간 + "읽음", 없으면 "읽지 않음" 표시
     if (message.message_readdate) {
-      return '읽음';
+      return {
+        text: '읽음',
+        time: formatTime(message.message_readdate)
+      };
     } else {
-      return '1';
+      return {
+        text: '읽지 않음',
+        time: null
+      };
     }
   };
 
@@ -134,6 +126,8 @@ const MessageItem = ({ message, isCurrentUser, attachments = [], senderName = nu
   const handleImageClick = (imageUrl) => {
     window.open(imageUrl, '_blank');
   };
+
+  const readStatusInfo = getReadStatusInfo();
 
   return (
     <MessageContainer $isCurrentUser={isCurrentUser}>
@@ -176,9 +170,10 @@ const MessageItem = ({ message, isCurrentUser, attachments = [], senderName = nu
               {formatTime(message.message_senddate)}
             </MessageTime>
             {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
-            {getReadStatus() && (
+            {readStatusInfo && (
               <ReadStatus>
-                {getReadStatus()}
+                {readStatusInfo.time && <span>{readStatusInfo.time}</span>}
+                <span>{readStatusInfo.text}</span>
               </ReadStatus>
             )}
           </MessageInfo>
