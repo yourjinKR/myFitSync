@@ -223,7 +223,7 @@ public class TrainerController {
     }
     
     // 스케줄 수정
-    @PutMapping("/schedule")
+    @PutMapping("/schedule/update")
     public ResponseEntity<?> updateSchedule(@RequestBody ScheduleVO vo) {
         scheduleService.updateSchedule(vo);
         return ResponseEntity.ok("수정 완료");
