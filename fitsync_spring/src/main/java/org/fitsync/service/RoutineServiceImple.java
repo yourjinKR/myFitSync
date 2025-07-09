@@ -53,7 +53,7 @@ public class RoutineServiceImple implements RoutineService {
 	        // RoutineListVO 등록
 	        RoutineListVO rlvo = new RoutineListVO();
 	        rlvo.setRoutine_name((String) body.get("routine_name"));
-	        rlvo.setWriter_idx(member_idx);
+	        rlvo.setWriter_idx(body.get("writer_idx") != null && body.get("writer_idx") != "" ? (int) body.get("writer_idx") : member_idx);
 	        rlvo.setMember_idx(body.get("member_idx") != null && body.get("member_idx") != "" ? (int) body.get("member_idx") : member_idx);
 	        result += rlmapper.insert(rlvo);
 	        

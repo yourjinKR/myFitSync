@@ -402,7 +402,7 @@ const AItest = () => {
             const parseData = {
                 routine_name : routine_name, 
                 member_idx : null, 
-                writer_idx : 0, // 컨트롤러에 수정 필요
+                writer_idx : 0,
                 list : parsedExerciseList,
             };
             return parseData;
