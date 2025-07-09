@@ -414,7 +414,7 @@ const AItest = () => {
     }
         
     // 루틴 추천 결과 DB에 저장
-    const saveResult = async () => {
+    const saveResult = async (result) => {
         const parsedResult = parseResult(result);
 
         for (const routineData of parsedResult) {
@@ -581,7 +581,7 @@ const AItest = () => {
                             )}
                         </RoutineContainer>
                     </Section>
-                    <StyledButton type="button" onClick={() => saveResult()}>
+                    <StyledButton type="button" onClick={() => saveResult(result)}>
                         저장
                     </StyledButton>
                     <StyledButton type="button" onClick={() => setResult({})}>
