@@ -19,7 +19,7 @@ const AdminApiContainer = () => {
     const { apiLogs, loading, fetchApiLogs } = useApiLogs();
     
     // 운동명 데이터 (커스텀 훅 사용)
-    const { rawDataMap, rawData } = useWorkoutNames();
+    const { rawDataMap, rawData, rawDataIdx } = useWorkoutNames();
 
     // 필터링 관련 상태 (커스텀 훅 사용)
     const {

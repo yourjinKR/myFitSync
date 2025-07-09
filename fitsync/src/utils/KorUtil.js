@@ -131,3 +131,31 @@ export function createWorkoutNameObjects(workoutNames) {
         return { name: name, name_dis: normalized, length: length };
     });
 }
+
+/** 응답 결과의 운동명들을 전부 확인 후 각각 이름을 유사어로 반환 */
+export function checkAllExerciseNames(result, dataMap) {
+    console.log('Checking all exercise names in the result...');
+    
+    const changedNameResult = result.content.map(routine => {
+        // console.log(routine.exercises);
+        const updatedExercises = routine.exercises.map(exercise => {
+            // console.log(`Checking exercise: ${exercise.pt_name}`);
+            const similarNames = getSimilarNamesByMap(exercise.pt_name, dataMap);
+            if (similarNames.length > 0) {
+                // console.log(`Found similar names for ${exercise.pt_name}:`, similarNames);
+                return { ...exercise, pt_name: similarNames[0].name };
+            } else {
+                console.warn(`No similar names found for ${exercise.pt_name}`);
+                return exercise; // 유사한 이름이 없으면 원래 이름 유지
+            }
+        });
+        return {
+            ...routine,
+            exercises: updatedExercises
+        };
+    });
+    return {
+        ...result,
+        content: changedNameResult
+    };
+}

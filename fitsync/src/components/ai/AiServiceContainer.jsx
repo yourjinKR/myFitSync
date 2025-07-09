@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import { getMemberTotalData } from '../../utils/memberUtils';
@@ -8,6 +8,7 @@ import FeedbackModal from './FeedbackModal';
 import IsLoading from '../IsLoading';
 import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
 import AiUtil from '../../utils/AiUtils';
+import { checkAllExerciseNames } from '../../utils/KorUtil';
 
 const ServiceContainer = styled.div`
     max-width: 1000px;
@@ -123,6 +124,11 @@ const AiServiceContainer = () => {
         fetchMemberData();
     }, []);
 
+    useEffect(() => {
+        if (aiResult !== null) {
+        }
+    },[aiResult]);
+
     // AI 루틴 생성 처리
     const handleGenerateRoutine = async (inputData) => {
         setCurrentStep(2);
@@ -153,8 +159,10 @@ const AiServiceContainer = () => {
                 logIdx: response.data.logIdx,
                 responseTime: parseFloat(elapsedSeconds)
             };
-            
+
             setAiResult(result);
+            // 이름 체크
+            const changedName = checkAllExerciseNames(result, rawDataMap);
             setCurrentStep(3);
         } catch (error) {
             console.error('AI 루틴 생성 실패:', error);
@@ -169,8 +177,10 @@ const AiServiceContainer = () => {
             alert('저장할 루틴이 없습니다.');
             return;
         }
+        const changedNameAiResult = checkAllExerciseNames(aiResult, rawDataMap);
+        console.log('변경된 AI 결과:', changedNameAiResult);
         
-        AiUtil.saveResult(aiResult, rawDataIdx, rawDataMap);
+        AiUtil.saveResult(changedNameAiResult, rawDataIdx, rawDataMap);
     };
 
     // 피드백 처리

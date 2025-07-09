@@ -400,10 +400,10 @@ const AItest = () => {
             });
 
             const parseData = {
-                routine_name : routine_name, 
+                routine_name : routine_name,
                 member_idx : null, 
                 writer_idx : 0,
-                list : parsedExerciseList,
+                routines : parsedExerciseList,
             };
             return parseData;
         }); 
