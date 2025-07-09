@@ -30,6 +30,12 @@ public class CloudinaryService {
     @Autowired
     public CloudinaryService(Cloudinary cloudinary) {
         this.cloudinary = cloudinary;
+        // Cloudinary 설정 확인 로그 추가
+        log.info("=== Cloudinary 설정 확인 ===");
+        log.info("Cloud Name: " + cloudinary.config.cloudName);
+        log.info("API Key: " + cloudinary.config.apiKey);
+        log.info("API Secret: " + (cloudinary.config.apiSecret != null ? "설정됨" : "설정되지 않음"));
+        log.info("========================");
     }
     
     // 첨부파일 클라우디너리 업로드
@@ -98,17 +104,24 @@ public class CloudinaryService {
         log.info("CloudinaryService uploadFile..." + file.getOriginalFilename() + ", " + message_idx);
         
         try {
+        	// 파일 정보 로깅
+            log.info("파일 크기: " + file.getSize() + " bytes");
+            log.info("파일 타입: " + file.getContentType());
+            
             // 파일 타입에 따른 Cloudinary 업로드 설정 구성
-            Map<String, Object> uploadParams = ObjectUtils.asMap(
-                "resource_type", "auto",  // 모든 파일 타입 자동 감지 (image, video, raw 등)
-                "folder", "pt-chat-files",  // Cloudinary 내 저장 폴더명
-                "public_id", "chat_" + System.currentTimeMillis(),  // 고유한 파일 ID 생성
-                "overwrite", false,  // 동일한 public_id가 있어도 덮어쓰지 않음
-                "quality", "auto:good"  // 이미지/비디오 품질 자동 최적화
-            );
+            Map<String, Object> uploadParams = new HashMap<>();
+            uploadParams.put("resource_type", "auto");  // 모든 파일 타입 자동 감지
+            uploadParams.put("folder", "pt-chat-files");  // Cloudinary 내 저장 폴더명
+            uploadParams.put("public_id", "chat_" + System.currentTimeMillis());  // 고유한 파일 ID 생성
+            uploadParams.put("overwrite", false);  // 동일한 public_id가 있어도 덮어쓰지 않음
+            uploadParams.put("quality", "auto:good");  // 이미지/비디오 품질 자동 최적화
+            
+            log.info("업로드 파라미터: " + uploadParams);
             
             // Cloudinary에 파일 업로드 실행
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadParams);
+            
+            log.info("Cloudinary 업로드 결과: " + uploadResult);
             
             // 업로드된 파일 정보를 데이터베이스에 저장하기 위한 VO 객체 생성
             ChatAttachVO vo = new ChatAttachVO();
@@ -129,16 +142,19 @@ public class CloudinaryService {
             // 첨부파일 정보를 데이터베이스에 저장 (시퀀스를 통해 attach_idx 자동 생성)
             mapper.insertAttach(vo);
             
+            log.info("DB 저장 완료, attach_idx: " + vo.getAttach_idx());
+            
             // 클라이언트에 반환할 파일 정보 구성
-            return ObjectUtils.asMap(
-                "attachIdx", vo.getAttach_idx(),  // 생성된 첨부파일 ID
-                "originalFilename", vo.getOriginal_filename(),  // 원본 파일명
-                "cloudinaryUrl", vo.getCloudinary_url(),  // 접근 가능한 URL
-                "cloudinaryPublicId", vo.getCloudinary_public_id(),  // Cloudinary 파일 ID
-                "fileSize", vo.getFile_size_bytes(),  // 파일 크기
-                "mimeType", vo.getMime_type(),  // MIME 타입
-                "fileExtension", vo.getFile_extension()  // 파일 확장자
-            );
+            Map<String, Object> result = new HashMap<>();
+            result.put("attachIdx", vo.getAttach_idx());
+            result.put("originalFilename", vo.getOriginal_filename());
+            result.put("cloudinaryUrl", vo.getCloudinary_url());
+            result.put("cloudinaryPublicId", vo.getCloudinary_public_id());
+            result.put("fileSize", vo.getFile_size_bytes());
+            result.put("mimeType", vo.getMime_type());
+            result.put("fileExtension", vo.getFile_extension());
+            
+            return result;
             
         } catch (IOException e) {
             log.error("Cloudinary 파일 업로드 실패: " + e.getMessage());
