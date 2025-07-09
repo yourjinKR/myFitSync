@@ -132,6 +132,8 @@ export function createWorkoutNameObjects(workoutNames) {
     });
 }
 
+/** 운동명을  */
+
 /** 응답 결과의 운동명들을 전부 확인 후 각각 이름을 유사어로 반환 */
 export function checkAllExerciseNames(result, dataMap) {
     console.log('Checking all exercise names in the result...');
@@ -159,3 +161,10 @@ export function checkAllExerciseNames(result, dataMap) {
         content: changedNameResult
     };
 }
+
+/** DB에 저장되지 않은 운동명, 이름을 다르게 부르는 운동명 */ 
+const exceptionNames = [
+    {pt_idx: 24, pt_name: '카프 레이즈'},
+    {pt_idx: 2, pt_name: '데드리프트'},
+    {pt_idx: 238, pt_name: '윗몸 일으키기'}, 
+];

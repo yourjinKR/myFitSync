@@ -89,7 +89,44 @@ const AiUtil = {
         } catch (error) {
             console.error('API 로그 업데이트 실패:', error);
         }
-    }
+    },
+
+    /** 로그 분석 함수 */
+    analyzeAIResult (result, userSplit, validWorkoutNames) {
+        console.log('해당 결과를 분석 :', result);
+        console.log('유저 분할:', userSplit);
+        
+
+        const errors = [];
+
+        if (!Array.isArray(result?.content)) {
+            console.warn('AI 응답이 유효한 JSON 배열이 아닙니다:', result);
+            return "invalid_json";
+        }
+
+        if (result.content.length !== Number(userSplit)) {
+            errors.push("split_mismatch");
+        }
+
+        const invalidExercises = [];
+        result.content.forEach(routine => {
+            if (!Array.isArray(routine.exercises)) return;
+
+            routine.exercises.forEach(ex => {
+                const name = (ex.pt_name.replace(/\s+/g, ''));
+                if (!validWorkoutNames.includes(name)) {
+                    console.warn(`유효하지 않은 운동명: ${name}`);
+                    invalidExercises.push(ex.pt_name);
+                }
+            });
+        });
+
+        if (invalidExercises.length > 0) {
+            errors.push("invalid_exercise: " + invalidExercises.join(", "));
+        }
+
+        return errors.length > 0 ? errors.join("; ") : null;
+    },
 };
 
 export default AiUtil;

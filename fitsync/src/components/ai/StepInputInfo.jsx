@@ -266,6 +266,7 @@ const StepInputInfo = ({ memberData, onGenerate }) => {
                 fat: body?.body_fat || '',
                 fat_percentage: body?.body_fat_percentage || '',
                 skeletal_muscle: body?.body_skeletal_muscle || '',
+                split: member?.member_split || 4,
             }));
         }
     }, [memberData]);

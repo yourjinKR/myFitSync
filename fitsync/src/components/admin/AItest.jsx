@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ButtonSubmit, Input } from '../../styles/FormStyles';
 import { 
@@ -18,7 +18,6 @@ import { getMemberTotalData } from '../../utils/memberUtils';
 // 스타일 컴포넌트 추가
 import styled from 'styled-components';
 import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
-import userReducer from '../../reducers/userReducer';
 import { useSelector } from 'react-redux';
 
 const PageContainer = styled(Container)`
@@ -106,27 +105,51 @@ function parseApiLogData(apiLogItem) {
 
         let parsedUserMassage = null;
         if (versionUtils.isVersionAtLeast(version, '0.0.7')) {
-            parsedUserMassage = JSON.parse(parsedPrompt.messages[1]?.content);
-            if (parsedUserMassage.split === parsedResponse.length) {
-                parsedUserMassage = { ...parsedUserMassage, isSplit: true };
+            try {
+                const userMessageContent = parsedPrompt.messages[1]?.content;
+                if (userMessageContent) {
+                    parsedUserMassage = JSON.parse(userMessageContent);
+                    if (parsedUserMassage.split === parsedResponse.length) {
+                        parsedUserMassage = { ...parsedUserMassage, isSplit: true };
+                    }
+                }
+            } catch (userMessageError) {
+                console.warn('사용자 메시지 파싱 실패:', userMessageError);
+                parsedUserMassage = { split: 1 }; // 기본값 설정
             }
+        } else {
+            // 구버전에서는 기본값 설정
+            parsedUserMassage = { split: 1 };
         }
 
-        return {
+        const result = {
             ...apiLogItem,
             parsed_prompt: parsedPrompt,
             parsed_response: parsedResponse,
             parsed_userMassage: parsedUserMassage,
             apilog_total_time: (responseTime - requestTime) / 1000
         };
+
+        console.log(`로그 ${apiLogItem.apilog_idx} 파싱 성공:`, {
+            version,
+            split: parsedUserMassage?.split,
+            responseLength: parsedResponse.length
+        });
+
+        return result;
     } catch (error) {
-        console.error('JSON 파싱 오류:', error);
-        return apiLogItem;
+        console.error(`로그 ${apiLogItem.apilog_idx} JSON 파싱 오류:`, error);
+        return {
+            ...apiLogItem,
+            parsed_prompt: null,
+            parsed_response: null,
+            parsed_userMassage: { split: 1 },
+            apilog_total_time: 0
+        };
     }
 }
 
 const AItest = () => {
-    const initialState = {count : 0}
     const user = useSelector(state => state.user);
 
     const initialValue = {content : '운동 루틴 추천해줘', token : 0};
@@ -140,7 +163,7 @@ const AItest = () => {
     const [additionalMemberData, setAdditionalMemberData] = useState({split : 4});
     const [responseTime, setResponseTime] = useState(0);
 
-    const {rawDataIdx, fetchWorkoutNames} = useWorkoutNames();
+    const {rawDataIdx} = useWorkoutNames();
 
     const handleInputText = (e) => {
         const {value} = e.target;
@@ -157,6 +180,32 @@ const AItest = () => {
         setMemberIndex(value);
     }
 
+    const fetchWorkoutData = async () => {
+        const groupedMap = new Map();
+        
+        try {
+            const response = await axios.get('/ai/getTextReact');
+            const parseList = response.data.map(name => name.replace(/\s+/g, '')); 
+            setRawData(parseList);
+
+            response.data.forEach(originalName => {
+                const { normalized, length } = normalizeAndDisassemble(originalName);
+                const entry = { name: originalName, name_dis: normalized };
+
+                if (!groupedMap.has(length)) {
+                    groupedMap.set(length, []);
+                }
+                groupedMap.get(length).push(entry);
+            });
+
+            setRawDataMap(new Map(groupedMap));
+            return parseList; // 최신 데이터를 반환
+        } catch (error) {
+            console.error('운동명 목록 요청 실패:', error);
+            return [];
+        }
+    };
+
     useEffect(() => {
         console.log(user.user.isLogin);
         
@@ -171,30 +220,8 @@ const AItest = () => {
         };
         fetchMemberData();
 
-        const fetchWorkoutNames = async () => {
-            const groupedMap = new Map();
-            
-            try {
-                const response = await axios.get('/ai/getTextReact');
-                const parseList = response.data.map(name => name.replace(/\s+/g, '')); 
-                setRawData(parseList);
-
-                response.data.forEach(originalName => {
-                    const { normalized, length } = normalizeAndDisassemble(originalName);
-                    const entry = { name: originalName, name_dis: normalized };
-
-                    if (!groupedMap.has(length)) {
-                        groupedMap.set(length, []);
-                    }
-                    groupedMap.get(length).push(entry);
-                });
-
-                setRawDataMap(new Map(groupedMap));
-            } catch (error) {
-                console.error('운동명 목록 요청 실패:', error);
-            }
-        }
-        fetchWorkoutNames();
+        fetchWorkoutData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -206,29 +233,37 @@ const AItest = () => {
         if (exception !== null && result.logIdx) {
             const apilog = {apilog_idx : result.logIdx, apilog_status_reason : exception};
             updateLogException(apilog);
-            // console.log(exception);
+            console.log(exception);
         } else {
-            // console.log('정상 처리 !!!');
+            console.log('정상 처리 !!!');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     },[result]);
 
     const updateLogException = async (log) => {
-        if (log.apilog_status_reason === null || log.apilog_status_reason === '') {
+        if (log.apilog_status_reason === null || log.apilog_status_reason === '' || log.apilog_status_reason === 'success') {
             log.apilog_status = 'success';
         } else {
             log.apilog_status = 'exception';
         }
-        console.log('업데이트할 로그:', log);
+        
+        console.log(`로그 ${log.apilog_idx} 업데이트:`, {
+            status: log.apilog_status,
+            reason: log.apilog_status_reason
+        });
+        
         try {
-            await axios.patch('/admin/updateExceptionReason', log)
-                .then((res) => console.log('API 로그 업데이트 결과:', res.data));
+            const response = await axios.patch('/admin/updateExceptionReason', log);
+            console.log(`로그 ${log.apilog_idx} 업데이트 성공:`, response.data);
         } catch (error) {
-            console.error('API 로그 업데이트 실패:', error);
+            console.error(`로그 ${log.apilog_idx} 업데이트 실패:`, error);
         }
     };
 
     function analyzeAIResult(result, userSplit, validWorkoutNames) {
         console.log('해당 결과를 분석 :', result);
+        console.log('사용자 split:', userSplit);
+        console.log('유효한 운동명 개수:', validWorkoutNames.length);
 
         const errors = [];
 
@@ -238,14 +273,23 @@ const AItest = () => {
         }
 
         if (result.content.length !== Number(userSplit)) {
+            console.warn(`Split 불일치: 응답 길이 ${result.content.length}, 사용자 split ${userSplit}`);
             errors.push("split_mismatch");
         }
 
         const invalidExercises = [];
-        result.content.forEach(routine => {
-            if (!Array.isArray(routine.exercises)) return;
+        result.content.forEach((routine, routineIndex) => {
+            if (!Array.isArray(routine.exercises)) {
+                console.warn(`루틴 ${routineIndex}: exercises가 배열이 아닙니다.`);
+                return;
+            }
 
-            routine.exercises.forEach(ex => {
+            routine.exercises.forEach((ex, exIndex) => {
+                if (!ex.pt_name) {
+                    console.warn(`루틴 ${routineIndex}, 운동 ${exIndex}: pt_name이 없습니다.`);
+                    return;
+                }
+                
                 const name = (ex.pt_name.replace(/\s+/g, ''));
                 if (!validWorkoutNames.includes(name)) {
                     console.warn(`유효하지 않은 운동명: ${name}`);
@@ -255,33 +299,111 @@ const AItest = () => {
         });
 
         if (invalidExercises.length > 0) {
+            console.warn(`총 ${invalidExercises.length}개의 유효하지 않은 운동명 발견:`, invalidExercises);
             errors.push("invalid_exercise: " + invalidExercises.join(", "));
         }
 
-        return errors.length > 0 ? errors.join("; ") : null;
+        const result_error = errors.length > 0 ? errors.join("; ") : null;
+        console.log('분석 결과:', result_error || 'success');
+        return result_error;
     }
 
-    const recheckAllLogs = () => {
-        axios.get('/admin/getAllApi')
-            .then(response => {
-                const logs = response.data;
-                logs.forEach(log => {
+    const recheckAllLogs = async () => {
+        try {
+            // 운동명 데이터가 없다면 먼저 가져오기
+            let currentRawData = rawData;
+            if (rawData.length === 0) {
+                console.log('운동명 데이터를 먼저 가져옵니다...');
+                currentRawData = await fetchWorkoutData();
+            }
+
+            const response = await axios.get('/admin/getAllApi');
+            const logs = response.data;
+            
+            console.log(`총 ${logs.length}개의 로그를 재검증합니다.`);
+            console.log('사용할 운동명 데이터 개수:', currentRawData.length);
+            
+            let successCount = 0;
+            let exceptionCount = 0;
+
+            for (const log of logs) {
+                try {
                     const parsedLog = parseApiLogData(log);
+                    
+                    // 파싱된 로그 데이터 검증
+                    if (!parsedLog.parsed_response) {
+                        console.warn(`로그 ${log.apilog_idx}: 응답 데이터가 없습니다.`);
+                        updateLogException({
+                            apilog_idx: log.apilog_idx,
+                            apilog_status_reason: 'no_response_data',
+                            apilog_status: 'exception'
+                        });
+                        exceptionCount++;
+                        continue;
+                    }
+
+                    // split 값 확인 및 기본값 설정
+                    let splitValue = parsedLog.parsed_userMassage?.split;
+                    if (!splitValue) {
+                        console.warn(`로그 ${log.apilog_idx}: split 값이 없습니다. 기본값 1로 설정합니다.`);
+                        splitValue = 1;
+                    }
 
                     const result = {
                         content: parsedLog.parsed_response,
                         logIdx: log.apilog_idx,
-                        split: parsedLog.parsed_userMassage?.split
+                        split: splitValue
                     };
 
-                    const exception = analyzeAIResult(result, result.split, rawData);
-                    const apilog = {apilog_idx: result.logIdx, apilog_status_reason: exception};
+                    // 운동명 데이터 재확인
+                    if (currentRawData.length === 0) {
+                        console.warn('운동명 데이터가 아직 로드되지 않았습니다.');
+                        updateLogException({
+                            apilog_idx: log.apilog_idx,
+                            apilog_status_reason: 'workout_data_not_loaded',
+                            apilog_status: 'exception'
+                        });
+                        exceptionCount++;
+                        continue;
+                    }
+
+                    const exception = analyzeAIResult(result, splitValue, currentRawData);
+                    let apilog = null;
+
+                    if (exception === null) {
+                        apilog = {
+                            apilog_idx: result.logIdx,
+                            apilog_status_reason: 'success',
+                            apilog_status: 'success'
+                        };
+                        successCount++;
+                    } else {
+                        apilog = {
+                            apilog_idx: result.logIdx,
+                            apilog_status_reason: exception,
+                            apilog_status: 'exception'
+                        };
+                        exceptionCount++;
+                    }
+                    
                     updateLogException(apilog);
-                });
-            })
-            .catch(error => {
-                console.error('모든 API 로그 재검증 실패:', error);
-            });
+                } catch (logError) {
+                    console.error(`로그 ${log.apilog_idx} 처리 중 오류:`, logError);
+                    updateLogException({
+                        apilog_idx: log.apilog_idx,
+                        apilog_status_reason: 'processing_error',
+                        apilog_status: 'exception'
+                    });
+                    exceptionCount++;
+                }
+            }
+
+            console.log(`재검증 완료: 성공 ${successCount}개, 예외 ${exceptionCount}개`);
+            alert(`재검증 완료!\n성공: ${successCount}개\n예외: ${exceptionCount}개`);
+        } catch (error) {
+            console.error('모든 API 로그 재검증 실패:', error);
+            alert('로그 재검증 중 오류가 발생했습니다.');
+        }
     };
 
     const testAPI = () => {
@@ -350,7 +472,8 @@ const AItest = () => {
         });
     };
 
-    // 해당 구조로 바뀌어야 함
+    // 해당 구조로 바뀌어야 함 (참고용)
+    /*
     const sendDataType = { 
         routine_name : 'AI 추천 루틴',
         member_idx : null,
@@ -360,6 +483,7 @@ const AItest = () => {
             {pt_idx: 0, pt_name: '운동명', routineSet : [{set_num: 0, set_volume: 0, set_count: 0}]},
         ]
     }
+    */
 
     // 결과 파싱
     const parseResult = (result) => {
@@ -395,7 +519,6 @@ const AItest = () => {
                     set_count: ex.set_count
                 }));
                 
-                let finalName = null;
                 return {pt_idx : exIdx, name : null, routine_memo : "", routineSet : routineSet};
             });
 
@@ -436,6 +559,22 @@ const AItest = () => {
         }
     };
 
+    // 디버깅용 함수
+    const debugWorkoutData = () => {
+        console.log('현재 rawData 길이:', rawData.length);
+        console.log('현재 rawData 샘플:', rawData.slice(0, 10));
+        console.log('현재 rawDataIdx 길이:', rawDataIdx.length);
+        console.log('현재 rawDataIdx 샘플:', rawDataIdx.slice(0, 5));
+        console.log('현재 rawDataMap 크기:', rawDataMap.size);
+        
+        alert(`
+운동명 데이터 상태:
+- rawData: ${rawData.length}개
+- rawDataIdx: ${rawDataIdx.length}개
+- rawDataMap: ${rawDataMap.size}개 그룹
+        `);
+    };
+
     return (
         <PageContainer>
             <FormContainer>
@@ -444,6 +583,9 @@ const AItest = () => {
                 <ButtonGroup>
                     <StyledButton type="button" onClick={recheckAllLogs}>
                         모든 로그 재검증
+                    </StyledButton>
+                    <StyledButton type="button" onClick={debugWorkoutData}>
+                        운동명 데이터 확인
                     </StyledButton>
                 </ButtonGroup>
                 

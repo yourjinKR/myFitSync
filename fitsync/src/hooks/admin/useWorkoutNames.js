@@ -13,6 +13,8 @@ export const useWorkoutNames = () => {
     const [rawDataIdx, setRawDataIdx] = useState([{}]);
     // 길이를 기준으로 운동명과 자모음 분해 운동명을 매핑
     const [rawDataMap, setRawDataMap] = useState(new Map());
+    // db 에 저장되지 않은 운동명, 이름을 다르게 부르는 운동명
+    const [exceptionNames, setExceptionNames] = useState([]);
 
     const fetchWorkoutNames = async () => {
         const groupedMap = new Map();
@@ -70,8 +72,9 @@ export const useWorkoutNames = () => {
 };
 
 
-// 없는 운동명 임시처리
-const exceptionNames = [
+/** DB에 저장되지 않은 운동명, 이름을 다르게 부르는 운동명 */ 
+const initExceptionNames = [
     {pt_idx: 24, pt_name: '카프 레이즈'},
     {pt_idx: 2, pt_name: '데드리프트'},
+    {pt_idx: 238, pt_name: '윗몸 일으키기'},
 ];

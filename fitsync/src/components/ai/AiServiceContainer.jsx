@@ -109,7 +109,7 @@ const AiServiceContainer = () => {
     const [memberData, setMemberData] = useState(null);
     const [aiResult, setAiResult] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-    const {rawDataIdx, rawDataMap, fetchWorkoutNames} = useWorkoutNames();
+    const {rawData, rawDataIdx, rawDataMap, fetchWorkoutNames} = useWorkoutNames();
 
     // 멤버 데이터 로드
     useEffect(() => {
@@ -125,8 +125,18 @@ const AiServiceContainer = () => {
     }, []);
 
     useEffect(() => {
-        if (aiResult !== null) {
+        if (aiResult === null) return;
+        if (Object.keys(aiResult).length === 0) return;
+
+        // console.log('파싱된 결과 : ', result);
+        const exception = AiUtil.analyzeAIResult(aiResult, aiResult.split, rawData);
+
+        if (exception !== null && aiResult.logIdx) {
+            const apilog = {apilog_idx : aiResult.logIdx, apilog_status_reason : exception};
+            AiUtil.updateLogException(apilog);
+            console.log(exception);
         }
+        
     },[aiResult]);
 
     // AI 루틴 생성 처리
@@ -157,7 +167,8 @@ const AiServiceContainer = () => {
             const result = {
                 content: parsedContent,
                 logIdx: response.data.logIdx,
-                responseTime: parseFloat(elapsedSeconds)
+                responseTime: parseFloat(elapsedSeconds),
+                split: inputData.split || 4,
             };
 
             setAiResult(result);
@@ -243,6 +254,7 @@ const AiServiceContainer = () => {
             {currentStep === 1 && (
                 <StepInputInfo 
                     memberData={memberData}
+                    setMemberData={setMemberData}
                     onGenerate={handleGenerateRoutine}
                 />
             )}
