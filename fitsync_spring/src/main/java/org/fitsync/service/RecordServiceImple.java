@@ -90,4 +90,10 @@ public class RecordServiceImple implements RecordService {
 		}
 	}
 	
+	// 운동기록 날짜 조회
+	@Override
+	public List<String> getRecordDatesByMonth(int memberIdx, String month) {
+	    return mapper.findRecordDatesByMonth(memberIdx, month);
+	}
+	
 }

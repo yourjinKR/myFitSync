@@ -14,6 +14,7 @@ import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
 import org.fitsync.service.LessonService;
 import org.fitsync.service.MemberService;
+import org.fitsync.service.RecordService;
 import org.fitsync.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -37,6 +39,9 @@ public class TrainerController {
     private LessonService lessonService;
     @Autowired
     private ScheduleService scheduleService; 
+    @Autowired
+    private RecordService recordService;
+   
     
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
@@ -57,6 +62,7 @@ public class TrainerController {
         return ResponseEntity.ok(profile);
     }
     
+    // 트레이너 프로필 수정
     @PutMapping("/update/{trainerIdx}")
     public ResponseEntity<Map<String, Object>> updateTrainer(
         @PathVariable int trainerIdx,
@@ -147,8 +153,32 @@ public class TrainerController {
     
     // 트레이너 스케줄 조회
     @GetMapping("/{trainerIdx}/schedule")
-    public List<ScheduleVO> getSchedulesByTrainer(@PathVariable int trainerIdx) {
-        return scheduleService.getSchedulesByTrainer(trainerIdx);
+    public ResponseEntity<?> getSchedulesByTrainer(
+            @PathVariable int trainerIdx,
+            HttpSession session
+    ) {
+        Object sessionIdx = session.getAttribute("member_idx");
+        if (sessionIdx == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        int memberIdx = Integer.parseInt(sessionIdx.toString());
+
+        MemberVO loginUser = memberService.getTrainerByIdx(memberIdx);
+        if (loginUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 로그인 정보입니다.");
+        }
+
+        if (!"trainer".equals(loginUser.getMember_type())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("트레이너만 접근 가능합니다.");
+        }
+
+        if (loginUser.getMember_idx() != trainerIdx) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("본인의 스케줄만 조회할 수 있습니다.");
+        }
+
+        List<ScheduleVO> schedules = scheduleService.getSchedulesByTrainer(trainerIdx);
+        return ResponseEntity.ok(schedules);
     }
 
     // 스케줄 등록(매칭X)
@@ -177,6 +207,25 @@ public class TrainerController {
         scheduleService.deleteSchedule(scheduleIdx);
         return ResponseEntity.ok("삭제 성공");
     }
-
     
+    // 월별 운동기록 날짜 조회
+    @GetMapping("/{memberIdx}/records")
+    public ResponseEntity<?> getRecordDatesByMonth(
+            @PathVariable int memberIdx,
+            @RequestParam String month) {
+        try {
+            List<String> recordDates = recordService.getRecordDatesByMonth(memberIdx, month);
+            return ResponseEntity.ok(recordDates);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("운동기록 날짜 조회 실패: " + e.getMessage());
+        }
+    }
+    
+    // 스케줄 수정
+    @PutMapping("/schedule")
+    public ResponseEntity<?> updateSchedule(@RequestBody ScheduleVO vo) {
+        scheduleService.updateSchedule(vo);
+        return ResponseEntity.ok("수정 완료");
+    }
 }

@@ -61,6 +61,7 @@ public class MemberController {
         	user.put("member_email", vo.getMember_email());
         	user.put("member_name", vo.getMember_name());
         	user.put("member_image", vo.getMember_image());
+        	user.put("member_type", vo.getMember_type());
         	user.put("isLogin", true);
         	
 	        result.put("success", true);

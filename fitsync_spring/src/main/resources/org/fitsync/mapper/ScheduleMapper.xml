@@ -40,4 +40,14 @@
     <delete id="deleteSchedule">
         DELETE FROM schedule WHERE schedule_idx = #{scheduleIdx}
     </delete>
+    
+   	<update id="updateSchedule" parameterType="org.fitsync.domain.ScheduleVO">
+	    UPDATE schedule
+	    SET
+	      schedule_date = #{schedule_date},
+	      schedule_stime = #{schedule_stime},
+	      schedule_etime = #{schedule_etime},
+	      schedule_content = #{schedule_content}
+	    WHERE schedule_idx = #{schedule_idx}
+  	</update>
 </mapper>

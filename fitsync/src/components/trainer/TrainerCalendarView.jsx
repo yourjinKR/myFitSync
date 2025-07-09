@@ -13,7 +13,9 @@ import styled from 'styled-components';
 import ScheduleInsertModal from './ScheduleInsertModal';
 import WorkoutInsert from './WorkoutInsert';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+
 
 // 스타일 컴포넌트 분리
 const Wrapper = styled.div`
@@ -73,7 +75,7 @@ const Toggle = styled.div`
     transition: background 0.2s, color 0.2s;
   }
 
-  button.active {
+  button[data-active='true'] {
     background: var(--primary-blue);
     color: var(--text-primary);
   }
@@ -264,6 +266,8 @@ const ScheduleContent = styled.div`
 
 const TrainerCalendarView = () => {
   const { trainerIdx } = useParams();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.user);
 
   const [view, setView] = useState('month');
   const [selectedDate, setSelectedDate] = useState('');
@@ -271,42 +275,85 @@ const TrainerCalendarView = () => {
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [showWorkoutInsert, setShowWorkoutInsert] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
-
+  const [recordDates, setRecordDates] = useState([]);
   const [members, setMembers] = useState([]);
   const [memberMap, setMemberMap] = useState({});
-
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const now = new Date();
-    const start = subDays(now, getDay(now));
-    return start;
+    return subDays(now, getDay(now));
   });
-
   const [monthSchedules, setMonthSchedules] = useState({});
   const [weekSchedules, setWeekSchedules] = useState({});
-
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedDeleteIds, setSelectedDeleteIds] = useState([]);
 
-  // 스케줄 API 불러오기 (전체)
+  // 접근 제어 로직 (이메일 기반)
+  useEffect(() => {
+    if (!user?.isLogin || user.member_type !== 'trainer') {
+      alert('트레이너만 접근할 수 있습니다.');
+      navigate('/');
+      return;
+    }
+
+    // 내 이메일 외 모두 차단
+    if (!user.member_email) {
+      alert('다른 트레이너 페이지는 접근할 수 없습니다.');
+      navigate('/');
+    }
+  }, [user, trainerIdx, navigate]);
+
+  // 스케줄 불러오기
   const fetchSchedules = () => {
-    axios.get(`/trainer/${trainerIdx}/schedule`).then((res) => {
-      const raw = res.data;
-      const monthMap = {};
-
-      raw.forEach((schedule) => {
-        const dateKey = format(new Date(schedule.schedule_date), 'yyyy-MM-dd');
-        if (!monthMap[dateKey]) monthMap[dateKey] = [];
-        monthMap[dateKey].push(schedule);
+    axios
+      .get(`/trainer/${trainerIdx}/schedule`)
+      .then((res) => {
+        const raw = res.data;
+        const monthMap = {};
+        raw.forEach((schedule) => {
+          const dateKey = format(new Date(schedule.schedule_date), 'yyyy-MM-dd');
+          if (!monthMap[dateKey]) monthMap[dateKey] = [];
+          monthMap[dateKey].push(schedule);
+        });
+        setMonthSchedules(monthMap);
+      })
+      .catch((err) => {
+        console.error('스케줄 불러오기 실패', err);
       });
-
-      setMonthSchedules(monthMap);
-    }).catch((err) => {
-      console.error('스케줄 불러오기 실패', err);
-    });
   };
 
-  // 주간 스케줄 필터링
+  useEffect(() => {
+    fetchSchedules();
+  }, [trainerIdx]);
+
+  // 수정 완료 후 스케줄 다시 불러오기
+  const handleScheduleUpdate = () => {
+    fetchSchedules();
+  };
+
+  useEffect(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    setSelectedDate(todayStr);
+    setShowPanel(true);
+
+    if (trainerIdx) {
+      fetchSchedules();
+      axios
+        .get(`/trainer/${trainerIdx}/members`)
+        .then((res) => {
+          setMembers(res.data);
+          const map = {};
+          res.data.forEach((m) => {
+            map[m.member_idx] = m.member_name;
+          });
+          setMemberMap(map);
+        })
+        .catch((err) => {
+          console.error('회원 리스트 불러오기 실패', err);
+        });
+    }
+  }, [trainerIdx]);
+
   useEffect(() => {
     if (!currentWeekStart || !monthSchedules) return;
 
@@ -317,7 +364,7 @@ const TrainerCalendarView = () => {
     Object.entries(monthSchedules).forEach(([dateStr, schedules]) => {
       const date = new Date(dateStr);
       if (date >= start && date <= end) {
-        schedules.forEach(schedule => {
+        schedules.forEach((schedule) => {
           const dayIndex = getDay(date);
           const key = `${dayIndex}-${schedule.schedule_stime}`;
           newWeekSchedules[key] = schedule;
@@ -328,31 +375,25 @@ const TrainerCalendarView = () => {
     setWeekSchedules(newWeekSchedules);
   }, [currentWeekStart, monthSchedules]);
 
-  // 초기 데이터 로딩
   useEffect(() => {
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    setSelectedDate(todayStr);
-    setShowPanel(true);
+    if (!user?.member_email) return;
 
-    if (trainerIdx) {
-      fetchSchedules();
+    const fetchRecordDates = async () => {
+      try {
+        const response = await axios.get(`/trainer/${trainerIdx}/records?month=${format(currentMonth, 'yyyy-MM')}`);
+        setRecordDates(response.data);
+      } catch (error) {
+        console.error('운동기록 날짜 불러오기 실패:', error);
+      }
+    };
 
-      axios.get(`/trainer/${trainerIdx}/members`).then((res) => {
-        setMembers(res.data);
-        const map = {};
-        res.data.forEach((m) => { map[m.member_idx] = m.member_name });
-        setMemberMap(map);
-      }).catch((err) => {
-        console.error('회원 리스트 불러오기 실패', err);
-      });
-    }
-  }, [trainerIdx]);
+    fetchRecordDates();
+  }, [currentMonth, user?.member_email, trainerIdx]);
 
-  // 일정 추가
   const handleInsertSchedule = async (key, schedule_name, schedule_stime, schedule_etime, schedule_content, user_idx = null) => {
     try {
-      await axios.post(`/trainer/${trainerIdx}/schedule`, { 
-        user_name : schedule_name,
+      await axios.post(`/trainer/${trainerIdx}/schedule`, {
+        user_name: schedule_name,
         schedule_stime,
         schedule_etime,
         schedule_content,
@@ -366,37 +407,27 @@ const TrainerCalendarView = () => {
     }
   };
 
-  // 삭제 모드 토글
   const toggleDeleteMode = () => {
     setIsDeleteMode(!isDeleteMode);
     setSelectedDeleteIds([]);
   };
 
-  // 체크박스 상태 변경
   const handleCheckboxChange = (schedule_idx) => {
-    setSelectedDeleteIds((prev) => {
-      if (prev.includes(schedule_idx)) {
-        return prev.filter(id => id !== schedule_idx);
-      } else {
-        return [...prev, schedule_idx];
-      }
-    });
+    setSelectedDeleteIds((prev) =>
+      prev.includes(schedule_idx) ? prev.filter((id) => id !== schedule_idx) : [...prev, schedule_idx]
+    );
   };
 
   const handleDeleteSelectedSchedules = () => {
     if (selectedDeleteIds.length === 0) return;
-
     if (window.confirm('선택한 일정을 삭제하시겠습니까?')) {
-      // 삭제 실행
       executeDelete();
     }
   };
 
   const executeDelete = async () => {
     try {
-      await Promise.all(selectedDeleteIds.map(id =>
-        axios.delete(`/trainer/${trainerIdx}/schedule/${id}`)
-      ));
+      await Promise.all(selectedDeleteIds.map((id) => axios.delete(`/trainer/${trainerIdx}/schedule/${id}`)));
       fetchSchedules();
       setSelectedDeleteIds([]);
       setIsDeleteMode(false);
@@ -404,50 +435,36 @@ const TrainerCalendarView = () => {
       console.error('일정 삭제 실패:', error);
     }
   };
-  
-  // 날짜 클릭
+
   const handleDayClick = (dateStr) => {
     setSelectedDate(dateStr);
     setShowPanel(true);
     if (isDeleteMode) {
-      setSelectedDeleteIds([]); // 삭제 모드에서는 클릭시 선택 초기화
+      setSelectedDeleteIds([]);
     }
   };
 
-  // 일정 추가 모달 열기
-  const handleAddSchedule = () =>{
-    console.log('추가 버튼 클릭, selectedDate:', selectedDate);
-    setShowInsertModal(true);
-  } 
-
-  // 회원 클릭 (운동 추가 모달 열기)
+  const handleAddSchedule = () => setShowInsertModal(true);
   const handleMemberClick = (schedule) => {
     setSelectedSchedule(schedule);
     setShowWorkoutInsert(true);
   };
-
-  // 운동 추가 모달 닫기
   const closeWorkoutModal = () => setShowWorkoutInsert(false);
 
-  // 스케줄 색상 분류: 'green' (운동기록), 'red' (스케줄), 'yellow' (user_name 스케줄)
   const getScheduleColorsByDate = (dateStr) => {
-    const schedules = monthSchedules[dateStr];
-    if (!schedules || schedules.length === 0) return [];
-
     const colors = new Set();
+    if (recordDates.includes(dateStr)) colors.add('green');
+    const schedules = monthSchedules[dateStr];
+    if (!schedules) return Array.from(colors);
     for (const s of schedules) {
-      if (s.category === 'my_workout') colors.add('green');
-      else if (s.category === 'schedule') colors.add('red');
+      if (s.category === 'schedule') colors.add('red');
       else if (s.user_name && !s.user_idx) colors.add('yellow');
     }
     return Array.from(colors);
   };
 
-  // 주간 일정 시간 및 요일 설정
   const hours = Array.from({ length: 19 }, (_, i) => `${(6 + i).toString().padStart(2, '0')}:00`);
   const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-
-  // 월별 달력 날짜 계산
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
@@ -476,8 +493,20 @@ const TrainerCalendarView = () => {
         )}
 
         <Toggle>
-          <button className={view === 'week' ? 'active' : ''} onClick={() => setView('week')}>주간 보기</button>
-          <button className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>월간 보기</button>
+          <button
+            type="button"
+            data-active={view === 'week'}
+            onClick={() => setView('week')}
+          >
+            주간 보기
+          </button>
+          <button
+            type="button"
+            data-active={view === 'month'}
+            onClick={() => setView('month')}
+          >
+            월간 보기
+          </button>
         </Toggle>
       </TopBar>
 
@@ -638,15 +667,6 @@ const TrainerCalendarView = () => {
             </LegendContainer>
           </ScheduleBox>
 
-          {isDeleteMode && (
-            <ButtonGroup style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
-              <button onClick={handleDeleteSelectedSchedules} disabled={selectedDeleteIds.length === 0}>
-                선택 삭제
-              </button>
-              <button onClick={toggleDeleteMode}>삭제 취소</button>
-            </ButtonGroup>
-          )}
-
           {showPanel && (
             <SlidePanel initial={{ y: 50 }} animate={{ y: 0 }} exit={{ y: 50 }}>
               <SlidePanelHeader>
@@ -719,6 +739,7 @@ const TrainerCalendarView = () => {
           {showWorkoutInsert && selectedSchedule && (
             <WorkoutInsert
               onClose={closeWorkoutModal}
+              onUpdate={handleScheduleUpdate}
               memberName={selectedSchedule.user_name || memberMap[selectedSchedule.user_idx]}
               memberIdx={selectedSchedule.user_idx}
               trainerIdx={trainerIdx}
@@ -726,6 +747,7 @@ const TrainerCalendarView = () => {
               stime={selectedSchedule.schedule_stime}
               etime={selectedSchedule.schedule_etime}
               memo={selectedSchedule.schedule_content}
+              scheduleIdx={selectedSchedule.schedule_idx}
             />
           )}
     </Wrapper>

@@ -30,4 +30,9 @@ public class ScheduleServiceImple implements ScheduleService {
     public int deleteSchedule(int scheduleIdx) {
         return mapper.deleteSchedule(scheduleIdx);
     }
+    
+    @Override
+    public void updateSchedule(ScheduleVO vo) {
+    	mapper.updateSchedule(vo);
+    }
 }
