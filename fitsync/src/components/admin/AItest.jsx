@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import axios from 'axios';
 import { ButtonSubmit, Input } from '../../styles/FormStyles';
 import { 
@@ -18,6 +18,8 @@ import { getMemberTotalData } from '../../utils/memberUtils';
 // 스타일 컴포넌트 추가
 import styled from 'styled-components';
 import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
+import userReducer from '../../reducers/userReducer';
+import { useSelector } from 'react-redux';
 
 const PageContainer = styled(Container)`
     padding: 2rem;
@@ -124,6 +126,9 @@ function parseApiLogData(apiLogItem) {
 }
 
 const AItest = () => {
+    const initialState = {count : 0}
+    const user = useSelector(state => state.user);
+
     const initialValue = {content : '운동 루틴 추천해줘', token : 0};
 
     const [inputText, setInputText] = useState({content : initialValue.content, token: initialValue.token});
@@ -153,6 +158,9 @@ const AItest = () => {
     }
 
     useEffect(() => {
+        console.log(user.user.isLogin);
+        
+
         const fetchMemberData = async () => {
             try {
                 const memberData = await getMemberTotalData();
@@ -363,7 +371,7 @@ const AItest = () => {
         /** 응답결과를 DB 구조에 맞게 파싱 */ 
         const parsedResult = result.content.map((routine, idx) => {
             // routine_name
-            const routine_name = routine.routine_name || `AI 추천 루틴 ${idx + 1}`;
+            const routine_name = routine.routine_name + ' (AI 생성)' || `AI 추천 루틴 ${idx + 1}`;
             
             // list
             const parsedExerciseList = routine.exercises.map(ex => {
@@ -388,7 +396,7 @@ const AItest = () => {
                 }));
                 
                 let finalName = null;
-                return {pt_idx : exIdx, name : null, routine_memo : null, routineSet : routineSet};
+                return {pt_idx : exIdx, name : null, routine_memo : "", routineSet : routineSet};
             });
 
             const parseData = {
@@ -463,7 +471,8 @@ const AItest = () => {
                 </InputGroup>
                 
                 <ButtonGroup>
-                    <StyledButton onClick={testAPI}>
+                    {/* user.isLogin이 false일 경우 */}
+                    <StyledButton onClick={testAPI} disabled={!user.user.isLogin}>
                         🚀 AI 루틴 생성
                     </StyledButton>
                 </ButtonGroup>

@@ -1,5 +1,6 @@
 import axios from "axios";
 
+/** 개인정보, 신체정보 */
 export const getMemberTotalData = async () => {
     try {
         const response = await axios.get(
