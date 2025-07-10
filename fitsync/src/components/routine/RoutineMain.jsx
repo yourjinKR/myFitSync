@@ -219,12 +219,12 @@ const RoutineMain = () => {
   location.pathname !== '/routine/add' && 
   location.pathname !== '/routine/set';
 
-  const init = {
+  const routineInit = {
     routine_name: '',
     member_idx : '',
     routines: [],
   };
-  const [routineData, setRoutineData] = useState(init);
+  const [routineData, setRoutineData] = useState(routineInit);
   const [newData, setNewData] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [unfinished, setUnfinished] = useState([]);
@@ -242,9 +242,12 @@ const RoutineMain = () => {
     
   },[routineData, unfinished, isSave , nav]);
   useEffect(() => {
-    if(prev !== null && routineData === init) {
+    if(prev !== null && routineData === routineInit) {
       nav(prev);
     }
+    if(location.pathname === '/routine/view'){
+      setRoutineData(routineInit);
+    } 
   },[])
 
  
@@ -266,7 +269,7 @@ const RoutineMain = () => {
         alert(result.msg);
         setIsSave(true);
         nav("/routine/view");
-        setRoutineData(init);
+        setRoutineData(routineInit);
       }
     } catch (error) {
       console.error("루틴 등록 오류:", error);
@@ -423,7 +426,7 @@ const RoutineMain = () => {
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
         <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev}} /> :
-        <Outlet context={{ routineData, setRoutineData, newData, setNewData }}/>
+        <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit }}/>
       }
 
       {/* 루틴 하단 버튼 */}

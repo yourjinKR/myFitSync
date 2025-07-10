@@ -194,7 +194,7 @@ const LoadingWrapper = styled.div`
 `;
 
 const RoutineDetail = () => {
-  const {routineData, setRoutineData} = useOutletContext();
+  const {routineData, setRoutineData, routineInit} = useOutletContext();
 
   const [init, setInit] = useState(null);
   const [data, setData] = useState(init);
@@ -219,42 +219,48 @@ const RoutineDetail = () => {
       ...data,
       update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
-
+    setRoutineData(data);
   }, [data]);
   
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
-    const handleRoutineData = async () => {
-      try {
-        const response = await axios.get(`/routine/${routine_list_idx}`, {
-          withCredentials: true
-        });
-        const result = response.data;
-        if (result.success) {
-          // 각 세트에 고유 ID 추가
-          const dataWithIds = {
-            ...result.vo,
-            routines: result.vo.routines.map(routine => ({
-              ...routine,
-              sets: routine.sets.map((set, index) => ({
-                ...set,
-                id: set.id || `${routine.pt_idx}-${index}-${Date.now()}`
+    if(routineData === null) return;
+    if(JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))){
+      const handleRoutineData = async () => {
+        try {
+          const response = await axios.get(`/routine/${routine_list_idx}`, {
+            withCredentials: true
+          });
+          const result = response.data;
+          if (result.success) {
+            // 각 세트에 고유 ID 추가
+            const dataWithIds = {
+              ...result.vo,
+              routines: result.vo.routines.map(routine => ({
+                ...routine,
+                sets: routine.sets.map((set, index) => ({
+                  ...set,
+                  id: set.id || `${routine.pt_idx}-${index}-${Date.now()}`
+                }))
               }))
-            }))
-          };
-          setData(dataWithIds);
-          setInit(dataWithIds);
-          setRoutineData(dataWithIds);
-        } else {
-          alert(result.message);
+            };
+            setData(dataWithIds);
+            setInit(dataWithIds);
+            setRoutineData(dataWithIds);
+          } else {
+            alert(result.message);
+          }
+        } catch (e) {
+          alert("루틴 정보를 불러오지 못했습니다.");
+        } finally {
+          setIsLoading(false);
         }
-      } catch (e) {
-        alert("루틴 정보를 불러오지 못했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    handleRoutineData();
+      };
+      handleRoutineData();
+    }else{
+      setData(routineData);
+      setIsLoading(false);
+    }
   }, [routine_list_idx]);
 
   // 세트 값 변경 공통 함수
@@ -324,7 +330,7 @@ const RoutineDetail = () => {
     }));
   };
 
-  const checkedSetsRef = useRef({}); // { 'pt_idx-setIndex': true/false, ... }
+  const checkedSetsRef = useRef({});
 
   useEffect(() => {
     // data.routines가 바뀔 때마다 체크 상태 초기화
@@ -338,8 +344,12 @@ const RoutineDetail = () => {
       });
       checkedSetsRef.current = newChecked;
     }
-  }, [data]);
-
+  }, [data, routineData]);
+  
+  useEffect(() => {
+    if(routineData === null) return;
+  }, [routineData]);
+  
   const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
     const key = `${routinePtIdx}-${setIndex}`;
     checkedSetsRef.current[key] = e.target.checked;
@@ -377,7 +387,7 @@ const RoutineDetail = () => {
       {data.routines && data.routines.map((routine) => (
         <ExerciseSection key={routine.pt_idx}>
           <SetTop>
-            {/* <img src={routine.imageUrl} alt={routine.pt.pt_name} /> */}
+            <img src={routine.imageUrl} alt={routine.pt.pt_name} />
             <h4>{routine.pt.pt_name}</h4>
           </SetTop>
           <MemoInput
@@ -408,7 +418,7 @@ const RoutineDetail = () => {
               {routine.sets && routine.sets.map((set, index) => {
                 const key = `${routine.pt_idx}-${index}`;
                 return (
-                  <SwipeableListItem className={checkedSetsRef.current[key] ? 'checked' : ''}
+                  <SwipeableListItem className={set.checked || checkedSetsRef.current[key] ? 'checked' : ''}
                     key={`${routine.pt_idx}-${index}-${set.id}`}
                     trailingActions={trailingActions(routine.pt_idx, index)}
                   >
@@ -437,7 +447,7 @@ const RoutineDetail = () => {
                       <CheckInput
                         type="checkbox"
                         id={`set-check-${routine.pt_idx}-${index}`}
-                        checked={checkedSetsRef.current[key] || false}
+                        checked={set.checked || checkedSetsRef.current[key] || false}
                         onChange={handleSetCheck(routine.pt_idx, index)}
                       />
                       <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
