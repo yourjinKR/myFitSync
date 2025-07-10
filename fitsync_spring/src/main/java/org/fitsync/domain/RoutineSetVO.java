@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RoutineSetVO {
-	private int routine_idx, set_num, set_volume, set_count;
+	private int routine_list_idx, routine_idx, set_num, set_volume, set_count;
 }

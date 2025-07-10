@@ -245,10 +245,13 @@ const RoutineMain = () => {
     if(prev !== null && routineData === routineInit) {
       nav(prev);
     }
+  },[])
+  
+  useEffect(() => {
     if(location.pathname === '/routine/view'){
       setRoutineData(routineInit);
     } 
-  },[])
+  },[location.pathname])
 
  
 
@@ -302,48 +305,32 @@ const RoutineMain = () => {
   // 운동 기록
   const handleRoutineRecord = async () => {
     let postData = newData;
-    let checkData = newData.routines;
-      checkData = checkData.filter((routine) => {
-      const chkSet = routine.sets.filter((set) => set.checked === true);
-      if(chkSet.length !== 0){
-        return {
-          ...routine,
-          sets : [...chkSet]
-        };
-      }
-    });
-    
-    postData = {
-      ...newData,
-      routines: checkData,
-    }
-    
-    console.log(" postData", postData)
+
     if(postData.routines.length === 0) {
       alert("완료된 운동이 없습니다.");
       closeAlert();
       return;
     }
     
-    // try {
-    //   const response = await axios.post(
-    //     `/routine/record/${routine_list_idx}`,
-    //     postData,
-    //     { withCredentials: true }
-    //   );
-    //   const result = response.data;
-    //   alertRef.current.style.display = "none";
-    //   setIsUpdate(false);
-    //   if(result.success) {
-    //     alert(result.msg);
-    //     nav("/routine/view");
-    //   } else {
-    //     alert(result.msg);
-    //   }
-    // } catch (error) {
-    //   alert("루틴 기록에 실패했습니다.");
-    //   closeAlert();
-    // }
+    try {
+      const response = await axios.post(
+        `/routine/record/${routine_list_idx}`,
+        postData,
+        { withCredentials: true }
+      );
+      const result = response.data;
+      alertRef.current.style.display = "none";
+      setIsUpdate(false);
+      if(result.success) {
+        alert(result.msg);
+        nav("/routine/view");
+      } else {
+        alert(result.msg);
+      }
+    } catch (error) {
+      alert("루틴 기록에 실패했습니다.");
+      closeAlert();
+    }
   }
   
   // 저장하기

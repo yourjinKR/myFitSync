@@ -144,15 +144,15 @@ const SetAddCTA = styled.button`
   }
 `;
 
-// 공통적으로 list의 특정 운동의 routineSet 변경하는 함수
+// 공통적으로 list의 특정 운동의 sets 변경하는 함수
 function updateSets(routineData, pt_idx, updateFn) {
   return {
     ...routineData,
-    routines: routineData.routines.map(item =>
-      item.pt_idx === pt_idx
-        ? { ...item, routineSet: updateFn(item.routineSet) }
-        : item
-    )
+    routines: routineData.routines.map(item => {
+      return item.pt_idx === pt_idx
+        	? { ...item, sets: updateFn(item.sets) }
+        	: item
+    })
   };
 }
 
@@ -165,8 +165,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   // 세트 추가
   const handleAddSet = () => {
     setRoutineData(prev =>
-      updateSets(prev, data.pt_idx, routineSet => [
-        ...routineSet,
+      updateSets(prev, data.pt_idx, sets => [
+        ...sets,
         { id: Date.now(), set_volume: '', set_count: '' }
       ])
     );
@@ -175,8 +175,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   // 세트 값 변경
   const handleSetChange = (setId, field, value) => {
     setRoutineData(prev =>
-      updateSets(prev, data.pt_idx, routineSet =>
-        routineSet.map(set =>
+      updateSets(prev, data.pt_idx, sets =>
+        sets.map(set =>
           set.id === setId ? { ...set, [field]: value } : set
         )
       )
@@ -203,8 +203,8 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
         destructive={true}
         onClick={() => {
           setRoutineData(prev =>
-            updateSets(prev, data.pt_idx, routineSet =>
-              routineSet.filter(set => set.id !== targetId)
+            updateSets(prev, data.pt_idx, sets =>
+              sets.filter(set => set.id !== targetId)
             )
           );
         }}
@@ -216,7 +216,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
 
   // 최초 1세트 없으면 1개 추가
   useEffect(() => {
-    if (setData && (!setData.routineSet || setData.routineSet.length === 0)) {
+    if (setData && (!setData.sets || setData.sets.length === 0)) {
       setRoutineData(prev =>
         updateSets(prev, data.pt_idx, () => [{ id: Date.now(), set_volume: '', set_count: '' }])
       );
@@ -224,13 +224,13 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
     // eslint-disable-next-line
   }, []);
 
-  // setData가 없거나 routineSet이 없는 경우 처리
+  // setData가 없거나 sets이 없는 경우 처리
   if (!setData) {
     return null;
   }
 
-  // routineSet이 없는 경우 빈 배열로 처리
-  const routineSet = setData.routineSet || [];
+  // sets이 없는 경우 빈 배열로 처리
+  const sets = setData.sets || [];
 
   return (
     <WorkoutSetWrapper>
@@ -253,7 +253,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
       </ListHeader>
       <ListBody>
         <SwipeableList actionDelay={0}>
-          {routineSet.map((set, index) => (
+          {sets.map((set, index) => (
             <SwipeableListItem
               key={set.id}
               trailingActions={trailingActions(set.id)}

@@ -6,10 +6,24 @@
 	<insert id="insert" parameterType="org.fitsync.domain.RoutineSetVO">
 		INSERT INTO ROUTINESET
 		VALUES (
-		 	#{routine_idx},
-	 		NVL((SELECT MAX(set_num) 
-	 		FROM ROUTINESET 
-	 		WHERE ROUTINE_IDX = #{routine_idx}),0) + 1,
+			<choose>
+	 			<when test="routine_idx > 0">
+	 				#{routine_idx},
+	 			</when>
+	 			<otherwise>
+				 	(SELECT MAX(ROUTINE_IDX) FROM ROUTINE WHERE ROUTINE_LIST_IDX = #{routine_list_idx}),
+	 			</otherwise>
+	 		</choose>
+	 		NVL((SELECT MAX(set_num) FROM ROUTINESET WHERE ROUTINE_IDX =
+	 		<choose>
+	 			<when test="routine_idx > 0">
+	 				#{routine_idx}
+	 			</when>
+	 			<otherwise>
+			 		(SELECT MAX(ROUTINE_IDX) FROM ROUTINE WHERE ROUTINE_LIST_IDX = #{routine_list_idx})
+	 			</otherwise>
+	 		</choose>
+	 		),0) + 1,
 		 	#{set_volume},
 		 	#{set_count}
 		)

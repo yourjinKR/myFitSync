@@ -234,6 +234,7 @@ const RoutineDetail = () => {
           const result = response.data;
           if (result.success) {
             // 각 세트에 고유 ID 추가
+            
             const dataWithIds = {
               ...result.vo,
               routines: result.vo.routines.map(routine => ({

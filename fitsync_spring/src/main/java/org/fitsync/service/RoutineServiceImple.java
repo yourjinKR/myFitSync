@@ -62,7 +62,6 @@ public class RoutineServiceImple implements RoutineService {
 	        if (result != 1) {
 	            throw new RuntimeException("RoutineList insert failed");
 	        }
-	        System.out.println(body);
 	        List<Map<String, Object>> routines = (List<Map<String, Object>>) body.get("routines");
 	        
 	        int routineResult = 0;
@@ -75,19 +74,18 @@ public class RoutineServiceImple implements RoutineService {
 	            
 	            routineResult += rmapper.insert(rvo); // 루틴 운동 등록
 	            int routine_idx = rmapper.getIdx(routine_list_idx);
-	            System.out.println("data : " + data);
-	            List<Map<String, Object>> sets = (List<Map<String, Object>>) data.get("routineSet");
+	            List<Map<String, Object>> sets = (List<Map<String, Object>>) data.get("sets");
 	            if (sets.size() > 0) {
 	                RoutineSetVO rsvo = new RoutineSetVO();
 	                int setResult = 0;
 //	                int idx = 1;
 	                for (Map<String, Object> set : sets) {
 	                	rsvo.setRoutine_idx(routine_idx);
-//	                	rsvo.setSet_num(idx++);
 	                	Object setVolumeObj = set.get("set_volume");
 	                	rsvo.setSet_volume(safeIntParse(setVolumeObj));
 	                	Object setCountObj = set.get("set_count");
-	                	rsvo.setSet_count(safeIntParse(setCountObj));	                	
+	                	rsvo.setSet_count(safeIntParse(setCountObj));	  
+	                	rsvo.setRoutine_list_idx(routine_list_idx);
 	                	
 	                	setResult += rsmapper.insert(rsvo); // 세트 등록
 					}
@@ -123,48 +121,80 @@ public class RoutineServiceImple implements RoutineService {
 		List<Map<String, Object>> newRoutines = (List<Map<String, Object>>) body.get("routines");
 		
 		Map<String, Object> compareData = compareRoutines(prevData, newRoutines, body);
+		
 		List<Map<String, Object>> routineComparisons = (List<Map<String, Object>>) compareData.get("routineComparisons");
 		for (Map<String, Object> routineComparison : routineComparisons) {
-			if(routineComparison.get("type") != null && (boolean) routineComparison.get("type").equals("MODIFIED")) {
-				Map<String, Object> differences = (Map<String, Object>) routineComparison.get("differences");
-				if((boolean) differences.get("sets_changed")) {
-					Map<String, Object> sets_differences = (Map<String, Object>) differences.get("sets_differences");
-					List<Map<String, Object>> set_comparisons = (List<Map<String, Object>>) sets_differences.get("set_comparisons");
-					for (Map<String, Object> set_comparison : set_comparisons) {
-						RoutineSetVO rsvo = new RoutineSetVO();
-						rsvo.setRoutine_idx(safeIntParse(set_comparison.get("routine_idx")));
-						if(set_comparison.get("type").equals("ADDED")) {
-							Map<String, Object> newSet = (Map<String, Object>)set_comparison.get("newSet");
-							rsvo.setSet_count(safeIntParse(newSet.get("set_count")));
-							rsvo.setSet_volume(safeIntParse(newSet.get("set_volume")));
-							result = rsmapper.insert(rsvo) > 0;
-						}
-						
-						if(set_comparison.get("type").equals("DELETED")) {
-							rsvo = (RoutineSetVO) set_comparison.get("prevSet");
-							result = rsmapper.delete(rsvo) > 0;
-						}
-						
-						if(set_comparison.get("type").equals("COMPARE")) {
-							if(set_comparison.get("count_changed") != null || set_comparison.get("volume_changed") != null) {
-								rsvo.setSet_count(
-									set_comparison.get("count_changed") != null && (boolean) set_comparison.get("count_changed") ? 
-									safeIntParse(set_comparison.get("new_count")) : 
-									safeIntParse(set_comparison.get("prev_count")) 
-								);
-								rsvo.setSet_volume(
-										set_comparison.get("volume_changed") != null && (boolean) set_comparison.get("volume_changed") ? 
-									safeIntParse(set_comparison.get("new_volume")) : 
-									safeIntParse(set_comparison.get("prev_volume")) 
-								);
-								rsvo.setSet_num(safeIntParse(set_comparison.get("set_num")));
-								result = rsmapper.update(rsvo) > 0;
+			if(routineComparison.get("type") != null) {
+				if((boolean) routineComparison.get("type").equals("MODIFIED")) {
+					Map<String, Object> differences = (Map<String, Object>) routineComparison.get("differences");
+					if((boolean) differences.get("sets_changed")) {
+						Map<String, Object> sets_differences = (Map<String, Object>) differences.get("sets_differences");
+						List<Map<String, Object>> set_comparisons = (List<Map<String, Object>>) sets_differences.get("set_comparisons");
+						for (Map<String, Object> set_comparison : set_comparisons) {
+							RoutineSetVO rsvo = new RoutineSetVO();
+							rsvo.setRoutine_list_idx(safeIntParse(body.get("routine_list_idx")));
+							
+							// 세트 추가
+							if(set_comparison.get("type").equals("ADDED")) {
+								Map<String, Object> newSet = (Map<String, Object>)set_comparison.get("newSet");
+								
+								rsvo.setRoutine_idx(safeIntParse(set_comparison.get("routine_idx")));
+								rsvo.setSet_count(safeIntParse(newSet.get("set_count")));
+								rsvo.setSet_volume(safeIntParse(newSet.get("set_volume")));
+ 								result = rsmapper.insert(rsvo) > 0;
 							}
+							
+							// 세트 삭제
+							if(set_comparison.get("type").equals("DELETED")) {
+								rsvo = (RoutineSetVO) set_comparison.get("prevSet");
+								result = rsmapper.delete(rsvo) > 0;
+							}
+							
+							// 세트 업데이트
+							if(set_comparison.get("type").equals("COMPARE")) {
+								if(set_comparison.get("count_changed") != null || set_comparison.get("volume_changed") != null) {
+									rsvo.setSet_count(
+											set_comparison.get("count_changed") != null && (boolean) set_comparison.get("count_changed") ? 
+												safeIntParse(set_comparison.get("new_count")) : 
+												safeIntParse(set_comparison.get("prev_count")) 
+											);
+									rsvo.setSet_volume(
+											set_comparison.get("volume_changed") != null && (boolean) set_comparison.get("volume_changed") ? 
+												safeIntParse(set_comparison.get("new_volume")) : 
+												safeIntParse(set_comparison.get("prev_volume")) 
+											);
+									rsvo.setSet_num(safeIntParse(set_comparison.get("set_num")));
+									rsvo.setRoutine_idx(safeIntParse(set_comparison.get("routine_idx")));
+									result = rsmapper.update(rsvo) > 0;
+								}
+							}
+							
 						}
-						
 					}
+				// 추가 운동 루틴
+				} else if((boolean) routineComparison.get("type").equals("ADDED")){
+					Map<String, Object> newRoutine = (Map<String, Object>) routineComparison.get("newRoutine");
+					RoutineVO rvo = new RoutineVO();
+					rvo.setPt_idx(safeIntParse(newRoutine.get("pt_idx")));
+					rvo.setRoutine_list_idx(safeIntParse(newRoutine.get("routine_list_idx")));
+		            rvo.setRoutine_memo(newRoutine.get("routine_memo") != null && !newRoutine.get("routine_memo").equals("") ? (String) newRoutine.get("routine_memo") : "");
+		            result = rmapper.insert(rvo) > 0;
+		            
+		            List<Map<String, Object>> sets = (List<Map<String, Object>>) newRoutine.get("sets");
+		            for (Map<String, Object> set : sets) {
+		            	RoutineSetVO rsvo = new RoutineSetVO();
+		            	rsvo.setSet_num(safeIntParse(set.get("set_num")));
+		            	rsvo.setSet_volume(safeIntParse(set.get("set_volume")));
+		            	rsvo.setSet_count(safeIntParse(set.get("set_count")));
+		            	rsvo.setRoutine_list_idx(safeIntParse(newRoutine.get("routine_list_idx")));
+		            	result = rsmapper.insert(rsvo) > 0; // 세트 등록
+					}
+					
+				} else {
+					
 				}
-			}	
+				
+			}
 			
 		}
 		return result;
