@@ -227,13 +227,13 @@ const ChatMain = () => {
       // 내가 트레이너인 경우 → 회원 정보 반환
       return {
         name: room.user_name || '회원',
-        image: null // 백엔드에서 user_image 필드 추가 필요
+        image: room.user_image // 백엔드에서 user_image 필드 추가 필요
       };
     } else {
       // 내가 일반 사용자인 경우 → 트레이너 정보 반환
       return {
         name: room.trainer_name || '트레이너',
-        image: null // 백엔드에서 trainer_image 필드 추가 필요
+        image: room.trainer_image // 백엔드에서 trainer_image 필드 추가 필요
       };
     }
   };
@@ -242,14 +242,26 @@ const ChatMain = () => {
   const renderAvatar = (room) => {
     const otherPerson = getOtherPersonInfo(room);
     
-    if (otherPerson.image) {
+    const hasValidImage = otherPerson.image && 
+                         typeof otherPerson.image === 'string' && 
+                         otherPerson.image.trim() !== '' &&
+                         otherPerson.image.startsWith('http');
+    
+    console.log('이미지 유효성 검사:', hasValidImage);
+    
+    if (hasValidImage) {
       // 프로필 이미지가 있는 경우
+      console.log('✅ 프로필 이미지 렌더링:', otherPerson.image);
       return (
         <Avatar>
           <img 
             src={otherPerson.image} 
             alt={`${otherPerson.name} 프로필`}
+            onLoad={() => {
+              console.log('✅ 이미지 로드 성공:', otherPerson.image);
+            }}
             onError={(e) => {
+              console.log('❌ 이미지 로드 실패:', otherPerson.image);
               // 이미지 로드 실패 시 기본 아바타로 대체
               e.target.style.display = 'none';
               e.target.parentElement.classList.add('default-avatar');
@@ -259,7 +271,8 @@ const ChatMain = () => {
         </Avatar>
       );
     } else {
-      // 프로필 이미지가 없는 경우 초성 표시
+      // 프로필 이미지가 없거나 유효하지 않은 경우 초성 표시
+      console.log('❌ 프로필 이미지 없음/무효, 초성 표시:', otherPerson.name.charAt(0));
       return (
         <Avatar className="default-avatar">
           {otherPerson.name.charAt(0).toUpperCase()}

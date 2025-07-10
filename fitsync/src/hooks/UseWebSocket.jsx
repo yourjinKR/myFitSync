@@ -8,6 +8,8 @@ export const useWebSocket = () => {
   const [connected, setConnected] = useState(false);// 연결 상태
   const clientRef = useRef(null);                   // 클라이언트 참조 (컴포넌트 언마운트 시 정리용)
   const isConnectingRef = useRef(false);            // 연결 중 상태 추가
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
   
   // WebSocket 연결 초기화 및 관리
   useEffect(() => {
@@ -22,21 +24,64 @@ export const useWebSocket = () => {
       console.log('WebSocket 연결 시도 중...');
       isConnectingRef.current = true; // 연결 중 플래그 설정
       
+      // 다양한 네트워크 환경 지원을 위한 URL 결정
+      const getWebSocketUrl = () => {
+        const currentHost = window.location.hostname;
+        const currentPort = window.location.port;
+        const protocol = window.location.protocol;
+        
+        // 개발 환경: localhost:3000에서 접속
+        if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+          return `${protocol}//localhost:7070/chat`;
+        }
+        
+        // 로컬 네트워크: 192.168.x.x:3000에서 접속
+        if (currentHost.startsWith('192.168.') || currentHost.startsWith('10.') || currentHost.startsWith('172.')) {
+          return `${protocol}//${currentHost}:7070/chat`;
+        }
+        
+        // 기본값: 현재 호스트 사용
+        return `${protocol}//${currentHost}:7070/chat`;
+      };
+      
+      const websocketUrl = getWebSocketUrl();
+      console.log('🌐 WebSocket 연결 URL:', websocketUrl);
+      
       const stompClient = new Client({
         webSocketFactory: () => {
-          console.log('SockJS 연결 생성');
-          // SockJS를 통한 WebSocket 연결 (폴백 지원)
-          return new SockJS('http://localhost:7070/chat', null, { 
-            withCredentials: true
+          console.log('SockJS 연결 생성 - URL:', websocketUrl);
+          return new SockJS(websocketUrl, null, { 
+            withCredentials: true,
+            transports: ['websocket', 'xhr-polling'], // 안정적인 전송 방식만 사용
+            timeout: 15000 // 연결 타임아웃 15초
           });
         },
-        connectHeaders: {},
+        connectHeaders: {
+          'X-Client-Type': 'chat-client',
+          'X-Timestamp': Date.now().toString()
+        },
         debug: function (str) {
           console.log('STOMP Debug:', str);
         },
         reconnectDelay: 5000,     // 재연결 설정 (연결 끊어졌을 때 5초 후 재시도)
         heartbeatIncoming: 4000,  // 서버로부터 받는 하트비트 간격
         heartbeatOutgoing: 4000,  // 서버로 보내는 하트비트 간격
+        onWebSocketClose: () => {
+          console.log('WebSocket 연결 종료됨');
+          setConnected(false);
+          isConnectingRef.current = false;
+          
+          // 재연결 시도
+          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+            reconnectAttemptsRef.current += 1;
+            console.log(`재연결 시도 ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
+            setTimeout(() => {
+              if (!connected && !isConnectingRef.current) {
+                connect();
+              }
+            }, 3000);
+          }
+        }
       });
 
       // 연결 성공 시 콜백
@@ -158,7 +203,8 @@ export const useWebSocket = () => {
       const messageWithSender = {
         ...messageData,
         sender_idx: memberIdx,
-        unique_id: uniqueId // 고유ID
+        unique_id: uniqueId, // 고유ID
+        timestamp: Date.now()
       };
       
       console.log('📤 메시지 전송 시도:', messageWithSender);
@@ -190,7 +236,8 @@ export const useWebSocket = () => {
       const readData = {
         message_idx,
         room_idx,
-        receiver_idx: memberIdx
+        receiver_idx: memberIdx,
+        timestamp: Date.now()
       };
       
       console.log('📖 최종 읽음 처리 데이터:', readData);
