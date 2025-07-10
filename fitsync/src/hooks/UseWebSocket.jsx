@@ -103,26 +103,42 @@ export const useWebSocket = () => {
       
       // 채팅 메시지 구독
       const messageSubscription = client.subscribe(`/topic/room/${room_idx}`, (message) => {
-        const messageData = JSON.parse(message.body);
-        onMessageReceived(messageData);
+        console.log('🔔 실시간 메시지 수신:', message.body);
+        try {
+          const messageData = JSON.parse(message.body);
+          console.log('📨 파싱된 메시지 데이터:', messageData);
+          
+          // 지연 없이 콜백 실행
+          onMessageReceived(messageData);
+        } catch (error) {
+          console.error('메시지 파싱 오류:', error);
+        }
       });
       
       // 읽음 확인 구독
       const readSubscription = client.subscribe(`/topic/room/${room_idx}/read`, (message) => {
-        const readData = JSON.parse(message.body);
-        onReadReceived && onReadReceived(readData);
+        console.log('📖 실시간 읽음 확인 수신:', message.body);
+        try {
+          const readData = JSON.parse(message.body);
+          console.log('👁️ 파싱된 읽음 데이터:', readData);
+          
+          // 지연 없이 콜백 실행
+          onReadReceived && onReadReceived(readData);
+        } catch (error) {
+          console.error('읽음 확인 파싱 오류:', error);
+        }
       });
       
-      console.log('채팅방 구독 완료');
+      console.log('✅ 채팅방 구독 완료 - room_idx:', room_idx);
       
       // 구독 해제 함수 반환
       return () => {
-        console.log('채팅방 구독 해제');
+        console.log('❌ 채팅방 구독 해제 - room_idx:', room_idx);
         messageSubscription.unsubscribe();
         readSubscription.unsubscribe();
       };
     } else {
-      console.warn('WebSocket 연결되지 않음 - 구독 불가');
+      console.warn('⚠️ WebSocket 연결되지 않음 - 구독 불가');
       return null;
     }
   }, [client, connected]);
@@ -145,23 +161,25 @@ export const useWebSocket = () => {
         unique_id: uniqueId // 고유ID
       };
       
+      console.log('📤 메시지 전송 시도:', messageWithSender);
+      
       try {
         client.publish({
           destination: '/app/chat.send',
           body: JSON.stringify(messageWithSender)
         });
-        console.log('메시지 전송 완료');
+        console.log('✅ 메시지 전송 완료');
       } catch (error) {
-        console.error('메시지 전송 실패:', error);
+        console.error('❌ 메시지 전송 실패:', error);
       }
     } else {
-      console.warn('WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
     }
   }, [client, connected]);
 
   // 읽음 처리
   const markAsRead = useCallback((message_idx, room_idx) => {
-    console.log('읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
+    console.log('👁️ 읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
     
     // 세션스토리지에서 member_idx 가져오기
     const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
@@ -175,15 +193,19 @@ export const useWebSocket = () => {
         receiver_idx: memberIdx
       };
       
-      console.log('최종 읽음 처리 데이터:', readData);
+      console.log('📖 최종 읽음 처리 데이터:', readData);
       
-      client.publish({
-        destination: '/app/chat.read',
-        body: JSON.stringify(readData)
-      });
-      console.log('읽음 처리 완료');
+      try {
+        client.publish({
+          destination: '/app/chat.read',
+          body: JSON.stringify(readData)
+        });
+        console.log('✅ 읽음 처리 완료');
+      } catch (error) {
+        console.error('❌ 읽음 처리 실패:', error);
+      }
     } else {
-      console.warn('WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
     }
   }, [client, connected]);
 

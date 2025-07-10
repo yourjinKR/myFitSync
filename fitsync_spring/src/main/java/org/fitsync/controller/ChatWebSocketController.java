@@ -23,7 +23,7 @@ public class ChatWebSocketController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
     
-    // 💡 중복 메시지 방지를 위한 처리된 메시지 ID 저장소
+    // 중복 메시지 방지를 위한 처리된 메시지 ID 저장소
     private final Set<String> processedMessages = ConcurrentHashMap.newKeySet();
     
     // 클라이언트에서 /app/chat.send로 메시지를 보내면 이 메서드가 처리
@@ -48,17 +48,17 @@ public class ChatWebSocketController {
             return;
         }
         
-        // 💡 중복 메시지 검사 및 방지
+        // 중복 메시지 검사 및 방지
         if (unique_id != null) {
             if (processedMessages.contains(unique_id)) {
-                System.out.println("🛑 중복 메시지 감지 및 차단 - unique_id: " + unique_id);
+                System.out.println("중복 메시지 감지 및 차단 - unique_id: " + unique_id);
                 return; // 중복 메시지는 처리하지 않음
             }
             
             // 처리된 메시지로 등록
             processedMessages.add(unique_id);
             
-            // 💡 메모리 누수 방지: 1000개 이상이면 오래된 것부터 제거
+            // 메모리 누수 방지: 1000개 이상이면 오래된 것부터 제거
             if (processedMessages.size() > 1000) {
                 // ConcurrentHashMap.newKeySet()은 insertion order를 보장하지 않으므로
                 // 간단하게 일정 개수 이상이면 전체 클리어
@@ -68,7 +68,7 @@ public class ChatWebSocketController {
             }
         }
         
-        System.out.println("🔵 메시지 처리 시작 - unique_id: " + unique_id + ", content: " + message_content);
+        System.out.println("메시지 처리 시작 - unique_id: " + unique_id + ", content: " + message_content);
         
         // 메시지 객체 생성
         MessageVO vo = new MessageVO();
@@ -83,19 +83,17 @@ public class ChatWebSocketController {
         
         System.out.println("✅ 메시지 저장 완료 - message_idx: " + savedMessage.getMessage_idx());
         
-        // 저장된 메시지의 완전한 정보를 다시 조회하여 전송
+        // 저장된 메시지를 즉시 브로드캐스트 (완전한 정보 조회 없이)
         try {
-            MessageVO completeMessage = chatService.getMessage(savedMessage.getMessage_idx());
-            if (completeMessage != null) {
-                System.out.println("📤 완전한 메시지 정보로 브로드캐스트: " + completeMessage.getMessage_senddate());
-                messagingTemplate.convertAndSend("/topic/room/" + room_idx, completeMessage);
-            } else {
-                System.err.println("❌ 저장된 메시지 조회 실패");
-                messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
-            }
-        } catch (Exception e) {
-            System.err.println("❌ 메시지 조회 중 오류: " + e.getMessage());
+            // 저장된 메시지에 추가 정보 설정
+            savedMessage.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
+            
+            System.out.println("즉시 메시지 브로드캐스트: " + savedMessage.getMessage_idx());
             messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
+            
+        } catch (Exception e) {
+            System.err.println("메시지 브로드캐스트 중 오류: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -108,24 +106,34 @@ public class ChatWebSocketController {
         
         // 필수 값 검증
         if (receiver_idx == null || message_idx == null || room_idx == null) {
-            System.err.println("❌ 읽음 처리 데이터 누락:");
+            System.err.println("읽음 처리 데이터 누락:");
             System.err.println("   receiver_idx: " + receiver_idx);
             System.err.println("   message_idx: " + message_idx);
             System.err.println("   room_idx: " + room_idx);
             return;
         }
         
+        System.out.println("읽음 처리 시작 - message_idx: " + message_idx + ", receiver_idx: " + receiver_idx);
+        
         // 읽음 처리
-        chatService.readMark(message_idx, receiver_idx);
+        int result = chatService.readMark(message_idx, receiver_idx);
         
-        // 읽음 확인 전송
-        String readTopic = "/topic/room/" + room_idx + "/read";
-        Map<String, Object> readNotification = Map.of(
-            "message_idx", message_idx, 
-            "receiver_idx", receiver_idx
-        );
-        
-        messagingTemplate.convertAndSend(readTopic, readNotification);
+        if (result > 0) {
+            System.out.println("읽음 처리 완료 - message_idx: " + message_idx);
+            
+            // 읽음 확인 즉시 전송
+            String readTopic = "/topic/room/" + room_idx + "/read";
+            Map<String, Object> readNotification = Map.of(
+                "message_idx", message_idx, 
+                "receiver_idx", receiver_idx,
+                "read_time", System.currentTimeMillis() // 읽은 시간 추가
+            );
+            
+            messagingTemplate.convertAndSend(readTopic, readNotification);
+            System.out.println("읽음 확인 브로드캐스트 완료");
+        } else {
+            System.out.println("읽음 처리 실패 - message_idx: " + message_idx);
+        }
     }
     
     // 메시지에서 Integer 값 안전하게 추출
