@@ -25,6 +25,8 @@ import RoutineDetail from '../components/routine/RoutineDetail';
 import IsLoading2 from '../components/IsLoading2';
 import AiServiceContainer from '../components/ai/AiServiceContainer';
 import IsLoading3 from '../components/IsLoading3';
+import PaymentContainer from '../components/payment/PaymentContainer';
+import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -94,8 +96,11 @@ const Display = () => {
           <Route path='/loading3' element={<IsLoading3/>}/>
 
           <Route path='/ai' element={<AiServiceContainer/>}>
-            
-          </Route>          
+          </Route>
+
+          <Route path='/payment' element={<PaymentContainer/>}>
+            <Route path='kakao' element={<KaKaoPayTest/>}/>
+          </Route>
 
           <Route path='/admin' element={<AdminMain/>}>
             <Route path='ai' element={<AItest/>}/>
