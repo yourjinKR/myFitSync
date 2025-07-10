@@ -87,8 +87,16 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
             {
               pt : {pt_idx: selectedValue, pt_name: selectedName, pt_category: selectedCategory},
               pt_idx: selectedValue,
+              routine_idx : null,
               routine_list_idx : routineData.routine_list_idx,
               routine_memo: null,
+              sets: [{
+                routins_idx: null,
+                set_num: 1,
+                set_volume: 0,
+                set_count: 0,
+                id: `${selectedValue}-0-${Date.now()}`
+              }]
             }
           ]
         });
