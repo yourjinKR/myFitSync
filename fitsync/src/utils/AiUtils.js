@@ -36,7 +36,7 @@ const AiUtil = {
                 }));
                 
                 let finalName = null;
-                return {pt_idx : exIdx, name : null, routine_memo : "", routineSet : routineSet};
+                return {pt_idx : exIdx, name : null, routine_memo : "", sets : routineSet};
             });
 
             const parseData = {
