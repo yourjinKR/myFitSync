@@ -55,14 +55,28 @@ const Avatar = styled.div`
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 1.6rem;
   margin-right: 16px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  
+  /* 프로필 이미지가 있을 때 */
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* 프로필 이미지가 없을 때 기본 스타일 */
+  &.default-avatar {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.6rem;
+  }
 `;
 
 const RoomInfo = styled.div`
@@ -205,6 +219,55 @@ const ChatMain = () => {
     }
   };
 
+  // 상대방 프로필 이미지 및 이름 가져오기
+  const getOtherPersonInfo = (room) => {
+    const currentMemberIdx = user.member_idx;
+    
+    if (room.trainer_idx === currentMemberIdx) {
+      // 내가 트레이너인 경우 → 회원 정보 반환
+      return {
+        name: room.user_name || '회원',
+        image: null // 백엔드에서 user_image 필드 추가 필요
+      };
+    } else {
+      // 내가 일반 사용자인 경우 → 트레이너 정보 반환
+      return {
+        name: room.trainer_name || '트레이너',
+        image: null // 백엔드에서 trainer_image 필드 추가 필요
+      };
+    }
+  };
+
+  // 아바타 렌더링 - 프로필 이미지 또는 초성
+  const renderAvatar = (room) => {
+    const otherPerson = getOtherPersonInfo(room);
+    
+    if (otherPerson.image) {
+      // 프로필 이미지가 있는 경우
+      return (
+        <Avatar>
+          <img 
+            src={otherPerson.image} 
+            alt={`${otherPerson.name} 프로필`}
+            onError={(e) => {
+              // 이미지 로드 실패 시 기본 아바타로 대체
+              e.target.style.display = 'none';
+              e.target.parentElement.classList.add('default-avatar');
+              e.target.parentElement.textContent = otherPerson.name.charAt(0).toUpperCase();
+            }}
+          />
+        </Avatar>
+      );
+    } else {
+      // 프로필 이미지가 없는 경우 초성 표시
+      return (
+        <Avatar className="default-avatar">
+          {otherPerson.name.charAt(0).toUpperCase()}
+        </Avatar>
+      );
+    }
+  };
+
   // 마지막 메시지 상태 텍스트 생성 (수정된 부분)
   const getLastMessageText = (room) => {
     const unreadCount = unreadCounts[room.room_idx] || 0;
@@ -276,9 +339,7 @@ const ChatMain = () => {
               onClick={() => handleRoomClick(room)}
             >
               {/* 상대방 아바타 */}
-              <Avatar>
-                {getInitial(getRoomDisplayName(room))}
-              </Avatar>
+              {renderAvatar(room)}
               
               {/* 채팅방 정보 */}
               <RoomInfo>

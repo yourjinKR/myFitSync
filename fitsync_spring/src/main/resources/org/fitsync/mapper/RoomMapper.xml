@@ -55,10 +55,10 @@
 	        r.last_message,
 	        r.room_status,
 	        r.room_name,
-	        -- 트레이너 이름
 	        trainer.member_name as trainer_name,
-	        -- 회원 이름  
-	        user_member.member_name as user_name
+	        trainer.member_image as trainer_image,
+	        user_member.member_name as user_name,
+	        user_member.member_image as user_image
 	    FROM room r
 	    LEFT JOIN member trainer ON r.trainer_idx = trainer.member_idx
 	    LEFT JOIN member user_member ON r.user_idx = user_member.member_idx
