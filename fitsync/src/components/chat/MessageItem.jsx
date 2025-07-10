@@ -112,9 +112,28 @@ const MessageItem = ({ message, isCurrentUser, attachments = [], senderName = nu
     
     // 읽음 시간이 있으면 읽은시간 + "읽음", 없으면 "읽지 않음" 표시
     if (message.message_readdate) {
+      // 다양한 형태의 날짜 처리
+      let readDate;
+      if (typeof message.message_readdate === 'string') {
+        readDate = new Date(message.message_readdate);
+      } else if (message.message_readdate instanceof Date) {
+        readDate = message.message_readdate;
+      } else {
+        // 타임스탬프 숫자인 경우
+        readDate = new Date(message.message_readdate);
+      }
+      
+      // 유효한 날짜인지 확인
+      if (isNaN(readDate.getTime())) {
+        return {
+          text: '읽음',
+          time: null
+        };
+      }
+      
       return {
         text: '읽음',
-        time: formatTime(message.message_readdate)
+        time: formatTime(readDate)
       };
     } else {
       return {

@@ -244,20 +244,29 @@ const ChatRoom = () => {
 
           // 받은 메시지인 경우 자동으로 읽음 처리
           if (newMessage.receiver_idx === currentMemberIdx) {
-            markAsRead(newMessage.message_idx, parseInt(roomId));
+            // 약간의 지연 후 읽음 처리 (메시지가 화면에 렌더링된 후)
+            setTimeout(() => {
+              markAsRead(newMessage.message_idx, parseInt(roomId));
+            }, 100);
           }
         },
         
         // 읽음 확인 수신 콜백
         (readData) => {
           // 해당 메시지의 읽음 상태 업데이트
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.message_idx === readData.message_idx 
-                ? { ...msg, message_readdate: new Date() }
-                : msg
-            )
-          );
+          setMessages(prev => {
+            const updatedMessages = prev.map(msg => {
+              if (msg.message_idx === readData.message_idx) {
+                return { 
+                  ...msg, 
+                  message_readdate: new Date().toISOString() // 현재 시간으로 설정
+                };
+              }
+              return msg;
+            });
+            
+            return updatedMessages;
+          });
         }
       );
 
@@ -336,42 +345,48 @@ const ChatRoom = () => {
 
   // 채팅방 표시 이름 생성
   const getRoomDisplayName = () => {
-    // 1순위: 채팅방 이름
+    // 백엔드에서 가져온 실제 이름 사용 (roomData에 상대방 이름이 포함되어 있음)
+    if (roomData && currentMemberIdx) {
+      if (roomData.trainer_idx === currentMemberIdx) {
+        // 내가 트레이너인 경우 → 회원 이름 표시
+        const userName = roomData.user_name || '회원';
+        return `${userName}님과의 상담`;
+      } else {
+        // 내가 일반 사용자인 경우 → 트레이너 이름 표시
+        const trainerName = roomData.trainer_name || '트레이너';
+        return `${trainerName}님과의 상담`;
+      }
+    }
+    
+    // 2순위: 기존 room_name 파싱
     if (roomData?.room_name) {
-      // "양태양님과의 상담" 형태에서 이름 추출
       const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
       if (nameMatch) {
-        // 현재 사용자가 트레이너인지 일반 사용자인지 확인
         if (roomData.trainer_idx === currentMemberIdx) {
-          // 내가 트레이너인 경우 → 회원님과의 상담으로 표시
-          return `회원님과의 상담`;
+          return `회원님과의 상담`; // 트레이너인 경우 임시 표시
         } else {
-          // 내가 일반 사용자인 경우 → 트레이너 이름 표시 (기존 로직)
-          const trainerName = nameMatch[1];
-          return `${trainerName}님과의 상담`;
+          return roomData.room_name; // 기존 이름 유지
         }
       }
-      
-      // 다른 형태의 room_name이면 그대로 반환
       return roomData.room_name;
     }
     
-    // 2순위: 트레이너 정보에서 이름
+    // 3순위: 트레이너 정보에서 이름
     if (location.state?.trainerInfo?.member_name) {
       const trainerName = location.state.trainerInfo.member_name;
       
       if (roomData?.trainer_idx === currentMemberIdx) {
-        return `회원님과의 상담`; // 내가 트레이너인 경우
+        return `회원님과의 상담`;
       } else {
-        return `${trainerName}님과의 상담`; // 내가 일반 사용자인 경우
+        return `${trainerName}님과의 상담`;
       }
     }
 
-    // 3순위: 기본 표시명
+    // 4순위: 기본 표시명
     if (roomData?.trainer_idx === currentMemberIdx) {
-      return `회원님과의 상담`; // 내가 트레이너인 경우
+      return `회원님과의 상담`;
     } else {
-      return `트레이너님과의 상담`; // 내가 일반 사용자인 경우
+      return `트레이너님과의 상담`;
     }
   };
 

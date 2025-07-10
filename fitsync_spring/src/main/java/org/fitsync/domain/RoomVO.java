@@ -13,6 +13,9 @@ public class RoomVO {
 	private Timestamp room_regdate, room_msgdate;
 	private String room_status, room_name;
 	
+	// 상대방 이름 정보 추가
+	private String trainer_name, user_name;
+	
 	public RoomVO(int trainer_idx, int user_idx, String room_name) {
 		this.trainer_idx = trainer_idx;
         this.user_idx = user_idx;

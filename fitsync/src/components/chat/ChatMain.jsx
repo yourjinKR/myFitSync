@@ -193,31 +193,15 @@ const ChatMain = () => {
     // 현재 로그인한 사용자의 member_idx 가져오기
     const currentMemberIdx = user.member_idx;
     
-    // 1순위: 설정된 채팅방 이름이 있고, 그 이름에서 상대방 이름 추출
-    if (room.room_name) {
-      // "트레이너님과의 상담" 형태에서 이름 추출
-      const nameMatch = room.room_name.match(/^(.+)님과의 상담$/);
-      if (nameMatch) {
-        // 현재 사용자가 트레이너인지 일반 사용자인지 확인
-        if (room.trainer_idx === currentMemberIdx) {
-          // 내가 트레이너인 경우 → 회원님과의 상담으로 표시
-          return `회원님과의 상담`;
-        } else {
-          // 내가 일반 사용자인 경우 → 트레이너 이름 표시 (기존 로직)
-          const trainerName = nameMatch[1];
-          return `${trainerName}님과의 상담`;
-        }
-      }
-      
-      // 다른 형태의 room_name이면 그대로 반환
-      return room.room_name;
-    }
-    
-    // 2순위: room_name이 없는 경우 기본 표시명
+    // 백엔드에서 가져온 실제 이름 사용
     if (room.trainer_idx === currentMemberIdx) {
-      return `회원님과의 상담`; // 내가 트레이너인 경우
+      // 내가 트레이너인 경우 → 회원 이름 표시
+      const userName = room.user_name || '회원';
+      return `${userName}님과의 상담`;
     } else {
-      return `트레이너님과의 상담`; // 내가 일반 사용자인 경우
+      // 내가 일반 사용자인 경우 → 트레이너 이름 표시
+      const trainerName = room.trainer_name || '트레이너';
+      return `${trainerName}님과의 상담`;
     }
   };
 
@@ -233,8 +217,19 @@ const ChatMain = () => {
   };
 
   // 아바타 초성 추출
-  const getInitial = (name) => {
-    return name.charAt(0).toUpperCase();
+  const getInitial = (room) => {
+    const currentMemberIdx = user.member_idx;
+    
+    // 실제 상대방 이름에서 초성 추출
+    if (room.trainer_idx === currentMemberIdx) {
+      // 내가 트레이너인 경우 → 회원 이름 초성
+      const userName = room.user_name || '회원';
+      return userName.charAt(0).toUpperCase();
+    } else {
+      // 내가 일반 사용자인 경우 → 트레이너 이름 초성
+      const trainerName = room.trainer_name || '트레이너';
+      return trainerName.charAt(0).toUpperCase();
+    }
   };
 
   // 채팅방 정보 클릭
