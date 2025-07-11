@@ -76,7 +76,7 @@ const MuscleGroup = ({ data, muscle, setMuscle, idx }) => {
           {data}
         </InfoBox>
         {parseInt(muscle) === parseInt(idx) ? (
-          <CheckIcon style={{ color: 'var(--primary-blue)', fontSize: '32px' }} />
+          <CheckIcon/>
         ) : null}
       </MuscleInner>
     </MuscleWrapper>

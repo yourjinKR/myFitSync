@@ -17,4 +17,9 @@
 			#{routine_memo}
 		)
 	</insert>
+	
+	<delete id="delete" parameterType="org.fitsync.domain.RoutineVO">
+		DELETE ROUTINE 
+		WHERE ROUTINE_IDX = #{routine_idx} AND ROUTINE_LIST_IDX = #{routine_list_idx}
+	</delete>
 </mapper>

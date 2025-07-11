@@ -7,4 +7,6 @@ public interface RoutineMapper {
 	public int getIdx(int routine_list_idx);
 	// 루틴 운동 등록
 	public int insert(RoutineVO vo);
+	// 루틴 운동 삭제
+	public int delete(RoutineVO vo);
 }

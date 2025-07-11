@@ -21,6 +21,12 @@ const WorkoutWrapper = styled.div`
     &:active {
       background: var(--bg-tertiary);
     }
+    
+    svg{
+      width: 32px;
+      height: 32px;
+    }
+  
   }
 `;
 
@@ -153,7 +159,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
             <dd>{data.pt_category}</dd>
           </dl>
         </InfoBox>
-        {chk && <CheckIcon style={{ color: 'var(--primary-blue)', fontSize: '32px' }} />}
+        {chk && <CheckIcon />}
       </label>
     </WorkoutWrapper>
   );
