@@ -225,6 +225,7 @@ const RoutineMain = () => {
     routines: [],
   };
   const [routineData, setRoutineData] = useState(routineInit);
+  console.log(" routineData", routineData);
   const [newData, setNewData] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [unfinished, setUnfinished] = useState([]);

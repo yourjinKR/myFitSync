@@ -191,7 +191,8 @@ public class RoutineServiceImple implements RoutineService {
 					}
 					
 				} else {
-					
+					RoutineVO rvo = (RoutineVO) routineComparison.get("prevRoutine");
+					result = rmapper.delete(rvo) > 0;
 				}
 				
 			}

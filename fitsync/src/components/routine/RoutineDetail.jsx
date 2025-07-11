@@ -1,11 +1,12 @@
 import axios from 'axios';
-import React, { use, useEffect, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
 import { CheckInput, Checklabel } from '../../styles/commonStyle';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import Timer from '../Timer';
+import { useLongPress } from 'use-long-press';
 
 const WorkoutSetWrapper = styled.div`
   padding: 20px;
@@ -20,6 +21,7 @@ const WorkoutSetWrapper = styled.div`
   }
 `;
 const ExerciseSection = styled.div`
+  position: relative;
   margin-bottom: 32px;
   background: var(--bg-secondary);
   border-radius: 12px;
@@ -34,6 +36,23 @@ const ExerciseSection = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
+
+  &.edit {
+    animation: editing 2s linear infinite;
+  }
+
+  @keyframes editing {
+    0%, 50%, 100% {
+      transform: rotate(0deg);
+    }
+    25%{
+      transform: rotate(0.3deg);
+    }
+    75% {
+      transform: rotate(-0.3deg);
+    }
+  }
+
     
 `;
 const SetTop = styled.div`
@@ -180,6 +199,41 @@ const SetAddCTA = styled.button`
   }
 `;
 
+const DeleteCTA = styled.button`
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  top: 10px;
+  right: 10px;
+  text-indent: -9999px;
+  font-size: 0;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--bg-white);
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%) rotate(45deg);
+  }
+  
+  &::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--bg-white);
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+  
+`;
+
 const RoutineTop = styled.div``;
 
 const LoadingWrapper = styled.div`
@@ -194,7 +248,8 @@ const LoadingWrapper = styled.div`
 
 const TimerBox = styled.div`
   display:flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 5px 10px;
   width: 100%;
   margin:10px 0;
@@ -218,6 +273,14 @@ const TimerCTA = styled.button`
   font-weight: bold;
 `;
 
+const EditCTA = styled.button`
+  font-size: 1.4rem;
+  color : var(--text-primary);
+  background: var(--primary-blue);
+  padding: 5px 15px;
+  border-radius: 5px;
+`;
+
 const RoutineDetail = () => {
   const {routineData, setRoutineData, routineInit} = useOutletContext();
 
@@ -229,6 +292,7 @@ const RoutineDetail = () => {
   const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
   const [isTimerShow, setIsTimerShow] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
   
@@ -253,7 +317,8 @@ const RoutineDetail = () => {
   }, [data]);
 
   useEffect(() => {
-  },[isTimerShow]);
+    console.log(" isEdit", isEdit)
+  },[isTimerShow, isEdit]);
   
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
@@ -404,9 +469,24 @@ const RoutineDetail = () => {
     );
   };
 
+  const handleRoutineDelete = (idx) => {
+    if (window.confirm("이 루틴을 삭제하시겠습니까?")) {
+      setData(prev => ({
+        ...prev,
+        routines: prev.routines.filter(item => item.pt_idx !== idx)
+      }));
+    }
+  }
+
+
   const handleTimerToggle = () => {
     setIsTimerShow(true);
   }
+
+  const handleLongPress = useLongPress(() => {
+    setIsEdit(true);
+  })
+
 
   // 로딩 처리
   if (isLoading || !data) {
@@ -423,16 +503,20 @@ const RoutineDetail = () => {
         <h3>{data.routine_name}</h3>
       </RoutineTop>
       <TimerBox>
+        {
+          isEdit ? <EditCTA onClick={() => setIsEdit(!isEdit)}>완료</EditCTA> : <div></div>
+        }
         <TimerCTA onClick={handleTimerToggle}>
           <AlarmIcon/>
           휴식 타이머
         </TimerCTA>
       </TimerBox>
       {data.routines && data.routines.map((routine) => (
-        <ExerciseSection key={routine.pt_idx}>
+        <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit': ''} {...handleLongPress()}>
+          {isEdit ? <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}>삭제</DeleteCTA>: <></>}
           <SetTop>
-            <img src={routine.imageUrl} alt={routine.pt.pt_name} />
-            <h4>{routine.pt.pt_name}</h4>
+              <img src={routine.imageUrl} alt={routine.pt.pt_name} />
+              <h4>{routine.pt.pt_name}</h4>
           </SetTop>
           <MemoInput
             name="memo"
