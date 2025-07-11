@@ -221,6 +221,10 @@ const TimerCTA = styled.button`
 const RoutineDetail = () => {
   const {routineData, setRoutineData, routineInit} = useOutletContext();
 
+  const [time, setTime] = useState({
+    minutes: 0,
+    seconds: 0,
+  });
   const [init, setInit] = useState(null);
   const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
@@ -506,7 +510,7 @@ const RoutineDetail = () => {
       ))}
 
       {
-        isTimerShow ? <Timer /> : <></>
+        isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow}/> : <></>
       }
     </WorkoutSetWrapper>
   );

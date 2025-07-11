@@ -51,7 +51,7 @@ const GlobalStyle = createGlobalStyle`
 
   @media (max-width: 750px) {
     *, *::before, *::after {
-      font-size: 1.3vw;
+      font-size: 1.3vw important; /* 모바일에서 폰트 크기 조정 */
     }
   }
  

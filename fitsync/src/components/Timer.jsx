@@ -4,10 +4,8 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode } from 'swiper/modules';
 import AlarmIcon from '@mui/icons-material/Alarm';
 
-
 import 'swiper/css';
 import 'swiper/css/free-mode';
-import { set } from 'date-fns';
 
 const TimerBg = styled.div`
   position: fixed;
@@ -20,21 +18,45 @@ const TimerBg = styled.div`
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  gap: 20px;
   z-index: 1000;
 `;
 
-const TimeController = styled.div`
-  position:relative;
-  height:100px;
+const TimerInner = styled.div`
+  position: relative;
   display: flex;
-  gap:15px;
+  flex-direction: column;
+  gap: 20px;
+  padding: 50px;
+`;
+
+
+const TimeController = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 100px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  letter-spacing: 8px;
+  z-index: -1;
+  opacity: 0;
+  
+  &.active {
+    z-index: 10;
+    opacity: 1;
+  }
+
+  font-size: 4rem;
+  font-weight: bold;
+
   .mySwiper {
     height: 100%;
-    outline: 1px solid #f00;
-
+    
     .swiper-slide{
       font-size: 4rem;
-      padding: 0 25px;
       text-align: center;
       line-height: 40px;
     }
@@ -43,9 +65,12 @@ const TimeController = styled.div`
 
 const TimerBox = styled.div`
   position: relative;
-  width: 200px;
-  height: 200px;
-`
+  width: 300px;
+  height: 300px;
+  background: var(--bg-primary);
+  border-radius: 50%;
+  
+`;
 
 const TimerText = styled.div`
   position: absolute;
@@ -60,11 +85,28 @@ const TimerText = styled.div`
   justify-content: center;
   width: 100%;
   height: 100%;
+  letter-spacing: 7px;
+  z-index: 10;
+  opacity: 1;
+  
+  &.active {
+    z-index: -1;
+    opacity: 0;
+  }
 `;
 
 const TimeControlBox = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 10px;
+  & > div {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
 const Button = styled.button.attrs(props => ({
@@ -83,6 +125,8 @@ const Button = styled.button.attrs(props => ({
   padding: 10px 20px;
   border-radius: 10px;
   text-align: center;
+  width: 120px;
+ 
 `;
 
 const Svg = styled.svg`
@@ -171,11 +215,8 @@ function timeFormat(seconds, minutes, type) {
   return result;
 }
 
-const Timer = () => {
-  const [time, setTime] = useState({
-    minutes: 0,
-    seconds: 0,
-  });
+const Timer = ({time, setTime, setIsTimerShow}) => {
+  
   const [formatTime, setFormatTime] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -187,7 +228,7 @@ const Timer = () => {
   const alarmBgRef = useRef(null);
 
   const [init, setInit] = useState({
-    size : 200, 
+    size : 300, 
     strokeWidth : 10, 
     percentage : 100
   });
@@ -208,6 +249,7 @@ const Timer = () => {
         setTotalTime(newFormatTime);
       }
     }
+
   }, [time, isRunning, isPause]);
 
   useEffect(() => {
@@ -225,8 +267,10 @@ const Timer = () => {
   
   const handleTimerControl = (type) => {
     if( formatTime !== null && formatTime !== undefined) {
+
       if (!isRunning && parseInt(formatTime) !== 0 && type === 'START') {
         setIsRunning(true);
+        setIsPause(false);
         timerRef.current = setInterval(() => {
           setFormatTime(prev => {
             const newTime = prev - 1;
@@ -266,98 +310,151 @@ const Timer = () => {
 
   const handleAlarm = () => {
     alarmRef.current.style.display = 'none';
+    setIsTimerShow(false);
   }
   
-  const handleTimer = () => {
-    console.log(" alarmRef.current", alarmRef.current)
+  const handleTimer = (e) => {
+    if (e.target === e.currentTarget) {
+      setIsTimerShow(false);
+    }
   }
 
+  const handleAddTime = (seconds) => {
+    setFormatTime(prev =>
+      parseInt(prev) + seconds
+    )
+
+    if(seconds !== 60) {
+      const newTime = time.seconds + seconds;
+      
+      if(newTime >= 60) {
+        secondsSwiperRef.current?.swiper?.slideTo(
+          parseInt(newTime%60) === 0 ? 0 : parseInt(newTime%60), 500);
+        minutesSwiperRef.current?.swiper?.slideTo(
+          parseInt(minutesSwiperRef.current?.swiper?.activeIndex) + 1, 
+          500
+        );
+      }else{
+        secondsSwiperRef.current?.swiper?.slideTo(newTime, 500);
+      }
+   
+    } else {
+      minutesSwiperRef.current?.swiper?.slideTo(
+        parseInt(minutesSwiperRef.current?.swiper?.activeIndex) + 1, 
+        500
+      );
+    }
+  }
 
   return (
     <TimerBg ref={alarmBgRef} onClick={handleTimer}>
-      <TimerBox>
-        <Svg width={init.size} height={init.size}>
-          <CircleBackground
-            cx={init.size / 2}
-            cy={init.size / 2}
-            r={radius}
-            />
-          <CircleProgress
-            cx={init.size / 2}
-            cy={init.size / 2}
-            r={radius}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            />
-        </Svg>
-        <TimerText ref={timerRef}>
-          {timeFormat(formatTime, 0, 'seconds')}
-        </TimerText>
-      </TimerBox>
-      <TimeController>
-        <Swiper
-          direction="vertical"
-          slidesPerView={2}
-          spaceBetween={10}
-          loop={false}
-          freeMode={{ enabled: true, sticky: true, momentum: true }}
-          centeredSlides={true}
-          onTouchEnd={() => updateTime("minutes")}
-          onTransitionEnd={(swiper) => {
-            setTime({
-              ...time,
-              minutes: swiper.activeIndex
-            })
-          }}
-          modules={[FreeMode]}
-          className="mySwiper"
-          ref={minutesSwiperRef}
-        >
+      <TimerInner>
+        <TimerBox>
+          <Svg width={init.size} height={init.size}>
+            <CircleBackground
+              cx={init.size / 2}
+              cy={init.size / 2}
+              r={radius}
+              />
+            <CircleProgress
+              cx={init.size / 2}
+              cy={init.size / 2}
+              r={radius}
+              strokeDasharray={circumference}
+              strokeDashoffset={isRunning ? offset : 0}
+              />
+          </Svg>
+            
+          <TimerText ref={timerRef} className={isPause || isRunning? '' : 'active'}>
+            {timeFormat(formatTime, 0, 'seconds')}
+          </TimerText>
+          <TimeController className={!isPause && !isRunning ? 'active' : ''}>
+            <Swiper
+              direction="vertical"
+              initialSlide={time.minutes}
+              slidesPerView={2}
+              spaceBetween={10}
+              loop={false}
+              freeMode={{ enabled: true, sticky: true, momentum: true }}
+              centeredSlides={true}
+              onTouchEnd={() => updateTime("minutes")}
+              onTransitionEnd={(swiper) => {
+                setTime({
+                  ...time,
+                  minutes: swiper.activeIndex
+                })
+              }}
+              modules={[FreeMode]}
+              className="mySwiper"
+              ref={minutesSwiperRef}
+            >
+              {
+                Array.from({ length: 61 }, (_, index) => (
+                  <SwiperSlide key={index}>
+                    {index < 10 ? '0' + index : index}
+                  </SwiperSlide>
+                ))
+              }
+            </Swiper>
+            :
+            <Swiper
+              direction="vertical"
+              initialSlide={time.seconds}
+              slidesPerView={2}
+              spaceBetween={10}
+              loop={false}
+              freeMode={{ enabled: true, sticky: true, momentum: true }}
+              centeredSlides={true}
+              onTouchEnd={() => updateTime("seconds")}
+              onTransitionEnd={(swiper) => {
+                setTime({
+                  ...time,
+                  seconds: swiper.activeIndex
+                })
+              }}
+              modules={[FreeMode]}
+              className="mySwiper"
+              ref={secondsSwiperRef}
+            >
+              {
+                Array.from({ length: 60 }, (_, index) => (
+                  <SwiperSlide key={index}>
+                    {index < 10 ? '0' + index : index}
+                  </SwiperSlide>
+                ))
+              }
+            </Swiper>
+          </TimeController>
+
+        </TimerBox>
+        
+        {/* 버튼 */}
+        <TimeControlBox>
+          <div>
+            {
+              isRunning ? 
+              <Button color={'red'} onClick={() => handleTimerControl('STOP')}>중지</Button> :
+              <Button color={'green'} onClick={() => handleTimerControl('START')}>시작</Button>
+            }
+            <Button color={'gay'} onClick={() => handleTimerControl('RESET')}>초기화</Button>
+          </div>
           {
-            Array.from({ length: 61 }, (_, index) => (
-              <SwiperSlide key={index}>
-                {index < 10 ? '0' + index : index}
-              </SwiperSlide>
-            ))
+            !isRunning ?
+            <div>
+              <Button color={'blue'} onClick={() => handleAddTime(30)}>+ 30초</Button>
+              <Button color={'blue'} onClick={() => handleAddTime(60)}>+ 1분</Button>
+            </div>
+            : <></>
           }
-        </Swiper>
-        <Swiper
-          direction="vertical"
-          slidesPerView={2}
-          spaceBetween={10}
-          loop={false}
-          freeMode={{ enabled: true, sticky: true, momentum: true }}
-          centeredSlides={true}
-          onTouchEnd={() => updateTime("seconds")}
-          onTransitionEnd={(swiper) => {
-            setTime({
-              ...time,
-              seconds: swiper.activeIndex
-            })
-          }}
-          modules={[FreeMode]}
-          className="mySwiper"
-          ref={secondsSwiperRef}
-        >
-          {
-            Array.from({ length: 60 }, (_, index) => (
-              <SwiperSlide key={index}>
-                {index < 10 ? '0' + index : index}
-              </SwiperSlide>
-            ))
-          }
-        </Swiper>
-      </TimeController>
-      <TimeControlBox>
-        <Button color={'green'} onClick={() => handleTimerControl('START')}>시작</Button>
-        <Button color={'red'} onClick={() => handleTimerControl('STOP')}>중지</Button>
-        <Button color={'gay'} onClick={() => handleTimerControl('RESET')}>초기화</Button>
-      </TimeControlBox>
-      <Alarm ref={alarmRef}>
-          <h4>휴식 알람</h4>
-          <AlarmIcon />
-          <Button color={'blue'} onClick={handleAlarm}>확인</Button>
-      </Alarm>
+        </TimeControlBox>
+
+        {/* 알람 */}
+        <Alarm ref={alarmRef}>
+            <h4>휴식 알람</h4>
+            <AlarmIcon />
+            <Button color={'blue'} onClick={handleAlarm}>확인</Button>
+        </Alarm>
+      </TimerInner>
     </TimerBg>
   );
 };
