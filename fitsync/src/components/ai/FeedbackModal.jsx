@@ -222,11 +222,17 @@ const FeedbackModal = ({ onClose, onSubmit }) => {
             label: '루틴 구성이 마음에 들지 않음',
             description: '운동 순서나 분할이 제 스타일과 맞지 않아요'
         },
+        {
+            value: 'timeout',
+            label: '응답시간이 너무 오래 걸림',
+            description: 'AI가 응답하는데 너무 오랜 시간이 걸려요'
+        },
         { 
             value: 'other', 
             label: '기타',
             description: '위에 해당하지 않는 다른 이유가 있어요'
-        }
+        },
+        
     ];
 
     const handleSubmit = () => {
@@ -242,7 +248,7 @@ const FeedbackModal = ({ onClose, onSubmit }) => {
             return;
         }
 
-        onSubmit('negative', reason);
+        onSubmit('DISLIKE', reason);
     };
 
     const handleOverlayClick = (e) => {

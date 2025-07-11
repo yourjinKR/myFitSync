@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import { getMemberTotalData } from '../../utils/memberUtils';
@@ -109,6 +109,7 @@ const AiServiceContainer = () => {
     const [memberData, setMemberData] = useState(null);
     const [aiResult, setAiResult] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [feedbackCompleted, setFeedbackCompleted] = useState(false); // 피드백 완료 상태
     const {rawData, rawDataIdx, rawDataMap, fetchWorkoutNames} = useWorkoutNames();
 
     // 멤버 데이터 로드
@@ -142,6 +143,7 @@ const AiServiceContainer = () => {
     // AI 루틴 생성 처리
     const handleGenerateRoutine = async (inputData) => {
         setCurrentStep(2);
+        setFeedbackCompleted(false); // 새로운 루틴 생성 시 피드백 상태 초기화
         
         try {
             const startTime = performance.now();
@@ -197,19 +199,22 @@ const AiServiceContainer = () => {
     // 피드백 처리
     const handleFeedback = async (type, reason = null) => {
         try {
-            const feedbackData = {
-                logIdx: aiResult?.logIdx,
-                type: type,
-                reason: reason
+            const log = {
+                apilog_idx : aiResult?.logIdx,
+                apilog_feedback : type,
+                apilog_feedback_reason : reason,
             };
+
+            console.log(log);
             
             // 피드백 API 호출 (실제 엔드포인트에 맞게 수정 필요)
-            await axios.post('/api/feedback', feedbackData, { withCredentials: true });
+            await axios.patch('/admin/updateFeedBack', log, { withCredentials: true });
             
             console.log('피드백 전송:', type, reason);
             setShowFeedbackModal(false);
+            setFeedbackCompleted(true); // 피드백 완료 상태 설정
             
-            if (type === 'positive') {
+            if (type === 'positive' || type === 'LIKE') {
                 alert('피드백 감사합니다! 더 나은 서비스를 제공하겠습니다.');
             } else {
                 alert('소중한 의견 감사합니다. 개선하여 더 나은 루틴을 제공하겠습니다.');
@@ -268,7 +273,12 @@ const AiServiceContainer = () => {
                     result={aiResult}
                     onSave={handleSaveResult}
                     onFeedback={() => setShowFeedbackModal(true)}
-                    onRetry={() => setCurrentStep(1)}
+                    onRetry={() => {
+                        setCurrentStep(1);
+                        setFeedbackCompleted(false); // 다시 시도 시 피드백 상태 초기화
+                    }}
+                    onSubmit={handleFeedback}
+                    feedbackCompleted={feedbackCompleted}
                 />
             )}
 

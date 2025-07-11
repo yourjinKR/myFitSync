@@ -32,4 +32,9 @@ public class ApiLogServiceImple implements ApiLogService{
 	public void updateExceptionReason(ApiLogVO log) {
 		apiLogMapper.updateExceptionReason(log);
 	}
+	
+	@Override
+	public void updateFeedBack(ApiLogVO apiLogVO) {
+		apiLogMapper.updateFeedBack(apiLogVO);
+	}
 }

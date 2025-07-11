@@ -42,6 +42,16 @@ public class AdminController {
 	        return ResponseEntity.status(500).body("업데이트 실패: " + e.getMessage());
 	    }
 	}
+	
+	@PatchMapping(value = "/updateFeedBack", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	public ResponseEntity<String> updateFeedBack(@RequestBody ApiLogVO log) {
+	    try {
+	    	apiLogService.updateFeedBack(log);
+	        return ResponseEntity.ok("피드백 업데이트 완료");
+	    } catch (Exception e) {
+	        return ResponseEntity.status(500).body("업데이트 실패: " + e.getMessage());
+	    }
+	}
 
 
 }

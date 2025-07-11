@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useState } from 'react';
+import styled, { keyframes, css } from 'styled-components';
 
 const ResultContainer = styled.div`
     background: var(--bg-secondary);
@@ -245,6 +245,15 @@ const FeedbackButtons = styled.div`
     }
 `;
 
+// 좋아요 버튼 애니메이션
+const likeAnimation = keyframes`
+    0% { transform: scale(1); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    75% { transform: scale(1.1) rotate(-2deg); }
+    100% { transform: scale(1); }
+`;
+
 const FeedbackButton = styled.button`
     background: ${props => props.positive ? 'var(--check-green)' : 'var(--warning)'};
     color: var(--text-primary);
@@ -253,15 +262,26 @@ const FeedbackButton = styled.button`
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 500;
-    cursor: pointer;
+    cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    opacity: ${props => props.disabled ? 0.5 : 1};
+    position: relative;
+    overflow: hidden;
     
-    &:hover {
+    ${props => props.isAnimating && css`
+        animation: ${likeAnimation} 0.8s ease-in-out;
+    `}
+    
+    &:hover:not(:disabled) {
         opacity: 0.9;
         transform: translateY(-1px);
+    }
+    
+    &:disabled {
+        transform: none;
     }
     
     @media (max-width: 768px) {
@@ -287,12 +307,34 @@ const EmptyState = styled.div`
     }
 `;
 
-const StepResult = ({ result, onSave, onFeedback, onRetry }) => {
+const StepResult = ({ result, onSave, onFeedback, onRetry, onSubmit, feedbackCompleted = false }) => {
+    const [feedbackStatus, setFeedbackStatus] = useState(feedbackCompleted ? 'positive' : null);
+    const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+
+    // feedbackCompleted prop이 변경될 때 상태 업데이트
+    React.useEffect(() => {
+        if (feedbackCompleted) {
+            setFeedbackStatus('positive');
+        }
+    }, [feedbackCompleted]);
+
     const handlePositiveFeedback = () => {
-        onFeedback('positive');
+        if (feedbackStatus) return; // 이미 피드백을 준 경우 무시
+        
+        setIsLikeAnimating(true);
+        
+        // 애니메이션 완료 후 onSubmit 호출
+        setTimeout(() => {
+            setIsLikeAnimating(false);
+            setFeedbackStatus('positive');
+            onSubmit('LIKE');
+        }, 800); // 애니메이션 시간과 맞춤
     };
 
     const handleNegativeFeedback = () => {
+        if (feedbackStatus) return; // 이미 피드백을 준 경우 무시
+        
+        setFeedbackStatus('negative');
         onFeedback('negative');
     };
 
@@ -376,14 +418,48 @@ const StepResult = ({ result, onSave, onFeedback, onRetry }) => {
 
             <FeedbackSection>
                 <FeedbackTitle>💭 이 루틴이 어떠신가요?</FeedbackTitle>
-                <FeedbackButtons>
-                    <FeedbackButton positive onClick={handlePositiveFeedback}>
-                        👍 좋아요
-                    </FeedbackButton>
-                    <FeedbackButton onClick={handleNegativeFeedback}>
-                        👎 개선 필요
-                    </FeedbackButton>
-                </FeedbackButtons>
+                {feedbackStatus ? (
+                    <div style={{ 
+                        color: 'var(--text-secondary)', 
+                        fontSize: '1rem',
+                        fontWeight: '500',
+                        padding: '1rem',
+                        background: 'var(--bg-tertiary)',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-light)'
+                    }}>
+                        {feedbackStatus === 'positive' ? (
+                            <>
+                                <span style={{ color: 'var(--check-green)', fontSize: '1.5rem' }}>✅</span>
+                                <br />
+                                피드백이 완료되었습니다. 감사합니다!
+                            </>
+                        ) : (
+                            <>
+                                <span style={{ color: 'var(--warning)', fontSize: '1.5rem' }}>📝</span>
+                                <br />
+                                개선 피드백이 등록되었습니다.
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    <FeedbackButtons>
+                        <FeedbackButton 
+                            positive 
+                            onClick={handlePositiveFeedback}
+                            isAnimating={isLikeAnimating}
+                            disabled={feedbackStatus !== null}
+                        >
+                            👍 좋아요
+                        </FeedbackButton>
+                        <FeedbackButton 
+                            onClick={handleNegativeFeedback}
+                            disabled={feedbackStatus !== null}
+                        >
+                            👎 개선 필요
+                        </FeedbackButton>
+                    </FeedbackButtons>
+                )}
             </FeedbackSection>
         </ResultContainer>
     );

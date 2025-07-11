@@ -12,4 +12,6 @@ public interface ApiLogMapper {
     List<ApiLogVO> selectApiList();
     // 예외 내용 입력
     void updateExceptionReason(ApiLogVO apiLogVO);
+    // 피드백 서버
+    void updateFeedBack(ApiLogVO apiLogVO);
 }

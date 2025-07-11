@@ -59,5 +59,16 @@
         	apilog_status_reason = #{apilog_status_reason} 
         WHERE apilog_idx = #{apilog_idx}
     </update>
+    
+	<update id="updateFeedBack" parameterType="org.fitsync.domain.ApiLogVO">
+	    UPDATE apilog
+	    <set>
+	        apilog_feedback = #{apilog_feedback},
+	        <if test="apilog_feedback_reason != null">
+	            apilog_feedback_reason = #{apilog_feedback_reason},
+	        </if>
+	    </set>
+	    WHERE apilog_idx = #{apilog_idx}
+	</update>
 
 </mapper>

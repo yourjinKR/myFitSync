@@ -12,4 +12,6 @@ public interface ApiLogService {
     List<ApiLogVO> selectApiList();
     
     void updateExceptionReason(ApiLogVO log);
+    
+    void updateFeedBack(ApiLogVO apiLogVO);
 }
