@@ -4,6 +4,8 @@ import { useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
 import { CheckInput, Checklabel } from '../../styles/commonStyle';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import Timer from '../Timer';
 
 const WorkoutSetWrapper = styled.div`
   padding: 20px;
@@ -14,7 +16,6 @@ const WorkoutSetWrapper = styled.div`
     color: var(--text-primary);
     border-bottom: 1px solid var(--border-light);
     padding-bottom: 12px;
-    margin-bottom: 20px;
     font-weight: 600;
   }
 `;
@@ -179,9 +180,7 @@ const SetAddCTA = styled.button`
   }
 `;
 
-const RoutineTop = styled.div`
-  margin-bottom: 24px;
-`;
+const RoutineTop = styled.div``;
 
 const LoadingWrapper = styled.div`
   display: flex;
@@ -193,12 +192,39 @@ const LoadingWrapper = styled.div`
   color: var(--text-secondary);
 `;
 
+const TimerBox = styled.div`
+  display:flex;
+  justify-content: flex-end;
+  padding: 5px 10px;
+  width: 100%;
+  margin:10px 0;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+  path {
+    color: var(--primary-blue-light);
+    font-weight:bold;
+  }
+`;
+    
+const TimerCTA = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--primary-blue-light);
+  font-size: 2rem;
+  font-weight: bold;
+`;
+
 const RoutineDetail = () => {
   const {routineData, setRoutineData, routineInit} = useOutletContext();
 
   const [init, setInit] = useState(null);
   const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTimerShow, setIsTimerShow] = useState(false);
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
   
@@ -221,6 +247,9 @@ const RoutineDetail = () => {
     });
     setRoutineData(data);
   }, [data]);
+
+  useEffect(() => {
+  },[isTimerShow]);
   
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
@@ -371,6 +400,10 @@ const RoutineDetail = () => {
     );
   };
 
+  const handleTimerToggle = () => {
+    setIsTimerShow(true);
+  }
+
   // 로딩 처리
   if (isLoading || !data) {
     return (
@@ -385,6 +418,12 @@ const RoutineDetail = () => {
       <RoutineTop>
         <h3>{data.routine_name}</h3>
       </RoutineTop>
+      <TimerBox>
+        <TimerCTA onClick={handleTimerToggle}>
+          <AlarmIcon/>
+          휴식 타이머
+        </TimerCTA>
+      </TimerBox>
       {data.routines && data.routines.map((routine) => (
         <ExerciseSection key={routine.pt_idx}>
           <SetTop>
@@ -465,6 +504,10 @@ const RoutineDetail = () => {
           </ListBody>
         </ExerciseSection>
       ))}
+
+      {
+        isTimerShow ? <Timer /> : <></>
+      }
     </WorkoutSetWrapper>
   );
 };

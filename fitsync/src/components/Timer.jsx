@@ -10,13 +10,17 @@ import 'swiper/css/free-mode';
 import { set } from 'date-fns';
 
 const TimerBg = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  z-index: 1000;
 `;
 
 const TimeController = styled.div`
@@ -180,6 +184,7 @@ const Timer = () => {
   const secondsSwiperRef = useRef(null);
   const timerRef = useRef(null);
   const alarmRef = useRef(null);
+  const alarmBgRef = useRef(null);
 
   const [init, setInit] = useState({
     size : 200, 
@@ -262,10 +267,14 @@ const Timer = () => {
   const handleAlarm = () => {
     alarmRef.current.style.display = 'none';
   }
+  
+  const handleTimer = () => {
+    console.log(" alarmRef.current", alarmRef.current)
+  }
 
 
   return (
-    <TimerBg>
+    <TimerBg ref={alarmBgRef} onClick={handleTimer}>
       <TimerBox>
         <Svg width={init.size} height={init.size}>
           <CircleBackground
