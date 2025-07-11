@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { getMemberTotalData } from '../../utils/memberUtils';
 import StepInputInfo from './StepInputInfo';
 import StepResult from './StepResult';
+import StepSuccess from './StepSuccess';
 import FeedbackModal from './FeedbackModal';
 import IsLoading from '../IsLoading';
 import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
@@ -105,12 +106,12 @@ const ProgressLabel = styled.div`
 `;
 
 const AiServiceContainer = () => {
-    const [currentStep, setCurrentStep] = useState(1); // 1: 입력, 2: 로딩, 3: 결과
+    const [currentStep, setCurrentStep] = useState(1); // 1: 입력, 2: 로딩, 3: 결과, 4: 완료
     const [memberData, setMemberData] = useState(null);
     const [aiResult, setAiResult] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [feedbackCompleted, setFeedbackCompleted] = useState(false); // 피드백 완료 상태
-    const {rawData, rawDataIdx, rawDataMap, fetchWorkoutNames} = useWorkoutNames();
+    const {rawData, rawDataIdx, rawDataMap} = useWorkoutNames();
 
     // 멤버 데이터 로드
     useEffect(() => {
@@ -138,6 +139,7 @@ const AiServiceContainer = () => {
             console.log(exception);
         }
         
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     },[aiResult]);
 
     // AI 루틴 생성 처리
@@ -175,7 +177,7 @@ const AiServiceContainer = () => {
 
             setAiResult(result);
             // 이름 체크
-            const changedName = checkAllExerciseNames(result, rawDataMap);
+            checkAllExerciseNames(result, rawDataMap);
             setCurrentStep(3);
         } catch (error) {
             console.error('AI 루틴 생성 실패:', error);
@@ -190,10 +192,19 @@ const AiServiceContainer = () => {
             alert('저장할 루틴이 없습니다.');
             return;
         }
-        const changedNameAiResult = checkAllExerciseNames(aiResult, rawDataMap);
-        console.log('변경된 AI 결과:', changedNameAiResult);
         
-        AiUtil.saveResult(changedNameAiResult, rawDataIdx, rawDataMap);
+        try {
+            const changedNameAiResult = checkAllExerciseNames(aiResult, rawDataMap);
+            console.log('변경된 AI 결과:', changedNameAiResult);
+            
+            await AiUtil.saveResult(changedNameAiResult, rawDataIdx, rawDataMap);
+            
+            // 저장 성공 후 완료 단계로 이동
+            setCurrentStep(4);
+        } catch (error) {
+            console.error('루틴 저장 실패:', error);
+            alert('루틴 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
     };
 
     // 피드백 처리
@@ -225,10 +236,19 @@ const AiServiceContainer = () => {
         }
     };
 
+    // 새 루틴 만들기 처리
+    const handleNewRoutine = () => {
+        setCurrentStep(1);
+        setAiResult(null);
+        setFeedbackCompleted(false);
+        setShowFeedbackModal(false);
+    };
+
     const steps = [
         { icon: '📝', label: '정보 입력', step: 1 },
         { icon: '🤖', label: 'AI 생성', step: 2 },
-        { icon: '✅', label: '완료', step: 3 }
+        { icon: '✅', label: '결과 확인', step: 3 },
+        { icon: '🎉', label: '완료', step: 4 }
     ];
 
     return (
@@ -279,6 +299,13 @@ const AiServiceContainer = () => {
                     }}
                     onSubmit={handleFeedback}
                     feedbackCompleted={feedbackCompleted}
+                />
+            )}
+            
+            {currentStep === 4 && (
+                <StepSuccess 
+                    result={aiResult}
+                    onNewRoutine={handleNewRoutine}
                 />
             )}
 
