@@ -235,6 +235,7 @@ const Timer = () => {
         setIsPause(true);
       } else if (type === 'RESET')  {
         setIsRunning(false);
+        setIsPause(false);
         if (timerRef.current != null) {
           clearInterval(timerRef.current);
           timerRef.current = null;
