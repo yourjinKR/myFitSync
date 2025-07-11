@@ -3,5 +3,39 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.MatchingMapper">
-
+		
+		<resultMap id="MatchingWithMemberMap" type="org.fitsync.domain.MatchingVO">
+			  <id property="matching_idx" column="MATCHING_IDX"/>
+			  <result property="trainer_idx" column="TRAINER_IDX"/>
+			  <result property="user_idx" column="USER_IDX"/>
+			  <result property="matching_total" column="MATCHING_TOTAL"/>
+			  <result property="matching_remain" column="MATCHING_REMAIN"/>
+			  <result property="matching_start" column="MATCHING_START"/>
+			  <result property="matching_end" column="MATCHING_END"/>
+			  <result property="matching_complete" column="MATCHING_COMPLETE"/>
+			
+			  <association property="member" javaType="org.fitsync.domain.MemberVO">
+			    <id property="member_idx" column="member_member_idx"/>
+			    <result property="member_name" column="member_member_name"/>
+			  </association>
+		</resultMap>
+		
+		<select id="getMatchedMembers" resultMap="MatchingWithMemberMap" parameterType="int">
+			  SELECT 
+			    m.MATCHING_IDX,
+			    m.TRAINER_IDX,
+			    m.USER_IDX,
+			    m.MATCHING_TOTAL,
+			    m.MATCHING_REMAIN,
+			    m.MATCHING_START,
+			    m.MATCHING_END,
+			    m.MATCHING_COMPLETE,
+			
+			    u.MEMBER_IDX AS member_member_idx,
+			    u.MEMBER_NAME AS member_member_name
+			  FROM MATCHING m
+			  JOIN MEMBER u ON m.USER_IDX = u.MEMBER_IDX
+			  WHERE m.TRAINER_IDX = #{trainerIdx}
+		</select>
+		
 </mapper>

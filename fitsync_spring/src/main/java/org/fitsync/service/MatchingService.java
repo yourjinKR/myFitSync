@@ -1,5 +1,11 @@
 package org.fitsync.service;
 
-public interface MatchingService {
+import java.util.List;
 
+import org.fitsync.domain.MatchingVO;
+
+public interface MatchingService {
+	
+	// 매칭된 회원 조회
+	public List<MatchingVO> getMatchedMembers(int trainerIdx);
 }

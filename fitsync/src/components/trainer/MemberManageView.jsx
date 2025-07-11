@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { AiOutlineSearch } from 'react-icons/ai';
 import UserInsetForTrainer from './UserInsetForTrainer'; // ✅ 하단 삽입 컴포넌트
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 /* ---------- styled-components ---------- */
 const Wrapper = styled.div`
@@ -19,11 +21,16 @@ const SearchBox = styled.div`
 const SearchInput = styled.input`
   width: 100%;
   padding: 0.85rem 3rem 0.85rem 1.25rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   font-size: 1rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
   &:focus {
-    outline: 2px solid #5b6eff;
+    outline: 2px solid var(--primary-blue);
   }
 `;
 
@@ -33,7 +40,7 @@ const SearchIcon = styled(AiOutlineSearch)`
   top: 50%;
   transform: translateY(-50%);
   font-size: 1.25rem;
-  color: #666;
+  color: var(--text-tertiary);
 `;
 
 const Tabs = styled.div`
@@ -49,40 +56,40 @@ const Tab = styled.button`
   font-weight: 600;
   cursor: pointer;
   padding-bottom: 0.25rem;
-  ${({ active }) =>
-    active &&
-    css`
-      border-bottom: 2px solid #000;
-    `}
+  color: ${({ $active }) => ($active ? 'var(--primary-blue)' : 'var(--text-secondary)')};
+  border-bottom: ${({ $active }) => ($active ? '2px solid var(--primary-blue)' : 'none')};
+  transition: color 0.2s, border-bottom 0.2s;
   span.count {
     margin-left: 0.25rem;
-    color: #5b6eff;
+    color: var(--primary-blue-light);
   }
 `;
 
 const AddBtn = styled.button`
   margin-left: auto;
-  background: #5b6eff;
-  color: #fff;
+  background: var(--primary-blue);
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 600;
   border: none;
   border-radius: 0.5rem;
   padding: 0.6rem 1rem;
   cursor: pointer;
+  transition: background 0.2s;
   &:hover {
-    background: #4a5de0;
+    background: var(--primary-blue-hover);
   }
 `;
 
 const Card = styled.div`
-  background: #fff;
+  background: var(--bg-secondary);
   border-radius: 0.75rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  border: 1px solid var(--border-light);
 `;
 
 const CardTop = styled.div`
@@ -90,11 +97,12 @@ const CardTop = styled.div`
   justify-content: space-between;
   font-size: 1rem;
   font-weight: 600;
+  color: var(--text-primary);
 `;
 
 const LessonInfo = styled.div`
   font-size: 0.9rem;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.3;
 `;
 
@@ -106,13 +114,13 @@ const StatusRow = styled.div`
     font-weight: 600;
   }
   .done {
-    color: #007bff;
+    color: var(--primary-blue);
   }
   .remain {
-    color: #30a330;
+    color: var(--check-green);
   }
   .reserved {
-    color: #777;
+    color: var(--text-tertiary);
   }
 `;
 
@@ -124,32 +132,59 @@ const DotRow = styled.div`
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: #ccc;
+    background: var(--border-medium);
   }
 `;
 
-/* ---------- 더미 데이터 ---------- */
-const dummyMembers = {
-  active: [
-    {
-      id: 1,
-      name: '유어진',
-      phone: '010-1234-5678',
-      lessonInfo: '수업 10회권 / 2025-12-31',
-      done: 1,
-      remain: 9,
-      reserved: 1,
-    },
-  ],
-  expired: [],
-};
+    const MemberManageView = () => {
+      const [tab, setTab] = useState('active');
+      const [keyword, setKeyword] = useState('');
+      const [showInsertForm, setShowInsertForm] = useState(false);
+      const [activeMembers, setActiveMembers] = useState([]);
+      const [expiredMembers, setExpiredMembers] = useState([]);
+      const { member_idx } = useSelector((state) => state.user.user);
 
-const MemberManageView = () => {
-  const [tab, setTab] = useState('active');
-  const [keyword, setKeyword] = useState('');
-  const [showInsertForm, setShowInsertForm] = useState(false);
+      useEffect(() => {
+      if (!member_idx) return;
 
-  const members = dummyMembers[tab].filter((m) =>
+      axios.get(`/trainer/${member_idx}/matched-members`)
+        .then((res) => {
+          const active = [];
+          const expired = [];
+
+          res.data.forEach((m) => {
+            const total = m.matching_total;
+            const remain = m.matching_remain;
+            const done = total - remain;
+
+            const card = {
+              id: m.user_idx,
+              name: m.member?.member_name || '이름없음',
+              lessonInfo: `수업 ${total}회권`,
+              done,
+              remain,
+              reserved: 0, // 예약 횟수는 아직 없다고 가정
+              dots: total,
+              startDate: m.matching_start,
+              endDate: m.matching_end,
+            };
+
+            if (m.matching_complete === 1) {
+              active.push(card);
+            } else if (m.matching_complete === 2) {
+              expired.push(card);
+            }
+          });
+
+          setActiveMembers(active);
+          setExpiredMembers(expired);
+        })
+        .catch((err) => {
+          console.error('회원 정보 불러오기 실패:', err);
+        });
+    }, [member_idx]);
+
+  const members = (tab === 'active' ? activeMembers : expiredMembers).filter((m) =>
     m.name.toLowerCase().includes(keyword.toLowerCase())
   );
 
@@ -166,10 +201,10 @@ const MemberManageView = () => {
 
       <Tabs>
         <Tab active={tab === 'active'} onClick={() => setTab('active')}>
-          활성 회원 <span className="count">{dummyMembers.active.length}</span>
+          활성 회원 <span className="count">{activeMembers.length}</span>
         </Tab>
         <Tab active={tab === 'expired'} onClick={() => setTab('expired')}>
-          만료 회원 <span className="count">{dummyMembers.expired.length}</span>
+          만료 회원 <span className="count">{expiredMembers.length}</span>
         </Tab>
 
         <AddBtn onClick={() => setShowInsertForm((prev) => !prev)}>
@@ -177,12 +212,10 @@ const MemberManageView = () => {
         </AddBtn>
       </Tabs>
 
-      {/* 회원 카드 리스트 */}
       {members.map((m) => (
         <Card key={m.id}>
           <CardTop>
             <div>{m.name}</div>
-            <div>{m.phone}</div>
           </CardTop>
 
           <LessonInfo>{m.lessonInfo}</LessonInfo>

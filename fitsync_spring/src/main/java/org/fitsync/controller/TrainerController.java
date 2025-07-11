@@ -8,11 +8,13 @@ import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.LessonVO;
+import org.fitsync.domain.MatchingVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
 import org.fitsync.service.LessonService;
+import org.fitsync.service.MatchingService;
 import org.fitsync.service.MemberService;
 import org.fitsync.service.RecordService;
 import org.fitsync.service.ScheduleService;
@@ -41,6 +43,8 @@ public class TrainerController {
     private ScheduleService scheduleService; 
     @Autowired
     private RecordService recordService;
+    @Autowired
+    private MatchingService matchingService;
    
     
     // 트레이너 프로필 조회
@@ -189,7 +193,12 @@ public class TrainerController {
 
         // 스케줄에 trainerIdx 설정 (필요하면)
         vo.setTrainer_idx(trainerIdx);
-
+        
+        System.out.println("컨트롤러 호출됨");
+        System.out.println("trainerIdx: " + trainerIdx);
+        System.out.println("ScheduleVO.user_idx: " + vo.getUser_idx());
+        System.out.println("ScheduleVO.user_name: " + vo.getUser_name());
+        
         int result = scheduleService.insertSchedule(vo);
 
         if (result > 0) {
@@ -228,4 +237,15 @@ public class TrainerController {
         scheduleService.updateSchedule(vo);
         return ResponseEntity.ok("수정 완료");
     }
+    
+    // 매칭된 회원 불러오기
+    @GetMapping("/{trainerIdx}/matched-members")
+    public ResponseEntity<?> getMatchedMembers(@PathVariable int trainerIdx) {
+        List<MatchingVO> members = matchingService.getMatchedMembers(trainerIdx);
+        System.out.println(" getMatchedMembers 호출됨 - trainerIdx: " + trainerIdx);
+        return ResponseEntity.ok(members);
+    }
+    
+    // 수업 횟수 차감
+    
 }

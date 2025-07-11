@@ -287,6 +287,8 @@ const TrainerCalendarView = () => {
   const [weekSchedules, setWeekSchedules] = useState({});
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedDeleteIds, setSelectedDeleteIds] = useState([]);
+  const [selectedStime, setSelectedStime] = useState('');
+  const [selectedEtime, setSelectedEtime] = useState('');
 
   // 접근 제어 로직 (이메일 기반)
   useEffect(() => {
@@ -391,21 +393,32 @@ const TrainerCalendarView = () => {
   }, [currentMonth, user?.member_email, trainerIdx]);
 
   const handleInsertSchedule = async (key, schedule_name, schedule_stime, schedule_etime, schedule_content, user_idx = null) => {
+    console.log('handleInsertSchedule 호출됨');
+    console.log('key:', key);
+    console.log('schedule_name:', schedule_name);
+    console.log('schedule_stime:', schedule_stime);
+    console.log('schedule_etime:', schedule_etime);
+    console.log('schedule_content:', schedule_content);
+    console.log('user_idx:', user_idx);
+
     try {
       await axios.post(`/trainer/${trainerIdx}/schedule`, {
         user_name: schedule_name,
         schedule_stime,
         schedule_etime,
         schedule_content,
-        user_idx,
+        user_idx: user_idx ?? 0,  // null일 경우 0으로 대체
         schedule_date: selectedDate,
       });
+
       fetchSchedules();
       setShowInsertModal(false);
     } catch (error) {
       console.error('일정 추가 실패:', error);
     }
   };
+
+
 
   const toggleDeleteMode = () => {
     setIsDeleteMode(!isDeleteMode);
@@ -512,85 +525,109 @@ const TrainerCalendarView = () => {
 
       {view === 'week' ? (
         <>
-          <ScheduleBox>
-            <WeekdaysRow>
-              <div></div>
-              {days.map((day, idx) => (
-                <div key={idx}>
-                  {day}
-                  <br />
-                  <small>{format(new Date(weekDates[idx]), 'MM/dd')}</small>
-                </div>
-              ))}
-            </WeekdaysRow>
-            <div style={{ display: 'grid', gridTemplateColumns: '4rem repeat(7, 1fr)' }}>
-              {hours.map((hour, idx) => (
-                <React.Fragment key={idx}>
+        <ScheduleBox>
+          <WeekdaysRow>
+            <div></div>
+            {days.map((day, idx) => (
+              <div key={idx}>
+                {day}
+                <br />
+                <small>{format(new Date(weekDates[idx]), 'MM/dd')}</small>
+              </div>
+            ))}
+          </WeekdaysRow>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '4rem repeat(7, 1fr)' }}>
+          {hours.map((hour, idx) => (
+            <React.Fragment key={idx}>
+              {/* 시간 표시 셀 */}
+              <div
+                style={{
+                  fontSize: '1.2rem',
+                  textAlign: 'right',
+                  paddingRight: '8px',
+                  color: 'var(--text-tertiary)',
+                  lineHeight: '3rem',
+                }}
+              >
+                {hour}
+              </div>
+
+              {/* 요일별 셀 */}
+              {days.map((_, dayIdx) => {
+                const clickedDate = format(addDays(currentWeekStart, dayIdx), 'yyyy-MM-dd');
+                const hourNum = parseInt(hour.split(':')[0], 10);
+                const key = `${dayIdx}-${hour}`;
+                const schedule = weekSchedules[key];
+
+                const isStart =
+                  !!schedule && parseInt(schedule.schedule_stime.split(':')[0], 10) === hourNum;
+
+                let duration = 1;
+                if (isStart) {
+                  const start = parseInt(schedule.schedule_stime.split(':')[0], 10);
+                  const end = parseInt(schedule.schedule_etime.split(':')[0], 10);
+                  duration = Math.max(end - start, 1);
+                }
+
+                return (
                   <div
+                    key={dayIdx}
                     style={{
-                      fontSize: '1.2rem',
-                      textAlign: 'right',
-                      paddingRight: '8px',
-                      color: 'var(--text-tertiary)',
-                      lineHeight: '3rem',
+                      borderLeft: '1px solid var(--border-light)',
+                      height: '3rem',
+                      position: 'relative', // 중요!
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setSelectedDate(clickedDate);
+                      setSelectedStime(hour);
+                      const nextHour = (hourNum + 1).toString().padStart(2, '0') + ':00';
+                      setSelectedEtime(nextHour);
+                      setShowInsertModal(true);
                     }}
                   >
-                    {hour}
-                  </div>
-                  {days.map((_, dayIdx) => {
-                    const key = `${dayIdx}-${hour}`;
-                    const schedule = weekSchedules[key];
-                    return (
+                    {isStart && (
                       <div
-                        key={dayIdx}
                         style={{
-                          borderLeft: '1px solid var(--border-light)',
-                          height: '3rem',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: `${duration * 3}rem`, // 3rem * 시간 수
+                          backgroundColor: 'var(--primary-blue)',
+                          color: 'var(--text-primary)',
+                          fontSize: '1.2rem',
+                          borderRadius: '0.6rem',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          padding: '0 0.3rem',
                           boxSizing: 'border-box',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          border: '1px solid var(--primary-blue-dark)',
+                          zIndex: 1,
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMemberClick(schedule);
                         }}
                       >
-                        {schedule && (
-                          <div
-                            style={{
-                              backgroundColor: 'var(--primary-blue)',
-                              color: 'var(--text-primary)',
-                              fontSize: '1.2rem',
-                              borderRadius: '0.6rem',
-                              width: '100%',
-                              height: '90%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '0 0.3rem',
-                              marginTop: '3rem',
-                              boxSizing: 'border-box',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              cursor: 'pointer',
-                              border: '1px solid var(--primary-blue-dark)',
-                            }}
-                            onClick={() => handleMemberClick(schedule)}
-                          >
-                            {schedule.user_idx
-                              ? memberMap[schedule.user_idx]
-                              : schedule.user_name || schedule.schedule_content}
-                          </div>
-                        )}
+                        {schedule.user_idx
+                          ? memberMap[schedule.user_idx]
+                          : schedule.user_name || schedule.schedule_content}
                       </div>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </div>
-          </ScheduleBox>
+                    )}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
+        </ScheduleBox>
 
-          <ButtonGroup style={{ justifyContent: 'flex-end' }}>
-            <button onClick={handleAddSchedule}>일정 추가</button>
-          </ButtonGroup>
         </>
       ) : (
         <>
@@ -732,9 +769,12 @@ const TrainerCalendarView = () => {
               onInsert={handleInsertSchedule}
               members={members}
               selectedDate={selectedDate}
+              selectedStime={selectedStime}
+              selectedEtime={selectedEtime}
               trainerIdx={trainerIdx}
             />
           )}
+
 
           {showWorkoutInsert && selectedSchedule && (
             <WorkoutInsert

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import styled from 'styled-components';
@@ -97,15 +98,30 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, onInsert }) => {
-  const [selectedMember, setSelectedMember] = useState('');
-  const [customMember, setCustomMember] = useState('');
-  const [startTime, setStartTime] = useState('06:00');
-  const [endTime, setEndTime] = useState('07:00');
-  const [useCustom, setUseCustom] = useState(false);
-  const [memo, setMemo] = useState('');
+  const ScheduleInsertModal = ({
+    trainerIdx,
+    selectedDate,
+    selectedStime = '06:00',
+    selectedEtime = '07:00',
+    onClose,
+    onInsert,
+  }) => {
+    const [selectedMember, setSelectedMember] = useState('');
+    const [customMember, setCustomMember] = useState('');
+    const [startTime, setStartTime] = useState(selectedStime);
+    const [endTime, setEndTime] = useState(selectedEtime);
+    const [useCustom, setUseCustom] = useState(false);
+    const [memo, setMemo] = useState('');
+    const [members, setMembers] = useState([]);
+    const modalRef = useRef();
+  
+  useEffect(() => {
+  if (!trainerIdx) return;
 
-  const modalRef = useRef();
+  axios.get(`/trainer/${trainerIdx}/matched-members`)
+    .then((res) => setMembers(res.data))
+    .catch((err) => console.error('매칭 회원 불러오기 실패:', err));
+}, [trainerIdx]);
 
   const hours = Array.from({ length: 19 }, (_, i) => {
     const hour = (6 + i) % 24;
@@ -114,7 +130,11 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
 
   const handleSubmit = () => {
     const scheduleName = useCustom ? customMember.trim() : selectedMember;
-
+    console.log('scheduleName:', scheduleName);
+    console.log('startTime:', startTime);
+    console.log('endTime:', endTime);
+    
+    
     if (!scheduleName || !startTime || !endTime) {
       alert('모든 항목을 입력해주세요.');
       return;
@@ -150,7 +170,10 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
         <Field>
           <label>회원 선택</label>
           <select
-            value={useCustom ? 'custom' : selectedMember}
+            value={useCustom ? 'custom' : (() => {
+              const matched = members.find((m) => m.member.member_name === selectedMember);
+              return matched ? matched.member.member_idx : '';
+            })()}
             onChange={(e) => {
               const val = e.target.value;
               if (val === 'custom') {
@@ -158,14 +181,15 @@ const ScheduleInsertModal = ({ members = [], trainerIdx, selectedDate, onClose, 
                 setSelectedMember('');
               } else {
                 setUseCustom(false);
-                setSelectedMember(val);
+                const selected = members.find((m) => m.member.member_idx === parseInt(val));
+                setSelectedMember(selected?.member.member_name || '');
               }
             }}
           >
             <option value="">-- 선택하세요 --</option>
             {members.map((m, idx) => (
-              <option key={idx} value={m.member_name}>
-                {m.member_name}
+              <option key={idx} value={m.member.member_idx}>
+                {m.member.member_name}
               </option>
             ))}
             <option value="custom">직접 입력</option>
