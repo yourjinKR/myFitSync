@@ -39,8 +39,6 @@ public class RecordServiceImple implements RecordService {
 			
 			if(findCheck) {
 				for (Map<String, Object> routine : routines) {
-					System.out.println("routine : " + routine);
-					System.out.println(routine);
 					RecordVO vo = new RecordVO();
 					vo.setMember_idx(member_idx);
 					

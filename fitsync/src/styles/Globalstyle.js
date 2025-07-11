@@ -8,11 +8,13 @@ const GlobalStyle = createGlobalStyle`
     --bg-primary: #1a1a1a;        /* 메인 배경 (검정+회색) */
     --bg-secondary: #2a2a2a;      /* 카드/컨테이너 배경 */
     --bg-tertiary: #3a3a3a;       /* 호버/활성 상태 */
+    --bg-white: #ffffff;     
     
     /* 텍스트 컬러 */
     --text-primary: #ffffff;       /* 주요 텍스트 */
     --text-secondary: #b0b0b0;     /* 보조 텍스트 */
     --text-tertiary: #808080;      /* 비활성 텍스트 */
+    --text-black: #222;
     
     /* 포인트 컬러 (파란색 계열) */
     --primary-blue: #4A90E2;       /* 메인 블루 */
@@ -31,6 +33,10 @@ const GlobalStyle = createGlobalStyle`
     --border-dark: #808080;
 
     --check-green: #4CAF50; /* 체크박스 체크 색상 */
+
+    --start-red: #F44336; /* 체크박스 체크 색상 */
+    --stop-green: #4CAF50; /* 체크박스 체크 색상 */
+    --reset-gay: #808080; /* 체크박스 체크 색상 */
   }
 
   /* reset.css 기반 */

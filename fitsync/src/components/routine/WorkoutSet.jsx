@@ -157,9 +157,7 @@ function updateSets(routineData, pt_idx, updateFn) {
 }
 
 const WorkoutSet = ({ data, routineData, setRoutineData }) => {
-  console.log(" data", data)
-  console.log(routineData.routines);
-  
+ 
   const setData = routineData.routines.find((item) => item.pt_idx === data.pt_idx);
 
   // 세트 추가

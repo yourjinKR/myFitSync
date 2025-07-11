@@ -27,6 +27,7 @@ import AiServiceContainer from '../components/ai/AiServiceContainer';
 import IsLoading3 from '../components/IsLoading3';
 import PaymentContainer from '../components/payment/PaymentContainer';
 import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
+import Timer from '../components/Timer';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -94,6 +95,7 @@ const Display = () => {
           <Route path='/loading' element={<IsLoading/>}/>
           <Route path='/loading2' element={<IsLoading2/>}/>
           <Route path='/loading3' element={<IsLoading3/>}/>
+          <Route path='/Timer' element={<Timer/>}/>
 
           <Route path='/ai' element={<AiServiceContainer/>}>
           </Route>

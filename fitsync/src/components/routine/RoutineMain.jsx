@@ -336,7 +336,6 @@ const RoutineMain = () => {
   // 저장하기
   const handleRecordData = (isRecord) => {
 
-    console.log(" newData", newData)
     if(isRecord) {
       if(newData.update) {
         setIsUpdate(true);
