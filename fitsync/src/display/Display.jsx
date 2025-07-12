@@ -28,6 +28,7 @@ import IsLoading3 from '../components/IsLoading3';
 import PaymentContainer from '../components/payment/PaymentContainer';
 import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
 import Timer from '../components/Timer';
+import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -70,7 +71,8 @@ const Display = () => {
   const isShow = 
     !location.pathname.includes("/routine/detail") &&
     location.pathname !== '/routine/add' && 
-    location.pathname !== '/routine/set';
+    location.pathname !== '/routine/set' &&
+    location.pathname !== '/test123';
 
   return (
     <DisplayWrapper >
@@ -99,6 +101,7 @@ const Display = () => {
 
           <Route path='/ai' element={<AiServiceContainer/>}>
           </Route>
+          <Route path='/test123' element={<SlideInputFormTest/>}/>
 
           <Route path='/payment' element={<PaymentContainer/>}>
             <Route path='kakao' element={<KaKaoPayTest/>}/>

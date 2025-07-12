@@ -9,13 +9,13 @@ export const getMemberTotalData = async () => {
         );
 
         if (response.data) {
-            console.log("Member data fetched successfully:", response.data);
+            console.log("멤버 정보 :", response.data);
             return response.data;
         } else {
             throw new Error(response.data);
         }
     } catch (error) {
-        console.error("Error fetching member data:", error);
+        console.error("멤버 정보 가져오기 오류 :", error);
         throw error;
     }
 }
