@@ -4,13 +4,29 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.*;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
 @Service
 public class PaymentServiceImple implements PaymentService {
+    @Value("${portone.api.secret}")
+    private String apiSecret;
+
+    @Value("${portone.billing.key}")
+    private String billingKey;
+    
+    @Value("${portone.channel.key}")
+    private String channelKey;
+    
+    @Value("${portone.store.id}")
+    private String storeId;
+	
 	@Override
 	public Object saveBillingKey() {
 		// TODO Auto-generated method stub
@@ -19,20 +35,52 @@ public class PaymentServiceImple implements PaymentService {
 	
 	// api key, payment id, billing key, channel key, ordername, amount, currency 
 	@Override
-	public Object payBillingKey() {
+	public Object payBillingKey(String payment) {
 	    try {
-	        HttpRequest request = HttpRequest.newBuilder()
-	                .uri(URI.create("https://api.portone.io/payments/paymentId/billing-key"))
-	                .header("Content-Type", "application/json")
-	                .method("POST", HttpRequest.BodyPublishers.ofString("{\"billingKey\":\"billing-key-0197feb4-f199-7120-a93a-e6aef71313c2\",\"orderName\":\"fitsync구독\",\"amount\":3000,\"currency\":KRW}"))
-	                .build();
-
-	        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-	        System.out.println(response.body());
+	    	HttpRequest request = HttpRequest.newBuilder()
+	    		    .uri(URI.create("https://api.portone.io/payments/"+ payment +"/billing-key"))
+	    		    .header("Content-Type", "application/json")
+	    		    .header("Authorization", "PortOne " + apiSecret)
+	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync123\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
+	    		    .build();
+	    		HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+	    		
+	    		// 응답 로깅
+	    		System.out.println("Status Code: " + response.statusCode());
+	    		System.out.println("Response Body: " + response.body());
+	    		
+	    		// JSON 응답을 Map으로 파싱하여 반환
+	    		try {
+	    			ObjectMapper objectMapper = new ObjectMapper();
+	    			Object responseData = objectMapper.readValue(response.body(), Object.class);
+	    			
+	    			// 성공/실패 상태와 함께 응답 데이터 반환
+	    			Map<String, Object> result = new HashMap<>();
+	    			result.put("statusCode", response.statusCode());
+	    			result.put("success", response.statusCode() >= 200 && response.statusCode() < 300);
+	    			result.put("data", responseData);
+	    			result.put("message", response.statusCode() >= 200 && response.statusCode() < 300 ? "Payment successful" : "Payment failed");
+	    			
+	    			return result;
+	    		} catch (Exception jsonEx) {
+	    			// JSON 파싱 실패 시 원본 응답 반환
+	    			Map<String, Object> result = new HashMap<>();
+	    			result.put("statusCode", response.statusCode());
+	    			result.put("success", false);
+	    			result.put("data", response.body());
+	    			result.put("message", "Failed to parse response");
+	    			return result;
+	    		}
+	    		
 	    } catch (IOException | InterruptedException e) {
 	        e.printStackTrace();
+	        // 예외 발생 시 에러 정보 반환
+	        Map<String, Object> errorResult = new HashMap<>();
+	        errorResult.put("success", false);
+	        errorResult.put("message", "Request failed: " + e.getMessage());
+	        errorResult.put("error", e.getClass().getSimpleName());
+	        return errorResult;
 	    }
-	    return null;
 	}
 
 	
