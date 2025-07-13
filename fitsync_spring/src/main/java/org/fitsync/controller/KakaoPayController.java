@@ -7,6 +7,8 @@ import lombok.extern.log4j.Log4j;
 
 import org.fitsync.service.KakaoPayService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +31,7 @@ public class KakaoPayController {
     public String kakaoPay(){
         log.info("kakaoPay post.....................");
 
-        return "redirect:" + kakaoPay.kakaoPayReady();
+        return "redirect:" + kakaoPay.kakaoPayReadyTest();
     }
 
     @GetMapping("/success")
@@ -37,4 +39,18 @@ public class KakaoPayController {
         log.info("kakaoPay Success get................");
         log.info("kakaoPaySuccess pg_token : " + pg_token);
     }
+    
+    
+    @PostMapping(value = "/portone/complete", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<?> portOneTest(@RequestBody String paymentId) {
+    	log.info(paymentId);
+    	return ResponseEntity.ok("결제가 완료됐습니다!!!");
+    }
+    
+    @PostMapping(value = "/portone/billing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<?> billing(@RequestBody String billingKey) {
+    	log.info(billingKey);
+    	return ResponseEntity.ok("빌링키 확인");
+    }
+    
 }

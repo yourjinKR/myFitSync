@@ -30,7 +30,7 @@ public class KakaoPayService {
     @Value("${kakao.api.secret.key}") // application.properties에 키에 해당하는 값 주입
     private String SECRET_KEY; // 테스트 SECRET_KEY 실제 API는 DOMAIN필요 발급
 
-    public Map<String, Object> kakaoPayReady() {
+    public Map<String, Object> kakaoPayReadyTest() {
         HttpHeaders headers = new HttpHeaders(); // HTTP 요청 헤더를 설정하기 위해 객체 생성
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "SECRET_KEY " + SECRET_KEY); // Authorization 헤더 설정
@@ -38,11 +38,11 @@ public class KakaoPayService {
         // 요청 본문 작성 (예제 데이터)
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("cid", "TC0ONETIME"); // 가맹점 코드 (테스트용)
-        requestBody.put("partner_order_id", "order_id_1234");
-        requestBody.put("partner_user_id", "user_id_1234");
-        requestBody.put("item_name", "Test Item");
+        requestBody.put("partner_order_id", "fitsync");
+        requestBody.put("partner_user_id", "구독자 테스트");
+        requestBody.put("item_name", "구독권");
         requestBody.put("quantity", 1);
-        requestBody.put("total_amount", 1000);
+        requestBody.put("total_amount", 3000);
         requestBody.put("vat_amount", 0);
         requestBody.put("tax_free_amount", 0);
         requestBody.put("approval_url", "http://localhost:3000/payment/kakao");
