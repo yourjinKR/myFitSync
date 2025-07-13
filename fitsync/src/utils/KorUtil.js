@@ -9,6 +9,19 @@ const tenseConsonantMap = {
     'ㅉ': 'ㅈ',
 };
 
+// 매칭 결과 상수 정의
+export const MATCH_RESULT = {
+    NO_MATCH_FOUND: -1,
+    EXACT_MATCH: 0
+};
+
+// 매칭 타입 상수 정의
+export const MATCH_TYPE = {
+    EXACT: 'exact',
+    SIMILAR: 'similar',
+    NONE: 'none'
+};
+
 /**
  * 자모음 분해 및 정규화
  * @param {string} name - 분해할 한글 문자열
@@ -49,12 +62,12 @@ export function levenshtein(a, b) {
 }
 
 /**
- * 유사한 운동명 찾기 (배열 버전)
+ * 유사한 운동명 찾기 (배열 버전) - 개선된 버전
  * @param {string} input - 입력된 운동명
  * @param {Array} dataList - 운동명 데이터 리스트
  * @param {number} maxLengthDiff - 최대 길이 차이 (기본값: 1)
  * @param {number} maxDistance - 최대 편집 거리 (기본값: 2)
- * @returns {Array} - 유사한 운동명 리스트
+ * @returns {Array} - 유사한 운동명 리스트 (빈 배열이면 매칭 실패)
  */
 export function getSimilarNamesByList(input, dataList, maxLengthDiff = 1, maxDistance = 2) {
     const { normalized: inputDis, length: inputLen } = normalizeAndDisassemble(input);
@@ -63,23 +76,25 @@ export function getSimilarNamesByList(input, dataList, maxLengthDiff = 1, maxDis
         .filter(item => Math.abs(item.length - inputLen) <= maxLengthDiff)
         .map(item => {
             const score = levenshtein(inputDis, item.name_dis);
-            return { name: item.name, score };
+            return { 
+                name: item.name, 
+                score,
+                matchType: score === MATCH_RESULT.EXACT_MATCH ? MATCH_TYPE.EXACT : MATCH_TYPE.SIMILAR
+            };
         })
         .filter(({ score }) => score <= maxDistance)
         .sort((a, b) => a.score - b.score);
     
-    console.log(input, '과 유사한 운동명:', result);
-
-    return result.length > 0 ? result : [{ name: '유사 운동명 찾지 못함', score: 0 }];
+    return result;
 }
 
 /**
- * 유사한 운동명 찾기 (맵 버전)
+ * 유사한 운동명 찾기 (맵 버전) - 개선된 버전
  * @param {string} input - 입력된 운동명
  * @param {Map} dataMap - 운동명 데이터 맵 (길이별로 그룹화된 운동명)
  * @param {number} maxLengthDiff - 최대 길이 차이 (기본값: 1)
  * @param {number} maxDistance - 최대 편집 거리 (기본값: 2)
- * @returns {Array} - 유사한 운동명 리스트
+ * @returns {Array} - 유사한 운동명 리스트 (빈 배열이면 매칭 실패)
  */
 export function getSimilarNamesByMap(input, dataMap, maxLengthDiff = 1, maxDistance = 2) {
     const { normalized: inputDis, length: inputLen } = normalizeAndDisassemble(input);
@@ -91,12 +106,52 @@ export function getSimilarNamesByMap(input, dataMap, maxLengthDiff = 1, maxDista
     const result = candidates
         .map(item => {
             const score = levenshtein(inputDis, item.name_dis);
-            return { name: item.name, score };
+            return { 
+                name: item.name, 
+                score,
+                matchType: score === MATCH_RESULT.EXACT_MATCH ? MATCH_TYPE.EXACT : MATCH_TYPE.SIMILAR,
+                idx: item.idx || null
+            };
         })
         .filter(({ score }) => score <= maxDistance)
         .sort((a, b) => a.score - b.score);
 
-    return result.length > 0 ? result : [{ name: '유사 운동명 찾지 못함', score: 0 }];
+    return result;
+}
+
+/**
+ * 최적의 매칭 결과를 찾는 래퍼 함수
+ * @param {string} input - 입력된 운동명
+ * @param {Map} dataMap - 운동명 데이터 맵
+ * @param {number} maxLengthDiff - 최대 길이 차이 (기본값: 1)
+ * @param {number} maxDistance - 최대 편집 거리 (기본값: 2)
+ * @returns {Object} - 매칭 결과 객체
+ */
+export function findBestMatch(input, dataMap, maxLengthDiff = 1, maxDistance = 2) {
+    const matches = getSimilarNamesByMap(input, dataMap, maxLengthDiff, maxDistance);
+    
+    if (!matches || matches.length === 0) {
+        return {
+            found: false,
+            originalName: input,
+            matchedName: null,
+            score: MATCH_RESULT.NO_MATCH_FOUND,
+            matchType: MATCH_TYPE.NONE,
+            isValid: false
+        };
+    }
+
+    const bestMatch = matches[0];
+    return {
+        found: true,
+        originalName: input,
+        matchedName: bestMatch.name,
+        score: bestMatch.score,
+        matchType: bestMatch.matchType,
+        isValid: true,
+        idx: bestMatch.idx,
+        allMatches: matches
+    };
 }
 
 /**
@@ -132,39 +187,57 @@ export function createWorkoutNameObjects(workoutNames) {
     });
 }
 
-/** 운동명을  */
-
-/** 응답 결과의 운동명들을 전부 확인 후 각각 이름을 유사어로 반환 */
+/**
+ * 응답 결과의 운동명들을 전부 확인 후 각각 이름을 유사어로 반환 - 개선된 버전
+ * @param {Object} result - AI 응답 결과 객체
+ * @param {Map} dataMap - 운동명 데이터 맵
+ * @returns {Object} - 매칭 정보가 포함된 결과 객체
+ */
 export function checkAllExerciseNames(result, dataMap) {
     console.log('Checking all exercise names in the result...');
     
     const changedNameResult = result.content.map(routine => {
-        // console.log(routine.exercises);
         const updatedExercises = routine.exercises.map(exercise => {
-            // console.log(`Checking exercise: ${exercise.pt_name}`);
-            const similarNames = getSimilarNamesByMap(exercise.pt_name, dataMap);
-            if (similarNames.length > 0) {
-                // console.log(`Found similar names for ${exercise.pt_name}:`, similarNames);
-                return { ...exercise, pt_name: similarNames[0].name };
+            const originalName = exercise.pt_name;
+            const matchResult = findBestMatch(originalName, dataMap);
+            
+            if (matchResult.found) {
+                if (matchResult.score > 0) {
+                    console.log(`Found similar name for ${originalName}: ${matchResult.matchedName} (score: ${matchResult.score})`);
+                }
+                
+                return { 
+                    ...exercise, 
+                    pt_name: matchResult.matchedName,
+                    // 매칭 정보도 함께 저장
+                    originalName: originalName,
+                    matchInfo: {
+                        isValid: true,
+                        matchType: matchResult.matchType,
+                        score: matchResult.score
+                    }
+                };
             } else {
-                console.warn(`No similar names found for ${exercise.pt_name}`);
-                return exercise; // 유사한 이름이 없으면 원래 이름 유지
+                console.warn(`No similar names found for ${originalName}`);
+                return {
+                    ...exercise,
+                    matchInfo: {
+                        isValid: false,
+                        matchType: MATCH_TYPE.NONE,
+                        score: MATCH_RESULT.NO_MATCH_FOUND
+                    }
+                };
             }
         });
+        
         return {
             ...routine,
             exercises: updatedExercises
         };
     });
+    
     return {
         ...result,
         content: changedNameResult
     };
 }
-
-/** DB에 저장되지 않은 운동명, 이름을 다르게 부르는 운동명 */ 
-const exceptionNames = [
-    {pt_idx: 24, pt_name: '카프 레이즈'},
-    {pt_idx: 2, pt_name: '데드리프트'},
-    {pt_idx: 238, pt_name: '윗몸 일으키기'}, 
-];

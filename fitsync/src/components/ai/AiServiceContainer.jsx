@@ -111,7 +111,7 @@ const AiServiceContainer = () => {
     const [aiResult, setAiResult] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [feedbackCompleted, setFeedbackCompleted] = useState(false); // 피드백 완료 상태
-    const {rawData, rawDataIdx, rawDataMap} = useWorkoutNames();
+    const {rawDataIdx, rawDataMap} = useWorkoutNames();
 
     // 멤버 데이터 로드
     useEffect(() => {
@@ -131,7 +131,7 @@ const AiServiceContainer = () => {
         if (Object.keys(aiResult).length === 0) return;
 
         // console.log('파싱된 결과 : ', result);
-        const exception = AiUtil.analyzeAIResult(aiResult, aiResult.split, rawData);
+        const exception = AiUtil.analyzeAIResult(aiResult, aiResult.split, rawDataMap);
 
         if (exception !== null && aiResult.logIdx) {
             const apilog = {apilog_idx : aiResult.logIdx, apilog_status_reason : exception};
@@ -156,7 +156,6 @@ const AiServiceContainer = () => {
             );
             
             const fullMessage = JSON.stringify(filteredUserInfo);
-            console.log('전송할 메시지:', fullMessage);
             
             const response = await axios.post(
                 '/ai/createRoutine', 

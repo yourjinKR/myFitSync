@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getSimilarNamesByMap } from "./KorUtil";
+import { findBestMatch } from "./KorUtil";
 
 const AiUtil = {
     /** 응답결과를 DB 구조에 맞게 파싱 */ 
@@ -18,13 +18,14 @@ const AiUtil = {
                 // rawDataIdx.pt_name에 이름이 있다면 pt_idx를 가져오고, 없다면 null로 설정
                 let exIdx = rawDataIdx.find(item => item.pt_name === ex.pt_name.replace(/\s+/g, ''))?.pt_idx || null;
                 if (exIdx === null) {
-                    // 유사한 운동명을 찾기
-                    const similarList = getSimilarNamesByMap(ex.pt_name, rawDataMap);
-                    // 유사한 운동명이 있다면 첫 번째 것을 사용
-                    const similarName = similarList.length > 0 ? similarList[0].name : null;
-
-                    if (similarName) {
-                        exIdx = rawDataIdx.find(item => item.pt_name === similarName)?.pt_idx || null;
+                    // 개선된 매칭 함수 사용
+                    const matchResult = findBestMatch(ex.pt_name, rawDataMap);
+                    
+                    if (matchResult.found) {
+                        exIdx = rawDataIdx.find(item => item.pt_name === matchResult.matchedName)?.pt_idx || null;
+                        if (matchResult.score > 0) {
+                            console.log(`Found similar exercise: ${ex.pt_name} → ${matchResult.matchedName} (score: ${matchResult.score})`);
+                        }
                     } else {
                         console.warn(`유효하지 않은 운동명: ${ex.pt_name}`);
                     }
@@ -35,7 +36,6 @@ const AiUtil = {
                     set_count: ex.set_count
                 }));
                 
-                let finalName = null;
                 return {pt_idx : exIdx, name : null, routine_memo : "", sets : routineSet};
             });
 
@@ -63,9 +63,9 @@ const AiUtil = {
                 });
 
                 if (response.data.success) {
-                    alert('루틴이 성공적으로 저장되었습니다.');
+                    console.log('루틴이 성공적으로 저장되었습니다.');
                 } else {
-                    alert('루틴 저장에 실패했습니다: ' + response.data.msg);
+                    console.error('루틴 저장에 실패했습니다: ' + response.data.msg);
                 }
             } catch (error) {
                 console.error('루틴 저장 중 오류 발생:', error);
@@ -92,11 +92,7 @@ const AiUtil = {
     },
 
     /** 로그 분석 함수 */
-    analyzeAIResult (result, userSplit, validWorkoutNames) {
-        console.log('해당 결과를 분석 :', result);
-        console.log('유저 분할:', userSplit);
-        
-
+    analyzeAIResult (result, userSplit, rawDataMap) {
         const errors = [];
 
         if (!Array.isArray(result?.content)) {
@@ -113,8 +109,10 @@ const AiUtil = {
             if (!Array.isArray(routine.exercises)) return;
 
             routine.exercises.forEach(ex => {
-                const name = (ex.pt_name.replace(/\s+/g, ''));
-                if (!validWorkoutNames.includes(name)) {
+                const name = ex.pt_name.replace(/\s+/g, '');
+                const matchResult = findBestMatch(name, rawDataMap);
+                
+                if (!matchResult.found) {
                     console.warn(`유효하지 않은 운동명: ${name}`);
                     invalidExercises.push(ex.pt_name);
                 }

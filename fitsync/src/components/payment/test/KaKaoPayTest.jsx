@@ -106,8 +106,6 @@ const handlePortOneBillingPaymentTest = async () => {
 
     return (
         <div>
-            <h1>KaKaoPay Test</h1>
-            <p>카카오 페이 결제 테스트입니다.</p>
             <ButtonSubmit onClick={handlePaymentRequest}>결제 요청</ButtonSubmit>
             <ButtonSubmit onClick={handlePortOneTest} name='KAKAOPAY'>포트원 테스트</ButtonSubmit>
             <ButtonSubmit onClick={handlePortOneBillingTest} name='KAKAOPAY'>빌링키 발급 테스트</ButtonSubmit>

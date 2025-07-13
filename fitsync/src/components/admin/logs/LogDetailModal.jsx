@@ -1164,20 +1164,6 @@ const ErrorMessage = styled.div`
   margin-bottom: 8px;
 `;
 
-const StackTrace = styled.div`
-  color: var(--text-secondary);
-  font-size: 12px;
-  
-  pre {
-    margin-top: 8px;
-    background: var(--bg-tertiary);
-    padding: 8px;
-    border-radius: 4px;
-    overflow-x: auto;
-    font-family: 'Courier New', monospace;
-  }
-`;
-
 // 토글 기능을 위한 스타일 컴포넌트들
 const ToggleSection = styled.div`
   border: 1px solid var(--border-light);
