@@ -46,6 +46,8 @@ const LogDetailModal = ({
     // 토글 상태 관리
     const [isBasicInfoExpanded, setIsBasicInfoExpanded] = useState(false);
     const [isUserInfoExpanded, setIsUserInfoExpanded] = useState(false);
+    const [isUserInputExpanded, setIsUserInputExpanded] = useState(false);
+    const [isAiResponseExpanded, setIsAiResponseExpanded] = useState(false);
 
     if (!isOpen || !log) return null;
 
@@ -403,9 +405,9 @@ const LogDetailModal = ({
     const statusInfo = getStatusInfo(log.apilog_status);
     const userInfo = parseUserInfo(log.parsed_userMassage);
     const workoutResult = parseWorkoutResult(log.parsed_response);
-    
-    // AI 응답에서 운동명 매칭 정보 추출 (log.parsed_response 우선, 없으면 log.apilog_ai_response 사용)
-    const similarExercises = getSimilarExercises(log.parsed_response || log.apilog_ai_response);
+
+    // AI 응답에서 운동명 매칭 정보 추출 (log.parsed_response 우선, 없으면 log.apilog_response 사용)
+    const similarExercises = getSimilarExercises(log.parsed_response || log.apilog_response);
 
     return (
         <ModalOverlay onClick={onClose}>
@@ -635,7 +637,7 @@ const LogDetailModal = ({
                     {/* 운동 결과 섹션 */}
                     {workoutResult && (
                         <Section>
-                            <SectionTitle>🏋️‍♀️ AI 추천 운동 루틴</SectionTitle>
+                            <SectionTitle>🏋️‍♀️ AI 응답 시각화</SectionTitle>
                             <WorkoutResultContainer>
                                 {/* 루틴 요약 정보 */}
                                 <ResultSummary>
@@ -789,32 +791,52 @@ const LogDetailModal = ({
 
 
                     {/* 사용자 입력 */}
-                    {log.apilog_user_input && (
+                    {log.apilog_prompt && (
                         <Section>
-                            <SectionTitle>📝 사용자 입력 (원본)</SectionTitle>
-                            <CodeBlock>
-                                <pre>{formatJson(log.apilog_user_input)}</pre>
-                            </CodeBlock>
+                            <ToggleSection>
+                                <ToggleSectionTitle 
+                                    onClick={() => setIsUserInputExpanded(!isUserInputExpanded)}
+                                    expanded={isUserInputExpanded}
+                                >
+                                    <ToggleIcon expanded={isUserInputExpanded}>▶</ToggleIcon>
+                                    📝 사용자 입력 (원본)
+                                </ToggleSectionTitle>
+                                <CollapsibleContent expanded={isUserInputExpanded}>
+                                    <CodeBlock>
+                                        <pre>{formatJson(log.apilog_prompt)}</pre>
+                                    </CodeBlock>
+                                </CollapsibleContent>
+                            </ToggleSection>
                         </Section>
                     )}
 
                     {/* AI 응답 */}
-                    {log.apilog_ai_response && (
+                    {log.apilog_response && (
                         <Section>
-                            <SectionTitle>🤖 AI 응답 (원본)</SectionTitle>
-                            <CodeBlock>
-                                <pre>{formatJson(log.apilog_ai_response)}</pre>
-                            </CodeBlock>
+                            <ToggleSection>
+                                <ToggleSectionTitle 
+                                    onClick={() => setIsAiResponseExpanded(!isAiResponseExpanded)}
+                                    expanded={isAiResponseExpanded}
+                                >
+                                    <ToggleIcon expanded={isAiResponseExpanded}>▶</ToggleIcon>
+                                    🤖 AI 응답 (원본)
+                                </ToggleSectionTitle>
+                                <CollapsibleContent expanded={isAiResponseExpanded}>
+                                    <CodeBlock>
+                                        <pre>{formatJson(log.apilog_response)}</pre>
+                                    </CodeBlock>
+                                </CollapsibleContent>
+                            </ToggleSection>
                         </Section>
                     )}
 
                     {/* 사용자 피드백 */}
-                    {log.apilog_user_feedback && (
+                    {log.apilog_feedback && (
                         <Section>
                             <SectionTitle>💬 사용자 피드백</SectionTitle>
                             <FeedbackContainer>
-                                <FeedbackType feedback={log.apilog_user_feedback}>
-                                    {log.apilog_user_feedback === 'LIKE' ? '👍 좋아요' : '👎 싫어요'}
+                                <FeedbackType feedback={log.apilog_feedback}>
+                                    {log.apilog_feedback === 'LIKE' ? '👍 좋아요' : '👎 싫어요'}
                                 </FeedbackType>
                                 {log.apilog_feedback_reason && (
                                     <FeedbackReason>
@@ -826,19 +848,13 @@ const LogDetailModal = ({
                     )}
 
                     {/* 오류 정보 */}
-                    {(log.apilog_response_status === 'ERROR' || log.apilog_response_status === 'EXCEPTION') && (
+                    {(log.apilog_status === 'error' || log.apilog_status === 'exception') && (
                         <Section>
                             <SectionTitle>🚨 오류 정보</SectionTitle>
                             <ErrorContainer>
                                 <ErrorMessage>
-                                    {log.apilog_error_message || '오류 메시지가 없습니다.'}
+                                    {log.apilog_status_reason || '오류 메시지가 없습니다.'}
                                 </ErrorMessage>
-                                {log.apilog_stack_trace && (
-                                    <StackTrace>
-                                        <strong>스택 트레이스:</strong>
-                                        <pre>{log.apilog_stack_trace}</pre>
-                                    </StackTrace>
-                                )}
                             </ErrorContainer>
                         </Section>
                     )}
@@ -914,7 +930,7 @@ const LogDetailModal = ({
                                         hasResponse: !!log.apilog_response,
                                         hasParsedResponse: !!log.parsed_response,
                                         hasParsedUserMessage: !!log.parsed_userMassage,
-                                        hasFeedback: !!log.apilog_user_feedback,
+                                        hasFeedback: !!log.apilog_feedback,
                                         userId: log.user_id,
                                         hasRawData: !!rawData,
                                         rawDataSize: rawData ? rawData.length : 0,
@@ -941,7 +957,7 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -950,13 +966,14 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   max-width: 1000px;
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-light);
 `;
 
 const ModalHeader = styled.div`
@@ -964,8 +981,8 @@ const ModalHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-tertiary);
 `;
 
 const HeaderContent = styled.div`
@@ -988,7 +1005,7 @@ const StatusIndicator = styled.div`
 
 const LogId = styled.div`
   font-family: 'Courier New', monospace;
-  color: #6b7280;
+  color: var(--text-tertiary);
   font-size: 14px;
 `;
 
@@ -997,13 +1014,13 @@ const CloseButton = styled.button`
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-secondary);
   padding: 4px;
   border-radius: 4px;
   
   &:hover {
-    background: #f3f4f6;
-    color: #374151;
+    background: var(--bg-primary);
+    color: var(--text-primary);
   }
 `;
 
@@ -1012,17 +1029,18 @@ const NavigationBar = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
 `;
 
 const NavButton = styled.button`
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  color: var(--text-primary);
   
   &:disabled {
     opacity: 0.5;
@@ -1030,13 +1048,13 @@ const NavButton = styled.button`
   }
   
   &:not(:disabled):hover {
-    background: #f9fafb;
+    background: var(--bg-tertiary);
   }
 `;
 
 const NavInfo = styled.div`
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-secondary);
 `;
 
 const ModalBody = styled.div`
@@ -1057,7 +1075,7 @@ const SectionTitle = styled.h3`
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1077,7 +1095,7 @@ const InfoItem = styled.div`
 
 const InfoLabel = styled.div`
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1085,19 +1103,20 @@ const InfoLabel = styled.div`
 
 const InfoValue = styled.div`
   font-size: 14px;
-  color: #111827;
+  color: var(--text-primary);
   font-weight: 500;
 `;
 
 const CodeBlock = styled.div`
-  background: #1f2937;
+  background: var(--bg-primary);
   border-radius: 8px;
   padding: 16px;
   overflow-x: auto;
+  border: 1px solid var(--border-light);
   
   pre {
     margin: 0;
-    color: #e5e7eb;
+    color: var(--text-primary);
     font-family: 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.5;
@@ -1124,34 +1143,34 @@ const FeedbackType = styled.div`
 `;
 
 const FeedbackReason = styled.div`
-  background: #f9fafb;
+  background: var(--bg-tertiary);
   padding: 12px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
   font-size: 14px;
-  color: #374151;
+  color: var(--text-primary);
 `;
 
 const ErrorContainer = styled.div`
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid var(--warning);
   border-radius: 8px;
   padding: 16px;
 `;
 
 const ErrorMessage = styled.div`
-  color: #dc2626;
+  color: var(--warning);
   font-weight: 500;
   margin-bottom: 8px;
 `;
 
 const StackTrace = styled.div`
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 12px;
   
   pre {
     margin-top: 8px;
-    background: #f9fafb;
+    background: var(--bg-tertiary);
     padding: 8px;
     border-radius: 4px;
     overflow-x: auto;
@@ -1161,7 +1180,7 @@ const StackTrace = styled.div`
 
 // 토글 기능을 위한 스타일 컴포넌트들
 const ToggleSection = styled.div`
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   overflow: hidden;
 `;
@@ -1171,16 +1190,16 @@ const ToggleSectionTitle = styled.div`
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  background: ${props => props.expanded ? '#f9fafb' : '#ffffff'};
-  border-bottom: ${props => props.expanded ? '1px solid #e5e7eb' : 'none'};
+  background: ${props => props.expanded ? 'var(--bg-tertiary)' : 'var(--bg-secondary)'};
+  border-bottom: ${props => props.expanded ? '1px solid var(--border-light)' : 'none'};
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
   transition: all 0.2s ease;
   
   &:hover {
-    background: #f9fafb;
+    background: var(--bg-tertiary);
   }
 `;
 
@@ -1197,7 +1216,6 @@ const CollapsibleContent = styled.div`
   overflow: hidden;
   transition: max-height 0.3s ease;
   padding: ${props => props.expanded ? '20px' : '0 20px'};
-  background: white;
 `;
 
 // 운동 결과 관련 스타일

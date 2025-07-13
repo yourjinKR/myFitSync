@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 import { Button, Select } from '../../../styles/chartStyle';
 
 /**
@@ -28,99 +29,49 @@ const FilterPanel = ({
     } = filters;
 
     return (
-        <div style={{ 
-            background: 'white', 
-            padding: '1.5rem', 
-            borderRadius: '0.75rem', 
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
-            marginBottom: '2rem' 
-        }}>
-            <h3 style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600', 
-                marginBottom: '1rem', 
-                color: '#374151' 
-            }}>
+        <FilterContainer>
+            <FilterHeader>
                 🔍 필터 및 검색
-            </h3>
+            </FilterHeader>
             
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: '1rem' 
-            }}>
+            <FilterGrid>
                 {/* 검색어 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        검색어
-                    </label>
-                    <input
+                <FilterGroup>
+                    <FilterLabel>검색어</FilterLabel>
+                    <SearchInput
                         type="text"
                         placeholder="ID, 모델명 검색..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '0.5rem',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '0.375rem',
-                            fontSize: '0.875rem'
-                        }}
                     />
-                </div>
+                </FilterGroup>
                 
                 {/* 상태 필터 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        상태
-                    </label>
-                    <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                <FilterGroup>
+                    <FilterLabel>상태</FilterLabel>
+                    <StyledSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
                         <option value="all">전체</option>
                         <option value="success">✅ 성공</option>
                         <option value="error">❌ 오류</option>
                         <option value="exception">⚠️ 예외</option>
-                    </Select>
-                </div>
+                    </StyledSelect>
+                </FilterGroup>
                 
                 {/* 모델 필터 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        모델
-                    </label>
-                    <Select value={modelFilter} onChange={(e) => setModelFilter(e.target.value)}>
+                <FilterGroup>
+                    <FilterLabel>모델</FilterLabel>
+                    <StyledSelect value={modelFilter} onChange={(e) => setModelFilter(e.target.value)}>
                         <option value="all">전체 모델</option>
                         {[...new Set(apiLogs.map(log => log.apilog_model).filter(Boolean))].map(model => (
                             <option key={model} value={model}>{model}</option>
                         ))}
-                    </Select>
-                </div>
+                    </StyledSelect>
+                </FilterGroup>
                 
                 {/* 서비스 필터 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        서비스
-                    </label>
-                    <Select value={serviceFilter} onChange={(e) => {
+                <FilterGroup>
+                    <FilterLabel>서비스</FilterLabel>
+                    <StyledSelect value={serviceFilter} onChange={(e) => {
                         setServiceFilter(e.target.value);
                         setVersionFilter('all'); // 서비스 변경 시 버전 필터 초기화
                     }}>
@@ -128,20 +79,13 @@ const FilterPanel = ({
                         {[...new Set(apiLogs.map(log => log.apilog_service_type).filter(Boolean))].map(service => (
                             <option key={service} value={service}>{service}</option>
                         ))}
-                    </Select>
-                </div>
+                    </StyledSelect>
+                </FilterGroup>
                 
                 {/* 버전 필터 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        버전
-                    </label>
-                    <Select value={versionFilter} onChange={(e) => setVersionFilter(e.target.value)}>
+                <FilterGroup>
+                    <FilterLabel>버전</FilterLabel>
+                    <StyledSelect value={versionFilter} onChange={(e) => setVersionFilter(e.target.value)}>
                         <option value="all">전체 버전</option>
                         {[...new Set(
                             apiLogs
@@ -170,84 +114,179 @@ const FilterPanel = ({
                                 )}
                             </option>
                         ))}
-                    </Select>
-                </div>
+                    </StyledSelect>
+                </FilterGroup>
                 
                 {/* 정렬 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        정렬
-                    </label>
-                    <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <FilterGroup>
+                    <FilterLabel>정렬</FilterLabel>
+                    <StyledSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                         <option value="newest">🆕 최신순</option>
                         <option value="oldest">📅 오래된순</option>
                         <option value="tokens">🪙 토큰순</option>
                         <option value="time">⏱️ 응답시간순</option>
-                    </Select>
-                </div>
+                    </StyledSelect>
+                </FilterGroup>
                 
                 {/* 시작일 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        시작일
-                    </label>
-                    <input
+                <FilterGroup>
+                    <FilterLabel>시작일</FilterLabel>
+                    <DateInput
                         type="date"
                         value={dateRange.start}
                         onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-                        style={{
-                            width: '100%',
-                            padding: '0.5rem',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '0.375rem',
-                            fontSize: '0.875rem'
-                        }}
                     />
-                </div>
+                </FilterGroup>
                 
                 {/* 종료일 */}
-                <div>
-                    <label style={{ 
-                        display: 'block', 
-                        fontSize: '0.875rem', 
-                        color: '#6b7280', 
-                        marginBottom: '0.25rem' 
-                    }}>
-                        종료일
-                    </label>
-                    <input
+                <FilterGroup>
+                    <FilterLabel>종료일</FilterLabel>
+                    <DateInput
                         type="date"
                         value={dateRange.end}
                         onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-                        style={{
-                            width: '100%',
-                            padding: '0.5rem',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '0.375rem',
-                            fontSize: '0.875rem'
-                        }}
                     />
-                </div>
+                </FilterGroup>
                 
                 {/* 새로고침 버튼 */}
-                <div style={{ display: 'flex', alignItems: 'end' }}>
-                    <Button onClick={fetchApiLogs} disabled={loading} style={{ width: '100%' }}>
+                <RefreshButtonGroup>
+                    <RefreshButton onClick={fetchApiLogs} disabled={loading}>
                         {loading ? '🔄 로딩 중...' : '🔄 새로고침'}
-                    </Button>
-                </div>
-            </div>
-        </div>
+                    </RefreshButton>
+                </RefreshButtonGroup>
+            </FilterGrid>
+        </FilterContainer>
     );
 };
+
+// Styled Components
+const FilterContainer = styled.div`
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-light);
+`;
+
+const FilterHeader = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+`;
+
+const FilterGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const FilterLabel = styled.label`
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+`;
+
+const StyledSelect = styled.select`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+  
+  option {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+`;
+
+const DateInput = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+`;
+
+const RefreshButtonGroup = styled.div`
+  display: flex;
+  align-items: end;
+`;
+
+const RefreshButton = styled.button`
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: var(--primary-blue-hover);
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+`;
 
 export default FilterPanel;

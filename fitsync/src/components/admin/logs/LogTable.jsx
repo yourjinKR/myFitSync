@@ -27,20 +27,20 @@ const LogTable = ({
   // 상태별 스타일 결정
   const getStatusColor = (status) => {
     switch (status) {
-      case 'SUCCESS': return '#10b981';
-      case 'ERROR': return '#ef4444';
+      case 'SUCCESS': return 'var(--success)';
+      case 'ERROR': return 'var(--warning)';
       case 'EXCEPTION': return '#f59e0b';
-      default: return '#6b7280';
+      default: return 'var(--text-tertiary)';
     }
   };
 
   // 응답시간별 색상
   const getResponseTimeColor = (time) => {
     const responseTime = parseFloat(time);
-    if (responseTime <= 500) return '#10b981';
-    if (responseTime <= 1000) return '#3b82f6';
+    if (responseTime <= 500) return 'var(--success)';
+    if (responseTime <= 1000) return 'var(--primary-blue)';
     if (responseTime <= 3000) return '#f59e0b';
-    return '#ef4444';
+    return 'var(--warning)';
   };
 
   // 시간 포맷팅
@@ -192,23 +192,24 @@ const LogTable = ({
 
 // 스타일 컴포넌트
 const TableContainer = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-light);
   position: relative;
   min-height: 400px;
 `;
 
 const TableHeader = styled.div`
   padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-tertiary);
 `;
 
 const ResultInfo = styled.div`
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 500;
 `;
 
@@ -228,9 +229,9 @@ const HeaderCell = styled.th`
   padding: 12px 16px;
   text-align: left;
   font-weight: 600;
-  color: #374151;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
   white-space: nowrap;
 `;
 
@@ -240,13 +241,13 @@ const SortableHeader = styled(HeaderCell)`
   position: relative;
   
   &:hover {
-    background: #f3f4f6;
+    background: var(--bg-primary);
   }
 `;
 
 const SortIcon = styled.span`
   margin-left: 4px;
-  color: #3b82f6;
+  color: var(--primary-blue);
   font-weight: bold;
 `;
 
@@ -255,25 +256,25 @@ const TableRow = styled.tr`
   transition: all 0.2s ease;
   
   &:hover {
-    background: #f9fafb;
+    background: var(--bg-tertiary);
   }
   
   ${props => props.selected && `
-    background: #eff6ff;
-    border-left: 3px solid #3b82f6;
+    background: var(--primary-blue-light);
+    border-left: 3px solid var(--primary-blue);
   `}
 `;
 
 const Cell = styled.td`
   padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-light);
   vertical-align: middle;
 `;
 
 const TimeStamp = styled.div`
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-secondary);
 `;
 
 const StatusBadge = styled.span`
@@ -291,7 +292,7 @@ const StatusBadge = styled.span`
 
 const ModelName = styled.div`
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -299,17 +300,18 @@ const ModelName = styled.div`
 `;
 
 const ServiceName = styled.div`
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 13px;
 `;
 
 const VersionBadge = styled.span`
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   padding: 2px 8px;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 500;
+  border: 1px solid var(--border-light);
 `;
 
 const ResponseTime = styled.div`
@@ -320,13 +322,13 @@ const ResponseTime = styled.div`
 
 const TokenCount = styled.div`
   font-family: 'Courier New', monospace;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-align: right;
 `;
 
 const UserId = styled.div`
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-tertiary);
   max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -339,7 +341,7 @@ const LoadingOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -350,8 +352,8 @@ const LoadingOverlay = styled.div`
 const LoadingSpinner = styled.div`
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #3b82f6;
+  border: 4px solid var(--border-light);
+  border-top: 4px solid var(--primary-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   
@@ -362,7 +364,7 @@ const LoadingSpinner = styled.div`
 `;
 
 const LoadingText = styled.div`
-  color: #6b7280;
+  color: var(--text-primary);
   font-size: 16px;
 `;
 
@@ -383,12 +385,12 @@ const EmptyIcon = styled.div`
 const EmptyTitle = styled.h3`
   margin: 0 0 8px 0;
   font-size: 18px;
-  color: #374151;
+  color: var(--text-primary);
 `;
 
 const EmptyDescription = styled.p`
   margin: 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 14px;
 `;
 

@@ -72,30 +72,31 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
 
 // 스타일 컴포넌트
 const TabContainer = styled.div`
-  background: #f9fafb;
+  background: var(--bg-primary);
   border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--border-light);
 `;
 
 const TabHeader = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   padding: 24px;
   border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
 `;
 
 const TabTitle = styled.h2`
   margin: 0 0 8px 0;
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
 `;
 
 const TabDescription = styled.p`
   margin: 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 14px;
 `;
 
@@ -113,43 +114,45 @@ const LogSummary = styled.div`
 `;
 
 const SummaryItem = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   padding: 16px;
   border-radius: 8px;
   text-align: center;
   min-width: 120px;
+  border: 1px solid var(--border-light);
 `;
 
 const SummaryLabel = styled.div`
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 `;
 
 const SummaryValue = styled.div`
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 `;
 
 const LoadingMessage = styled.div`
   text-align: center;
   padding: 40px;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 16px;
 `;
 
 const EmptyMessage = styled.div`
   text-align: center;
   padding: 40px;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 16px;
 `;
 
 const LogList = styled.div`
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
+  border: 1px solid var(--border-light);
 `;
 
 const LogItem = styled.div`
@@ -157,11 +160,12 @@ const LogItem = styled.div`
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 16px;
   padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
+  transition: background-color 0.2s ease;
   
   &:hover {
-    background: #f9fafb;
+    background: var(--bg-tertiary);
   }
   
   &:last-child {
@@ -171,7 +175,7 @@ const LogItem = styled.div`
 
 const LogTime = styled.div`
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-secondary);
 `;
 
 const LogStatus = styled.div`
@@ -179,22 +183,22 @@ const LogStatus = styled.div`
   font-weight: 600;
   color: ${props => {
         switch (props.status) {
-            case 'success': return '#10b981';
-            case 'error': return '#ef4444';
+            case 'success': return 'var(--success)';
+            case 'error': return 'var(--warning)';
             case 'exception': return '#f59e0b';
-            default: return '#6b7280';
+            default: return 'var(--text-tertiary)';
         }
     }};
 `;
 
 const LogModel = styled.div`
   font-size: 13px;
-  color: #374151;
+  color: var(--text-primary);
 `;
 
 const LogResponseTime = styled.div`
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-align: right;
 `;
 
