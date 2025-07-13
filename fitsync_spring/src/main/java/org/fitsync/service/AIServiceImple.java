@@ -78,7 +78,7 @@ public class AIServiceImple implements AIService {
 		    "- fat: 체지방량 (kg)\n" +
 		    "- fat_percentage: 체지방률 (%)\n" +
 		    "- skeletal_muscle: 골격근량 (kg)\n" +
-		    "- disease: 사용자가 가진 질병명 (예: 고혈압, 디스크 등, 없으면 null)\n" +
+		    "- disease: 사용자가 불편한 신체 부위 (예: [무릎, 발목...])\n" +
 		    "- purpose: 운동 목적 (예: 다이어트, 근력 증가, 체형 교정 등)\n" +
 		    "- day: 운동 가능한 요일 (예: 월, 수, 금)\n" +
 		    "- time: 운동 가능한 시간대 (예: 오전, 오후, 저녁)\n" +
@@ -175,7 +175,7 @@ public class AIServiceImple implements AIService {
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.1.1");
+            apiLog.setApilog_version("0.1.2");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 

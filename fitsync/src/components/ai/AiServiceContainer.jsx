@@ -175,9 +175,10 @@ const AiServiceContainer = () => {
                 split: inputData.split || 4,
             };
 
-            setAiResult(result);
             // 이름 체크
-            checkAllExerciseNames(result, rawDataMap);
+            const changedNameResult = checkAllExerciseNames(result, rawDataMap);
+            setAiResult(changedNameResult);
+
             setCurrentStep(3);
         } catch (error) {
             console.error('AI 루틴 생성 실패:', error);
