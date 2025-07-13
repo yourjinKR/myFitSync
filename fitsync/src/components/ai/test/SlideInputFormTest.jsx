@@ -16,18 +16,6 @@ const slideIn = keyframes`
     }
 `;
 
-const bounce = keyframes`
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-    }
-    40% {
-        transform: translateY(-8px);
-    }
-    60% {
-        transform: translateY(-4px);
-    }
-`;
-
 const pulse = keyframes`
     0% {
         transform: scale(1);
@@ -66,6 +54,7 @@ const TopHeader = styled.div`
     align-items: center;
     flex-shrink: 0;
     box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
+    position: relative;
     
     @media (max-width: 480px) {
         padding: 1.2rem 1.5rem;
@@ -83,7 +72,7 @@ const HeaderTitle = styled.h1`
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     
     @media (max-width: 480px) {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         gap: 0.5rem;
     }
 `;
@@ -118,85 +107,72 @@ const CloseButton = styled.button`
     }
 `;
 
-// 진행 표시기 영역
-const ProgressSection = styled.div`
-    background: var(--bg-secondary);
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border-light);
-    flex-shrink: 0;
-    
-    @media (max-width: 480px) {
-        padding: 1.2rem 1.5rem;
-    }
-`;
-
-const ProgressTrack = styled.div`
+const HeaderBackButton = styled.button`
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 0.8rem;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 48px;
+    min-height: 48px;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1rem;
-    position: relative;
-`;
-
-const ProgressStep = styled.div`
-    flex: 1;
-    display: flex;
-    align-items: center;
-    position: relative;
-`;
-
-const ProgressDot = styled.div`
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: ${props => 
-        props.active ? 'var(--primary-blue)' : 
-        props.completed ? 'var(--check-green)' : 'var(--border-medium)'};
-    transition: all 0.4s ease;
-    flex-shrink: 0;
-    border: 3px solid ${props => 
-        props.active ? 'var(--primary-blue-light)' : 
-        props.completed ? 'var(--success)' : 'var(--border-light)'};
-    animation: ${props => props.active ? pulse : 'none'} 2s ease-in-out infinite;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    margin-right: 1rem;
+    
+    &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: scale(1.1) translateX(-3px);
+    }
+    
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none;
+    }
     
     @media (max-width: 480px) {
-        width: 14px;
-        height: 14px;
-        border-width: 2px;
+        font-size: 1.2rem;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.6rem;
+        margin-right: 0.8rem;
     }
 `;
 
-const ProgressLine = styled.div`
-    flex: 1;
-    height: 3px;
-    background: ${props => props.completed ? 'var(--check-green)' : 'var(--border-light)'};
-    transition: all 0.4s ease;
-    margin: 0 0.5rem;
-    border-radius: 2px;
+// 진행 표시기 영역 - 헤더 하단 선형 스타일
+const ProgressBar = styled.div`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
 `;
 
-const ProgressInfo = styled.div`
-    text-align: center;
+const ProgressFill = styled.div`
+    height: 100%;
+    background: linear-gradient(90deg, var(--check-green), var(--success));
+    width: ${props => ((props.currentSlide + 1) / props.totalSlides) * 100}%;
+    transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    position: relative;
     
-    h3 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 0 0 0.3rem 0;
-        
-        @media (max-width: 480px) {
-            font-size: 1.1rem;
-        }
-    }
-    
-    p {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        margin: 0;
-        
-        @media (max-width: 480px) {
-            font-size: 0.9rem;
-        }
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 20px;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3));
+        animation: ${pulse} 2s ease-in-out infinite;
     }
 `;
 
@@ -224,7 +200,7 @@ const Slide = styled.div`
     min-width: 100%;
     display: flex;
     flex-direction: column;
-    padding: 2rem;
+    padding: 2rem 2rem 6rem 2rem; /* 하단에 네비게이션 공간 확보 */
     overflow-y: auto;
     animation: ${slideIn} 0.6s ease-out;
     
@@ -244,7 +220,7 @@ const Slide = styled.div`
     }
     
     @media (max-width: 480px) {
-        padding: 1.5rem;
+        padding: 1.5rem 1.5rem 5rem 1.5rem;
     }
 `;
 
@@ -450,89 +426,110 @@ const CheckboxInput = styled.input`
     }
 `;
 
-// 하단 네비게이션 영역
+// 하단 네비게이션 영역 - 고정 위치 (다음 버튼만)
 const BottomNavigation = styled.div`
-    background: var(--bg-secondary);
-    padding: 2rem;
-    border-top: 1px solid var(--border-light);
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 750px;
+    backdrop-filter: blur(20px);
+    padding: 1.2rem 2rem;
     display: flex;
-    gap: 1.5rem;
-    justify-content: space-between;
-    flex-shrink: 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    justify-content: center;
+    z-index: 1001;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(74, 144, 226, 0.3), transparent);
+    }
     
     @media (max-width: 480px) {
-        padding: 1.5rem;
-        gap: 1rem;
+        padding: 1rem 1.5rem;
     }
 `;
 
 const NavButton = styled.button`
-    flex: 1;
-    padding: 1.5rem 2.5rem;
-    font-size: 1.2rem;
-    font-weight: 700;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
     border: none;
-    border-radius: 16px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.8rem;
-    min-height: 60px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    gap: 0.5rem;
+    min-height: 48px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s;
+    }
+    
+    &:hover::before {
+        left: 100%;
+    }
     
     &:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
         transform: none;
+        
+        &::before {
+            display: none;
+        }
+    }
+    
+    &:active:not(:disabled) {
+        transform: scale(0.98);
     }
     
     @media (max-width: 480px) {
-        padding: 1.3rem 2rem;
-        font-size: 1.1rem;
-        min-height: 56px;
-        gap: 0.6rem;
-    }
-`;
-
-const BackButton = styled(NavButton)`
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 3px solid var(--border-medium);
-    flex: 0.7;
-    
-    &:hover:not(:disabled) {
-        background: var(--bg-primary);
-        border-color: var(--primary-blue);
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+        gap: 0.4rem;
     }
 `;
 
 const NextButton = styled(NavButton)`
-    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-hover));
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.3);
+    font-weight: 700;
     
     &:hover:not(:disabled) {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
-        animation: ${bounce} 0.6s ease-in-out;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
     }
 `;
 
 const SubmitButton = styled(NavButton)`
-    background: linear-gradient(135deg, var(--check-green), var(--success));
+    background: linear-gradient(135deg, var(--check-green) 0%, var(--success) 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+    font-weight: 700;
     
     &:hover:not(:disabled) {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
-        animation: ${bounce} 0.6s ease-in-out;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
     }
 `;
 
@@ -552,11 +549,21 @@ const WelcomeCenter = styled.div`
 `;
 
 const WelcomeIcon = styled.div`
-    font-size: 6rem;
+    font-size: 6rem !important; /* !important로 글로벌 스타일 오버라이드 */
     animation: ${pulse} 3s ease-in-out infinite;
+    line-height: 1;
+    
+    /* 모바일에서도 큰 크기 유지 */
+    @media (max-width: 750px) {
+        font-size: 5rem !important; /* 모바일에서도 충분히 큰 크기 */
+    }
     
     @media (max-width: 480px) {
-        font-size: 4.5rem;
+        font-size: 4.5rem !important; /* 작은 모바일에서도 적당히 큰 크기 */
+    }
+    
+    @media (max-width: 320px) {
+        font-size: 4rem !important; /* 매우 작은 화면에서 최소 크기 */
     }
 `;
 
@@ -589,23 +596,14 @@ const WelcomeSlide = ({ onNext }) => (
                 개인 맞춤형 운동 계획을 받을 수 있어요!
             </WelcomeMessage>
         </WelcomeCenter>
-        
-        <BottomNavigation>
-            <div style={{ flex: 0 }}></div>
-            <NextButton onClick={onNext}>
-                시작하기 🚀
-            </NextButton>
-        </BottomNavigation>
     </Slide>
 );
 
-const BasicInfoSlide = ({ formData, setFormData, onNext, onBack }) => {
+const BasicInfoSlide = ({ formData, setFormData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
-
-    const isValid = formData.age && formData.gender && formData.height && formData.weight;
 
     return (
         <Slide>
@@ -667,20 +665,11 @@ const BasicInfoSlide = ({ formData, setFormData, onNext, onBack }) => {
                     />
                 </InputGroup>
             </InputArea>
-            
-            <BottomNavigation>
-                <BackButton onClick={onBack}>
-                    ← 이전
-                </BackButton>
-                <NextButton onClick={onNext} disabled={!isValid}>
-                    다음 →
-                </NextButton>
-            </BottomNavigation>
         </Slide>
     );
 };
 
-const BodyCompositionSlide = ({ formData, setFormData, onNext, onBack }) => {
+const BodyCompositionSlide = ({ formData, setFormData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -734,20 +723,11 @@ const BodyCompositionSlide = ({ formData, setFormData, onNext, onBack }) => {
                     />
                 </InputGroup>
             </InputArea>
-            
-            <BottomNavigation>
-                <BackButton onClick={onBack}>
-                    ← 이전
-                </BackButton>
-                <NextButton onClick={onNext}>
-                    다음 →
-                </NextButton>
-            </BottomNavigation>
         </Slide>
     );
 };
 
-const HealthConditionSlide = ({ formData, setFormData, onNext, onBack }) => {
+const HealthConditionSlide = ({ formData, setFormData }) => {
     const bodyParts = ['손목', '팔꿈치', '어깨', '목', '허리', '골반', '발목', '무릎'];
     
     const handleCheckboxChange = (bodyPart) => {
@@ -784,37 +764,14 @@ const HealthConditionSlide = ({ formData, setFormData, onNext, onBack }) => {
                     </CheckboxGrid>
                 </InputGroup>
             </InputArea>
-            
-            <BottomNavigation>
-                <BackButton onClick={onBack}>
-                    ← 이전
-                </BackButton>
-                <NextButton onClick={onNext}>
-                    다음 →
-                </NextButton>
-            </BottomNavigation>
         </Slide>
     );
 };
 
-const GoalsSlide = ({ formData, setFormData, onNext, onBack, onSubmit }) => {
+const GoalsSlide = ({ formData, setFormData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = () => {
-        if (!formData.age || !formData.gender || !formData.height || !formData.weight) {
-            alert('필수 정보를 모두 입력해주세요.');
-            return;
-        }
-        
-        const finalFormData = {
-            ...formData,
-            disease: formData.disease.join(', ')
-        };
-        
-        onSubmit(finalFormData);
     };
 
     return (
@@ -857,15 +814,6 @@ const GoalsSlide = ({ formData, setFormData, onNext, onBack, onSubmit }) => {
                     </SelectField>
                 </InputGroup>
             </InputArea>
-            
-            <BottomNavigation>
-                <BackButton onClick={onBack}>
-                    ← 이전
-                </BackButton>
-                <SubmitButton onClick={handleSubmit}>
-                    루틴 생성하기 🚀
-                </SubmitButton>
-            </BottomNavigation>
         </Slide>
     );
 };
@@ -873,7 +821,6 @@ const GoalsSlide = ({ formData, setFormData, onNext, onBack, onSubmit }) => {
 const SlideInputFormTest = () => {
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [memberData, setMemberData] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         age: '',
@@ -894,7 +841,6 @@ const SlideInputFormTest = () => {
         const fetchMemberData = async () => {
             try {
                 const data = await getMemberTotalData();
-                setMemberData(data);
                 
                 if (data) {
                     const { member, body } = data;
@@ -945,10 +891,54 @@ const SlideInputFormTest = () => {
         navigate('/ai');
     };
 
-    const handleGenerate = (finalFormData) => {
+    const handleGenerate = () => {
+        if (!formData.age || !formData.gender || !formData.height || !formData.weight) {
+            alert('필수 정보를 모두 입력해주세요.');
+            return;
+        }
+        
+        const finalFormData = {
+            ...formData,
+            disease: formData.disease.join(', ')
+        };
+        
         console.log('생성할 데이터:', finalFormData);
         // 실제 AI 생성 로직으로 이동
         navigate('/ai', { state: { formData: finalFormData } });
+    };
+
+    const isFormValid = formData.age && formData.gender && formData.height && formData.weight;
+
+    const getButtonConfig = () => {
+        switch (currentSlide) {
+            case 0:
+                return {
+                    type: 'next',
+                    text: '시작하기 🚀',
+                    disabled: false
+                };
+            case slides.length - 1:
+                return {
+                    type: 'submit',
+                    text: '루틴 생성하기 🚀',
+                    disabled: false
+                };
+            default:
+                return {
+                    type: 'next',
+                    text: '다음 →',
+                    disabled: currentSlide === 1 && !isFormValid
+                };
+        }
+    };
+
+    const handleButtonClick = () => {
+        const config = getButtonConfig();
+        if (config.type === 'submit') {
+            handleGenerate();
+        } else {
+            handleNext();
+        }
     };
 
     const renderSlide = () => {
@@ -956,45 +946,46 @@ const SlideInputFormTest = () => {
         
         const commonProps = {
             formData,
-            setFormData,
-            onNext: handleNext,
-            onBack: handleBack,
-            onSubmit: handleGenerate
+            setFormData
         };
 
         return <SlideComponent {...commonProps} />;
     };
 
-    const currentSlideInfo = slides[currentSlide];
+    const buttonConfig = getButtonConfig();
 
     return (
         <FormContainer>
             <TopHeader>
-                <HeaderTitle>🤖 AI 루틴 생성</HeaderTitle>
+                {currentSlide > 0 && (
+                    <HeaderBackButton onClick={handleBack}>
+                        ←
+                    </HeaderBackButton>
+                )}
+                <HeaderTitle>AI 루틴 생성</HeaderTitle>
                 <CloseButton onClick={handleClose}>✕</CloseButton>
+                <ProgressBar>
+                    <ProgressFill currentSlide={currentSlide} totalSlides={slides.length} />
+                </ProgressBar>
             </TopHeader>
-            
-            <ProgressSection>
-                <ProgressTrack>
-                    {slides.map((_, index) => (
-                        <ProgressStep key={index}>
-                            <ProgressDot 
-                                active={index === currentSlide}
-                                completed={index < currentSlide}
-                            />
-                            {index < slides.length - 1 && (
-                                <ProgressLine completed={index < currentSlide} />
-                            )}
-                        </ProgressStep>
-                    ))}
-                </ProgressTrack>
-            </ProgressSection>
             
             <MainContent>
                 <SlideContainer currentSlide={0}>
                     {renderSlide()}
                 </SlideContainer>
             </MainContent>
+            
+            <BottomNavigation>
+                {buttonConfig.type === 'submit' ? (
+                    <SubmitButton onClick={handleButtonClick} disabled={buttonConfig.disabled}>
+                        {buttonConfig.text}
+                    </SubmitButton>
+                ) : (
+                    <NextButton onClick={handleButtonClick} disabled={buttonConfig.disabled}>
+                        {buttonConfig.text}
+                    </NextButton>
+                )}
+            </BottomNavigation>
         </FormContainer>
     );
 };
