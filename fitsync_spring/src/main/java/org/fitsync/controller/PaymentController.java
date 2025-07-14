@@ -76,8 +76,6 @@ public class PaymentController {
     // 내 결제수단 목록 조회 (빌링키 제외)
     @GetMapping("/bill/list")
     public ResponseEntity<?> getPaymentMethods(HttpSession session) {
-    	log.info("결제수단 목록 조회 요청");
-    	
     	Object memberIdx = session.getAttribute("member_idx");
     	if (memberIdx == null) {
     		log.error("세션에 member_idx가 없습니다.");
@@ -86,8 +84,6 @@ public class PaymentController {
     	
     	try {
     		List<PaymentMethodVO> paymentMethods = payService.getPaymentMethods((int) memberIdx);
-    		log.info("결제수단 목록 조회 성공. 개수: " + paymentMethods.size());
-    		
     		return ResponseEntity.ok(Map.of(
     			"success", true, 
     			"message", "Payment methods retrieved successfully",
