@@ -98,56 +98,86 @@ const ButtonGroup = styled.div`
   }
 `;
 
-  const ScheduleInsertModal = ({
-    trainerIdx,
-    selectedDate,
-    selectedStime = '06:00',
-    selectedEtime = '07:00',
-    onClose,
-    onInsert,
-  }) => {
-    const [selectedMember, setSelectedMember] = useState('');
-    const [customMember, setCustomMember] = useState('');
-    const [startTime, setStartTime] = useState(selectedStime);
-    const [endTime, setEndTime] = useState(selectedEtime);
-    const [useCustom, setUseCustom] = useState(false);
-    const [memo, setMemo] = useState('');
-    const [members, setMembers] = useState([]);
-    const modalRef = useRef();
+const ScheduleInsertModal = ({
+  trainerIdx,
+  selectedDate,
+  selectedStime = '06:00',
+  onClose,
+  onInsert,
+  members = [],
+  schedulesForDate = [],
+}) => {
+  const modalRef = useRef(null);
   
-  useEffect(() => {
-  if (!trainerIdx) return;
+  const [startTime, setStartTime] = useState(selectedStime || '06:00');
+  const [memo, setMemo] = useState('');
+  const [selectedMember, setSelectedMember] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
+  const [customMember, setCustomMember] = useState('');
 
-  axios.get(`/trainer/${trainerIdx}/matched-members`)
-    .then((res) => setMembers(res.data))
-    .catch((err) => console.error('매칭 회원 불러오기 실패:', err));
-}, [trainerIdx]);
+  // 종료 시간은 startTime + 1시간으로 계산
+  const getEndTime = (stime) => {
+    const hour = parseInt(stime.split(':')[0], 10);
+    const nextHour = ((hour + 1) % 24).toString().padStart(2, '0');
+    return `${nextHour}:00`;
+  };
+  const endTime = getEndTime(startTime);
 
+  // 시간 옵션: 06:00 ~ 24:00
   const hours = Array.from({ length: 19 }, (_, i) => {
     const hour = (6 + i) % 24;
     return `${hour.toString().padStart(2, '0')}:00`;
   });
 
+  // 첫 진입 시 회원 자동 선택
+  useEffect(() => {
+    if (members.length > 0 && !useCustom && !selectedMember) {
+      setSelectedMember(members[0].member.member_name);
+    }
+  }, [members, useCustom, selectedMember]);
+
+  const isTimeConflict = () => {
+    if (!schedulesForDate || !startTime) return false;
+
+    const startHour = parseInt(startTime.split(':')[0], 10);
+    const endHour = (startHour + 1) % 24;
+
+    for (const s of schedulesForDate) {
+      const sStart = parseInt(s.schedule_stime.split(':')[0], 10);
+      const sEndRaw = s.schedule_etime || (s.schedule_stime && ((parseInt(s.schedule_stime.split(':')[0], 10) + 1) % 24).toString().padStart(2, '0') + ':00');
+      if (!sEndRaw) continue;
+      const sEnd = parseInt(sEndRaw.split(':')[0], 10);
+
+      console.log(`Checking conflict: new ${startHour}-${endHour} vs existing ${sStart}-${sEnd}`);
+
+      if (startHour < sEnd && endHour > sStart) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleSubmit = () => {
     const scheduleName = useCustom ? customMember.trim() : selectedMember;
-    console.log('scheduleName:', scheduleName);
-    console.log('startTime:', startTime);
-    console.log('endTime:', endTime);
-    
-    
-    if (!scheduleName || !startTime || !endTime) {
+
+    if (!scheduleName || !startTime) {
       alert('모든 항목을 입력해주세요.');
       return;
     }
 
-    const member = members.find((m) => m.member_name === selectedMember);
-    const userIdxToSend = useCustom ? null : (member?.member_idx || null);
+    if (isTimeConflict()) {
+      alert('해당 시작 시간에 이미 등록된 스케줄이 있습니다.');
+      return;
+    }
+
+    const member = members.find((m) => m.member.member_name === selectedMember);
+    const userIdxToSend = useCustom ? null : (member?.member.member_idx || null);
     const userNameToSend = useCustom ? customMember.trim() : selectedMember;
 
     const dayIndex = new Date(selectedDate).getDay();
     const key = `${dayIndex}-${startTime}`;
-
-    // 부모 컴포넌트에 입력값만 전달
+    console.log(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
+    
     onInsert(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
     onClose();
   };
@@ -162,33 +192,29 @@ const ButtonGroup = styled.div`
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
-  return ReactDOM.createPortal(
+  return (
     <Backdrop>
       <Modal ref={modalRef}>
         <Title>일정 추가</Title>
 
+        {/* 회원 선택 */}
         <Field>
           <label>회원 선택</label>
           <select
-            value={useCustom ? 'custom' : (() => {
-              const matched = members.find((m) => m.member.member_name === selectedMember);
-              return matched ? matched.member.member_idx : '';
-            })()}
+            value={useCustom ? 'custom' : selectedMember}
             onChange={(e) => {
-              const val = e.target.value;
-              if (val === 'custom') {
+              if (e.target.value === 'custom') {
                 setUseCustom(true);
                 setSelectedMember('');
               } else {
                 setUseCustom(false);
-                const selected = members.find((m) => m.member.member_idx === parseInt(val));
-                setSelectedMember(selected?.member.member_name || '');
+                setSelectedMember(e.target.value);
               }
             }}
           >
             <option value="">-- 선택하세요 --</option>
             {members.map((m, idx) => (
-              <option key={idx} value={m.member.member_idx}>
+              <option key={idx} value={m.member.member_name}>
                 {m.member.member_name}
               </option>
             ))}
@@ -196,6 +222,7 @@ const ButtonGroup = styled.div`
           </select>
         </Field>
 
+        {/* 직접 입력 */}
         {useCustom && (
           <Field>
             <label>이름 입력</label>
@@ -208,9 +235,13 @@ const ButtonGroup = styled.div`
           </Field>
         )}
 
+        {/* 시작 시간 */}
         <Field>
           <label>시작 시간</label>
-          <select value={startTime} onChange={(e) => setStartTime(e.target.value)}>
+          <select
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+          >
             {hours.map((h) => (
               <option key={h} value={h}>
                 {h}
@@ -219,17 +250,18 @@ const ButtonGroup = styled.div`
           </select>
         </Field>
 
+        {/* 종료 시간 (자동 계산) */}
         <Field>
           <label>종료 시간</label>
-          <select value={endTime} onChange={(e) => setEndTime(e.target.value)}>
-            {hours.map((h) => (
-              <option key={h} value={h}>
-                {h}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            value={endTime}
+            readOnly
+            style={{ background: '#eee', color: '#888' }}
+          />
         </Field>
 
+        {/* 메모 */}
         <Field>
           <label>메모</label>
           <textarea
@@ -239,13 +271,13 @@ const ButtonGroup = styled.div`
           />
         </Field>
 
+        {/* 버튼 */}
         <ButtonGroup>
           <button onClick={handleSubmit}>추가</button>
           <button onClick={onClose}>취소</button>
         </ButtonGroup>
       </Modal>
-    </Backdrop>,
-    document.body
+    </Backdrop>
   );
 };
 
