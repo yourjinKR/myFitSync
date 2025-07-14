@@ -18,6 +18,14 @@
         SELECT * FROM payment_method
         WHERE member_idx = #{member_idx}
     </select>
+    
+    <!-- 회원별 결제수단 조회 (빌링키 제외) -->
+    <select id="selectByMemberIdxExcludingKey" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
+        SELECT method_idx, member_idx, method_provider, method_name, method_regdate
+        FROM payment_method
+        WHERE member_idx = #{member_idx}
+        ORDER BY method_regdate DESC
+    </select>
 
     <!-- 단건 조회 (method_idx 기준) -->
     <select id="selectByMethodIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">

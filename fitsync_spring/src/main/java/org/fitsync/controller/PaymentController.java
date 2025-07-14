@@ -1,5 +1,6 @@
 package org.fitsync.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,21 +40,16 @@ public class PaymentController {
     // 결제창을 통해 생성한 빌링키를 저장
     @PostMapping(value = "/bill/issue", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> issueBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
-    	log.info("빌링키 저장 요청 받음. Body: " + body);
     	
     	Object memberIdx = session.getAttribute("member_idx");
     	if (memberIdx == null) {
-    		log.error("세션에 member_idx가 없습니다.");
     		return ResponseEntity.badRequest().body("User not logged in");
     	}
     	
     	String billingKey = body.get("method_key");
-		log.info("Billing Key: " + billingKey);
 		String methodProvider = body.get("method_provider");
-		log.info("Method Provider: " + methodProvider);
 
 		if (billingKey == null || methodProvider == null) {
-			log.error("필수 파라미터가 누락되었습니다. billingKey: " + billingKey + ", methodProvider: " + methodProvider);
 			return ResponseEntity.badRequest().body("Missing required parameters");
 		}
 
@@ -74,6 +71,36 @@ public class PaymentController {
 			log.error("Exception while saving billing key: ", e);
 			return ResponseEntity.status(500).body(Map.of("success", false, "message", "Internal server error"));
 		}
+    }
+    
+    // 내 결제수단 목록 조회 (빌링키 제외)
+    @GetMapping("/bill/list")
+    public ResponseEntity<?> getPaymentMethods(HttpSession session) {
+    	log.info("결제수단 목록 조회 요청");
+    	
+    	Object memberIdx = session.getAttribute("member_idx");
+    	if (memberIdx == null) {
+    		log.error("세션에 member_idx가 없습니다.");
+    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+    	}
+    	
+    	try {
+    		List<PaymentMethodVO> paymentMethods = payService.getPaymentMethods((int) memberIdx);
+    		log.info("결제수단 목록 조회 성공. 개수: " + paymentMethods.size());
+    		
+    		return ResponseEntity.ok(Map.of(
+    			"success", true, 
+    			"message", "Payment methods retrieved successfully",
+    			"data", paymentMethods
+    		));
+    		
+    	} catch (Exception e) {
+    		log.error("결제수단 목록 조회 중 오류 발생: ", e);
+    		return ResponseEntity.status(500).body(Map.of(
+    			"success", false, 
+    			"message", "Internal server error"
+    		));
+    	}
     }
     
     // 빌링키로 결제

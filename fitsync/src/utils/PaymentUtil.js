@@ -10,7 +10,7 @@ const paymentMethodInfo = {
     TOSSPAYMENTS: {channelKey: process.env.REACT_APP_PORTONE_TOSSPAYMENTS_KEY, billingKeyMethod: "CARD",},
 };
 
-/** 빌링키 등록 */
+/** 빌링키 발급 */
 const issueBillingKey = async (name) => {
     const inputInfo = paymentMethodInfo[name];
 
@@ -25,7 +25,7 @@ const issueBillingKey = async (name) => {
     return result;
 };
 
-/** 빌링키 DB 저장 */
+/** 결제수단 DB 저장 (빌링키) */
 const saveBillingKey = async ({method_key, method_provider}) => {
     try {
         const response = await axios.post('/payment/bill/issue', 
@@ -50,7 +50,29 @@ const saveBillingKey = async ({method_key, method_provider}) => {
     }
 };
 
+/** 내 결제수단 불러오기 */
+const getBillingKeys = async () => {
+    try {
+        const response = await axios.get('/payment/bill/list', 
+            { 
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('결제수단 목록 조회 성공:', response.data);
+        return response.data;
+        
+    } catch (error) {
+        console.error('Error fetching payment methods:', error);
+        throw error;
+    }
+};
+
 export const PaymentUtil = {
     issueBillingKey : issueBillingKey,
     saveBillingKey : saveBillingKey,
+    getBillingKeys : getBillingKeys,
 }

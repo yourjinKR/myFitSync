@@ -94,11 +94,42 @@ const billingKey = async (e) => {
     }
 }
 
+/** 내 결제수단 목록 조회 */
+const handleGetPaymentMethods = async () => {
+    try {
+        const response = await PaymentUtil.getBillingKeys();
+        console.log("결제수단 목록:", response);
+        
+        if (response.success) {
+            const methods = response.data;
+            if (methods.length > 0) {
+                const methodList = methods.map(method => 
+                    `${method.method_provider} (등록일: ${new Date(method.method_regdate).toLocaleDateString()})`
+                ).join('\n');
+                alert(`등록된 결제수단:\n${methodList}`);
+            } else {
+                alert("등록된 결제수단이 없습니다.");
+            }
+        } else {
+            alert(`조회 실패: ${response.message}`);
+        }
+    } catch (error) {
+        console.error("결제수단 목록 조회 중 오류:", error);
+        
+        if (error.response) {
+            alert(`서버 오류: ${error.response.data?.message || error.response.status}`);
+        } else {
+            alert(`오류: ${error.message}`);
+        }
+    }
+}
+
     return (
         <div>
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
             <ButtonSubmit onClick={handlePortOneBillingPaymentTest}>빌링키 결제 테스트(toss-payments)</ButtonSubmit>
+            <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
         </div>
     );
 };

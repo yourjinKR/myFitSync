@@ -38,6 +38,11 @@ public class PaymentServiceImple implements PaymentService {
 		return paymentMethodMapper.insertPaymentMethod(vo);
 	}
 	
+	@Override
+	public List<PaymentMethodVO> getPaymentMethods(int memberIdx) {
+		return paymentMethodMapper.selectByMemberIdxExcludingKey(memberIdx);
+	}
+	
 	// api key, payment id, billing key, channel key, ordername, amount, currency 
 	@Override
 	public Object payBillingKey(String payment) {
