@@ -185,7 +185,7 @@ public class TrainerController {
         return ResponseEntity.ok(schedules);
     }
 
-    // 스케줄 등록(매칭X)
+    // 스케줄 등록
     @PostMapping("/{trainerIdx}/schedule")
     public ResponseEntity<?> addSchedule(
         @PathVariable int trainerIdx,

@@ -236,6 +236,7 @@ const DotRow = styled.div`
 
       {members.length === 0 && <p>해당 회원이 없습니다.</p>}
       {showInsertForm && <UserInsetForTrainer />}
+      
     </Wrapper>
   );
 };
