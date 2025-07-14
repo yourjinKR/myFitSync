@@ -6,6 +6,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 
+import org.fitsync.domain.PaymentMethodVO;
+import org.fitsync.mapper.PaymentMethodMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +29,13 @@ public class PaymentServiceImple implements PaymentService {
     
     @Value("${portone.store.id}")
     private String storeId;
+
+	@Autowired
+	private PaymentMethodMapper paymentMethodMapper;
 	
 	@Override
-	public Object saveBillingKey() {
-		// TODO Auto-generated method stub
-		return null;
+	public int saveBillingKey(PaymentMethodVO vo) {
+		return paymentMethodMapper.insertPaymentMethod(vo);
 	}
 	
 	// api key, payment id, billing key, channel key, ordername, amount, currency 

@@ -57,11 +57,48 @@ const handlePortOneBillingPaymentTest = async () => {
     }
 }
 
+/** 빌링키 발급 및 저장 */
+const billingKey = async (e) => {
+    const { name } = e.target;
+    e.preventDefault();
+
+    try {
+        const result = await PaymentUtil.issueBillingKey(name);
+        
+        if (result !== null) {
+            // 빌링키 저장
+            const saveResponse = await PaymentUtil.saveBillingKey({
+                method_key: result.billingKey,
+                method_provider: name,
+            });
+            
+            alert("빌링키가 성공적으로 발급되고 저장되었습니다!");
+        } else {
+            console.error("빌링키 발급 실패:", result);
+            alert(`빌링키 발급 실패: ${result.message || '알 수 없는 오류'}`);
+        }
+        
+    } catch (error) {
+        console.error("빌링키 발급 및 저장 중 오류:", error);
+        
+        if (error.response) {
+            console.log("서버 응답 오류:", error.response.data);
+            alert(`서버 오류: ${error.response.data?.message || error.response.status}`);
+        } else if (error.request) {
+            console.log("네트워크 오류:", error.request);
+            alert("네트워크 오류가 발생했습니다. 연결을 확인해주세요.");
+        } else {
+            console.log("기타 오류:", error.message);
+            alert(`오류: ${error.message}`);
+        }
+    }
+}
+
     return (
         <div>
-            <ButtonSubmit onClick={PaymentUtil.issueBillingKey} name={KAKAOPAY}>빌링키 발급 테스트(kakao)</ButtonSubmit>
-            <ButtonSubmit onClick={PaymentUtil.issueBillingKey} name={TOSSPAYMENTS}>빌링키 발급 테스트(toss-payments)</ButtonSubmit>
-            <ButtonSubmit onClick={handlePortOneBillingPaymentTest} name={TOSSPAYMENTS}>빌링키 결제 테스트(toss-payments)</ButtonSubmit>
+            <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
+            <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
+            <ButtonSubmit onClick={handlePortOneBillingPaymentTest}>빌링키 결제 테스트(toss-payments)</ButtonSubmit>
         </div>
     );
 };

@@ -2,6 +2,9 @@ package org.fitsync.controller;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpSession;
+
+import org.fitsync.domain.PaymentMethodVO;
 import org.fitsync.service.PaymentServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,11 +34,46 @@ public class PaymentController {
     
     @Autowired
     private PaymentServiceImple payService;
-    
+
     // 결제창을 통해 생성한 빌링키를 저장
-    @PostMapping("/bill/issue")
-    public ResponseEntity<?> issueBillingKey() throws IOException {
-    	return null;
+    @PostMapping(value = "/bill/issue", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> issueBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
+    	log.info("빌링키 저장 요청 받음. Body: " + body);
+    	
+    	Object memberIdx = session.getAttribute("member_idx");
+    	if (memberIdx == null) {
+    		log.error("세션에 member_idx가 없습니다.");
+    		return ResponseEntity.badRequest().body("User not logged in");
+    	}
+    	
+    	String billingKey = body.get("method_key");
+		log.info("Billing Key: " + billingKey);
+		String methodProvider = body.get("method_provider");
+		log.info("Method Provider: " + methodProvider);
+
+		if (billingKey == null || methodProvider == null) {
+			log.error("필수 파라미터가 누락되었습니다. billingKey: " + billingKey + ", methodProvider: " + methodProvider);
+			return ResponseEntity.badRequest().body("Missing required parameters");
+		}
+
+		PaymentMethodVO vo = new PaymentMethodVO();
+		vo.setMember_idx((int) memberIdx);
+		vo.setMethod_key(billingKey);
+		vo.setMethod_provider(methodProvider);
+
+		try {
+			int result = payService.saveBillingKey(vo);
+			if (result > 0) {
+				log.info("Billing key saved successfully: " + billingKey);
+				return ResponseEntity.ok(Map.of("success", true, "message", "Billing key saved successfully"));
+			} else {
+				log.error("Failed to save billing key: " + billingKey);
+				return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Failed to save billing key"));
+			}
+		} catch (Exception e) {
+			log.error("Exception while saving billing key: ", e);
+			return ResponseEntity.status(500).body(Map.of("success", false, "message", "Internal server error"));
+		}
     }
     
     // 빌링키로 결제

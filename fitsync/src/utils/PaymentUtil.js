@@ -1,4 +1,5 @@
 import PortOne from "@portone/browser-sdk/v2";
+import axios from "axios";
 
 export const KAKAOPAY = "KAKAOPAY";
 export const TOSSPAYMENTS = "TOSSPAYMENTS";
@@ -10,11 +11,8 @@ const paymentMethodInfo = {
 };
 
 /** 빌링키 등록 */
-const issueBillingKey = async (e) => {
-    const {name} = e.target;
+const issueBillingKey = async (name) => {
     const inputInfo = paymentMethodInfo[name];
-
-    e.preventDefault();
 
     const result = await PortOne.requestIssueBillingKey({
         ...inputInfo,
@@ -24,8 +22,35 @@ const issueBillingKey = async (e) => {
     }); 
 
     console.log("결제 요청 결과:", result);
+    return result;
+};
+
+/** 빌링키 DB 저장 */
+const saveBillingKey = async ({method_key, method_provider}) => {
+    try {
+        const response = await axios.post('/payment/bill/issue', 
+            {
+                method_key: method_key,
+                method_provider: method_provider
+            },
+            { 
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('빌링키 저장 성공:', response.data);
+        return response.data;
+        
+    } catch (error) {
+        console.error('Error saving billing key:', error);
+        throw error;
+    }
 };
 
 export const PaymentUtil = {
     issueBillingKey : issueBillingKey,
+    saveBillingKey : saveBillingKey,
 }

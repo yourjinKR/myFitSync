@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.fitsync.mapper.PaymentMethodMapper">
+
+    <!-- 결제수단 등록 -->
+    <insert id="insertPaymentMethod" parameterType="org.fitsync.domain.PaymentMethodVO">
+        INSERT INTO payment_method (
+            method_idx, member_idx, method_key, method_provider, method_regdate
+        ) VALUES (
+            payment_method_seq.nextval, #{member_idx}, #{method_key}, #{method_provider}, SYSDATE
+        )
+    </insert>
+
+    <!-- 회원별 결제수단 조회 -->
+    <select id="selectByMemberIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
+        SELECT * FROM payment_method
+        WHERE member_idx = #{member_idx}
+    </select>
+
+    <!-- 단건 조회 (method_idx 기준) -->
+    <select id="selectByMethodIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
+        SELECT * FROM payment_method
+        WHERE method_idx = #{method_idx}
+    </select>
+
+    <!-- 결제수단 이름 수정 -->
+    <update id="updatePaymentMethodName" parameterType="org.fitsync.domain.PaymentMethodVO">
+        UPDATE payment_method
+        SET method_name = #{method_name}
+        WHERE method_idx = #{method_idx}
+    </update>
+
+    <!-- 결제수단 삭제 -->
+    <delete id="deletePaymentMethod" parameterType="int">
+        DELETE FROM payment_method
+        WHERE method_idx = #{method_idx}
+    </delete>
+
+</mapper>
