@@ -51,7 +51,13 @@ const GlobalStyle = createGlobalStyle`
 
   @media (max-width: 750px) {
     *, *::before, *::after {
-      font-size: 3vw !important; /* 모바일에서 폰트 크기 조정 */
+      font-size: 1.4vw; /* 모바일에서 폰트 크기 조정 */
+    }
+  }
+ 
+  @media (max-width: 500px) {
+    *, *::before, *::after {
+      font-size: 1.6vw; /* 모바일에서 폰트 크기 조정 */
     }
   }
  

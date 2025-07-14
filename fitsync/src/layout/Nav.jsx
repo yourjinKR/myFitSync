@@ -32,7 +32,7 @@ const NavButton = styled.button`
   border: none;
   outline: none;
   color: #eebbc3;
-  font-size: 1.6rem;
+  font-size: 1.2rem;
   font-weight: 600;
   display: flex;
   flex-direction: column;
@@ -43,7 +43,12 @@ const NavButton = styled.button`
 
   svg {
     margin-bottom: 2px;
-    font-size: 4rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    path {
+      font-size: 5rem;
+    }
+
   }
 `;
 

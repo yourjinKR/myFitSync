@@ -4,9 +4,10 @@ import Routine from './Routine';
 import axios from 'axios';
 
 const EmptyData = styled.div`
+  width: 100%;
   font-weight: bold;
-  color: var(--text-tertiary);
   font-size: 2rem;
+  color: var(--text-tertiary);
   border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 50px 0;
@@ -16,6 +17,9 @@ const EmptyData = styled.div`
 `;
 
 const RoutineListWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 `;
 
 const RoutineList = () => {

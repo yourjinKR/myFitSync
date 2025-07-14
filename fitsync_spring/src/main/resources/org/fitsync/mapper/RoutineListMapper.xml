@@ -3,12 +3,50 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.RoutineListMapper">
-
-	<select id="getRoutineList" parameterType="int"
-		resultType="org.fitsync.domain.RoutineListVO">
-		SELECT *
-		FROM ROUTINELIST
-		WHERE MEMBER_IDX = #{member_idx}
+	
+	<resultMap id="routineListMap" type="org.fitsync.domain.RoutineListVO">
+	    <id property="routine_list_idx" column="ROUTINE_LIST_IDX"/>
+	    <result property="member_idx" column="MEMBER_IDX"/>
+	    <result property="writer_idx" column="WRITER_IDX"/>
+	    <result property="routine_name" column="ROUTINE_NAME"/>
+	    
+	    <collection property="routines" ofType="org.fitsync.domain.RoutineVO">
+	        <id property="routine_idx" column="ROUTINE_IDX"/>
+	        <result property="routine_list_idx" column="ROUTINE_LIST_IDX"/>
+	        <result property="pt_idx" column="PT_IDX"/>
+	        <result property="routine_memo" column="ROUTINE_MEMO"/>
+	        
+	        <!-- PT 정보 추가 -->
+	        <association property="pt" javaType="org.fitsync.domain.PtVO">
+	            <id property="pt_idx" column="PT_IDX"/>
+	            <result property="pt_name" column="PT_NAME"/>
+	            <result property="pt_category" column="PT_CATEGORY"/>
+	            <result property="pt_image" column="PT_IMAGE"/>
+	            <result property="pt_content" column="PT_CONTENT"/>
+	            <result property="pt_writer" column="PT_WRITER"/>
+	        </association>
+	    </collection>
+	</resultMap>
+	
+	<select id="getRoutineList" parameterType="int" resultMap="routineListMap">
+		SELECT
+		    RL.ROUTINE_LIST_IDX,
+		    RL.MEMBER_IDX,
+		    RL.WRITER_IDX,
+		    RL.ROUTINE_NAME,
+		    R.ROUTINE_IDX,
+		    R.PT_IDX,
+		    R.ROUTINE_MEMO,
+		    PT.PT_NAME,
+		    PT.PT_CATEGORY,
+		    PT.PT_IMAGE,
+		    PT.PT_CONTENT,
+		    PT.PT_WRITER
+		FROM ROUTINELIST RL
+		LEFT JOIN ROUTINE R ON RL.ROUTINE_LIST_IDX = R.ROUTINE_LIST_IDX
+		LEFT JOIN PT PT ON R.PT_IDX = PT.PT_IDX
+		WHERE RL.MEMBER_IDX = #{member_idx}
+		ORDER BY RL.ROUTINE_LIST_IDX, R.ROUTINE_IDX
 	</select>
 	
 	<!-- ResultMap 정의 -->

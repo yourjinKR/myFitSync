@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { use, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -20,8 +20,8 @@ const HeaderWrapper = styled.header`
   transform: translateX(-50%);
   
   button {
-    background: transparent;
-    color: var(--text-secondary);
+    
+    color: var(--text-primary);
     font-size: 1.4rem;
     font-weight: 500;
     padding: 8px 16px;
@@ -29,13 +29,6 @@ const HeaderWrapper = styled.header`
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
-    
-    &:active {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      border-color: var(--border-medium);
-      transform: scale(0.98);
-    }
   }
   
   p {
@@ -47,7 +40,6 @@ const HeaderWrapper = styled.header`
 
 const HeaderCTA = styled.button`
   border-radius: 6px;
-  color: #ffffff;
   background: var(--primary-blue);
   padding: 8px 16px;
   font-size: 1.4rem;
@@ -55,11 +47,6 @@ const HeaderCTA = styled.button`
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  
-  &:active:not(:disabled) {
-    background: var(--primary-blue-hover);
-    transform: scale(0.98);
-  }
   
   &:disabled {
     background: var(--border-medium);
@@ -225,11 +212,11 @@ const RoutineMain = () => {
     routines: [],
   };
   const [routineData, setRoutineData] = useState(routineInit);
-  console.log(" routineData", routineData);
   const [newData, setNewData] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [unfinished, setUnfinished] = useState([]);
   const [isSave, setIsSave] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
 
   const [pendingNav, setPendingNav] = useState(false);  // 상태 반영 후 이동 예약
 
@@ -253,6 +240,15 @@ const RoutineMain = () => {
       setRoutineData(routineInit);
     } 
   },[location.pathname])
+
+  useEffect(() => {
+    if(newData === null) return;
+    if(newData.update){
+      setIsUpdate(true);
+    }else{
+      setIsUpdate(false);
+    }
+  },[newData])
 
  
 
@@ -289,6 +285,7 @@ const RoutineMain = () => {
   // 루틴 기록
   const handleRocordSubmit = () => {
     alertRef.current.style.display = "flex";
+
     const dataFilter = newData.routines;
     dataFilter.map((routine) => {
       const sets = routine.sets;
@@ -336,27 +333,50 @@ const RoutineMain = () => {
   
   // 저장하기
   const handleRecordData = (isRecord) => {
-
     if(isRecord) {
-      if(newData.update) {
-        setIsUpdate(true);
-      }else{
-        handleRoutineRecord();
-      }
+      handleRoutineRecord();
     } else {
       closeAlert();
     }
   }
 
+  useEffect(() => {
+    if(newData === null) return;
+    if(!isEdit && newData.update) {
+      if(window.confirm("루틴을 업데이트 하시겠습니까?")){
+        handleUpdateData(true);
+      }
+    }
+  },[isEdit]);
+
   const handleUpdateData = (type) => {
-    setNewData(prev => ({
-      ...prev,
-      update: type
-    }));
-    setIsUpdate(false);
-    alertRef.current.style.display = "none";
-    setUnfinished([]);
-    handleRoutineRecord();
+    if(type) {
+      const putData = async () => {
+        try {
+          const response = await axios.put(
+            `/routine/update/${routine_list_idx}`,
+            newData,
+            { withCredentials: true }
+          );
+          const result = response.data;
+          if(result.success) {
+            alert(result.msg);
+            setIsUpdate(false);
+            nav("/routine/view");
+          } else {
+            alert(result.msg);
+          }
+        } catch (error) {
+          alert("루틴 업데이트에 실패했습니다.");
+        }
+      }
+      putData();
+    }else{
+      setNewData(prev => ({
+        ...prev,
+        update: type
+      }));
+    }
   }    
 
   const closeAlert = () => {
@@ -380,10 +400,7 @@ const RoutineMain = () => {
 
   // 루틴 운동 등록
   const handleButton = () => {
-    // if (!routineData.routine_name || routineData.routine_name === "") {
-    //   alert("루틴명을 작성해주세요.");
-    //   return;
-    // }
+
 
     if(routineData.routines.length > 0){
       setPendingNav(true); // 상태 반영 후 이동 예약
@@ -407,13 +424,13 @@ const RoutineMain = () => {
               location.pathname !== `/routine/detail/${routine_list_idx}` ? 
               <HeaderCTA disabled={location.pathname !== '/routine/set' ? true : false} onClick={handleDataSubmit}>저장</HeaderCTA>
               :
-              <HeaderCTA onClick={handleRocordSubmit}>마치기</HeaderCTA>
+              <HeaderCTA disabled={isEdit} onClick={handleRocordSubmit}>마치기</HeaderCTA>
             }
           </HeaderWrapper> : <></>}
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
         <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev}} /> :
-        <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit }}/>
+        <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit, isEdit, setIsEdit }}/>
       }
 
       {/* 루틴 하단 버튼 */}
@@ -442,13 +459,15 @@ const RoutineMain = () => {
             <WarrningText>
               {
                 unfinished.length === 0 ? <></> :
-                <div style={{ width: '100%', overflowY: 'auto', maxHeight: '200px' }}>
+                <div>
                   <H4 isWarring={true}>완료되지 않은 운동 목록</H4>
-                  {unfinished.map((item, idx) => (
-                    <p key={idx}>
-                      {item}
-                    </p>
-                  ))}
+                  <div style={{ width: '100%', overflowY: 'auto', maxHeight: '200px' }}>
+                    {unfinished.map((item, idx) => (
+                      <p key={idx}>
+                        {item}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               }
             </WarrningText>

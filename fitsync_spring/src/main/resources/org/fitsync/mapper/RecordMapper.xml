@@ -10,7 +10,8 @@
 		    sysdate,
 		    #{pt_idx},
 		    #{routine_memo},
-		    #{routine_name}
+		    #{routine_name},
+		    #{routine_list_idx}
 		)
 	</insert>
 	

@@ -5,6 +5,9 @@ import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from '
 import styled from 'styled-components';
 import { CheckInput, Checklabel } from '../../styles/commonStyle';
 import AlarmIcon from '@mui/icons-material/Alarm';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DeleteIcon from '@mui/icons-material/Delete';
+import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
 import { useLongPress } from 'use-long-press';
 
@@ -15,9 +18,10 @@ const WorkoutSetWrapper = styled.div`
   h3 {
     font-size: 2.4rem;
     color: var(--text-primary);
-    border-bottom: 1px solid var(--border-light);
-    padding-bottom: 12px;
     font-weight: 600;
+    height: 30px;
+    line-height: 30px;
+    width: calc(100% - 100px);
   }
 `;
 const ExerciseSection = styled.div`
@@ -36,10 +40,17 @@ const ExerciseSection = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
-
-  &.edit {
-    animation: editing 2s linear infinite;
+  
+  & > button > svg { 
+    width: 24px;
+    height: 24px;
+    background: var(--border-dark);
+    border-radius: 50%;
+    path { 
+      color : var(--bg-secondary);
+    };
   }
+
 
   @keyframes editing {
     0%, 50%, 100% {
@@ -128,7 +139,14 @@ const ListBody = styled.div`
     align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid var(--border-light);
+
+    svg {
+      width: 24px;
+      height: 24px;
+      color: var(--text-secondary);
+    }
   }
+
   
   .swipeable-list-item__content > div {
     flex: 1;
@@ -205,36 +223,56 @@ const DeleteCTA = styled.button`
   height: 30px;
   top: 10px;
   right: 10px;
-  text-indent: -9999px;
-  font-size: 0;
-
-  &::before {
-    content: "";
-    display: block;
-    width: 100%;
-    height: 2px;
-    background: var(--bg-white);
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%) rotate(45deg);
-  }
-  
-  &::after {
-    content: "";
-    display: block;
-    width: 100%;
-    height: 2px;
-    background: var(--bg-white);
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%) rotate(-45deg);
-  }
-  
 `;
 
-const RoutineTop = styled.div``;
+const RoutineTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+  input {
+    font-size: 2.4rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    height: 30px;
+    line-height: 1.5;
+    width: calc(100% - 100px);
+    padding: 0;
+  }
+`;
+
+const EditCTA = styled.button`
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  color : var(--text-primary);
+  padding: 5px 15px;
+  border-radius: 5px;
+  height: 30px;
+  line-height: 1.5;
+
+  &.edit {
+    background: var(--primary-blue);
+    color: var(--text-white);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  path {
+    font-size: 2rem;
+    color: var(--text-primary);
+  }
+`;
+
+const RoutineTitle = styled.input`
+  font-size: 2.4rem;
+  border: none;
+  background: transparent;
+`;
 
 const LoadingWrapper = styled.div`
   display: flex;
@@ -248,11 +286,12 @@ const LoadingWrapper = styled.div`
 
 const TimerBox = styled.div`
   display:flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 5px 10px;
   width: 100%;
   margin:10px 0;
+  min-height: 34px;
   
   svg {
     width: 24px;
@@ -263,7 +302,7 @@ const TimerBox = styled.div`
     font-weight:bold;
   }
 `;
-    
+
 const TimerCTA = styled.button`
   display: flex;
   align-items: center;
@@ -273,16 +312,9 @@ const TimerCTA = styled.button`
   font-weight: bold;
 `;
 
-const EditCTA = styled.button`
-  font-size: 1.4rem;
-  color : var(--text-primary);
-  background: var(--primary-blue);
-  padding: 5px 15px;
-  border-radius: 5px;
-`;
 
 const RoutineDetail = () => {
-  const {routineData, setRoutineData, routineInit} = useOutletContext();
+  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit } = useOutletContext();
 
   const [time, setTime] = useState({
     minutes: 0,
@@ -292,10 +324,9 @@ const RoutineDetail = () => {
   const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
   const [isTimerShow, setIsTimerShow] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
-  
+
   // checked 필드를 제거한 새로운 객체 반환
   const omitChecked = (obj) => {
     if (!obj || !obj.routines) return obj;
@@ -314,16 +345,17 @@ const RoutineDetail = () => {
       update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
     setRoutineData(data);
+
   }, [data]);
 
   useEffect(() => {
-    console.log(" isEdit", isEdit)
-  },[isTimerShow, isEdit]);
-  
+  }, [isTimerShow]);
+
+
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
-    if(routineData === null) return;
-    if(JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))){
+    if (routineData === null) return;
+    if (JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))) {
       const handleRoutineData = async () => {
         try {
           const response = await axios.get(`/routine/${routine_list_idx}`, {
@@ -332,7 +364,7 @@ const RoutineDetail = () => {
           const result = response.data;
           if (result.success) {
             // 각 세트에 고유 ID 추가
-            
+
             const dataWithIds = {
               ...result.vo,
               routines: result.vo.routines.map(routine => ({
@@ -356,7 +388,7 @@ const RoutineDetail = () => {
         }
       };
       handleRoutineData();
-    }else{
+    } else {
       setData(routineData);
       setIsLoading(false);
     }
@@ -379,31 +411,48 @@ const RoutineDetail = () => {
   };
 
   // 세트 삭제 - setId 대신 setIndex 사용
-  const handleDeleteSet = (routinePtIdx, setIndex) => {
+  const handleDeleteSet = (routinePtIdx, setIndex, routine_idx) => {
+    const target = data.routines.find((item) => item.routine_idx === routine_idx);
+    if(target.sets.length === 1 ) return alert("최소 하나의 세트는 남겨야 합니다.");
     setData(prev => ({
       ...prev,
       routines: prev.routines.map(r =>
         r.pt_idx === routinePtIdx
           ? {
-              ...r,
-              sets: r.sets.filter((set, index) => index !== setIndex)
-            }
+            ...r,
+            sets: r.sets.filter((set, index) => index !== setIndex)
+          }
           : r
       )
     }));
   };
 
-  // trailingActions - setIndex 전달
-  const trailingActions = (routinePtIdx, setIndex) => (
-    <TrailingActions>
-      <SwipeAction
-        destructive={true}
-        onClick={() => handleDeleteSet(routinePtIdx, setIndex)}
-      >
-        삭제
-      </SwipeAction>
-    </TrailingActions>
-  );
+  // trailingActions - 세트가 1개일 때는 비활성화
+  const trailingActions = (routinePtIdx, setIndex, routine_idx) => {
+    const routine = data.routines.find(r => r.pt_idx === routinePtIdx);
+    const hasOnlyOneSet = routine && routine.sets.length <= 1;
+    
+    return (
+      <TrailingActions>
+        <SwipeAction
+          destructive={!hasOnlyOneSet}
+          onClick={() => {
+            if (!hasOnlyOneSet) {
+              handleDeleteSet(routinePtIdx, setIndex, routine_idx);
+            } else {
+              alert("최소 하나의 세트는 남겨야 합니다.");
+            }
+          }}
+          style={{
+            background: hasOnlyOneSet ? 'var(--text-tertiary)' : 'var(--error)',
+            opacity: hasOnlyOneSet ? 0.5 : 1
+          }}
+        >
+          {hasOnlyOneSet ? '불가' : '삭제'}
+        </SwipeAction>
+      </TrailingActions>
+    );
+  };
 
   // 세트 추가 함수 (특정 routine에 세트 추가)
   const handleAddSet = (routinePtIdx) => {
@@ -412,18 +461,18 @@ const RoutineDetail = () => {
       routines: prev.routines.map(r =>
         r.pt_idx === routinePtIdx
           ? {
-              ...r,
-              sets: [
-                ...r.sets,
-                { 
-                  routins_idx : r.routine_idx,
-                  set_num : r.sets.length + 1,
-                  set_volume: 0, 
-                  set_count: 0,
-                  id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`, 
-                }
-              ]
-            }
+            ...r,
+            sets: [
+              ...r.sets,
+              {
+                routins_idx: r.routine_idx,
+                set_num: r.sets.length + 1,
+                set_volume: 0,
+                set_count: 0,
+                id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`,
+              }
+            ]
+          }
           : r
       )
     }));
@@ -444,25 +493,25 @@ const RoutineDetail = () => {
       checkedSetsRef.current = newChecked;
     }
   }, [data, routineData]);
-  
+
   useEffect(() => {
-    if(routineData === null) return;
+    if (routineData === null) return;
   }, [routineData]);
-  
+
   const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
     const key = `${routinePtIdx}-${setIndex}`;
     checkedSetsRef.current[key] = e.target.checked;
     setData(
-      prev => ({ 
+      prev => ({
         ...prev,
         routines: prev.routines.map(r =>
           r.pt_idx === routinePtIdx
             ? {
-                ...r,
-                sets: r.sets.map((set, idx) =>
-                  idx === setIndex ? { ...set, checked: e.target.checked } : set
-                )
-              }
+              ...r,
+              sets: r.sets.map((set, idx) =>
+                idx === setIndex ? { ...set, checked: e.target.checked } : set
+              )
+            }
             : r
         )
       })
@@ -484,8 +533,12 @@ const RoutineDetail = () => {
   }
 
   const handleLongPress = useLongPress(() => {
-    setIsEdit(true);
+    // setIsEdit(true);
   })
+
+  const handleEditToggle = () => {
+    setIsEdit(!isEdit);
+  }
 
 
   // 로딩 처리
@@ -500,23 +553,41 @@ const RoutineDetail = () => {
   return (
     <WorkoutSetWrapper>
       <RoutineTop>
-        <h3>{data.routine_name}</h3>
+        {isEdit ?
+          <RoutineTitle
+            type="text"
+            name=""
+            id=""
+            value={data.routine_name}
+            onChange={e => {
+              const value = e.target.value;
+              setData(prev => ({
+                ...prev,
+                routine_name: value
+              }));
+            }}
+          /> : <h3>{data.routine_name}</h3>}
+
+        <EditCTA className={isEdit ? "edit" : ""} onClick={handleEditToggle}>
+          {isEdit ? "업데이트" : <SettingsIcon />}
+        </EditCTA>
       </RoutineTop>
+
       <TimerBox>
-        {
-          isEdit ? <EditCTA onClick={() => setIsEdit(!isEdit)}>완료</EditCTA> : <div></div>
+        {isEdit ? <></> :
+          <TimerCTA onClick={handleTimerToggle}>
+            <AlarmIcon />
+            휴식 타이머
+          </TimerCTA>
         }
-        <TimerCTA onClick={handleTimerToggle}>
-          <AlarmIcon/>
-          휴식 타이머
-        </TimerCTA>
+
       </TimerBox>
       {data.routines && data.routines.map((routine) => (
-        <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit': ''} {...handleLongPress()}>
-          {isEdit ? <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}>삭제</DeleteCTA>: <></>}
+        <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''} {...handleLongPress()}>
+          <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon/></DeleteCTA>
           <SetTop>
-              <img src={routine.imageUrl} alt={routine.pt.pt_name} />
-              <h4>{routine.pt.pt_name}</h4>
+            <img src={routine.imageUrl} alt={routine.pt.pt_name} />
+            <h4>{routine.pt.pt_name}</h4>
           </SetTop>
           <MemoInput
             name="memo"
@@ -539,7 +610,7 @@ const RoutineDetail = () => {
             <div>번호</div>
             <div>KG</div>
             <div>횟수</div>
-            <div>완료</div>
+            <div>{isEdit ? '삭제' : '완료'}</div>
           </ListHeader>
           <ListBody>
             <SwipeableList actionDelay={0}>
@@ -548,7 +619,7 @@ const RoutineDetail = () => {
                 return (
                   <SwipeableListItem className={set.checked || checkedSetsRef.current[key] ? 'checked' : ''}
                     key={`${routine.pt_idx}-${index}-${set.id}`}
-                    trailingActions={trailingActions(routine.pt_idx, index)}
+                    trailingActions={trailingActions(routine.pt_idx, index, routine.routine_idx)}
                   >
                     <div>{index + 1}</div>
                     <div>
@@ -572,15 +643,21 @@ const RoutineDetail = () => {
                       />
                     </div>
                     <div>
-                      <CheckInput
-                        type="checkbox"
-                        id={`set-check-${routine.pt_idx}-${index}`}
-                        checked={set.checked || checkedSetsRef.current[key] || false}
-                        onChange={handleSetCheck(routine.pt_idx, index)}
-                      />
-                      <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
-                        <span className="visually-hidden">세트 완료 체크</span>
-                      </Checklabel>
+                      {isEdit ?
+                        <DeleteIcon onClick={() => handleDeleteSet(routine.pt_idx, index, routine.routine_idx)} />
+                        :
+                        <>
+                          <CheckInput
+                            type="checkbox"
+                            id={`set-check-${routine.pt_idx}-${index}`}
+                            checked={set.checked || checkedSetsRef.current[key] || false}
+                            onChange={handleSetCheck(routine.pt_idx, index)}
+                          />
+                          <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
+                            <span className="visually-hidden">세트 완료 체크</span>
+                          </Checklabel>
+                        </>
+                      }
                     </div>
                   </SwipeableListItem>
                 );
@@ -594,7 +671,7 @@ const RoutineDetail = () => {
       ))}
 
       {
-        isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow}/> : <></>
+        isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : <></>
       }
     </WorkoutSetWrapper>
   );

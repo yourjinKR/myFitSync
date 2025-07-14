@@ -32,15 +32,13 @@ public class RecordServiceImple implements RecordService {
 		try {
 			List<Map<String, Object>> routines = (List<Map<String, Object>>) body.get("routines");
 			boolean result = false;
-			
-			
-			
 			boolean findCheck = findChecked(routines);
-			
+			// 세트 완료 여부 확인
 			if(findCheck) {
 				for (Map<String, Object> routine : routines) {
 					RecordVO vo = new RecordVO();
 					vo.setMember_idx(member_idx);
+					vo.setRoutine_list_idx(safeIntParse(routine.get("routine_list_idx")));
 					
 					// pt_idx 변환
 					Object ptIdxObj = routine.get("pt_idx");
@@ -124,6 +122,20 @@ public class RecordServiceImple implements RecordService {
 		    if (hasChecked) break;
 		}
 	    return hasChecked;
+	}
+	
+	
+	private int safeIntParse(Object obj) {
+	    if (obj == null) return 0;
+	    if (obj instanceof Integer) return (Integer) obj;
+	    if (obj instanceof String) {
+	        try {
+	            return Integer.parseInt((String) obj);
+	        } catch (NumberFormatException e) {
+	            return 0;
+	        }
+	    }
+	    return 0;
 	}
 	
 }

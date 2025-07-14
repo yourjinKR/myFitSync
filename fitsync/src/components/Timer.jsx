@@ -250,6 +250,7 @@ const Timer = ({time, setTime, setIsTimerShow}) => {
       }
     }
 
+    console.log("🚀  :  Timer  :  time:", time)
   }, [time, isRunning, isPause]);
 
   useEffect(() => {
@@ -261,8 +262,8 @@ const Timer = ({time, setTime, setIsTimerShow}) => {
   }, [formatTime]);
 
 
-  const updateTime = (type) => {
-    minutesSwiperRef.current?.swiper?.slideToClosest(500);
+  const updateTime = () => {
+    minutesSwiperRef.current?.swiper?.slideToClosest(200);
   }
   
   const handleTimerControl = (type) => {
@@ -302,8 +303,8 @@ const Timer = ({time, setTime, setIsTimerShow}) => {
         setTotalTime(resetTime);
         
         // 각 Swiper를 0번째 슬라이드로 이동
-        minutesSwiperRef.current?.swiper?.slideTo(0, 500);
-        secondsSwiperRef.current?.swiper?.slideTo(0, 500);
+        minutesSwiperRef.current?.swiper?.slideTo(0, 200);
+        secondsSwiperRef.current?.swiper?.slideTo(0, 200);
       }
     }
   }
@@ -329,19 +330,19 @@ const Timer = ({time, setTime, setIsTimerShow}) => {
       
       if(newTime >= 60) {
         secondsSwiperRef.current?.swiper?.slideTo(
-          parseInt(newTime%60) === 0 ? 0 : parseInt(newTime%60), 500);
+          parseInt(newTime%60) === 0 ? 0 : parseInt(newTime%60), 100);
         minutesSwiperRef.current?.swiper?.slideTo(
           parseInt(minutesSwiperRef.current?.swiper?.activeIndex) + 1, 
-          500
+          200
         );
       }else{
-        secondsSwiperRef.current?.swiper?.slideTo(newTime, 500);
+        secondsSwiperRef.current?.swiper?.slideTo(newTime, 100);
       }
    
     } else {
       minutesSwiperRef.current?.swiper?.slideTo(
         parseInt(minutesSwiperRef.current?.swiper?.activeIndex) + 1, 
-        500
+        200
       );
     }
   }

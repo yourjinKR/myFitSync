@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -129,29 +130,35 @@ public class RoutineController {
 		return ResponseEntity.ok(result);
 	}
 	
+	@PutMapping("/update/{routine_list_idx}")
+	public ResponseEntity<?> updateRoutine(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
+		Map<String, Object> result = new HashMap<>();
+		int member_idx = (int)(session.getAttribute("member_idx"));
+		if(service.updateRoutine(body, member_idx)) {
+			result.put("success", true);
+			result.put("msg", "루틴이 업데이트 되었습니다.");		
+		}else {
+			result.put("success", false);
+			result.put("msg", "업데이트에 실패하였습니다.");		
+		}
+		
+		return ResponseEntity.ok(result);
+	}
+	
 	// 루틴 기록
 	@PostMapping("/record/{routine_list_idx}")
 	public ResponseEntity<?> insertRecord(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
+		
 		Map<String, Object> result = new HashMap<>();
 		int member_idx = (int)(session.getAttribute("member_idx"));
 		String recordResult = rcservice.insertRecord(body, member_idx);
 		if(recordResult.equals("success")) {
-			if(body.get("update") != null && (boolean) (body.get("update"))) {
-				if(service.updateRoutine(body, member_idx)) {
-					result.put("success", true);
-					result.put("msg", "운동 기록 및 루틴이 업데이트 되었습니다.");				
-				}else {
-					result.put("success", false);
-					result.put("msg", recordResult);				
-				}
-			}else {
-				result.put("success", true);
-				result.put("msg", "운동 기록이 완료되었습니다.");				
-			}
+			result.put("success", true);
+			result.put("msg", "기록 정상 등록되었습니다.");		
 		}else {
 			result.put("success", false);
-			result.put("msg", recordResult);
-		}
+			result.put("msg", recordResult);		
+		} 
 		
 		return ResponseEntity.ok(result);
 		
