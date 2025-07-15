@@ -185,7 +185,7 @@ const MessageItem = ({ message, isCurrentUser, attachments = [], senderName = nu
             )}
           </MessageBubble>
           
-          {/* 시간과 읽음 상태를 말풍선 옆에 표시 */}
+          {/* 읽음 상태를 말풍선 옆에 표시 */}
           <MessageInfo $isCurrentUser={isCurrentUser}>
             <MessageTime>
               {formatTime(message.message_senddate)}
@@ -193,7 +193,6 @@ const MessageItem = ({ message, isCurrentUser, attachments = [], senderName = nu
             {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
             {readStatusInfo && (
               <ReadStatus>
-                {readStatusInfo.time && <span>{readStatusInfo.time}</span>}
                 <span>{readStatusInfo.text}</span>
               </ReadStatus>
             )}

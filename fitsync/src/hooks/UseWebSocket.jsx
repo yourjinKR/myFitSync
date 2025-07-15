@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axios from 'axios';
+import { getWebSocketUrl, getNetworkInfo } from '../utils/WebSocketUtils';
 
 export const useWebSocket = () => {
   const [client, setClient] = useState(null);       // STOMP 클라이언트 객체
@@ -9,7 +10,8 @@ export const useWebSocket = () => {
   const clientRef = useRef(null);                   // 클라이언트 참조 (컴포넌트 언마운트 시 정리용)
   const isConnectingRef = useRef(false);            // 연결 중 상태 추가
   const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 10;
+  const subscriptionsRef = useRef(new Map()); // 구독 정보 저장
   
   // WebSocket 연결 초기화 및 관리
   useEffect(() => {
@@ -24,96 +26,80 @@ export const useWebSocket = () => {
       console.log('WebSocket 연결 시도 중...');
       isConnectingRef.current = true; // 연결 중 플래그 설정
       
-      // 다양한 네트워크 환경 지원을 위한 URL 결정
-      const getWebSocketUrl = () => {
-        const currentHost = window.location.hostname;
-        const currentPort = window.location.port;
-        const protocol = window.location.protocol;
-        
-        // 개발 환경: localhost:3000에서 접속
-        if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-          return `${protocol}//localhost:7070/chat`;
-        }
-        
-        // 로컬 네트워크: 192.168.x.x:3000에서 접속
-        if (currentHost.startsWith('192.168.') || currentHost.startsWith('10.') || currentHost.startsWith('172.')) {
-          return `${protocol}//${currentHost}:7070/chat`;
-        }
-        
-        // 기본값: 현재 호스트 사용
-        return `${protocol}//${currentHost}:7070/chat`;
-      };
+      // 네트워크 정보 확인
+      const networkInfo = getNetworkInfo();
+      const websocketUrl = networkInfo.websocketUrl;
       
-      const websocketUrl = getWebSocketUrl();
-      console.log('🌐 WebSocket 연결 URL:', websocketUrl);
+      console.log('🔗 WebSocket 연결 URL:', websocketUrl);
+      console.log('🌍 네트워크 환경:', networkInfo);
       
       const stompClient = new Client({
         webSocketFactory: () => {
           console.log('SockJS 연결 생성 - URL:', websocketUrl);
           return new SockJS(websocketUrl, null, { 
             withCredentials: true,
-            transports: ['websocket', 'xhr-polling'], // 안정적인 전송 방식만 사용
+            transports: ['websocket', 'xhr-polling', 'xhr-streaming'], // 안정적인 전송 방식만 사용
             timeout: 15000 // 연결 타임아웃 15초
           });
         },
         connectHeaders: {
           'X-Client-Type': 'chat-client',
+          'X-Network-Type': networkInfo.isLocal ? 'local' : 
+                           networkInfo.isPrivateNetwork ? 'private' : 'public',
           'X-Timestamp': Date.now().toString()
         },
         debug: function (str) {
           console.log('STOMP Debug:', str);
         },
-        reconnectDelay: 5000,     // 재연결 설정 (연결 끊어졌을 때 5초 후 재시도)
-        heartbeatIncoming: 4000,  // 서버로부터 받는 하트비트 간격
-        heartbeatOutgoing: 4000,  // 서버로 보내는 하트비트 간격
-        onWebSocketClose: () => {
-          console.log('WebSocket 연결 종료됨');
+        reconnectDelay: 0,     // 재연결 설정 (연결 끊어졌을 때 5초 후 재시도)
+        heartbeatIncoming: 20000,  // 서버로부터 받는 하트비트 간격
+        heartbeatOutgoing: 10000,  // 서버로 보내는 하트비트 간격
+
+        onConnect: (frame) => {
+          console.log('✅ WebSocket 연결 성공!', frame);
+          isConnectingRef.current = false;
+          reconnectAttemptsRef.current = 0;
+          setConnected(true);
+          setClient(stompClient);
+          clientRef.current = stompClient;
+          
+          // 기존 구독 복원
+          restoreSubscriptions(stompClient);
+        },
+
+        onStompError: (frame) => {
+          console.error('❌ STOMP 에러:', frame.headers['message']);
+          console.error('STOMP 에러 상세:', frame);
+          isConnectingRef.current = false;
+          setConnected(false);
+          scheduleReconnect();
+        },
+
+        onWebSocketError: (event) => {
+          console.error('❌ WebSocket 에러:', event);
+          isConnectingRef.current = false;
+          setConnected(false);
+          scheduleReconnect();
+        },
+
+        onDisconnect: () => {
+          console.log('🔌 WebSocket 연결 해제됨');
+          isConnectingRef.current = false;
+          setConnected(false);
+          scheduleReconnect();
+        },
+
+        onWebSocketClose: (event) => {
+          console.log('🔌 WebSocket 연결 종료됨', event.code, event.reason);
           setConnected(false);
           isConnectingRef.current = false;
           
-          // 재연결 시도
-          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-            reconnectAttemptsRef.current += 1;
-            console.log(`재연결 시도 ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
-            setTimeout(() => {
-              if (!connected && !isConnectingRef.current) {
-                connect();
-              }
-            }, 3000);
+          // 정상 종료가 아닌 경우에만 재연결
+          if (event.code !== 1000) {
+            scheduleReconnect();
           }
         }
       });
-
-      // 연결 성공 시 콜백
-      stompClient.onConnect = (frame) => {
-        console.log('WebSocket 연결 성공!', frame);
-        isConnectingRef.current = false;
-        setConnected(true);
-        setClient(stompClient);
-        clientRef.current = stompClient;
-      };
-
-      // STOMP 에러 발생 시 콜백
-      stompClient.onStompError = (frame) => {
-        console.error('STOMP 에러:', frame.headers['message']);
-        console.error('STOMP 에러 상세:', frame);
-        isConnectingRef.current = false;
-        setConnected(false);
-      };
-
-      // WebSocket 에러 발생 시 콜백
-      stompClient.onWebSocketError = (event) => {
-        console.error('WebSocket 에러:', event);
-        isConnectingRef.current = false;
-        setConnected(false);
-      };
-
-      // 연결 해제 시 콜백
-      stompClient.onDisconnect = () => {
-        console.log('WebSocket 연결 해제됨');
-        isConnectingRef.current = false;
-        setConnected(false);
-      };
 
       // 연결 시작
       try {
@@ -123,7 +109,43 @@ export const useWebSocket = () => {
         console.error('STOMP 클라이언트 활성화 실패:', error);
         isConnectingRef.current = false;
         setConnected(false);
+        scheduleReconnect();
       }
+    };
+
+    // 재연결 로직 (지수 백오프)
+    const scheduleReconnect = () => {
+      if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+        console.error('❌ 최대 재연결 시도 횟수 초과');
+        return;
+      }
+
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
+      reconnectAttemptsRef.current += 1;
+      
+      console.log(`🔄 ${delay}ms 후 재연결 시도 (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+      
+      setTimeout(() => {
+        if (!connected && !isConnectingRef.current) {
+          connect();
+        }
+      }, delay);
+    };
+
+    // 기존 구독 복원
+    const restoreSubscriptions = (stompClient) => {
+      subscriptionsRef.current.forEach((subscriptionInfo, destination) => {
+        try {
+          console.log(`🔄 구독 복원: ${destination}`);
+          const subscription = stompClient.subscribe(destination, subscriptionInfo.callback);
+          subscriptionsRef.current.set(destination, {
+            ...subscriptionInfo,
+            subscription
+          });
+        } catch (error) {
+          console.error(`구독 복원 실패: ${destination}`, error);
+        }
+      });
     };
 
     connect();
@@ -173,6 +195,31 @@ export const useWebSocket = () => {
           console.error('읽음 확인 파싱 오류:', error);
         }
       });
+
+      // 구독 정보 저장 (재연결 시 복원용)
+      subscriptionsRef.current.set(`/topic/room/${room_idx}`, {
+        callback: (message) => {
+          try {
+            const messageData = JSON.parse(message.body);
+            onMessageReceived(messageData);
+          } catch (error) {
+            console.error('메시지 파싱 오류:', error);
+          }
+        },
+        subscription: messageSubscription
+      });
+      
+      subscriptionsRef.current.set(`/topic/room/${room_idx}/read`, {
+        callback: (message) => {
+          try {
+            const readData = JSON.parse(message.body);
+            onReadReceived && onReadReceived(readData);
+          } catch (error) {
+            console.error('읽음 확인 파싱 오류:', error);
+          }
+        },
+        subscription: readSubscription
+      });
       
       console.log('✅ 채팅방 구독 완료 - room_idx:', room_idx);
       
@@ -181,6 +228,8 @@ export const useWebSocket = () => {
         console.log('❌ 채팅방 구독 해제 - room_idx:', room_idx);
         messageSubscription.unsubscribe();
         readSubscription.unsubscribe();
+        subscriptionsRef.current.delete(`/topic/room/${room_idx}`);
+        subscriptionsRef.current.delete(`/topic/room/${room_idx}/read`);
       };
     } else {
       console.warn('⚠️ WebSocket 연결되지 않음 - 구독 불가');
