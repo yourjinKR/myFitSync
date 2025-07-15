@@ -28,7 +28,7 @@ export const useWebSocket = () => {
       
       // 네트워크 정보 확인
       const networkInfo = getNetworkInfo();
-      const websocketUrl = networkInfo.websocketUrl;
+      const websocketUrl = '/chat';
       
       console.log('🔗 WebSocket 연결 URL:', websocketUrl);
       console.log('🌍 네트워크 환경:', networkInfo);
