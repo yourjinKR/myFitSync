@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -218,19 +218,17 @@ const RoutineMain = () => {
   const [isSave, setIsSave] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [tempData, setTempData] = useState(localStorage.getItem('routineData') ? JSON.parse(localStorage.getItem('routineData')) : []);
-  
-
-
   const [pendingNav, setPendingNav] = useState(false);  // 상태 반영 후 이동 예약
 
   
   useEffect(() => {
     if (routineData === null) return;
-    if(isSave) {
-      nav("/routine/view");
-      setIsSave(false);
+    if(routine_list_idx !== 'custom') {
+      if(isSave) {
+        nav("/routine/view");
+        setIsSave(false);
+      }
     }
-    
   },[routineData, unfinished, isSave , nav]);
   useEffect(() => {
     if(prev !== null && routineData === routineInit) {
@@ -246,7 +244,7 @@ const RoutineMain = () => {
 
   useEffect(() => {
     if(newData === null) return;
-    if(newData.update){
+    if(routine_list_idx !== 'custom' && newData.update){
       setIsUpdate(true);
     }else{
       setIsUpdate(false);
@@ -274,7 +272,16 @@ const RoutineMain = () => {
       if(result.success) {
         alert(result.msg);
         setIsSave(true);
-        nav("/routine/view");
+        setTempData(prev => 
+          prev.map(item => 
+            item.routine_name === routineData.routine_name 
+              ? { ...item, save: true }
+              : item
+          )
+        );
+        if(routine_list_idx !== 'custom'){
+          nav("/routine/view");
+        } 
         setRoutineData(routineInit);
       }
     } catch (error) {
@@ -318,7 +325,7 @@ const RoutineMain = () => {
     
     try {
       const response = await axios.post(
-        `/routine/record/${routine_list_idx}`,
+        `/routine/record`,
         postData,
         { withCredentials: true }
       );
@@ -327,7 +334,13 @@ const RoutineMain = () => {
       setIsUpdate(false);
       if(result.success) {
         alert(result.msg);
+        if(routine_list_idx === 'custom') {
+          const newLocalData = tempData.filter(item => item.routine_name !== postData.routine_name);
+          setTempData(newLocalData);
+        }
+
         nav("/routine/view");
+
       } else {
         alert(result.msg);
       }
@@ -348,7 +361,6 @@ const RoutineMain = () => {
 
   useEffect(() => {
     if(newData === null) return;
-   
   },[isEdit]);
 
   const handleUpdateData = (type) => {
@@ -388,7 +400,16 @@ const RoutineMain = () => {
       }));
     }
    
-  }    
+  }   
+  
+  const handleTempSave = (type) => {
+    if(type) {
+      handleRoutineResponse();
+    }else{
+      closeAlert();
+    }
+  };
+
 
   const closeAlert = () => {
     alertRef.current.style.display = "none";
@@ -423,6 +444,7 @@ const RoutineMain = () => {
   const handleAddWorkOut = () => {
     nav("/routine/add?prev=/routine/detail/" + routine_list_idx);
   }
+          
 
   return (
     <>
@@ -440,7 +462,7 @@ const RoutineMain = () => {
           </HeaderWrapper> : <></>}
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
-        <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev, tempData}} /> :
+        <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev, tempData, setTempData}} /> :
         <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit, isEdit, setIsEdit, handleUpdateData, tempData, setTempData}}/>
       }
 
@@ -466,6 +488,19 @@ const RoutineMain = () => {
             </ButtonGroup>
           </AlertDiv>
         :
+          !isSave && 
+          tempData.find(item => item.routine_name === routineData.routine_name)?.save !== true &&
+          routine_list_idx !== undefined &&
+          routine_list_idx !== null &&
+          routine_list_idx === 'custom' ?
+          <AlertDiv>
+            <H4>해당 운동을 저장하시겠습니까?</H4>
+            <ButtonGroup>
+              <button onClick={() => handleTempSave(true)}>저장하기</button>
+              <button onClick={() => handleTempSave(false)}>취소</button>
+            </ButtonGroup>
+          </AlertDiv>
+          :
           <AlertDiv>
             <WarrningText>
               {
@@ -482,7 +517,7 @@ const RoutineMain = () => {
                 </div>
               }
             </WarrningText>
-            <H4>저장하시겠습니까?</H4>
+            <H4>운동정보를 기록하시겠습니까?</H4>
             <ButtonGroup>
               <button onClick={() => handleRecordData(true)}>예</button>
               <button onClick={() => handleRecordData(false)}>아니오</button>

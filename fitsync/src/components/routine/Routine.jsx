@@ -70,13 +70,19 @@ const CategoryText = styled.div`
   font-weight: bold;
 `;
 
-const Routine = ({ data, onDelete, type }) => {
+const Routine = ({ data, onDelete, type, setTempData }) => {
   const nav = useNavigate();
 
   // 클릭 이벤트에서 제외할 태그들
   const excludedTags = ['path', 'svg', 'button', 'BUTTON'];
 
   const handleGoRoutine = (e) => {
+    if(type !== null && type === 'custom') {
+      e.stopPropagation();
+      nav(`/routine/detail/custom?date=${data.routine_name}`);
+      return;
+    }
+
     if (!excludedTags.includes(e.target.tagName)) {
       nav(`/routine/detail/${data.routine_list_idx}`);
     }
@@ -87,6 +93,12 @@ const Routine = ({ data, onDelete, type }) => {
     
     if (window.confirm('정말로 루틴을 삭제하시겠습니까?')) {
       try {
+        if(type !== null && type === 'custom') {
+          const localData = JSON.parse(localStorage.getItem('routineData'));
+          const newLocalData = localData.filter(item => item.routine_name !== data.routine_name);
+          setTempData(newLocalData);
+          return;
+        }
         const response = await axios.delete(`/routine/delete/${data.routine_list_idx}`, {
           withCredentials: true,
         });
@@ -111,7 +123,7 @@ const Routine = ({ data, onDelete, type }) => {
   };
 
   return (
-    <RoutineWrapper data-routine-wrapper onClick={handleGoRoutine}>
+    <RoutineWrapper onClick={handleGoRoutine}>
       <Inner>
         <h3>
           {

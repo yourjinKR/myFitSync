@@ -1,15 +1,18 @@
-function formatDate(date) {
+function formatDate(date, type) {
   let result = '';
   const d = new Date(date || Date.now());
   
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  // const hours = String(d.getHours()).padStart(2, '0');
-  // const minutes = String(d.getMinutes()).padStart(2, '0');
-  // const seconds = String(d.getSeconds()).padStart(2, '0');
-  // result = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  result = `${year}-${month}-${day}`;
+  if (type === 'none') {
+    result = `${year}-${month}-${day}`;
+  }else{
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    result = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
   return result;
 }
 
@@ -40,7 +43,7 @@ function getDateDiffText(targetDate) {
   // 1일 이상 차이나는 경우
   if (days > 0) {
     if (days > 7) {
-      result = formatDate(targetDate)
+      result = formatDate(targetDate, 'none')
     } else {
       result = isPast ? `${days}일 전` : `${days}일 후`;
     }

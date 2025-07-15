@@ -146,8 +146,8 @@ public class RoutineController {
 	}
 	
 	// 루틴 기록
-	@PostMapping("/record/{routine_list_idx}")
-	public ResponseEntity<?> insertRecord(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
+	@PostMapping("/record")
+	public ResponseEntity<?> insertRecord(@RequestBody Map<String, Object> body, HttpSession session) {
 		
 		Map<String, Object> result = new HashMap<>();
 		int member_idx = (int)(session.getAttribute("member_idx"));

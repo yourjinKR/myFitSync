@@ -33,7 +33,7 @@ const TempDataWrapper = styled.div`
 
 
 const RoutineView = () => {
-  const {tempData} = useOutletContext();
+  const {tempData, setTempData} = useOutletContext();
   const nav = useNavigate();
   const handleAddRoutine = (type) => {
     if (type === "custom") {
@@ -53,7 +53,7 @@ const RoutineView = () => {
         <TempDataWrapper >
         {
           tempData.map((item, idx) => (
-            <Routine key={idx} data={item} type="custom"/>
+            <Routine key={idx} data={item} type="custom" setTempData={setTempData} />
           ))
         }
         </TempDataWrapper>

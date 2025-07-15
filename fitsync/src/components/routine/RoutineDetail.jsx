@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
 import { CheckInput, Checklabel } from '../../styles/commonStyle';
@@ -10,7 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
 import dateFormat from '../../utils/dateFormat';
-const {formatDate} = dateFormat;
+const { formatDate } = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
   padding: 20px;
@@ -326,7 +326,7 @@ const TimerCTA = styled.button`
 
 
 const RoutineDetail = () => {
-  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, handleUpdateData, setTempData } = useOutletContext();
+  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, handleUpdateData, tempData, setTempData } = useOutletContext();
 
   const [time, setTime] = useState({
     minutes: 0,
@@ -338,6 +338,10 @@ const RoutineDetail = () => {
   const [isTimerShow, setIsTimerShow] = useState(false);
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
+  const location = useLocation();
+  const param = new URLSearchParams(location.search);
+  const targetDate = param.get('date');
+
 
   // checked 필드를 제거한 새로운 객체 반환
   const omitChecked = (obj) => {
@@ -351,34 +355,43 @@ const RoutineDetail = () => {
     };
   };
 
+  // useEffect - data
   useEffect(() => {
-    if(data === null) return;
+    if (data === null) return;
     setNewData({
       ...data,
-      update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
+      update: routine_list_idx === 'custom' ||JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
+    
     setRoutineData(data);
-
     // 자유 운동 저장
-    if(routine_list_idx !== null && routine_list_idx === 'custom'){
+    if (routine_list_idx !== null && routine_list_idx === 'custom') {
+
       const currentDate = data.routine_name === "" ? formatDate() : data.routine_name;
-      
-      if(data.routines.length === 0 && data.routine_name === "") {
+
+
+      if (data.routines.length === 0 && data.routine_name === "") {
         setData(prev => ({
           ...prev,
           routine_name: currentDate // 현재 날짜로 초기화
         }));
       }
-      
+
       // routine_name이 빈칸이 아닐 때만 tempData에 저장
-      if(data.routines.length !== 0 && data.routine_name ) {
+
+      if (targetDate !== null && data.routines.length === 0 && data.routine_name === "") {
+        setData({ ...tempData.find(item => item.routine_name === targetDate) });
+        return;
+      }
+
+      if (data.routines.length !== 0 && data.routine_name) {
         setTempData(prev => {
           // 같은 currentDate가 있는지 확인
           const existingIndex = prev.findIndex(item => item.routine_name === data.routine_name);
-          
+
           if (existingIndex !== -1) {
             // 기존 데이터가 있으면 수정
-            return prev.map((item, index) => 
+            return prev.map((item, index) =>
               index === existingIndex ? data : item
             );
           } else {
@@ -387,12 +400,13 @@ const RoutineDetail = () => {
           }
         });
       }
+
     }
+
   }, [data]);
 
   useEffect(() => {
   }, [isTimerShow]);
-
 
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
@@ -590,8 +604,6 @@ const RoutineDetail = () => {
           {isEdit ?
             <RoutineTitle
               type="text"
-              name=""
-              id=""
               value={data.routine_name}
               onChange={e => {
                 const value = e.target.value;
@@ -618,97 +630,97 @@ const RoutineDetail = () => {
 
       </TimerBox>
       {
-      data.routines.length === 0 ? 
-      <div className="imgBox">
-        <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" alt="" />
-      </div> :
-      data.routines && data.routines.map((routine) => (
-        <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
-          <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
-          <SetTop>
-            <img src={routine.imageUrl} alt={routine.pt.pt_name} />
-            <h4>{routine.pt.pt_name}</h4>
-          </SetTop>
-          <MemoInput
-            name="memo"
-            type="text"
-            placeholder="루틴에 대한 메모를 작성해주세요."
-            value={routine.routine_memo || ""}
-            onChange={e => {
-              const value = e.target.value;
-              setData(prev => ({
-                ...prev,
-                routines: prev.routines.map(r =>
-                  r.pt_idx === routine.pt_idx
-                    ? { ...r, routine_memo: value }
-                    : r
-                )
-              }));
-            }}
-          />
-          <ListHeader>
-            <div>번호</div>
-            <div>KG</div>
-            <div>횟수</div>
-            <div>{isEdit ? '삭제' : '완료'}</div>
-          </ListHeader>
-          <ListBody>
-            <SwipeableList actionDelay={0}>
-              {routine.sets && routine.sets.map((set, index) => {
-                const key = `${routine.pt_idx}-${index}`;
-                return (
-                  <SwipeableListItem className={set.checked || checkedSetsRef.current[key] ? 'checked' : ''}
-                    key={`${routine.pt_idx}-${index}-${set.id}`}
-                    trailingActions={trailingActions(routine.pt_idx, index, routine.routine_idx)}
-                  >
-                    <div>{index + 1}</div>
-                    <div>
-                      <input
-                        type="number"
-                        value={set.set_volume || ''}
-                        placeholder="0"
-                        onChange={e =>
-                          handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="number"
-                        value={set.set_count || ''}
-                        placeholder="0"
-                        onChange={e =>
-                          handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      {isEdit ?
-                        <DeleteIcon onClick={() => handleDeleteSet(routine.pt_idx, index, routine.routine_idx)} />
-                        :
-                        <>
-                          <CheckInput
-                            type="checkbox"
-                            id={`set-check-${routine.pt_idx}-${index}`}
-                            checked={set.checked || checkedSetsRef.current[key] || false}
-                            onChange={handleSetCheck(routine.pt_idx, index)}
+        data.routines.length === 0 ?
+          <div className="imgBox">
+            <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" alt="" />
+          </div> :
+          data.routines && data.routines.map((routine) => (
+            <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
+              <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
+              <SetTop>
+                <img src={routine.imageUrl} alt={routine.pt.pt_name} />
+                <h4>{routine.pt.pt_name}</h4>
+              </SetTop>
+              <MemoInput
+                name="memo"
+                type="text"
+                placeholder="루틴에 대한 메모를 작성해주세요."
+                value={routine.routine_memo || ""}
+                onChange={e => {
+                  const value = e.target.value;
+                  setData(prev => ({
+                    ...prev,
+                    routines: prev.routines.map(r =>
+                      r.pt_idx === routine.pt_idx
+                        ? { ...r, routine_memo: value }
+                        : r
+                    )
+                  }));
+                }}
+              />
+              <ListHeader>
+                <div>번호</div>
+                <div>KG</div>
+                <div>횟수</div>
+                <div>{isEdit ? '삭제' : '완료'}</div>
+              </ListHeader>
+              <ListBody>
+                <SwipeableList actionDelay={0}>
+                  {routine.sets && routine.sets.map((set, index) => {
+                    const key = `${routine.pt_idx}-${index}`;
+                    return (
+                      <SwipeableListItem className={set.checked || checkedSetsRef.current[key] ? 'checked' : ''}
+                        key={`${routine.pt_idx}-${index}-${set.id}`}
+                        trailingActions={trailingActions(routine.pt_idx, index, routine.routine_idx)}
+                      >
+                        <div>{index + 1}</div>
+                        <div>
+                          <input
+                            type="number"
+                            value={set.set_volume || ''}
+                            placeholder="0"
+                            onChange={e =>
+                              handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
+                            }
                           />
-                          <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
-                            <span className="visually-hidden">세트 완료 체크</span>
-                          </Checklabel>
-                        </>
-                      }
-                    </div>
-                  </SwipeableListItem>
-                );
-              })}
-            </SwipeableList>
-            <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt_idx)}>
-              세트 추가 +
-            </SetAddCTA>
-          </ListBody>
-        </ExerciseSection>
-      ))}
+                        </div>
+                        <div>
+                          <input
+                            type="number"
+                            value={set.set_count || ''}
+                            placeholder="0"
+                            onChange={e =>
+                              handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          {isEdit ?
+                            <DeleteIcon onClick={() => handleDeleteSet(routine.pt_idx, index, routine.routine_idx)} />
+                            :
+                            <>
+                              <CheckInput
+                                type="checkbox"
+                                id={`set-check-${routine.pt_idx}-${index}`}
+                                checked={set.checked || checkedSetsRef.current[key] || false}
+                                onChange={handleSetCheck(routine.pt_idx, index)}
+                              />
+                              <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
+                                <span className="visually-hidden">세트 완료 체크</span>
+                              </Checklabel>
+                            </>
+                          }
+                        </div>
+                      </SwipeableListItem>
+                    );
+                  })}
+                </SwipeableList>
+                <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt_idx)}>
+                  세트 추가 +
+                </SetAddCTA>
+              </ListBody>
+            </ExerciseSection>
+          ))}
 
       {
         isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : <></>
