@@ -217,6 +217,9 @@ const RoutineMain = () => {
   const [unfinished, setUnfinished] = useState([]);
   const [isSave, setIsSave] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [tempData, setTempData] = useState(localStorage.getItem('routineData') ? JSON.parse(localStorage.getItem('routineData')) : []);
+  
+
 
   const [pendingNav, setPendingNav] = useState(false);  // 상태 반영 후 이동 예약
 
@@ -250,7 +253,10 @@ const RoutineMain = () => {
     }
   },[newData])
 
- 
+  useEffect(() => {
+    if(tempData === null || tempData.length === 0) return;
+    localStorage.setItem('routineData', JSON.stringify(tempData));
+  },[tempData]);
 
   // 루틴 추가
   const handleRoutineResponse = async () => {
@@ -342,11 +348,7 @@ const RoutineMain = () => {
 
   useEffect(() => {
     if(newData === null) return;
-    if(!isEdit && newData.update) {
-      if(window.confirm("루틴을 업데이트 하시겠습니까?")){
-        handleUpdateData(true);
-      }
-    }
+   
   },[isEdit]);
 
   const handleUpdateData = (type) => {
@@ -370,13 +372,22 @@ const RoutineMain = () => {
           alert("루틴 업데이트에 실패했습니다.");
         }
       }
-      putData();
+
+      if(isEdit && newData.update) {
+        if(window.confirm("루틴을 업데이트 하시겠습니까?")){
+          putData();
+        }
+      }
+
+      setIsEdit(!isEdit);
+      
     }else{
       setNewData(prev => ({
         ...prev,
         update: type
       }));
     }
+   
   }    
 
   const closeAlert = () => {
@@ -429,8 +440,8 @@ const RoutineMain = () => {
           </HeaderWrapper> : <></>}
       {
         location.pathname !== `/routine/detail/${routine_list_idx}` ? 
-        <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev}} /> :
-        <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit, isEdit, setIsEdit }}/>
+        <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev, tempData}} /> :
+        <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit, isEdit, setIsEdit, handleUpdateData, tempData, setTempData}}/>
       }
 
       {/* 루틴 하단 버튼 */}

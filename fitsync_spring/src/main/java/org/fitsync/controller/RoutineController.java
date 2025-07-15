@@ -154,7 +154,7 @@ public class RoutineController {
 		String recordResult = rcservice.insertRecord(body, member_idx);
 		if(recordResult.equals("success")) {
 			result.put("success", true);
-			result.put("msg", "기록 정상 등록되었습니다.");		
+			result.put("msg", "정상 등록되었습니다.");		
 		}else {
 			result.put("success", false);
 			result.put("msg", recordResult);		

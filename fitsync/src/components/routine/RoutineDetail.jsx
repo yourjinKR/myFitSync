@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { use, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
@@ -9,11 +9,13 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
-import { useLongPress } from 'use-long-press';
+import dateFormat from '../../utils/dateFormat';
+const {formatDate} = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
   padding: 20px;
   background: var(--bg-primary);
+  height: 100%;
 
   h3 {
     font-size: 2.4rem;
@@ -22,6 +24,16 @@ const WorkoutSetWrapper = styled.div`
     height: 30px;
     line-height: 30px;
     width: calc(100% - 100px);
+  }
+  .imgBox{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 80%;
+    img {
+      width: 50%;
+    }
   }
 `;
 const ExerciseSection = styled.div`
@@ -314,7 +326,7 @@ const TimerCTA = styled.button`
 
 
 const RoutineDetail = () => {
-  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit } = useOutletContext();
+  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, handleUpdateData, setTempData } = useOutletContext();
 
   const [time, setTime] = useState({
     minutes: 0,
@@ -340,12 +352,42 @@ const RoutineDetail = () => {
   };
 
   useEffect(() => {
+    if(data === null) return;
     setNewData({
       ...data,
       update: JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
     setRoutineData(data);
 
+    // 자유 운동 저장
+    if(routine_list_idx !== null && routine_list_idx === 'custom'){
+      const currentDate = data.routine_name === "" ? formatDate() : data.routine_name;
+      
+      if(data.routines.length === 0 && data.routine_name === "") {
+        setData(prev => ({
+          ...prev,
+          routine_name: currentDate // 현재 날짜로 초기화
+        }));
+      }
+      
+      // routine_name이 빈칸이 아닐 때만 tempData에 저장
+      if(data.routines.length !== 0 && data.routine_name ) {
+        setTempData(prev => {
+          // 같은 currentDate가 있는지 확인
+          const existingIndex = prev.findIndex(item => item.routine_name === data.routine_name);
+          
+          if (existingIndex !== -1) {
+            // 기존 데이터가 있으면 수정
+            return prev.map((item, index) => 
+              index === existingIndex ? data : item
+            );
+          } else {
+            // 기존 데이터가 없으면 추가
+            return [...prev, data];
+          }
+        });
+      }
+    }
   }, [data]);
 
   useEffect(() => {
@@ -355,7 +397,7 @@ const RoutineDetail = () => {
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
     if (routineData === null) return;
-    if (JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))) {
+    if (routine_list_idx !== 'custom' && JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))) {
       const handleRoutineData = async () => {
         try {
           const response = await axios.get(`/routine/${routine_list_idx}`, {
@@ -413,7 +455,7 @@ const RoutineDetail = () => {
   // 세트 삭제 - setId 대신 setIndex 사용
   const handleDeleteSet = (routinePtIdx, setIndex, routine_idx) => {
     const target = data.routines.find((item) => item.routine_idx === routine_idx);
-    if(target.sets.length === 1 ) return alert("최소 하나의 세트는 남겨야 합니다.");
+    if (target.sets.length === 1) return alert("최소 하나의 세트는 남겨야 합니다.");
     setData(prev => ({
       ...prev,
       routines: prev.routines.map(r =>
@@ -431,7 +473,7 @@ const RoutineDetail = () => {
   const trailingActions = (routinePtIdx, setIndex, routine_idx) => {
     const routine = data.routines.find(r => r.pt_idx === routinePtIdx);
     const hasOnlyOneSet = routine && routine.sets.length <= 1;
-    
+
     return (
       <TrailingActions>
         <SwipeAction
@@ -532,15 +574,6 @@ const RoutineDetail = () => {
     setIsTimerShow(true);
   }
 
-  const handleLongPress = useLongPress(() => {
-    // setIsEdit(true);
-  })
-
-  const handleEditToggle = () => {
-    setIsEdit(!isEdit);
-  }
-
-
   // 로딩 처리
   if (isLoading || !data) {
     return (
@@ -552,26 +585,28 @@ const RoutineDetail = () => {
 
   return (
     <WorkoutSetWrapper>
-      <RoutineTop>
-        {isEdit ?
-          <RoutineTitle
-            type="text"
-            name=""
-            id=""
-            value={data.routine_name}
-            onChange={e => {
-              const value = e.target.value;
-              setData(prev => ({
-                ...prev,
-                routine_name: value
-              }));
-            }}
-          /> : <h3>{data.routine_name}</h3>}
+      {routine_list_idx !== 'custom' ?
+        <RoutineTop>
+          {isEdit ?
+            <RoutineTitle
+              type="text"
+              name=""
+              id=""
+              value={data.routine_name}
+              onChange={e => {
+                const value = e.target.value;
+                setData(prev => ({
+                  ...prev,
+                  routine_name: value
+                }));
+              }}
+            /> : <h3>{data.routine_name}</h3>}
 
-        <EditCTA className={isEdit ? "edit" : ""} onClick={handleEditToggle}>
-          {isEdit ? "업데이트" : <SettingsIcon />}
-        </EditCTA>
-      </RoutineTop>
+          <EditCTA className={isEdit ? "edit" : ""} onClick={isEdit ? handleUpdateData : () => setIsEdit(!isEdit)}>
+            {isEdit ? "업데이트" : <SettingsIcon />}
+          </EditCTA>
+        </RoutineTop>
+        : <></>}
 
       <TimerBox>
         {isEdit ? <></> :
@@ -582,9 +617,14 @@ const RoutineDetail = () => {
         }
 
       </TimerBox>
-      {data.routines && data.routines.map((routine) => (
-        <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''} {...handleLongPress()}>
-          <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon/></DeleteCTA>
+      {
+      data.routines.length === 0 ? 
+      <div className="imgBox">
+        <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" alt="" />
+      </div> :
+      data.routines && data.routines.map((routine) => (
+        <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
+          <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
           <SetTop>
             <img src={routine.imageUrl} alt={routine.pt.pt_name} />
             <h4>{routine.pt.pt_name}</h4>

@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import dateFormat from '../../utils/dateFormat';
+const {getDateDiffText} = dateFormat;
 
 const RoutineWrapper = styled.div`
   width: calc( 50% - 5px );
   border: 1px solid var(--border-light);
   background: var(--bg-secondary);
-  margin-top: 15px;
   padding: 18px 18px 32px;
   border-radius: 12px;
   position: relative;
@@ -69,7 +70,7 @@ const CategoryText = styled.div`
   font-weight: bold;
 `;
 
-const Routine = ({ data, onDelete }) => {
+const Routine = ({ data, onDelete, type }) => {
   const nav = useNavigate();
 
   // 클릭 이벤트에서 제외할 태그들
@@ -112,7 +113,13 @@ const Routine = ({ data, onDelete }) => {
   return (
     <RoutineWrapper data-routine-wrapper onClick={handleGoRoutine}>
       <Inner>
-        <h3>{data.routine_name}</h3>
+        <h3>
+          {
+            type !== null && type === 'custom' ? 
+            <>{getDateDiffText(data.routine_name)}</> :
+            <>{data.routine_name}</>
+          }
+        </h3>
         <button onClick={handleRoutineDelete}>
           <DeleteIcon />
         </button>
