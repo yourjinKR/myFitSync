@@ -55,6 +55,15 @@ export const calculateAge = (memberBirth) => {
     }
 };
 
+/** 시간 변환 */
+export const convertTimestampToDateInfo = (timestamp) => {
+    const date = new Date(timestamp);
+    return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+    };
+}
 
 
 const versionUtils = {

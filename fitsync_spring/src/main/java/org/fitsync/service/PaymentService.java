@@ -14,4 +14,8 @@ public interface PaymentService {
 	public Object payBillingKey(String payment);
 	
 	public Object scheduleBillingKey();
+	
+	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName);
+	
+	public boolean deletePaymentMethod(int memberIdx, int methodIdx);
 }

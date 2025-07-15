@@ -3,7 +3,17 @@ import { ButtonSubmit } from '../../../styles/FormStyles';
 import axios from 'axios';
 import { KAKAOPAY, PaymentUtil, TOSSPAYMENTS } from '../../../utils/PaymentUtil';
 
+const initwallet = {
+    method_idx : null,
+    member_idx : null,
+    method_key : null,
+    method_provider : null,
+    method_name : "결제수단을 등록해주세요",
+    method_regdate : null
+};
+
 const KaKaoPayTest = () => {
+    const [wallet, setWallet] = useState([initwallet]);
 
     /** 난수 return 함수 (paymentId 전용)  */
     const randomId = () => {
@@ -100,6 +110,7 @@ const KaKaoPayTest = () => {
             
             if (response.success) {
                 const methods = response.data;
+                setWallet(methods);
                 return methods.length > 0 ? methods : null;
             } else {
                 alert(`조회 실패: ${response.message}`);
@@ -118,6 +129,8 @@ const KaKaoPayTest = () => {
 
     return (
         <div>
+            
+
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
             <ButtonSubmit onClick={handlePortOneBillingPaymentTest}>빌링키 결제 테스트(toss-payments)</ButtonSubmit>

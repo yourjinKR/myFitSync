@@ -99,4 +99,37 @@ public class PaymentServiceImple implements PaymentService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName) {
+		try {
+			// VO 객체 생성하여 파라미터 전달
+			PaymentMethodVO vo = new PaymentMethodVO();
+			vo.setMember_idx(memberIdx);
+			vo.setMethod_idx(methodIdx);
+			vo.setMethod_name(methodName);
+			
+			int updatedRows = paymentMethodMapper.updatePaymentMethodNameSecure(vo);
+			return updatedRows > 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	@Override
+	public boolean deletePaymentMethod(int memberIdx, int methodIdx) {
+		try {
+			// VO 객체 생성하여 파라미터 전달
+			PaymentMethodVO vo = new PaymentMethodVO();
+			vo.setMember_idx(memberIdx);
+			vo.setMethod_idx(methodIdx);
+			
+			int deletedRows = paymentMethodMapper.deletePaymentMethod(vo);
+			return deletedRows > 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 }

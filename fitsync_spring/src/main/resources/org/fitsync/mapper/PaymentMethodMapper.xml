@@ -39,11 +39,18 @@
         SET method_name = #{method_name}
         WHERE method_idx = #{method_idx}
     </update>
+    
+    <!-- 결제수단 이름 수정 (보안된 버전 - member 소유권 확인) -->
+    <update id="updatePaymentMethodNameSecure" parameterType="org.fitsync.domain.PaymentMethodVO">
+        UPDATE payment_method
+        SET method_name = #{method_name}
+        WHERE method_idx = #{method_idx} AND member_idx = #{member_idx}
+    </update>
 
     <!-- 결제수단 삭제 -->
-    <delete id="deletePaymentMethod" parameterType="int">
+    <delete id="deletePaymentMethod" parameterType="org.fitsync.domain.PaymentMethodVO">
         DELETE FROM payment_method
-        WHERE method_idx = #{method_idx}
+        WHERE method_idx = #{method_idx} AND member_idx = #{member_idx}
     </delete>
 
 </mapper>

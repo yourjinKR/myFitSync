@@ -26,6 +26,7 @@ import IsLoading2 from '../components/IsLoading2';
 import AiServiceContainer from '../components/ai/AiServiceContainer';
 import IsLoading3 from '../components/IsLoading3';
 import PaymentContainer from '../components/payment/PaymentContainer';
+import PaymentMethodList from '../components/payment/PaymentMethodList';
 import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
@@ -104,7 +105,8 @@ const Display = () => {
           <Route path='/test123' element={<SlideInputFormTest/>}/>
 
           <Route path='/payment' element={<PaymentContainer/>}>
-            <Route path='kakao' element={<KaKaoPayTest/>}/>
+            <Route path='methods' element={<PaymentMethodList/>}/>
+            <Route path='test' element={<KaKaoPayTest/>}/>
           </Route>
 
           <Route path='/admin' element={<AdminMain/>}>

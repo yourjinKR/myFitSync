@@ -19,7 +19,10 @@ public interface PaymentMethodMapper {
 
     // 결제수단 이름 수정
     int updatePaymentMethodName(PaymentMethodVO vo);
+    
+    // 결제수단 이름 수정 (보안된 버전 - member 소유권 확인)
+    int updatePaymentMethodNameSecure(PaymentMethodVO vo);
 
     // 결제수단 삭제
-    int deletePaymentMethod(int method_idx);
+    int deletePaymentMethod(PaymentMethodVO vo);
 }
