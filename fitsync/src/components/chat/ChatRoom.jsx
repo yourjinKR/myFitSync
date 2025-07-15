@@ -84,17 +84,19 @@ const ChatRoom = () => {
   const { roomId } = useParams(); // URL에서 채팅방 ID 추출
   const location = useLocation(); // 이전 페이지에서 전달된 state 정보
   const navigate = useNavigate();
-  
+
   // Redux에서 현재 사용자 정보 가져오기
   const { user } = useSelector(state => state.user);
-  
+
   // 컴포넌트 상태 관리
   const [messages, setMessages] = useState([]); // 메시지 목록
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [roomData, setRoomData] = useState(null); // 채팅방 정보
   const [attachments, setAttachments] = useState({}); // 첨부파일 정보 (message_idx를 key로 하는 객체)
   const [currentMemberIdx, setCurrentMemberIdx] = useState(null); // 현재 사용자의 member_idx
-  
+
+  // 미확인 메시지 초기 읽음 처리 플래그
+  const initialReadDone = useRef(false);
   // 자동 스크롤을 위한 ref
   const messagesEndRef = useRef(null);
 
@@ -104,11 +106,11 @@ const ChatRoom = () => {
   // 채팅용 member_idx 조회 및 세션스토리지 저장
   const getMemberIdxForChat = async () => {
     try {
-      
-      const response = await axios.get('/api/chat/member-info', { 
-        withCredentials: true 
+
+      const response = await axios.get('/api/chat/member-info', {
+        withCredentials: true
       });
-      
+
       if (response.data.success) {
         const memberIdx = response.data.member_idx.toString();
         sessionStorage.setItem('chat_member_idx', memberIdx);
@@ -164,11 +166,11 @@ const ChatRoom = () => {
   const loadMessages = async () => {
     try {
       setLoading(true);
-      
+
       // 백엔드 API 호출 (readMessageList 메서드와 정확히 일치)
       const messageList = await chatApi.readMessageList(parseInt(roomId));
       setMessages(messageList);
-      
+
       // 각 이미지 메시지의 첨부파일 정보 로드
       const attachmentsMap = {};
       for (const message of messageList) {
@@ -184,10 +186,10 @@ const ChatRoom = () => {
         }
       }
       setAttachments(attachmentsMap);
-      
+
     } catch (error) {
       console.error('메시지 로드 실패:', error);
-      
+
       // 에러 처리
       if (error.response?.status === 404) {
         alert('존재하지 않는 채팅방입니다.');
@@ -204,13 +206,13 @@ const ChatRoom = () => {
   // WebSocket 구독 설정(실시간 새메시지 읽음확인)
   useEffect(() => {
     if (connected && roomId && currentMemberIdx) {
-      
+
       const unsubscribe = subscribeToRoom(
         parseInt(roomId),
-        
+
         // 새 메시지 수신 콜백
         async (newMessage) => {
-          
+
           // 중복 메시지 방지
           setMessages(prev => {
             // 동일한 message_idx가 이미 존재하는지 확인
@@ -250,21 +252,21 @@ const ChatRoom = () => {
             }, 100);
           }
         },
-        
+
         // 읽음 확인 수신 콜백
         (readData) => {
           // 해당 메시지의 읽음 상태 업데이트
           setMessages(prev => {
             const updatedMessages = prev.map(msg => {
               if (msg.message_idx === readData.message_idx) {
-                return { 
-                  ...msg, 
+                return {
+                  ...msg,
                   message_readdate: new Date().toISOString() // 현재 시간으로 설정
                 };
               }
               return msg;
             });
-            
+
             return updatedMessages;
           });
         }
@@ -275,10 +277,29 @@ const ChatRoom = () => {
     }
   }, [connected, roomId, subscribeToRoom, markAsRead, currentMemberIdx]);
 
+  // 방 입장 직후, 과거(unread) 메시지 전부 읽음 처리
+  useEffect(() => {
+    if (
+      connected &&
+      currentMemberIdx &&
+      messages.length > 0 &&
+      !initialReadDone.current
+    ) {
+      initialReadDone.current = true;
+
+      messages.forEach(msg => {
+        // 나에게 온(unread) 메시지인 경우에만
+        if (msg.receiver_idx === currentMemberIdx && !msg.message_readdate) {
+          markAsRead(msg.message_idx, parseInt(roomId, 10));
+        }
+      });
+    }
+  }, [connected, currentMemberIdx, messages, roomId, markAsRead]);
+
   // 새 메시지 추가 시 자동 스크롤
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
+      messagesEndRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'end'
       });
@@ -293,7 +314,7 @@ const ChatRoom = () => {
     }
 
     // 상대방 인덱스 계산
-    const otherMemberIdx = roomData?.trainer_idx === currentMemberIdx 
+    const otherMemberIdx = roomData?.trainer_idx === currentMemberIdx
       ? roomData?.user_idx      // 내가 트레이너면 → 상대방은 회원
       : roomData?.trainer_idx;  // 내가 회원이면 → 상대방은 트레이너
 
@@ -311,28 +332,28 @@ const ChatRoom = () => {
 
     // 파일 업로드 처리 (이미지인 경우)
     if (file && messageType === 'image') {
-      
+
       // 메시지가 서버에 저장될 때까지 잠시 대기 후 파일 업로드
       setTimeout(async () => {
         try {
           // 최신 메시지 목록에서 방금 전송한 메시지 찾기
           const messageList = await chatApi.readMessageList(parseInt(roomId));
           const latestMessage = messageList[messageList.length - 1];
-          
+
           if (latestMessage && latestMessage.sender_idx === currentMemberIdx) {
-            
+
             // 백엔드 API 호출 (uploadFile 메서드와 정확히 일치)
             await chatApi.uploadFile(file, latestMessage.message_idx);
-            
+
             // 업로드된 첨부파일 정보 조회
             const attachList = await chatApi.readFile(latestMessage.message_idx);
-            
+
             // 첨부파일 상태 업데이트
             setAttachments(prev => ({
               ...prev,
               [latestMessage.message_idx]: attachList
             }));
-            
+
             console.log('파일 업로드 완료:', attachList);
           }
         } catch (error) {
@@ -357,7 +378,7 @@ const ChatRoom = () => {
         return `${trainerName}님과의 상담`;
       }
     }
-    
+
     // 2순위: 기존 room_name 파싱
     if (roomData?.room_name) {
       const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
@@ -370,11 +391,11 @@ const ChatRoom = () => {
       }
       return roomData.room_name;
     }
-    
+
     // 3순위: 트레이너 정보에서 이름
     if (location.state?.trainerInfo?.member_name) {
       const trainerName = location.state.trainerInfo.member_name;
-      
+
       if (roomData?.trainer_idx === currentMemberIdx) {
         return `회원님과의 상담`;
       } else {
@@ -403,7 +424,7 @@ const ChatRoom = () => {
           <BackButton onClick={handleBackClick}>
             ←
           </BackButton>
-          
+
           <UserInfo>
             <UserName>채팅방</UserName>
           </UserInfo>
@@ -420,12 +441,12 @@ const ChatRoom = () => {
         <BackButton onClick={handleBackClick}>
           ←
         </BackButton>
-        
+
         <UserInfo>
           <UserName>{getRoomDisplayName()}</UserName>
         </UserInfo>
       </Header>
-      
+
       {/* 메시지 목록 */}
       <MessagesContainer>
         <MessageList
