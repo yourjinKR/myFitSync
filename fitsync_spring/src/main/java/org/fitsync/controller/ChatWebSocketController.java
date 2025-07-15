@@ -77,6 +77,7 @@ public class ChatWebSocketController {
         vo.setReceiver_idx(receiver_idx);
         vo.setMessage_content(message_content);
         vo.setMessage_type(message_type);
+        vo.setAttach_idx(null);
         
         // 메시지 저장
         MessageVO savedMessage = chatService.registerMessage(vo);

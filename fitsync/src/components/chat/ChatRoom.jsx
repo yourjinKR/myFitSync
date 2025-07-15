@@ -174,12 +174,11 @@ const ChatRoom = () => {
       // 각 이미지 메시지의 첨부파일 정보 로드
       const attachmentsMap = {};
       for (const message of messageList) {
-        if (message.message_type === 'image') {
+        if (message.message_type === 'image' && message.attach_idx && message.attach_idx > 0) {
           try {
-            // 백엔드 API 호출 (readFile 메서드와 정확히 일치)
-            const attachList = await chatApi.readFile(message.message_idx);
-            attachmentsMap[message.message_idx] = attachList;
-            console.log(`메시지 ${message.message_idx} 첨부파일:`, attachList);
+            // 단일 첨부파일 객체 조회
+            const attachment = await chatApi.readFile(message.message_idx);
+            attachmentsMap[message.message_idx] = attachment;
           } catch (error) {
             console.error(`메시지 ${message.message_idx} 첨부파일 로드 실패:`, error);
           }
@@ -224,17 +223,16 @@ const ChatRoom = () => {
           });
 
           // 이미지 메시지인 경우 첨부파일 정보도 로드
-          if (newMessage.message_type === 'image') {
+          if (newMessage.message_type === 'image' && newMessage.attach_idx && newMessage.attach_idx > 0) {
             try {
               // 약간의 딜레이 후 첨부파일 정보 로드 (서버에서 파일 처리 완료 대기)
               setTimeout(async () => {
                 try {
-                  const attachList = await chatApi.readFile(newMessage.message_idx);
+                  const attachment = await chatApi.readFile(newMessage.message_idx);
                   setAttachments(prev => ({
                     ...prev,
-                    [newMessage.message_idx]: attachList
+                    [newMessage.message_idx]: attachment
                   }));
-                  console.log(`실시간 메시지 ${newMessage.message_idx} 첨부파일 로드 완료:`, attachList);
                 } catch (error) {
                   console.error(`실시간 메시지 ${newMessage.message_idx} 첨부파일 로드 실패:`, error);
                 }
@@ -341,20 +339,20 @@ const ChatRoom = () => {
           const latestMessage = messageList[messageList.length - 1];
 
           if (latestMessage && latestMessage.sender_idx === currentMemberIdx) {
+            // 파일 업로드 및 메시지 연결
+            const uploadResult = await chatApi.uploadFile(file, latestMessage.message_idx);
 
-            // 백엔드 API 호출 (uploadFile 메서드와 정확히 일치)
-            await chatApi.uploadFile(file, latestMessage.message_idx);
-
-            // 업로드된 첨부파일 정보 조회
-            const attachList = await chatApi.readFile(latestMessage.message_idx);
-
-            // 첨부파일 상태 업데이트
+            // 첨부파일 상태 업데이트 (단일 객체)
             setAttachments(prev => ({
               ...prev,
-              [latestMessage.message_idx]: attachList
+              [latestMessage.message_idx]: {
+                attach_idx: uploadResult.attachIdx,
+                original_filename: uploadResult.originalFilename,
+                cloudinary_url: uploadResult.cloudinaryUrl,
+                file_size_bytes: uploadResult.fileSize,
+                mime_type: uploadResult.mimeType
+              }
             }));
-
-            console.log('파일 업로드 완료:', attachList);
           }
         } catch (error) {
           console.error('파일 업로드 실패:', error);

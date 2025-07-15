@@ -124,7 +124,7 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
             <MessageItem
               message={message}
               isCurrentUser={message.sender_idx === currentMemberIdx}
-              attachments={attachments[message.message_idx] || []}
+              attachments={attachments[message.message_idx] || null} // 단일 객체 전달
               senderName={isConsecutive ? null : senderName} // 연속 메시지가 아닐 때만 이름 표시
             />
           </React.Fragment>

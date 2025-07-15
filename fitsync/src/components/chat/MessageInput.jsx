@@ -272,10 +272,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
             <FileName>{selectedFile.name}</FileName>
             <FileSize>{formatFileSize(selectedFile.size)}</FileSize>
           </FileInfo>
-          <RemoveButton 
-            onClick={removeSelectedFile}
-            title="선택된 파일 제거"
-          >
+          <RemoveButton onClick={removeSelectedFile} title="선택된 파일 제거">
             ×
           </RemoveButton>
         </FilePreview>
@@ -284,11 +281,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
       {/* 메시지 입력 영역 */}
       <InputContainer>
         {/* 파일 첨부 버튼 */}
-        <AttachButton
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
-          title="이미지 첨부"
-        >
+        <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled} title="이미지 첨부">
           📎
         </AttachButton>
 
@@ -313,11 +306,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
           />
           
           {/* 전송 버튼 */}
-          <SendButton
-            onClick={handleSend}
-            disabled={disabled || (!messageText.trim() && !selectedFile)}
-            title="전송 (Enter)"
-          >
+          <SendButton onClick={handleSend} disabled={disabled || (!messageText.trim() && !selectedFile)} title="전송 (Enter)">
             ➤
           </SendButton>
         </TextAreaContainer>

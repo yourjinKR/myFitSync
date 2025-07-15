@@ -18,8 +18,10 @@
             message_type,
             message_senddate,
             message_delete,
-            message_order,
-            attach_idx
+            message_order
+            <if test="attach_idx != null and attach_idx > 0">
+                ,attach_idx
+            </if>
         ) VALUES (
             #{message_idx},
             #{room_idx},
@@ -29,8 +31,10 @@
             #{message_type},
             SYSTIMESTAMP,
             'N',
-            #{message_order},
-            #{attach_idx}
+            #{message_order}
+            <if test="attach_idx != null and attach_idx > 0">
+                ,#{attach_idx}
+            </if>
         )
     </insert>
     
