@@ -1,5 +1,6 @@
 package org.fitsync.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -121,11 +122,21 @@ public class ChatRestController {
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("message_idx") int message_idx, HttpSession session) {
         
-    	int member_idx = (Integer) session.getAttribute("member_idx");
-    	System.out.println("파일 업로드 - message_idx: " + message_idx + ", member_idx: " + member_idx);
-    	
+        int member_idx = (Integer) session.getAttribute("member_idx");
         try {
-            Map<String, Object> result = chatService.uploadFile(file, message_idx);
+            // 1. 파일 업로드
+            ChatAttachVO attachment = chatService.uploadFile(file);
+            // 2. 메시지와 첨부파일 연결
+            chatService.linkAttachmentToMessage(message_idx, attachment.getAttach_idx());
+            // 3. 응답 데이터 구성
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("attachIdx", attachment.getAttach_idx());
+            result.put("originalFilename", attachment.getOriginal_filename());
+            result.put("cloudinaryUrl", attachment.getCloudinary_url());
+            result.put("fileSize", attachment.getFile_size_bytes());
+            result.put("mimeType", attachment.getMime_type());
+            
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "파일 업로드 실패: " + e.getMessage()));
@@ -155,13 +166,17 @@ public class ChatRestController {
     
     // 메시지 첨부파일 조회 GET /api/chat/message/{message_idx}/files
     @GetMapping("/message/{message_idx}/files")
-    public ResponseEntity<List<ChatAttachVO>> readFile(@PathVariable int message_idx, HttpSession session) {
-    	
-    	int member_idx = (Integer) session.getAttribute("member_idx");
-    	System.out.println("첨부파일 조회 - message_idx: " + message_idx + ", member_idx: " + member_idx);
-    	
-        List<ChatAttachVO> attachments = chatService.readFile(message_idx);
-        return ResponseEntity.ok(attachments);
+    public ResponseEntity<ChatAttachVO> readFile(@PathVariable int message_idx, HttpSession session) {
+        
+        int member_idx = (Integer) session.getAttribute("member_idx");
+        
+        ChatAttachVO attachment = chatService.readFile(message_idx);
+        
+        if (attachment != null) {
+            return ResponseEntity.ok(attachment);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 	
 }

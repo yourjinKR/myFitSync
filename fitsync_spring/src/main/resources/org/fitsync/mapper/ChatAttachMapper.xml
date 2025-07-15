@@ -11,7 +11,6 @@
         </selectKey>
         INSERT INTO chatattach (
             attach_idx,
-            message_idx,
             original_filename,
             cloudinary_url,
             cloudinary_public_id,
@@ -21,7 +20,6 @@
             uploaddate
         ) VALUES (
             #{attach_idx},
-            #{message_idx},
             #{original_filename},
             #{cloudinary_url},
             #{cloudinary_public_id},
@@ -35,13 +33,6 @@
     <!-- 첨부파일 상세 조회 -->
     <select id="getAttach" parameterType="int" resultType="org.fitsync.domain.ChatAttachVO">
         SELECT * FROM chatattach WHERE attach_idx = #{attach_idx}
-    </select>
-    
-    <!-- 메시지별 첨부파일 조회 -->
-    <select id="getAttachList" parameterType="int" resultType="org.fitsync.domain.ChatAttachVO">
-        SELECT * FROM chatattach 
-        WHERE message_idx = #{message_idx}
-        ORDER BY uploaddate ASC
     </select>
     
     <!-- 첨부파일 삭제 -->

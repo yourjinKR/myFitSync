@@ -26,8 +26,10 @@ public interface ChatService {
     public int unreadCount(int room_idx, int receiver_idx);
     
     // 파일 업로드
-    public Map<String, Object> uploadFile(MultipartFile file, int message_idx) throws Exception;
-    boolean deleteFile(int attach_idx);
-    public List<ChatAttachVO> readFile(int message_idx);
+    public ChatAttachVO uploadFile(MultipartFile file) throws Exception;
+    public boolean deleteFile(int attach_idx);
+    public ChatAttachVO readFile(int message_idx);
+    // 메시지와 첨부파일 연결
+    public int linkAttachmentToMessage(int message_idx, int attach_idx);
 	
 }

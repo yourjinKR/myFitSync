@@ -3,6 +3,7 @@ package org.fitsync.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
+import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MessageVO;
 
 public interface MessageMapper {
@@ -21,5 +22,9 @@ public interface MessageMapper {
     public int readMark(@Param("message_idx") int message_idx, @Param("receiver_idx") int receiver_idx);
     // 읽지 않은 메시지 수 조회
     public int unreadCount(@Param("room_idx") int room_idx, @Param("receiver_idx") int receiver_idx);
-	
+    // 메시지의 첨부파일 조회
+    public ChatAttachVO getMessageAttachment(@Param("message_idx") int message_idx);
+    // 메시지 첨부파일 업데이트
+    public int updateMessageAttachment(@Param("message_idx") int message_idx, @Param("attach_idx") int attach_idx);
+    
 }

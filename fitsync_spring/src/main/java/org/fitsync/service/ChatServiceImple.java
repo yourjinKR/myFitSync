@@ -131,23 +131,30 @@ public class ChatServiceImple implements ChatService {
 	
 	// 메시지에 첨부파일을 업로드(Cloudinary에 실제파일을 업로드하고 DB에 파일정보를 저장)
 	@Override
-	public Map<String, Object> uploadFile(MultipartFile file, int message_idx) throws Exception {
-		log.info("uploadFile..." + file.getOriginalFilename() + ", " + message_idx);
-		return cloudinaryService.uploadFile(file, message_idx);
-	}
-	
-	// 메시지에 첨부된 파일 삭제
-	@Override
-	public boolean deleteFile(int attach_idx) {
-		log.info("ChatService deleteAttachment..." + attach_idx);
-		return cloudinaryService.deleteFile(attach_idx);
-	}
+    public ChatAttachVO uploadFile(MultipartFile file) throws Exception {
+        log.info("uploadFile..." + file.getOriginalFilename());
+        return cloudinaryService.uploadFile(file);
+    }
+    
+    // 메시지에 첨부된 파일 삭제
+    @Override
+    public boolean deleteFile(int attach_idx) {
+        log.info("deleteFile..." + attach_idx);
+        return cloudinaryService.deleteFile(attach_idx);
+    }
 
-	// 메시지에 첨부된 파일 목록을 조회
-	@Override
-	public List<ChatAttachVO> readFile(int message_idx) {
-		log.info("readFile..." + message_idx);
-		return attachMapper.getAttachList(message_idx);
-	}
+    // 메시지 첨부파일 조회
+    @Override
+    public ChatAttachVO readFile(int message_idx) {
+        log.info("readFile..." + message_idx);
+        return messageMapper.getMessageAttachment(message_idx);
+    }
+    
+    // 메시지와 첨부파일 연결
+    @Override
+    public int linkAttachmentToMessage(int message_idx, int attach_idx) {
+        log.info("linkAttachmentToMessage..." + message_idx + ", " + attach_idx);
+        return messageMapper.updateMessageAttachment(message_idx, attach_idx);
+    }
 
 }

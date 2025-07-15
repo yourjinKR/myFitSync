@@ -9,8 +9,8 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatAttachVO {
-	private int attach_idx, message_idx;
-	private long file_size_bytes;
-	private String original_filename, cloudinary_url, cloudinary_public_id, mime_type, file_extension;
-	private Timestamp uploaddate;
+	private int attach_idx;
+    private long file_size_bytes;
+    private String original_filename, cloudinary_url, cloudinary_public_id, mime_type, file_extension;
+    private Timestamp uploaddate;
 }
