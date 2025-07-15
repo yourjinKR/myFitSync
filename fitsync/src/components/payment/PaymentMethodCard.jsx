@@ -259,7 +259,7 @@ const PaymentMethodCard = ({ method, onRenamed, onDeleted, onError }) => {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="새로운 결제수단 이름을 입력하세요"
-            maxLength={50}
+            maxLength={20}
             disabled={isLoading}
           />
           <FormButtons>

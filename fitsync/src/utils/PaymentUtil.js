@@ -4,12 +4,15 @@ import axios from "axios";
 export const KAKAOPAY = "KAKAOPAY";
 export const TOSSPAYMENTS = "TOSSPAYMENTS";
 
+/** 카드명 리스트 */
+
+
 /** 결제수단 필요정보 매핑 */
 const paymentMethodInfo = {
-    KAKAOPAY: {channelKey: process.env.REACT_APP_PORTONE_KAKAOPAY_KEY, billingKeyMethod: "EASY_PAY"},
-    TOSSPAYMENTS: {channelKey: process.env.REACT_APP_PORTONE_TOSSPAYMENTS_KEY, billingKeyMethod: "CARD",},
+    KAKAOPAY: {channelKey: process.env.REACT_APP_PORTONE_KAKAOPAY_KEY, billingKeyMethod: "EASY_PAY", },
+    TOSSPAYMENTS: {channelKey: process.env.REACT_APP_PORTONE_TOSSPAYMENTS_KEY, billingKeyMethod: "CARD", },
 };
-
+// easyPay : {availableCards : ["CARD_COMPANY_SHINHAN_CARD"]}
 /** 빌링키 발급 */
 const issueBillingKey = async (name) => {
     const inputInfo = paymentMethodInfo[name];
@@ -38,7 +41,8 @@ const saveBillingKey = async ({method_key, method_provider}) => {
         const response = await axios.post('/payment/bill/issue', 
             {
                 method_key: method_key,
-                method_provider: method_provider
+                method_provider: method_provider,
+                method_name: PaymentUtil.setDefaultPaymentMethodName(method_provider),
             },
             { 
                 withCredentials: true,
@@ -78,8 +82,17 @@ const getBillingKeys = async () => {
     }
 };
 
-/** 결제수단 기본 이름 설정 */
-
+/** 결제수단 기본 이름 설정 (PC사 + ) */
+const setDefaultPaymentMethodName = (provider) => {
+    switch (provider) {
+        case KAKAOPAY:
+            return "카카오페이";
+        case TOSSPAYMENTS:
+            return "토스페이먼츠";
+        default:
+            return "기타 결제수단";
+    }
+};
 
 /** 결제수단명 이름 변경 */
 const renameBillingKey = async ({method_idx, method_name}) => {
@@ -136,4 +149,5 @@ export const PaymentUtil = {
     getBillingKeys : getBillingKeys,
     renameBillingKey : renameBillingKey,
     deletePaymentMethod : deletePaymentMethod,
+    setDefaultPaymentMethodName : setDefaultPaymentMethodName,
 }

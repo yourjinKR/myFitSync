@@ -49,8 +49,10 @@ public class PaymentController {
     		return ResponseEntity.badRequest().body("User not logged in");
     	}
     	
+    	log.info(body);
     	String billingKey = body.get("method_key");
 		String methodProvider = body.get("method_provider");
+		String methodName = body.get("method_name");
 
 		if (billingKey == null || methodProvider == null) {
 			return ResponseEntity.badRequest().body("Missing required parameters");
@@ -60,7 +62,8 @@ public class PaymentController {
 		vo.setMember_idx((int) memberIdx);
 		vo.setMethod_key(billingKey);
 		vo.setMethod_provider(methodProvider);
-
+		vo.setMethod_name(methodName);
+		
 		try {
 			int result = payService.saveBillingKey(vo);
 			if (result > 0) {
@@ -147,6 +150,8 @@ public class PaymentController {
     public ResponseEntity<Map<String, Object>> renameBillingKey(
             @RequestBody Map<String, Object> requestData,
             HttpSession session) {
+    	log.info(requestData);
+    	
         try {
             // 세션에서 사용자 ID 가져오기
             Object memberIdxObj = session.getAttribute("member_idx");

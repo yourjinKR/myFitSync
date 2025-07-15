@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { PaymentUtil } from '../../utils/PaymentUtil';
 import PaymentMethodCard from './PaymentMethodCard';
 import LoadingSpinner from './LoadingSpinner';
@@ -65,9 +66,14 @@ const EmptyState = styled.div`
 `;
 
 const PaymentMethodList = () => {
+  const navigate = useNavigate();
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: '', content: '' });
+
+  const handleAddMethod = () => {
+    navigate('/payment/register');
+  };
 
   useEffect(() => {
     loadPaymentMethods();
@@ -135,7 +141,7 @@ const PaymentMethodList = () => {
     <Container>
       <Header>
         <Title>내 결제수단</Title>
-        <AddMethodButton onClick={() => window.location.href = '/payment/test'}>
+        <AddMethodButton onClick={handleAddMethod}>
           + 결제수단 추가
         </AddMethodButton>
       </Header>
@@ -149,7 +155,7 @@ const PaymentMethodList = () => {
             새로운 결제수단을 등록하여<br />
             편리하게 결제를 이용해보세요.
           </p>
-          <AddMethodButton onClick={() => window.location.href = '/payment/test'}>
+          <AddMethodButton onClick={handleAddMethod}>
             첫 결제수단 등록하기
           </AddMethodButton>
         </EmptyState>

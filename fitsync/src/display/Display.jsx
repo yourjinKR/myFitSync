@@ -27,9 +27,10 @@ import AiServiceContainer from '../components/ai/AiServiceContainer';
 import IsLoading3 from '../components/IsLoading3';
 import PaymentContainer from '../components/payment/PaymentContainer';
 import PaymentMethodList from '../components/payment/PaymentMethodList';
-import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
+import PaymentMethodRegister from '../components/payment/PaymentMethodRegister';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
+import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -105,8 +106,9 @@ const Display = () => {
           <Route path='/test123' element={<SlideInputFormTest/>}/>
 
           <Route path='/payment' element={<PaymentContainer/>}>
-            <Route path='methods' element={<PaymentMethodList/>}/>
             <Route path='test' element={<KaKaoPayTest/>}/>
+            <Route path='methods' element={<PaymentMethodList/>}/>
+            <Route path='register' element={<PaymentMethodRegister/>}/>
           </Route>
 
           <Route path='/admin' element={<AdminMain/>}>

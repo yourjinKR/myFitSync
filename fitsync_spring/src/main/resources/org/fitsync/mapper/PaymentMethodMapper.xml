@@ -7,9 +7,23 @@
     <!-- 결제수단 등록 -->
     <insert id="insertPaymentMethod" parameterType="org.fitsync.domain.PaymentMethodVO">
         INSERT INTO payment_method (
-            method_idx, member_idx, method_key, method_provider, method_regdate
+            method_idx, 
+            member_idx, 
+            method_key, 
+            method_provider,
+	        <if test="method_name != null">
+	            method_name,
+	        </if>
+            method_regdate
         ) VALUES (
-            payment_method_seq.nextval, #{member_idx}, #{method_key}, #{method_provider}, SYSDATE
+            payment_method_seq.nextval, 
+            #{member_idx}, 
+            #{method_key}, 
+            #{method_provider}, 
+	        <if test="method_name != null">
+	            #{method_name},
+	        </if>
+            SYSDATE
         )
     </insert>
 
