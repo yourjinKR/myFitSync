@@ -1,6 +1,7 @@
 package org.fitsync.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.fitsync.domain.PaymentMethodVO;
 
@@ -10,6 +11,8 @@ public interface PaymentService {
 	public int saveBillingKey(PaymentMethodVO vo);
 	
 	public List<PaymentMethodVO> getPaymentMethods(int memberIdx);
+	
+	public Object getBillingKeyInfo(int memberIdx);
 	
 	public Object payBillingKey(String payment);
 	

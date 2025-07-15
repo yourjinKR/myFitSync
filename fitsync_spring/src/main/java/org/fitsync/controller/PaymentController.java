@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.io.IOException;
+import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
@@ -78,6 +79,7 @@ public class PaymentController {
 			return ResponseEntity.status(500).body(Map.of("success", false, "message", "Internal server error"));
 		}
     }
+
     
     // 내 결제수단 목록 조회 (빌링키 제외)
     @GetMapping("/bill/list")
@@ -107,11 +109,17 @@ public class PaymentController {
     
     // 빌링키로 결제
     @PostMapping(value = "/bill/pay")
-    public ResponseEntity<?> payBillingKey(@RequestBody Map<String, String> body) throws IOException {
-    	String payment = body.get("paymentId");
+    public ResponseEntity<?> payBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
+    	Object session_member_idx = session.getAttribute("member_idx");
+    	String payment_id = body.get("payment_id");
+    	
+    	String method_idx = body.get("method_idx");
+    	String method_name = body.get("method_name");
+		String method_provider = body.get("method_provider");
+		String method_member_idx = body.get("member_idx");
     	
     	try {
-    		Object result = payService.payBillingKey(payment);
+    		Object result = payService.payBillingKey(payment_id);
     		log.info("Payment result: " + result);
     		
     		// 결과가 Map이고 success 필드를 체크

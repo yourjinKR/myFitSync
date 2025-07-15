@@ -33,17 +33,39 @@ public class PaymentServiceImple implements PaymentService {
 	@Autowired
 	private PaymentMethodMapper paymentMethodMapper;
 	
+	// 결제수단 등록
 	@Override
 	public int saveBillingKey(PaymentMethodVO vo) {
 		return paymentMethodMapper.insertPaymentMethod(vo);
 	}
 	
+	// 결제수단 불러오기 (빌링키 제외)
 	@Override
 	public List<PaymentMethodVO> getPaymentMethods(int memberIdx) {
 		return paymentMethodMapper.selectByMemberIdxExcludingKey(memberIdx);
 	}
 	
-	// api key, payment id, billing key, channel key, ordername, amount, currency 
+	// 빌링키 정보 가져오기
+	@Override
+	public Object getBillingKeyInfo(int methodIdx) {
+		String billingKey = null;
+		try {
+			HttpRequest request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
+				    .header("Content-Type", "application/json")
+				    .header("Authorization", "PortOne " + apiSecret)
+				    .method("GET", HttpRequest.BodyPublishers.ofString("{}"))
+				    .build();
+				HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+				System.out.println(response.body());
+				return response;
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null;
+	}
+	
+	// 빌링키로 결제 (api key, payment id, billing key, channel key, ordername, amount, currency 
 	@Override
 	public Object payBillingKey(String payment) {
 	    try {

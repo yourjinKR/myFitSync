@@ -16,4 +16,6 @@ public class PaymentMethodVO {
     private String method_provider;
     private String method_name;
     private Date method_regdate;
+    private String method_card;
+    private String method_card_num;
 }

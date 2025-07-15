@@ -25,11 +25,11 @@ const KaKaoPayTest = () => {
     /** 빌링키 결제 */
     const handlePortOneBillingPaymentTest = async () => {
         try {
-            const paymentId = randomId();
-            console.log("Generated Payment ID:", paymentId);
+            const payment_id = randomId();
+            console.log("Generated Payment ID:", payment_id);
 
             const response = await axios.post('/payment/bill/pay', {
-                paymentId,
+                payment_id,
             });
             
             console.log("빌링키 결제 응답 상태:", response.status);
@@ -133,7 +133,7 @@ const KaKaoPayTest = () => {
 
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
-            <ButtonSubmit onClick={handlePortOneBillingPaymentTest}>빌링키 결제 테스트(toss-payments)</ButtonSubmit>
+            <ButtonSubmit onClick={handlePortOneBillingPaymentTest}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
         </div>
     );

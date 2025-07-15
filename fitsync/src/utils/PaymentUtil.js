@@ -4,8 +4,12 @@ import axios from "axios";
 export const KAKAOPAY = "KAKAOPAY";
 export const TOSSPAYMENTS = "TOSSPAYMENTS";
 
-/** 카드명 리스트 */
-
+/** 난수 return 함수 (paymentId 전용)  */
+export const randomId = () => {
+    return [...crypto.getRandomValues(new Uint32Array(2))]
+        .map((word) => word.toString(16).padStart(8, "0"))
+        .join("");
+}
 
 /** 결제수단 필요정보 매핑 */
 const paymentMethodInfo = {
@@ -143,6 +147,30 @@ const deletePaymentMethod = async (method_idx) => {
     }
 };
 
+/** 빌링키 결제 */
+const payBillingKey = async (method) => {
+    const { method_idx, method_provider, member_idx } = method;
+    const payment_id = randomId();
+
+    try {
+        const response = await axios.post('/payment/bill/pay', {
+            payment_id,
+            method_idx,
+            method_provider,
+            member_idx,
+        }, {
+            withCredentials: true,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('빌링키 결제 성공:', response);
+        return response.data;
+    } catch (error) {
+        
+    }
+}
+
 export const PaymentUtil = {
     issueBillingKey : issueBillingKey,
     saveBillingKey : saveBillingKey,
@@ -150,4 +178,5 @@ export const PaymentUtil = {
     renameBillingKey : renameBillingKey,
     deletePaymentMethod : deletePaymentMethod,
     setDefaultPaymentMethodName : setDefaultPaymentMethodName,
+    payBillingKey : payBillingKey,
 }
