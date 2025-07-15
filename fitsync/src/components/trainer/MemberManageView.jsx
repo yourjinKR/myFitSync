@@ -136,7 +136,7 @@ const DotRow = styled.div`
   }
 `;
 
-    const MemberManageView = () => {
+  const MemberManageView = () => {
       const [tab, setTab] = useState('active');
       const [keyword, setKeyword] = useState('');
       const [showInsertForm, setShowInsertForm] = useState(false);
@@ -163,7 +163,7 @@ const DotRow = styled.div`
               lessonInfo: `수업 ${total}회권`,
               done,
               remain,
-              reserved: 0, // 예약 횟수는 아직 없다고 가정
+              reserved: 0,
               dots: total,
               startDate: m.matching_start,
               endDate: m.matching_end,

@@ -5,14 +5,15 @@ import { MdEdit, MdCheck } from 'react-icons/md'; // 수정/저장 아이콘
 const ProfileHeader = styled.div`
   text-align: center;
   padding-bottom: 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
 `;
 
 const ProfileImage = styled.div`
   width: 100px;
   height: 100px;
   margin: 0 auto 14px;
-  background-color: #ccc;
+  background-color: var(--border-medium);
   border-radius: 50%;
 `;
 
@@ -27,6 +28,7 @@ const Name = styled.h2`
   font-size: 1.7rem;
   font-weight: bold;
   margin-bottom: 8px;
+  color: var(--text-primary);
 `;
 
 const EditButton = styled.button`
@@ -34,17 +36,18 @@ const EditButton = styled.button`
   border: none;
   cursor: pointer;
   font-size: 1.6rem;
-  color: #007aff;
+  color: var(--primary-blue);
   padding: 0;
   margin-bottom: 8px;
 
   &:hover {
     opacity: 0.8;
+    color: var(--primary-blue-hover);
   }
 `;
 
 const ReviewCount = styled.p`
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1.05rem;
   margin-top: 4px;
 `;
@@ -52,7 +55,7 @@ const ReviewCount = styled.p`
 const Quote = styled.p`
   font-style: italic;
   font-size: 1.15rem;
-  color: #555;
+  color: var(--text-secondary);
   margin-top: 10px;
   padding: 0 10px;
 `;
@@ -63,21 +66,23 @@ const QuoteInput = styled.input`
   width: 80%;
   font-size: 1.1rem;
   font-style: italic;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-light);
   border-radius: 6px;
   text-align: center;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 `;
 
 const SummaryBox = styled.div`
   margin-top: 14px;
   padding: 16px;
-  background-color: #f7f7f7;
+  background-color: var(--bg-tertiary);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   font-size: 1.15rem;
-  color: #333;
+  color: var(--text-primary);
 `;
 
 const SummaryItem = styled.div`
@@ -93,9 +98,6 @@ const TrainerProfileHeader = ({ trainer, isEdit, onChange, onEditToggle, loginUs
 
       <NameWrapper>
         <Name>{trainer.name} 선생님</Name>
-
-        {console.log('[디버그] loginUserId:', loginUserId)}
-        {console.log('[디버그] trainer.member_idx:', trainer?.member_email)}
 
         {loginUserId && trainer?.member_email && loginUserId === trainer.member_email && (
           <EditButton onClick={onEditToggle} title={isEdit ? '저장하기' : '수정하기'}>
