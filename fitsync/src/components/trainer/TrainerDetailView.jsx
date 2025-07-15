@@ -11,6 +11,7 @@ import TrainerReviewSection from './TrainerReviewSection';
 // 스타일 컴포넌트 추가
 import styled from 'styled-components';
 
+// 컨테이너
 const Container = styled.div`
   margin: 0 auto;
   padding: 1.5rem;
@@ -20,6 +21,7 @@ const Container = styled.div`
   min-height: 100vh;
 `;
 
+// 탭 메뉴
 const TabMenu = styled.div`
   display: flex;
   border-bottom: 1px solid var(--border-light);
@@ -29,6 +31,7 @@ const TabMenu = styled.div`
   overflow: hidden;
 `;
 
+// 탭 버튼
 const TabButton = styled.button`
   flex: 1;
   padding: 1rem 0;
@@ -42,6 +45,7 @@ const TabButton = styled.button`
   transition: background 0.2s, color 0.2s;
 `;
 
+// 플로팅 버튼
 const FloatingButton = styled.button`
   position: fixed;
   bottom: 1.5rem;
@@ -65,6 +69,7 @@ const FloatingButton = styled.button`
   }
 `;
 
+// 모달 백드롭
 const ModalBackdrop = styled.div`
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -75,6 +80,7 @@ const ModalBackdrop = styled.div`
   z-index: 2000;
 `;
 
+// 모달 박스
 const ModalBox = styled.div`
   background: var(--bg-secondary);
   padding: 2rem;
@@ -86,6 +92,7 @@ const ModalBox = styled.div`
   text-align: center;
 `;
 
+// 모달 버튼
 const ModalButton = styled.button`
   margin: 1rem 0.5rem 0 0;
   padding: 0.6rem 1.2rem;
@@ -126,7 +133,6 @@ const TrainerDetailView = () => {
       try {
         const res = await axios.get(`/trainer/profile/${trainerIdx}`);
         const data = res.data;
-
         const trainerData = {
           member_idx: data.member_idx,
           member_email: data.member_email,
@@ -144,7 +150,7 @@ const TrainerDetailView = () => {
         // 레슨 데이터도 함께 불러오기
         const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
         const lessons = lessonRes.data || [];
-
+        
         // state 세팅
         setTrainer({ ...trainerData, lessons });
         setEditedTrainer({ ...trainerData, lessons });

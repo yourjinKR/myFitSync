@@ -3,28 +3,29 @@ import styled from 'styled-components';
 
 const Section = styled.section`
   padding: 24px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
 `;
 
 const SectionTitle = styled.h3`
   font-weight: bold;
   margin-bottom: 16px;
   font-size: 1.3rem;
-  color: #222;
+  color: var(--text-primary);
 `;
 
 const PriceItem = styled.div`
-  background-color: #444;
+  background-color: var(--bg-tertiary);
   padding: 16px;
   border-radius: 10px;
   margin-bottom: 16px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 1.15rem;
   line-height: 1.6;
 
   strong {
     font-size: 1.2rem;
-    color: #fff;
+    color: var(--text-primary);
   }
 
   div {
@@ -38,7 +39,9 @@ const Input = styled.input`
   padding: 10px;
   margin-bottom: 16px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   box-sizing: border-box;
 `;
 
@@ -48,7 +51,9 @@ const InlineInput = styled.input`
   padding: 6px 10px;
   margin-right: 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 `;
 
 const Controls = styled.div`
@@ -58,8 +63,8 @@ const Controls = styled.div`
 `;
 
 const AddButton = styled.button`
-  background-color: #007aff;
-  color: white;
+  background-color: var(--primary-blue);
+  color: var(--text-primary);
   border: none;
   padding: 8px 14px;
   font-size: 1rem;
@@ -67,14 +72,14 @@ const AddButton = styled.button`
   cursor: pointer;
 
   &:disabled {
-    background-color: #999;
+    background-color: var(--border-medium);
     cursor: not-allowed;
   }
 `;
 
 const RemoveButton = styled.button`
-  background-color: #ff5c5c;
-  color: white;
+  background-color: var(--warning);
+  color: var(--text-primary);
   border: none;
   padding: 6px 12px;
   font-size: 0.9rem;
@@ -83,7 +88,7 @@ const RemoveButton = styled.button`
 `;
 
 const Label = styled.label`
-  color: white;
+  color: var(--text-secondary);
   font-weight: 600;
   margin-right: 6px;
 `;
@@ -204,7 +209,7 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
       })}
 
       {!isEdit && lessons.length === 0 && (
-        <p>가격표가 등록되지 않았습니다.</p>
+        <p style={{ color: 'var(--text-tertiary)' }}>가격표가 등록되지 않았습니다.</p>
       )}
     </Section>
   );

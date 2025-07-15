@@ -2,24 +2,26 @@ import React from 'react';
 import styled from 'styled-components';
 import TrainerIntroduce from './TrainerIntroduce';
 import TrainerPriceList from './TrainerPriceList';
+import axios from 'axios';
 
 const Section = styled.section`
   padding: 24px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
 `;
 
 const SectionTitle = styled.h3`
   font-weight: bold;
   margin-bottom: 16px;
   font-size: 1.3rem;
-  color: #222;
+  color: var(--text-primary);
 `;
 
 const CertList = styled.ul`
   list-style: none;
   padding-left: 0;
   font-size: 1.15rem;
-  color: #333;
+  color: var(--text-primary);
 
   li {
     margin-bottom: 10px;
@@ -28,7 +30,7 @@ const CertList = styled.ul`
 
 const InfoContent = styled.div`
   font-size: 1.15rem;
-  color: #444;
+  color: var(--text-secondary);
   line-height: 1.6;
   white-space: pre-line;
 `;
@@ -36,15 +38,15 @@ const InfoContent = styled.div`
 const ReviewItem = styled.div`
   padding: 14px;
   margin-bottom: 12px;
-  background-color: #f9f9f9;
+  background-color: var(--bg-tertiary);
   border-radius: 8px;
   font-size: 1.1rem;
-  color: #444;
+  color: var(--text-primary);
   line-height: 1.6;
 
   strong {
     display: block;
-    color: #777;
+    color: var(--text-tertiary);
     margin-bottom: 4px;
     font-size: 0.9rem;
   }
@@ -53,7 +55,7 @@ const ReviewItem = styled.div`
     margin: 4px 0 6px;
     font-size: 1.15rem;
     font-weight: bold;
-    color: #222;
+    color: var(--primary-blue);
   }
 `;
 
@@ -61,14 +63,30 @@ const MoreButton = styled.button`
   margin-top: 10px;
   background: none;
   border: none;
-  color: #007aff;
+  color: var(--primary-blue);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   padding: 0;
+  &:hover {
+    color: var(--primary-blue-hover);
+  }
 `;
 
 const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, onLessonsChange }) => {
+  const handleImageUpload = async (formData) => {
+  try {
+    const res = await axios.post('/trainer/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      withCredentials: true,
+    });
+    return res.data;
+  } catch (err) {
+    console.error('업로드 실패', err);
+    alert('업로드 실패');
+    return null;
+  }
+};
   return (
     <>
       {/* 소개 + 이미지 */}
@@ -79,6 +97,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
           description={trainer.description}
           isEdit={isEdit}
           onChange={onChange}
+          onImageUpload={handleImageUpload}
         />
       </Section>
 

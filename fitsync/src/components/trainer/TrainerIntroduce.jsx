@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import styled from 'styled-components';
 
 const ImageGrid = styled.div`
@@ -46,24 +46,53 @@ const Input = styled.input`
   border: 1px solid #ccc;
 `;
 
-const TrainerIntroduce = ({ images, description, isEdit, onChange }) => {
+const TrainerIntroduce = ({ images, description, isEdit, onChange, onImageUpload }) => {
+  const inputRefs = useRef([]);
+
+  const handleFileChange = async (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await onImageUpload(formData); // ✅ 너가 말한 위치!
+      const url = res?.url;
+
+      if (url) {
+        const updated = [...images];
+        updated[index] = url;
+        onChange('images', updated);
+      }
+    } catch (err) {
+      console.error('업로드 실패:', err);
+      alert('이미지 업로드 실패');
+    }
+  };
+
+  const handleClick = (index) => {
+    inputRefs.current[index]?.click();
+  };
+
   return (
     <>
       {isEdit ? (
         <>
-          <div style={{ marginBottom: '10px' }}>
-            {images.map((img, i) => (
-              <Input
-                key={i}
-                value={img}
-                onChange={(e) => {
-                  const updated = [...images];
-                  updated[i] = e.target.value;
-                  onChange('images', updated);
-                }}
-              />
+          <ImageGrid>
+            {[...Array(6)].map((_, i) => (
+              <ImageBox key={i} onClick={() => handleClick(i)} style={{ cursor: 'pointer' }}>
+                {images[i] ? images[i] : '+'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  ref={(el) => (inputRefs.current[i] = el)}
+                  onChange={(e) => handleFileChange(e, i)}
+                />
+              </ImageBox>
             ))}
-          </div>
+          </ImageGrid>
           <Textarea
             value={description}
             onChange={(e) => onChange('description', e.target.value)}
