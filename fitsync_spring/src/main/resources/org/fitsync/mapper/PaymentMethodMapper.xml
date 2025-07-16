@@ -39,6 +39,12 @@
         )
     </insert>
 
+    <!-- 같은 카드 번호가 있는지 확인 -->
+    <select id="checkDuplicateCard" parameterType="org.fitsync.domain.PaymentMethodVO" resultType="org.fitsync.domain.PaymentMethodVO">
+        SELECT * FROM payment_method
+        WHERE member_idx = #{member_idx} AND method_card = #{method_card} AND method_card_num = #{method_card_num}
+    </select>
+
     <!-- 회원별 결제수단 조회 -->
     <select id="selectByMemberIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
         SELECT * FROM payment_method

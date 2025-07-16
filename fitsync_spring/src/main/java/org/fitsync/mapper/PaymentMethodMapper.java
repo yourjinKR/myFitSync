@@ -8,6 +8,9 @@ public interface PaymentMethodMapper {
     // 결제수단 등록
     int insertPaymentMethod(PaymentMethodVO vo);
 
+    // 결제수단 중복 확인 (카드 번호 기준)
+    PaymentMethodVO checkDuplicateCard(PaymentMethodVO vo);
+
     // method_idx로 단건 조회
     PaymentMethodVO selectByMethodIdx(int method_idx);
 
