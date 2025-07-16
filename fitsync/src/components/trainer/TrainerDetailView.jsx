@@ -174,14 +174,14 @@ const TrainerDetailView = () => {
 
   const handleEditToggle = async () => {
     if (isEditMode) {
+      console.log('[디버깅] editedTrainer.images:', editedTrainer.images);
       // 저장 로직
       const payload = {
         member_idx: trainerIdx,
         member_intro: editedTrainer.intro || '',
         member_info: editedTrainer.description || '',
-        member_info_image: editedTrainer.images?.join(',') || '',
+        member_info_image: editedTrainer.images?.map(img => img.id).join(',') || '',
       };
-
       try {
         await axios.put(`/trainer/update/${trainerIdx}`, payload, {
           withCredentials: true,

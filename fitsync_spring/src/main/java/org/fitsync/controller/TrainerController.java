@@ -7,12 +7,14 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.AwardsVO;
+import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.LessonVO;
 import org.fitsync.domain.MatchingVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
+import org.fitsync.service.CloudinaryService;
 import org.fitsync.service.LessonService;
 import org.fitsync.service.MatchingService;
 import org.fitsync.service.MemberService;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/trainer")
@@ -45,12 +48,16 @@ public class TrainerController {
     private RecordService recordService;
     @Autowired
     private MatchingService matchingService;
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
    
     
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
     public ResponseEntity<?> getTrainerProfileById(@PathVariable int trainerIdx) {
         MemberVO member = memberService.getTrainerByIdx(trainerIdx);
+        System.out.println("[DEBUG] trainerIdx: " + trainerIdx + ", member: " + member);
         if (member == null) {
             return ResponseEntity.status(404).body("Trainer not found");
         }
@@ -246,6 +253,36 @@ public class TrainerController {
         return ResponseEntity.ok(members);
     }
     
-    // 수업 횟수 차감
+    // 트레이너 소개사진 업로드
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadTrainerImage(@RequestParam("file") MultipartFile file) {
+        try {
+            ChatAttachVO vo = cloudinaryService.uploadFile(file);
+
+            // 프론트에서 필요한 정보만 골라서 반환
+            Map<String, Object> result = new HashMap<>();
+            result.put("attach_idx", vo.getAttach_idx());
+            result.put("url", vo.getCloudinary_url());
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("업로드 실패");
+        }
+    }
+    
+    // 트레이너 소개사진 삭제
+    @DeleteMapping("/upload/{attachIdx}")
+    public ResponseEntity<?> deleteUploadedImage(@PathVariable int attachIdx) {
+        boolean success = cloudinaryService.deleteFile(attachIdx);
+        if (success) {
+            return ResponseEntity.ok("삭제 성공");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("삭제 실패");
+        }
+    }
+    
+    
     
 }
