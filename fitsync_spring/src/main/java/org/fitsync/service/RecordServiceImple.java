@@ -114,7 +114,9 @@ public class RecordServiceImple implements RecordService {
 
 		    for (Map<String, Object> set : sets) {
 		        if (set.containsKey("checked")) {
-		            hasChecked = true;
+		        	if((boolean) set.get("checked")) {
+		        		hasChecked = true;
+		        	}
 		            break;
 		        }
 		    }

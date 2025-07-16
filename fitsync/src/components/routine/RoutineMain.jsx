@@ -211,6 +211,7 @@ const RoutineMain = () => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const prev = query.get("prev");
+  const targetDate = query.get("date");
   
 
   // 헤더 변경 여부
@@ -236,13 +237,14 @@ const RoutineMain = () => {
   
   useEffect(() => {
     if (routineData === null) return;
-    if(routine_list_idx !== 'custom' || prev === null || prev === undefined) {
-      if(isSave) {
+    if(routine_list_idx !== 'custom' ) {
+      if(isSave && (prev === null || prev === undefined)) {
         nav("/routine/view");
         setIsSave(false);
       }
     }else{
-      if(tempData.routine_name !== "") {
+      const localData = tempData.find(item => item.saveDate === targetDate);
+      if(localData != null && localData.routine_name !== "") {
         setIsSave(true);
       }
     }
@@ -256,6 +258,7 @@ const RoutineMain = () => {
   useEffect(() => {
     if(location.pathname === '/routine/view'){
       setRoutineData(routineInit);
+      closeAlert();
     } 
 
     if(isEdit){
@@ -296,7 +299,7 @@ const RoutineMain = () => {
         setIsSave(true);
         setTempData(prev => 
           prev.map(item => 
-            item.routine_name === routineData.routine_name 
+            item.saveDate === routineData.saveDate 
               ? { ...item, save: true }
               : item
           )
@@ -341,6 +344,10 @@ const RoutineMain = () => {
 
     if(postData.routines.length === 0) {
       alert("완료된 운동이 없습니다.");
+      const saveCheck = tempData.find(item => item.saveDate === newData.saveDate).save;
+      if(saveCheck === undefined || saveCheck === false) {
+        setIsSave(false);
+      }
       closeAlert();
       return;
     }
@@ -355,6 +362,7 @@ const RoutineMain = () => {
       alertRef.current.style.display = "none";
       setIsUpdate(false);
       if(result.success) {
+
         alert(result.msg);
         if(routine_list_idx === 'custom') {
           const newLocalData = tempData.filter(item => item.routine_name !== postData.routine_name);
@@ -362,9 +370,12 @@ const RoutineMain = () => {
         }
 
         nav("/routine/view");
-
       } else {
         alert(result.msg);
+        const saveCheck = tempData.find(item => item.saveDate === newData.saveDate).save;
+        if(saveCheck === undefined || saveCheck === false) {
+          setIsSave(false);
+        }
       }
     } catch (error) {
       alert("루틴 기록에 실패했습니다.");
@@ -377,6 +388,10 @@ const RoutineMain = () => {
     if(isRecord) {
       handleRoutineRecord();
     } else {
+      const saveCheck = tempData.find(item => item.saveDate === newData.saveDate).save;
+      if(saveCheck === undefined || saveCheck === false) {
+        setIsSave(false);
+      }
       closeAlert();
     }
   }
@@ -467,8 +482,7 @@ const RoutineMain = () => {
   const handleAddWorkOut = () => {
     nav("/routine/add?prev=/routine/detail/" + routine_list_idx);
   }
-          
-
+  
   return (
     <>
       {/* 루틴 헤더 */}
@@ -512,12 +526,12 @@ const RoutineMain = () => {
           </AlertDiv>
         :
           !isSave && 
-          tempData.find(item => item.routine_name === routineData.routine_name)?.save !== true &&
+          tempData.find(item => item.saveDate === routineData.saveDate)?.save !== true &&
           routine_list_idx !== undefined &&
           routine_list_idx !== null &&
           routine_list_idx === 'custom' ?
           <AlertDiv>
-            <H4>해당 운동을 저장하시겠습니까?</H4>
+            <H4>루틴에 등록하시겠습니까?</H4>
             <RoutineNameInput
               placeholder="루틴 이름을 입력하세요"
               type="text"
@@ -531,7 +545,7 @@ const RoutineMain = () => {
               }}
             />
             <ButtonGroup>
-              <button onClick={() => handleTempSave(true)}>저장하기</button>
+              <button onClick={() => handleTempSave(true)}>등록</button>
               <button onClick={() => handleTempSave(false)}>취소</button>
             </ButtonGroup>
           </AlertDiv>
