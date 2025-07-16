@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
@@ -22,13 +23,20 @@ import java.io.IOException;
 @Service
 public class PaymentServiceImple implements PaymentService {
     @Value("${portone.api.secret}")
-    private String apiSecret;
+    private String apiSecretKey;
 
     @Value("${portone.billing.key}")
     private String billingKey;
     
     @Value("${portone.channel.key}")
     private String channelKey;
+    
+    @Value("${portone.kakaopay.channel.key}")
+    private String kakaoPayKey;
+    
+    @Value("${portone.tosspayments.channel.key}")
+    private String tosspaymentsKey;
+
     
     @Value("${portone.store.id}")
     private String storeId;
@@ -78,7 +86,7 @@ public class PaymentServiceImple implements PaymentService {
 			HttpRequest request = HttpRequest.newBuilder()
 				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
 				    .header("Content-Type", "application/json")
-				    .header("Authorization", "PortOne " + apiSecret)
+				    .header("Authorization", "PortOne " + apiSecretKey)
 				    .method("GET", HttpRequest.BodyPublishers.noBody())
 				    .build();
 				    
@@ -171,16 +179,32 @@ public class PaymentServiceImple implements PaymentService {
 		log.info("추출된 카드 정보: " + cardInfo);
 		return cardInfo;
 	}
+
+	// 채널키 매칭
+	public String getChannelKey(String channelType) {
+		switch (channelType.toLowerCase()) {
+			case "kakaopay":
+				return kakaoPayKey;
+			case "tosspayments":
+				return tosspaymentsKey;
+			default:
+				return channelKey; // 기본 채널키
+		}
+	}
 	
-	// 빌링키로 결제 (api key, payment id, billing key, channel key, ordername, amount, currency 
+	// 빌링키로 결제 (api key, payment id, billing key == method key, channel key, ordername, amount, currency 
 	@Override
-	public Object payBillingKey(String payment) {
+	public Object payBillingKey(String paymentId, int methodIdx) {
 	    try {
+			PaymentMethodVO method = paymentMethodMapper.selectByMethodIdx(methodIdx);
+			String billingKey = method.getMethod_key();
+			String channelKey = getChannelKey(method.getMethod_provider());
+
 	    	HttpRequest request = HttpRequest.newBuilder()
-	    		    .uri(URI.create("https://api.portone.io/payments/"+ payment +"/billing-key"))
+	    		    .uri(URI.create("https://api.portone.io/payments/"+ paymentId +"/billing-key"))
 	    		    .header("Content-Type", "application/json")
-	    		    .header("Authorization", "PortOne " + apiSecret)
-	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync123\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
+	    		    .header("Authorization", "PortOne " + apiSecretKey)
+	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync 구독\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
 	    		    .build();
 	    		HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 	    		
@@ -272,7 +296,7 @@ public class PaymentServiceImple implements PaymentService {
 			HttpRequest request = HttpRequest.newBuilder()
 				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
 				    .header("Content-Type", "application/json")
-				    .header("Authorization", "PortOne " + apiSecret)
+				    .header("Authorization", "PortOne " + apiSecretKey)
 				    .method("GET", HttpRequest.BodyPublishers.noBody())
 				    .build();
 				    

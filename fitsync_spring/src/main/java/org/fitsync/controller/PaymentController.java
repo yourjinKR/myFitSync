@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.io.IOException;
+import io.portone.sdk.server.common.Country.Pa;
 import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
@@ -151,14 +152,12 @@ public class PaymentController {
     public ResponseEntity<?> payBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
     	Object session_member_idx = session.getAttribute("member_idx");
     	String payment_id = body.get("payment_id");
-    	
     	String method_idx = body.get("method_idx");
-    	String method_name = body.get("method_name");
-		String method_provider = body.get("method_provider");
-		String method_member_idx = body.get("member_idx");
+    	 	
+        log.info(payment_id + ", " + method_idx);
     	
     	try {
-    		Object result = payService.payBillingKey(payment_id);
+    		Object result = payService.payBillingKey(payment_id, Integer.parseInt(method_idx));
     		log.info("Payment result: " + result);
     		
     		// 결과가 Map이고 success 필드를 체크

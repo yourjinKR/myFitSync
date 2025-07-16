@@ -167,23 +167,20 @@ export const PaymentUtil = {
     },
 
     /** 빌링키 결제 */
-    payBillingKey : async (method) => {
-        const { method_idx, method_provider, member_idx } = method;
+    payBillingKey : async ({ method_idx, method_provider, member_idx }) => {
         const payment_id = randomId();
 
         try {
             const response = await axios.post('/payment/bill/pay', {
                 payment_id,
                 method_idx,
-                method_provider,
-                member_idx,
             }, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('빌링키 결제 성공:', response);
+            console.log('빌링키 결제 성공:', response.data);
             return response.data;
         } catch (error) {
             console.error('빌링키 결제 중 오류:', error);
