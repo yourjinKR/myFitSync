@@ -46,7 +46,7 @@ public class CloudinaryService {
             // Cloudinary 업로드 파라미터 설정
             Map<String, Object> uploadParams = new HashMap<>();
             uploadParams.put("resource_type", "auto");
-            uploadParams.put("folder", "pt-chat-files");
+            uploadParams.put("folder", "fitsync");
             uploadParams.put("public_id", "chat_" + System.currentTimeMillis());
             uploadParams.put("overwrite", false);
             uploadParams.put("quality", "auto:good");

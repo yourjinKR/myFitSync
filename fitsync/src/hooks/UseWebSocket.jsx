@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import axios from 'axios';
 
 export const useWebSocket = () => {
   const [client, setClient] = useState(null);       // STOMP 클라이언트 객체
