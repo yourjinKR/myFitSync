@@ -79,7 +79,7 @@ const Routine = ({ data, onDelete, type, setTempData }) => {
   const handleGoRoutine = (e) => {
     if(type !== null && type === 'custom') {
       e.stopPropagation();
-      nav(`/routine/detail/custom?date=${data.routine_name}`);
+      nav(`/routine/detail/custom?date=${data.saveDate}`);
       return;
     }
 
@@ -95,7 +95,7 @@ const Routine = ({ data, onDelete, type, setTempData }) => {
       try {
         if(type !== null && type === 'custom') {
           const localData = JSON.parse(localStorage.getItem('routineData'));
-          const newLocalData = localData.filter(item => item.routine_name !== data.routine_name);
+          const newLocalData = localData.filter(item => item.saveDate !== data.saveDate);
           setTempData(newLocalData);
           return;
         }
@@ -128,7 +128,7 @@ const Routine = ({ data, onDelete, type, setTempData }) => {
         <h3>
           {
             type !== null && type === 'custom' ? 
-            <>{getDateDiffText(data.routine_name)}</> :
+            <>{data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name} )` : ''}</> :
             <>{data.routine_name}</>
           }
         </h3>
@@ -137,9 +137,13 @@ const Routine = ({ data, onDelete, type, setTempData }) => {
         </button>
       </Inner>
       <CategoryText>
-        {getCategoryText()}
+        {getCategoryText()}<br/>
+         {
+            type !== null && type === 'custom' ? 
+            <>{getDateDiffText(data.saveDate)}</> :
+            <></>
+          }
       </CategoryText>
-      <p>운동하러가기</p>
     </RoutineWrapper>
   );
 };

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { use, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -187,7 +187,20 @@ const RoutineAddCTA = styled.button`
   border: none;
   font-weight: 500;
   border-radius: 5px;
+`;
 
+const RoutineNameInput = styled.input`
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1.6rem;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  margin-top: 8px;
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
 `;
 
 const RoutineMain = () => {
@@ -228,6 +241,10 @@ const RoutineMain = () => {
         nav("/routine/view");
         setIsSave(false);
       }
+    }else{
+      if(tempData.routine_name !== "") {
+        setIsSave(true);
+      }
     }
   },[routineData, unfinished, isSave , nav]);
   useEffect(() => {
@@ -240,6 +257,10 @@ const RoutineMain = () => {
     if(location.pathname === '/routine/view'){
       setRoutineData(routineInit);
     } 
+
+    if(isEdit){
+      setIsEdit(false);
+    }
   },[location.pathname])
 
   useEffect(() => {
@@ -258,7 +279,7 @@ const RoutineMain = () => {
 
   // 루틴 추가
   const handleRoutineResponse = async () => {
-    if(!routineData.routine_name || routineData.routine_name === "") {
+    if((routineData.saveDate === null || routineData.saveDate === "") && (!routineData.routine_name || routineData.routine_name === "")) {
       alert("루틴명을 작성해주세요.");
       return;
     }
@@ -406,7 +427,8 @@ const RoutineMain = () => {
     if(type) {
       handleRoutineResponse();
     }else{
-      closeAlert();
+      // closeAlert();
+      setIsSave(true);
     }
   };
 
@@ -495,6 +517,18 @@ const RoutineMain = () => {
           routine_list_idx === 'custom' ?
           <AlertDiv>
             <H4>해당 운동을 저장하시겠습니까?</H4>
+            <RoutineNameInput
+              placeholder="루틴 이름을 입력하세요"
+              type="text"
+              value={routineData.routine_name}
+              onChange={e => {
+                const value = e.target.value;
+                setRoutineData(prev => ({
+                  ...prev,
+                  routine_name: value
+                }));
+              }}
+            />
             <ButtonGroup>
               <button onClick={() => handleTempSave(true)}>저장하기</button>
               <button onClick={() => handleTempSave(false)}>취소</button>

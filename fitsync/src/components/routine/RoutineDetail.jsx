@@ -358,55 +358,77 @@ const RoutineDetail = () => {
   // useEffect - data
   useEffect(() => {
     if (data === null) return;
+
     setNewData({
       ...data,
-      update: routine_list_idx === 'custom' ||JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
+      update: routine_list_idx === 'custom' || JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
     });
-    
+
     setRoutineData(data);
+
     // 자유 운동 저장
     if (routine_list_idx !== null && routine_list_idx === 'custom') {
-
-      const currentDate = data.routine_name === "" ? formatDate() : data.routine_name;
-
-
-      if (data.routines.length === 0 && data.routine_name === "") {
+      const currentDate = data.saveDate === undefined ? formatDate() : data.saveDate;
+      
+      if (data.routines.length === 0 && (data.saveDate === null || data.saveDate === undefined || data.saveDate === "")) {
         setData(prev => ({
           ...prev,
-          routine_name: currentDate // 현재 날짜로 초기화
+          saveDate: currentDate
         }));
       }
 
-      // routine_name이 빈칸이 아닐 때만 tempData에 저장
-
-      if (targetDate !== null && data.routines.length === 0 && data.routine_name === "") {
-        setData({ ...tempData.find(item => item.routine_name === targetDate) });
-        return;
+      // targetDate 파라미터가 있고 데이터가 비어있을 때 기존 데이터 로드
+      if (targetDate !== null && data.routines.length === 0 && data.saveDate !== "") {
+        const existingData = tempData.find(item => item.saveDate === targetDate);
+        if (existingData) {
+          setData(existingData);
+          return;
+        }
       }
 
-      if (data.routines.length !== 0 && data.routine_name) {
+      // routine_name이 있고 routines가 있을 때만 저장
+      if (data.routines.length !== 0 && data.saveDate !== null && data.saveDate !== "") {
         setTempData(prev => {
-          // 같은 currentDate가 있는지 확인
-          const existingIndex = prev.findIndex(item => item.routine_name === data.routine_name);
+          const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
 
           if (existingIndex !== -1) {
-            // 기존 데이터가 있으면 수정
             return prev.map((item, index) =>
               index === existingIndex ? data : item
             );
           } else {
-            // 기존 데이터가 없으면 추가
             return [...prev, data];
           }
         });
       }
+    } else {
+      // 일반 루틴에서 체크된 세트 확인
+      if (data && data.routines) {
+        data.routines.forEach(routine => {
+          const checkedSets = routine.sets.filter(set => set.checked === true);
+          if (checkedSets.length > 0) {
+            if(data.saveDate === null || data.saveDate === undefined || data.saveDate === "") {
+              setData(prev => ({
+                ...prev,
+                saveDate : formatDate(),
+              }));
+            }
+            
+            setTempData(prev => {
+              const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
 
+              if (existingIndex !== -1) {
+                return prev.map((item, index) =>
+                  index === existingIndex ? data : item
+                );
+              } else {
+                return [...prev, data];
+              }
+            });
+          }
+        });
+      }
     }
-
   }, [data]);
-
-  useEffect(() => {
-  }, [isTimerShow]);
 
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
