@@ -17,6 +17,9 @@ public interface PaymentMethodMapper {
     // member_idx로 조회 (빌링키 제외)
     List<PaymentMethodVO> selectByMemberIdxExcludingKey(int member_idx);
 
+    // 빌링키 가져오기
+    PaymentMethodVO selectBillingKeyByMethodIdx(int method_idx);
+
     // 결제수단 이름 수정
     int updatePaymentMethodName(PaymentMethodVO vo);
     

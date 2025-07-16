@@ -133,6 +133,7 @@ const KaKaoPayTest = () => {
 
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
+            <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 20})}>내 빌링키 정보 조회</ButtonSubmit>
             <ButtonSubmit onClick={handlePortOneBillingPaymentTest}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
         </div>

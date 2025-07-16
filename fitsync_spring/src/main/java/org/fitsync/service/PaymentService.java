@@ -12,7 +12,7 @@ public interface PaymentService {
 	
 	public List<PaymentMethodVO> getPaymentMethods(int memberIdx);
 	
-	public Object getBillingKeyInfo(int memberIdx);
+	public Object getBillingKeyInfo(int methodIdx);
 	
 	public Object payBillingKey(String payment);
 	

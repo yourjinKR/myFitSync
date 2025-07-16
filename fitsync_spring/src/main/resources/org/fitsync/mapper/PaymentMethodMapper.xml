@@ -41,6 +41,13 @@
         ORDER BY method_regdate DESC
     </select>
 
+    <!-- 빌링키 가져오기 -->
+    <select id="selectBillingKeyByMethodIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
+        SELECT method_key, method_provider, method_card
+        FROM payment_method
+        WHERE method_idx = #{method_idx}
+    </select>
+
     <!-- 단건 조회 (method_idx 기준) -->
     <select id="selectByMethodIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
         SELECT * FROM payment_method

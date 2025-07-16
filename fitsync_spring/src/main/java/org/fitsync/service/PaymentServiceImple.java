@@ -14,8 +14,11 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.log4j.Log4j;
+
 import java.io.IOException;
 
+@Log4j
 @Service
 public class PaymentServiceImple implements PaymentService {
     @Value("${portone.api.secret}")
@@ -48,21 +51,43 @@ public class PaymentServiceImple implements PaymentService {
 	// 빌링키 정보 가져오기
 	@Override
 	public Object getBillingKeyInfo(int methodIdx) {
-		String billingKey = null;
 		try {
+			String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
+			
 			HttpRequest request = HttpRequest.newBuilder()
 				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
 				    .header("Content-Type", "application/json")
 				    .header("Authorization", "PortOne " + apiSecret)
-				    .method("GET", HttpRequest.BodyPublishers.ofString("{}"))
+				    .method("GET", HttpRequest.BodyPublishers.noBody())  // GET 요청이므로 noBody() 사용
 				    .build();
-				HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-				System.out.println(response.body());
-				return response;
+				    
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			
+			log.info("PortOne API Response Status: " + response.statusCode());
+			log.info("PortOne API Response Body: " + response.body());
+			
+			// JSON 응답을 Map으로 파싱하여 반환
+			ObjectMapper objectMapper = new ObjectMapper();
+			@SuppressWarnings("unchecked")
+			Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+			
+			// 성공/실패 상태와 함께 응답 데이터 반환
+			Map<String, Object> result = new HashMap<>();
+			result.put("statusCode", response.statusCode());
+			result.put("success", response.statusCode() >= 200 && response.statusCode() < 300);
+			result.put("data", responseData);
+			result.put("message", response.statusCode() >= 200 && response.statusCode() < 300 ? "빌링키 정보 조회 성공" : "빌링키 정보 조회 실패");
+			
+			return result;
+			
 		} catch (Exception e) {
-			// TODO: handle exception
+			log.error("빌링키 정보 조회 중 오류 발생: ", e);
+			Map<String, Object> errorResult = new HashMap<>();
+			errorResult.put("success", false);
+			errorResult.put("message", "빌링키 정보 조회 실패: " + e.getMessage());
+			errorResult.put("error", e.getClass().getSimpleName());
+			return errorResult;
 		}
-		return null;
 	}
 	
 	// 빌링키로 결제 (api key, payment id, billing key, channel key, ordername, amount, currency 

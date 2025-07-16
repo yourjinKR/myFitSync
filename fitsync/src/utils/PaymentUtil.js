@@ -89,16 +89,16 @@ export const PaymentUtil = {
     },
 
     /** 빌링키 정보 가져오기 */
-    getBillingKeyInfo : async (member_idx) => {
+    getBillingKeyInfo : async ({method_idx}) => {
         try {
             const response = await axios.post('/payment/bill/info',
-                {member_idx: member_idx},
+                {method_idx},
                 { withCredentials: true,
                     headers: {'Content-Type': 'application/json'}
                 }
             );
-            console.log('빌링키 정보 조회 성공:', response);
-            return response;
+            console.log('빌링키 정보 조회 성공:', response.data);
+            return response.data;
         } catch (error) {
             console.error('Error fetching billing key info:', error);
             throw error;

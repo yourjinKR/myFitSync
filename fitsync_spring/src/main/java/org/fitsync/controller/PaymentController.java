@@ -107,6 +107,45 @@ public class PaymentController {
     	}
     }
     
+    // 빌링키 정보
+    @PostMapping("/bill/info")
+    public ResponseEntity<?> getBillingKeyInfo(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
+    	Object sessionMemberIdx = session.getAttribute("member_idx");
+    	if (sessionMemberIdx == null) {
+    		log.error("세션에 member_idx가 없습니다.");
+    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+    	}
+    	
+    	Object methodIdx = body.get("method_idx");
+    	if (methodIdx == null) {
+    		log.error("method_idx가 요청에 없습니다.");
+    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "method_idx is required"));
+    	}
+    	
+    	try {
+    		int methodIdxInt = Integer.parseInt(methodIdx.toString());
+    		Object result = payService.getBillingKeyInfo(methodIdxInt);
+    		
+    		log.info("빌링키 정보 조회 결과: " + result);
+    		return ResponseEntity.ok(result);
+    		
+    	} catch (NumberFormatException e) {
+    		log.error("method_idx 형식 오류: ", e);
+    		return ResponseEntity.badRequest().body(Map.of(
+    			"success", false, 
+    			"message", "잘못된 method_idx 형식입니다."
+    		));
+    	} catch (Exception e) {
+    		log.error("빌링키 정보 조회 중 오류 발생: ", e);
+    		return ResponseEntity.status(500).body(Map.of(
+    			"success", false, 
+    			"message", "Internal server error: " + e.getMessage()
+    		));
+    	}
+    }
+    
+    
+    
     // 빌링키로 결제
     @PostMapping(value = "/bill/pay")
     public ResponseEntity<?> payBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
