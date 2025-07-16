@@ -236,7 +236,7 @@ const RoutineMain = () => {
   
   useEffect(() => {
     if (routineData === null) return;
-    if(routine_list_idx !== 'custom') {
+    if(routine_list_idx !== 'custom' || prev === null || prev === undefined) {
       if(isSave) {
         nav("/routine/view");
         setIsSave(false);
@@ -279,10 +279,11 @@ const RoutineMain = () => {
 
   // 루틴 추가
   const handleRoutineResponse = async () => {
-    if((routineData.saveDate === null || routineData.saveDate === "") && (!routineData.routine_name || routineData.routine_name === "")) {
+    if(!routineData.routine_name || routineData.routine_name === "") {
       alert("루틴명을 작성해주세요.");
       return;
     }
+    
     try {
       const response = await axios.post(
         "/routine/add",
