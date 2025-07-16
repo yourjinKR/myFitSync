@@ -282,7 +282,19 @@ const MessageInput = ({ onSendMessage, disabled }) => {
       <InputContainer>
         {/* 파일 첨부 버튼 */}
         <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled} title="이미지 첨부">
-          📎
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 1 1 4.95 4.95L8.83 17.66"></path>
+          </svg>
         </AttachButton>
 
         {/* 숨겨진 파일 입력 요소 */}

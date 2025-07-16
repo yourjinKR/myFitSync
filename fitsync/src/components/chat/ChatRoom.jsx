@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -8,6 +8,7 @@ import axios from 'axios';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import IsLoading3 from '../../components/IsLoading3';
+import ChatRoomHeader from './ChatRoomHeader';
 
 const Container = styled.div`
   display: flex;
@@ -94,11 +95,16 @@ const ChatRoom = () => {
   const [roomData, setRoomData] = useState(null); // 채팅방 정보
   const [attachments, setAttachments] = useState({}); // 첨부파일 정보 (message_idx를 key로 하는 객체)
   const [currentMemberIdx, setCurrentMemberIdx] = useState(null); // 현재 사용자의 member_idx
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false); // 읽지 않은 메시지로 스크롤 완료 여부
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // 첫 로드 여부
+  const [searchResults, setSearchResults] = useState([]); // 검색 결과
 
   // 미확인 메시지 초기 읽음 처리 플래그
   const initialReadDone = useRef(false);
   // 자동 스크롤을 위한 ref
   const messagesEndRef = useRef(null);
+  // 메시지 컨테이너 참조
+  const messagesContainerRef = useRef(null);
 
   // WebSocket 연결 및 기능들
   const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket();
@@ -294,15 +300,98 @@ const ChatRoom = () => {
     }
   }, [connected, currentMemberIdx, messages, roomId, markAsRead]);
 
+  // 메시지 로드 후 스마트 스크롤 위치 설정
+  useEffect(() => {
+    if (messages.length > 0 && isInitialLoad && currentMemberIdx && !hasScrolledToUnread) {
+      // 1. 첫 번째 읽지 않은 메시지 찾기
+      const firstUnreadMessage = messages.find(msg => 
+        msg.sender_idx !== currentMemberIdx && !msg.message_readdate
+      );
+
+      if (firstUnreadMessage) {
+        // 2. 읽지 않은 메시지가 있으면 해당 메시지로 스크롤
+        console.log('📍 첫 번째 읽지 않은 메시지로 스크롤:', firstUnreadMessage.message_idx);
+        scrollToMessage(firstUnreadMessage.message_idx);
+      } else {
+        // 3. 읽지 않은 메시지가 없으면 가장 최신 메시지로 스크롤
+        console.log('📍 읽지 않은 메시지 없음 - 최신 메시지로 스크롤');
+        scrollToBottom(false); // 애니메이션 없이 즉시 이동
+      }
+      
+      setHasScrolledToUnread(true);
+      setIsInitialLoad(false);
+    }
+  }, [messages, currentMemberIdx, isInitialLoad, hasScrolledToUnread]);
+
   // 새 메시지 추가 시 자동 스크롤
   useEffect(() => {
+    if (!isInitialLoad && messages.length > 0) {
+      // 사용자가 스크롤을 맨 아래에 두고 있을 때만 자동 스크롤
+      if (isScrollAtBottom()) {
+        scrollToBottom(true); // 애니메이션과 함께 이동
+      }
+    }
+  }, [messages.length, isInitialLoad]);
+
+  // 특정 메시지로 스크롤하는 함수
+  const scrollToMessage = useCallback((messageIdx) => {
+    const messageElement = document.getElementById(`message-${messageIdx}`);
+    if (messageElement && messagesContainerRef.current) {
+      // 해당 메시지가 컨테이너 중앙에 오도록 스크롤
+      const containerRect = messagesContainerRef.current.getBoundingClientRect();
+      const messageRect = messageElement.getBoundingClientRect();
+      
+      const scrollTop = messagesContainerRef.current.scrollTop + 
+                       messageRect.top - containerRect.top - 
+                       containerRect.height / 2 + messageRect.height / 2;
+      
+      messagesContainerRef.current.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+
+      // 메시지 하이라이트 효과
+      messageElement.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
+      setTimeout(() => {
+        messageElement.style.backgroundColor = '';
+      }, 2000);
+      
+      console.log('✅ 메시지로 스크롤 완료:', messageIdx);
+    }
+  }, []);
+
+  // 맨 아래로 스크롤하는 함수
+  const scrollToBottom = useCallback((smooth = true) => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
+        behavior: smooth ? 'smooth' : 'auto',
         block: 'end'
       });
+      console.log('✅ 맨 아래로 스크롤 완료');
     }
-  }, [messages]);
+  }, []);
+
+  // 현재 스크롤이 맨 아래에 있는지 확인하는 함수
+  const isScrollAtBottom = useCallback(() => {
+    if (!messagesContainerRef.current) return false;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const threshold = 100; // 100px 이내면 맨 아래로 간주
+    
+    return scrollTop + clientHeight >= scrollHeight - threshold;
+  }, []);
+
+  // 검색 결과 처리 함수
+  const handleSearchResults = useCallback((results) => {
+    setSearchResults(results);
+    console.log('🔍 검색 결과 업데이트:', results.length, '개');
+  }, []);
+
+  // 검색 결과에서 특정 메시지로 이동
+  const handleScrollToSearchResult = useCallback((messageIdx) => {
+    console.log('🔍 검색 결과로 스크롤 이동:', messageIdx);
+    scrollToMessage(messageIdx);
+  }, [scrollToMessage]);
 
   // 메시지 전송 핸들러
   const handleSendMessage = async (messageContent, messageType = 'text', file = null) => {
@@ -435,18 +524,15 @@ const ChatRoom = () => {
   return (
     <Container>
       {/* 채팅방 헤더 */}
-      <Header>
-        <BackButton onClick={handleBackClick}>
-          ←
-        </BackButton>
-
-        <UserInfo>
-          <UserName>{getRoomDisplayName()}</UserName>
-        </UserInfo>
-      </Header>
+      <ChatRoomHeader 
+        roomDisplayName={getRoomDisplayName()} 
+        onSearchResults={handleSearchResults} 
+        onScrollToSearchResult={handleScrollToSearchResult}
+        messages={messages}
+      />
 
       {/* 메시지 목록 */}
-      <MessagesContainer>
+      <MessagesContainer ref={messagesContainerRef}>
         <MessageList
           messages={messages}
           currentMemberIdx={currentMemberIdx} // currentUser 대신 currentMemberIdx 전달

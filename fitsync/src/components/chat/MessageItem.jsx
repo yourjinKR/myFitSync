@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import styled from 'styled-components';
+import ImageModal from './ImageModal';
 
 // 메시지 컨테이너 - 내 메시지는 오른쪽, 상대방 메시지는 왼쪽 정렬
 const MessageContainer = styled.div`
@@ -7,6 +8,10 @@ const MessageContainer = styled.div`
   justify-content: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
   margin-bottom: 12px;
   align-items: flex-end;
+  /* 검색 결과 하이라이트를 위한 transition 추가 */
+  transition: background-color 0.3s ease;
+  padding: 4px 8px;
+  border-radius: 8px;
 `;
 
 // 사용자 이름 표시 (상대방 메시지에만)
@@ -33,8 +38,6 @@ const MessageBubble = styled.div`
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   position: relative;
   word-wrap: break-word;
-  
-  /* 말풍선 꼬리 제거 - 깔끔한 디자인을 위해 */
 `;
 
 const MessageText = styled.div`
@@ -53,9 +56,16 @@ const MessageImage = styled.img`
   cursor: pointer;
   display: block;
   margin-bottom: 4px;
+  transition: all 0.2s ease;
   
   &:hover {
     opacity: 0.9;
+    transform: scale(1.02); /* 호버 시 살짝 확대 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  &:active {
+    transform: scale(0.98); /* 클릭 시 살짝 축소 */
   }
 `;
 
@@ -94,8 +104,31 @@ const ReadStatus = styled.div`
   gap: 4px;
 `;
 
+const ReadTime = styled.span`
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+`;
+
 // 개별 메시지 아이템 컴포넌트
 const MessageItem = ({ message, isCurrentUser, attachments = null, senderName = null }) => {
+
+  // 이미지 모달 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 이미지 클릭 핸들러 - 새창 대신 모달 열기
+  const handleImageClick = useCallback((e) => {
+    e.preventDefault(); // 기본 동작 방지
+    e.stopPropagation(); // 이벤트 버블링 방지
+    
+    console.log('🖼️ 이미지 클릭 - 모달 열기:', attachments?.original_filename);
+    setIsModalOpen(true);
+  }, [attachments]);
+
+  // 모달 닫기 핸들러
+  const handleModalClose = useCallback(() => {
+    console.log('❌ 이미지 모달 닫기');
+    setIsModalOpen(false);
+  }, []);
   
   // 시간을 HH:MM 형식으로 포맷
   const formatTime = (timestamp) => {
@@ -124,15 +157,11 @@ const MessageItem = ({ message, isCurrentUser, attachments = null, senderName = 
     }
   };
 
-  // 이미지 클릭 핸들러
-  const handleImageClick = (imageUrl) => {
-    window.open(imageUrl, '_blank');
-  };
-
   const readStatusInfo = getReadStatusInfo();
 
   return (
-    <MessageContainer $isCurrentUser={isCurrentUser}>
+    <>
+    <MessageContainer id={`message-${message.message_idx}`} $isCurrentUser={isCurrentUser}>
       <MessageGroup>
         {/* 상대방 메시지인 경우에만 이름 표시 */}
         {!isCurrentUser && senderName && (
@@ -148,8 +177,9 @@ const MessageItem = ({ message, isCurrentUser, attachments = null, senderName = 
                 <MessageImage
                   src={attachments.cloudinary_url}
                   alt={attachments.original_filename}
-                  onClick={() => handleImageClick(attachments.cloudinary_url)}
-                  title="클릭하면 원본 이미지를 볼 수 있습니다"
+                  onClick={handleImageClick} // 새창 대신 모달 열기
+                  title="클릭하면 확대하여 볼 수 있습니다"
+                  loading="lazy" // 이미지 지연 로딩
                 />
                 {/* 이미지와 함께 텍스트가 있는 경우 표시 */}
                 {message.message_content && message.message_content !== '[이미지]' && (
@@ -170,13 +200,23 @@ const MessageItem = ({ message, isCurrentUser, attachments = null, senderName = 
             {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
             {readStatusInfo && (
               <ReadStatus>
-                <span>{readStatusInfo.text}</span>
+                <ReadTime>{readStatusInfo.text}</ReadTime>
               </ReadStatus>
             )}
           </MessageInfo>
         </MessageWithInfo>
       </MessageGroup>
     </MessageContainer>
+    {/* 이미지 모달 - attachments가 있을 때만 렌더링 */}
+    {attachments && (
+      <ImageModal
+        isOpen={isModalOpen}
+        imageUrl={attachments.cloudinary_url}
+        originalFilename={attachments.original_filename}
+        onClose={handleModalClose}
+      />
+    )}
+    </>
   );
 };
 

@@ -62,7 +62,7 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
     return currentDate !== previousDate;
   };
 
-  // 발신자 이름 생성 (상대방 메시지에만 필요)
+  // 발신자 이름 생성 (상대방 메시지에만 필요) - 수정된 부분
   const getSenderName = (message) => {
     // 내 메시지인 경우 이름 불필요
     if (message.sender_idx === currentMemberIdx) {
@@ -74,18 +74,11 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
     if (roomData && currentMemberIdx) {
       // 현재 사용자가 트레이너인지 일반 사용자인지 확인
       if (roomData.trainer_idx === currentMemberIdx) {
-        // 내가 트레이너면 상대방은 회원
-        return '회원';
+        // 내가 트레이너면 상대방은 회원 - roomData.user_name 사용
+        return roomData.user_name || '회원';
       } else {
-        // 내가 일반 사용자면 상대방은 트레이너
-        // roomData.room_name에서 트레이너 이름 추출
-        if (roomData.room_name) {
-          const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
-          if (nameMatch) {
-            return nameMatch[1]; // 트레이너 이름
-          }
-        }
-        return '트레이너';
+        // 내가 일반 사용자면 상대방은 트레이너 - roomData.trainer_name 사용
+        return roomData.trainer_name || '트레이너';
       }
     }
     

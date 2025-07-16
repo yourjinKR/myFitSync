@@ -60,14 +60,12 @@ const Avatar = styled.div`
   position: relative;
   flex-shrink: 0;
   
-  /* 프로필 이미지가 있을 때 */
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
   
-  /* 프로필 이미지가 없을 때 기본 스타일 */
   &.default-avatar {
     background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
     display: flex;
@@ -81,23 +79,57 @@ const Avatar = styled.div`
 
 const RoomInfo = styled.div`
   flex: 1;
+  min-width: 0; /* 텍스트 오버플로우를 위해 필요 */
+`;
+
+const RoomNameContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
 `;
 
 const RoomName = styled.div`
   font-size: 1.6rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const UnreadBadge = styled.div`
+  background: #ff4757; /* 빨간색 배지 */
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
 `;
 
 const LastMessage = styled.div`
   font-size: 1.3rem;
-  color: var(--text-secondary);
+  color: ${props => props.hasUnread ? 'var(--text-primary)' : 'var(--text-secondary)'};
+  font-weight: ${props => props.hasUnread ? '500' : '400'};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const TimeStamp = styled.div`
   font-size: 1.2rem;
   color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-left: 8px;
 `;
 
 const EmptyState = styled.div`
@@ -130,6 +162,7 @@ const ChatMain = () => {
   const [rooms, setRooms] = useState([]);       // 채팅방 목록
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [unreadCounts, setUnreadCounts] = useState({}); // 읽지 않은 메시지 개수 저장
+  const [lastMessages, setLastMessages] = useState({}); // 각 방의 마지막 메시지
 
   // 컴포넌트 마운트시 초기화
   useEffect(() => {
@@ -151,16 +184,33 @@ const ChatMain = () => {
 
       // 각 채팅방의 읽지 않은 메시지 개수 조회
       const unreadData = {};
+      const lastMessageData = {};
+
       for (const room of roomList) {
         try {
+          // 읽지 않은 메시지 개수 조회
           const unreadResponse = await ChatApi.unreadCount(room.room_idx);
           unreadData[room.room_idx] = unreadResponse.unreadCount || 0;
+
+          // 마지막 메시지 조회
+          const messages = await ChatApi.readMessageList(room.room_idx, 0, 1);
+          if (messages.length > 0) {
+            lastMessageData[room.room_idx] = messages[messages.length - 1];
+          }
+
         } catch (error) {
           console.error(`채팅방 ${room.room_idx} 읽지 않은 메시지 조회 실패:`, error);
           unreadData[room.room_idx] = 0;
         }
       }
       setUnreadCounts(unreadData);
+      setLastMessages(lastMessageData);
+      
+      console.log('✅ 채팅방 목록 로드 완료:', {
+        rooms: roomList.length,
+        unreadCounts: Object.keys(unreadData).length,
+        lastMessages: Object.keys(lastMessageData).length
+      });
       
     } catch (error) {
       console.error('채팅방 목록 로드 실패:', error);
@@ -186,23 +236,37 @@ const ChatMain = () => {
     const now = new Date();
     const diffInMs = now - date;
     const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
-    // 24시간 이내면 시:분 형태로 표시
+    // 1시간 이내: "방금 전", "30분 전"
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      if (diffInMinutes < 1) return '방금 전';
+      return `${diffInMinutes}분 전`;
+    }
+    
+    // 24시간 이내: "오후 3:25"
     if (diffInHours < 24) {
       return date.toLocaleTimeString('ko-KR', {
         hour: '2-digit',
         minute: '2-digit'
       });
-    } else {
-      // 24시간 이후면 월 일 형태로 표시
-      return date.toLocaleDateString('ko-KR', {
-        month: 'short',
-        day: 'numeric'
-      });
     }
+    
+    // 7일 이내: "3일 전"
+    if (diffInDays < 7) {
+      return `${Math.floor(diffInDays)}일 전`;
+    }
+    
+    // 그 이후: "12/25"
+    return date.toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric'
+    });
+
   };
 
-  // 채팅방 표시 이름 생성 (수정된 부분)
+  // 채팅방 표시 이름 생성
   const getRoomDisplayName = (room) => {
     // 현재 로그인한 사용자의 member_idx 가져오기
     const currentMemberIdx = user.member_idx;
@@ -236,6 +300,36 @@ const ChatMain = () => {
         image: room.trainer_image // 백엔드에서 trainer_image 필드 추가 필요
       };
     }
+  };
+
+  // 마지막 메시지 미리보기 생성
+  const getLastMessagePreview = (room) => {
+    const lastMessage = lastMessages[room.room_idx];
+    
+    if (!lastMessage) {
+      return '메시지가 없습니다';
+    }
+    
+    let preview = '';
+    
+    // 메시지 타입별 미리보기 생성
+    if (lastMessage.message_type === 'image') {
+      preview = '[이미지]';
+    } else {
+      preview = lastMessage.message_content || '';
+    }
+    
+    // 긴 메시지는 잘라서 표시
+    if (preview.length > 30) {
+      preview = preview.substring(0, 30) + '...';
+    }
+    
+    // 내가 보낸 메시지인 경우 "나: " 접두사 추가
+    if (lastMessage.sender_idx === user.member_idx) {
+      preview = `나: ${preview}`;
+    }
+    
+    return preview;
   };
 
   // 아바타 렌더링 - 프로필 이미지 또는 초성
@@ -281,33 +375,6 @@ const ChatMain = () => {
     }
   };
 
-  // 마지막 메시지 상태 텍스트 생성 (수정된 부분)
-  const getLastMessageText = (room) => {
-    const unreadCount = unreadCounts[room.room_idx] || 0;
-    
-    if (unreadCount > 0) {
-      return `새 메시지 ${unreadCount}개가 있습니다`;
-    } else {
-      return '메시지 기록이 있습니다';
-    }
-  };
-
-  // 아바타 초성 추출
-  const getInitial = (room) => {
-    const currentMemberIdx = user.member_idx;
-    
-    // 실제 상대방 이름에서 초성 추출
-    if (room.trainer_idx === currentMemberIdx) {
-      // 내가 트레이너인 경우 → 회원 이름 초성
-      const userName = room.user_name || '회원';
-      return userName.charAt(0).toUpperCase();
-    } else {
-      // 내가 일반 사용자인 경우 → 트레이너 이름 초성
-      const trainerName = room.trainer_name || '트레이너';
-      return trainerName.charAt(0).toUpperCase();
-    }
-  };
-
   // 채팅방 정보 클릭
   const handleRoomClick = (room) => {
     navigate(`/chat/${room.room_idx}`, {
@@ -334,7 +401,6 @@ const ChatMain = () => {
         <Subtitle>진행중인 상담 목록입니다</Subtitle>
       </Header>
 
-      {/* 채팅방이 없는 경우 빈 상태 표시 */}
       {rooms.length === 0 ? (
         <RoomList>
           <EmptyState>
@@ -344,30 +410,42 @@ const ChatMain = () => {
           </EmptyState>
         </RoomList>
       ) : (
-        // 채팅방 목록 표시
         <RoomList>
-          {rooms.map((room) => (
-            <RoomItem
-              key={room.room_idx}
-              onClick={() => handleRoomClick(room)}
-            >
-              {/* 상대방 아바타 */}
-              {renderAvatar(room)}
-              
-              {/* 채팅방 정보 */}
-              <RoomInfo>
-                <RoomName>{getRoomDisplayName(room)}</RoomName>
-                <LastMessage>
-                  {getLastMessageText(room)}
-                </LastMessage>
-              </RoomInfo>
-              
-              {/* 마지막 메시지 시간 */}
-              <TimeStamp>
-                {formatTime(room.room_msgdate)}
-              </TimeStamp>
-            </RoomItem>
-          ))}
+          {rooms.map((room) => {
+            const unreadCount = unreadCounts[room.room_idx] || 0;
+            const lastMessage = lastMessages[room.room_idx];
+            
+            return (
+              <RoomItem
+                key={room.room_idx}
+                onClick={() => handleRoomClick(room)}
+              >
+                {/* 상대방 아바타 */}
+                {renderAvatar(room)}
+                
+                {/* 채팅방 정보 */}
+                <RoomInfo>
+                  <RoomNameContainer>
+                    <RoomName>{getRoomDisplayName(room)}</RoomName>
+                    {/* 읽지 않은 메시지 배지 */}
+                    {unreadCount > 0 && (
+                      <UnreadBadge>
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </UnreadBadge>
+                    )}
+                  </RoomNameContainer>
+                  <LastMessage hasUnread={unreadCount > 0}>
+                    {getLastMessagePreview(room)}
+                  </LastMessage>
+                </RoomInfo>
+                
+                {/* 마지막 메시지 시간 */}
+                <TimeStamp>
+                  {formatTime(lastMessage?.message_senddate || room.room_msgdate)}
+                </TimeStamp>
+              </RoomItem>
+            );
+          })}
         </RoomList>
       )}
     </Container>
