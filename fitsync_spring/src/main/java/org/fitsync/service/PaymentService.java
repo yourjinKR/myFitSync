@@ -21,4 +21,6 @@ public interface PaymentService {
 	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName);
 	
 	public boolean deletePaymentMethod(int memberIdx, int methodIdx);
+	
+	public Map<String, Object> getCardInfoByBillingKey(String billingKey);
 }

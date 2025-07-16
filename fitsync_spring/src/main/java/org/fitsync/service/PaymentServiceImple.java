@@ -36,10 +36,31 @@ public class PaymentServiceImple implements PaymentService {
 	@Autowired
 	private PaymentMethodMapper paymentMethodMapper;
 	
-	// 결제수단 등록
+	// 결제수단 등록 (카드 정보 포함)
 	@Override
 	public int saveBillingKey(PaymentMethodVO vo) {
-		return paymentMethodMapper.insertPaymentMethod(vo);
+		try {
+			// 빌링키로 카드 정보 조회
+			Map<String, Object> cardInfo = getCardInfoByBillingKey(vo.getMethod_key());
+			
+			// 카드 정보를 VO에 설정
+			String cardName = (String) cardInfo.get("name");
+			String cardNumber = (String) cardInfo.get("number");
+			
+			vo.setMethod_card(cardName != null ? cardName : "알 수 없는 카드");
+			vo.setMethod_card_num(cardNumber != null ? cardNumber : "****-****-****-****");
+			
+			log.info("카드 정보와 함께 결제수단 저장: " + cardName + " (" + cardNumber + ")");
+			
+			return paymentMethodMapper.insertPaymentMethod(vo);
+			
+		} catch (Exception e) {
+			log.error("결제수단 저장 중 오류 발생: ", e);
+			// 카드 정보 조회 실패 시에도 기본값으로 저장 시도
+			vo.setMethod_card("정보 조회 실패");
+			vo.setMethod_card_num("****-****-****-****");
+			return paymentMethodMapper.insertPaymentMethod(vo);
+		}
 	}
 	
 	// 결제수단 불러오기 (빌링키 제외)
@@ -58,7 +79,7 @@ public class PaymentServiceImple implements PaymentService {
 				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
 				    .header("Content-Type", "application/json")
 				    .header("Authorization", "PortOne " + apiSecret)
-				    .method("GET", HttpRequest.BodyPublishers.noBody())  // GET 요청이므로 noBody() 사용
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
 				    .build();
 				    
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
@@ -66,19 +87,33 @@ public class PaymentServiceImple implements PaymentService {
 			log.info("PortOne API Response Status: " + response.statusCode());
 			log.info("PortOne API Response Body: " + response.body());
 			
-			// JSON 응답을 Map으로 파싱하여 반환
-			ObjectMapper objectMapper = new ObjectMapper();
-			@SuppressWarnings("unchecked")
-			Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
-			
-			// 성공/실패 상태와 함께 응답 데이터 반환
-			Map<String, Object> result = new HashMap<>();
-			result.put("statusCode", response.statusCode());
-			result.put("success", response.statusCode() >= 200 && response.statusCode() < 300);
-			result.put("data", responseData);
-			result.put("message", response.statusCode() >= 200 && response.statusCode() < 300 ? "빌링키 정보 조회 성공" : "빌링키 정보 조회 실패");
-			
-			return result;
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				// JSON 응답을 Map으로 파싱
+				ObjectMapper objectMapper = new ObjectMapper();
+				@SuppressWarnings("unchecked")
+				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+				
+				// 카드 정보 추출
+				Map<String, Object> cardInfo = extractCardInfo(responseData);
+				
+				// 성공 응답 반환
+				Map<String, Object> result = new HashMap<>();
+				result.put("statusCode", response.statusCode());
+				result.put("success", true);
+				result.put("data", responseData);
+				result.put("cardInfo", cardInfo);  // 추출된 카드 정보 추가
+				result.put("message", "빌링키 정보 조회 성공");
+				
+				return result;
+			} else {
+				// 실패 응답
+				Map<String, Object> result = new HashMap<>();
+				result.put("statusCode", response.statusCode());
+				result.put("success", false);
+				result.put("data", response.body());
+				result.put("message", "빌링키 정보 조회 실패");
+				return result;
+			}
 			
 		} catch (Exception e) {
 			log.error("빌링키 정보 조회 중 오류 발생: ", e);
@@ -88,6 +123,53 @@ public class PaymentServiceImple implements PaymentService {
 			errorResult.put("error", e.getClass().getSimpleName());
 			return errorResult;
 		}
+	}
+	
+	/**
+	 * PortOne 빌링키 응답에서 카드 정보를 추출하는 메서드
+	 * @param responseData PortOne API 응답 데이터
+	 * @return 추출된 카드 정보 (name, number, publisher, issuer 등)
+	 */
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> extractCardInfo(Map<String, Object> responseData) {
+		Map<String, Object> cardInfo = new HashMap<>();
+		
+		try {
+			// methods 배열에서 첫 번째 요소의 카드 정보 추출
+			List<Map<String, Object>> methods = (List<Map<String, Object>>) responseData.get("methods");
+			if (methods != null && !methods.isEmpty()) {
+				Map<String, Object> method = methods.get(0);
+				if ("BillingKeyPaymentMethodCard".equals(method.get("type"))) {
+					Map<String, Object> card = (Map<String, Object>) method.get("card");
+					if (card != null) {
+						cardInfo.put("name", card.get("name"));           // 카드 이름 (예: "기업은행카드")
+						cardInfo.put("number", card.get("number"));       // 카드 번호 (마스킹됨)
+						cardInfo.put("publisher", card.get("publisher")); // 발행사
+						cardInfo.put("issuer", card.get("issuer"));       // 발급사
+						cardInfo.put("brand", card.get("brand"));         // 브랜드
+						cardInfo.put("type", card.get("type"));           // 카드 타입 (DEBIT/CREDIT)
+						cardInfo.put("bin", card.get("bin"));             // BIN 코드
+					}
+				}
+			}
+			
+			// 카드 정보가 없는 경우 기본값 설정
+			if (cardInfo.isEmpty()) {
+				cardInfo.put("name", "알 수 없는 카드");
+				cardInfo.put("number", "****-****-****-****");
+				cardInfo.put("publisher", "UNKNOWN");
+				cardInfo.put("issuer", "UNKNOWN");
+			}
+			
+		} catch (Exception e) {
+			log.error("카드 정보 추출 중 오류 발생: ", e);
+			cardInfo.put("name", "정보 추출 실패");
+			cardInfo.put("number", "****-****-****-****");
+			cardInfo.put("error", e.getMessage());
+		}
+		
+		log.info("추출된 카드 정보: " + cardInfo);
+		return cardInfo;
 	}
 	
 	// 빌링키로 결제 (api key, payment id, billing key, channel key, ordername, amount, currency 
@@ -177,6 +259,49 @@ public class PaymentServiceImple implements PaymentService {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
+		}
+	}
+
+	/**
+	 * 빌링키로 카드 정보만 조회 (결제수단 등록 시 사용)
+	 * @param billingKey 빌링키
+	 * @return 카드 정보 (name, number)
+	 */
+	public Map<String, Object> getCardInfoByBillingKey(String billingKey) {
+		try {
+			HttpRequest request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
+				    .header("Content-Type", "application/json")
+				    .header("Authorization", "PortOne " + apiSecret)
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
+				    .build();
+				    
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			
+			log.info("카드 정보 조회 - Status: " + response.statusCode());
+			
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				ObjectMapper objectMapper = new ObjectMapper();
+				@SuppressWarnings("unchecked")
+				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+				
+				return extractCardInfo(responseData);
+			} else {
+				log.error("카드 정보 조회 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
+				Map<String, Object> errorInfo = new HashMap<>();
+				errorInfo.put("name", "조회 실패");
+				errorInfo.put("number", "****-****-****-****");
+				errorInfo.put("error", "API 호출 실패");
+				return errorInfo;
+			}
+			
+		} catch (Exception e) {
+			log.error("카드 정보 조회 중 오류 발생: ", e);
+			Map<String, Object> errorInfo = new HashMap<>();
+			errorInfo.put("name", "조회 실패");
+			errorInfo.put("number", "****-****-****-****");
+			errorInfo.put("error", e.getMessage());
+			return errorInfo;
 		}
 	}
 }

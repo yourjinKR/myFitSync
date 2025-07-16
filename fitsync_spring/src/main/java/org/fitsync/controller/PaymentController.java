@@ -315,5 +315,38 @@ public class PaymentController {
         }
     }
 
-
+    // 빌링키로 카드 정보 조회 (결제수단 등록 시 사용)
+    @PostMapping("/bill/card-info")
+    public ResponseEntity<?> getCardInfoByBillingKey(@RequestBody Map<String, String> body, HttpSession session) {
+    	Object sessionMemberIdx = session.getAttribute("member_idx");
+    	if (sessionMemberIdx == null) {
+    		log.error("세션에 member_idx가 없습니다.");
+    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+    	}
+    	
+    	String billingKey = body.get("billing_key");
+    	if (billingKey == null || billingKey.trim().isEmpty()) {
+    		log.error("billing_key가 요청에 없습니다.");
+    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "billing_key is required"));
+    	}
+    	
+    	try {
+    		Map<String, Object> cardInfo = payService.getCardInfoByBillingKey(billingKey);
+    		
+    		log.info("카드 정보 조회 결과: " + cardInfo);
+    		return ResponseEntity.ok(Map.of(
+    			"success", true,
+    			"message", "카드 정보 조회 성공",
+    			"cardInfo", cardInfo
+    		));
+    		
+    	} catch (Exception e) {
+    		log.error("카드 정보 조회 중 오류 발생: ", e);
+    		return ResponseEntity.status(500).body(Map.of(
+    			"success", false, 
+    			"message", "Internal server error: " + e.getMessage()
+    		));
+    	}
+    }
+    
 }

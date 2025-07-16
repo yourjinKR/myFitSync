@@ -14,6 +14,12 @@
 	        <if test="method_name != null">
 	            method_name,
 	        </if>
+	        <if test="method_card != null">
+	            method_card,
+	        </if>
+	        <if test="method_card_num != null">
+	            method_card_num,
+	        </if>
             method_regdate
         ) VALUES (
             payment_method_seq.nextval, 
@@ -22,6 +28,12 @@
             #{method_provider}, 
 	        <if test="method_name != null">
 	            #{method_name},
+	        </if>
+	        <if test="method_card != null">
+	            #{method_card},
+	        </if>
+	        <if test="method_card_num != null">
+	            #{method_card_num},
 	        </if>
             SYSDATE
         )
@@ -35,7 +47,7 @@
     
     <!-- 회원별 결제수단 조회 (빌링키 제외) -->
     <select id="selectByMemberIdxExcludingKey" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
-        SELECT method_idx, member_idx, method_provider, method_name, method_regdate, method_card
+        SELECT method_idx, member_idx, method_provider, method_name, method_regdate, method_card, method_card_num
         FROM payment_method
         WHERE member_idx = #{member_idx}
         ORDER BY method_regdate DESC
@@ -43,7 +55,7 @@
 
     <!-- 빌링키 가져오기 -->
     <select id="selectBillingKeyByMethodIdx" parameterType="int" resultType="org.fitsync.domain.PaymentMethodVO">
-        SELECT method_key, method_provider, method_card
+        SELECT method_key, method_provider, method_card, method_card_num
         FROM payment_method
         WHERE method_idx = #{method_idx}
     </select>
