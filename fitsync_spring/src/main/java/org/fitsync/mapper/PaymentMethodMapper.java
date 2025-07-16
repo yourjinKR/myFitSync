@@ -31,4 +31,10 @@ public interface PaymentMethodMapper {
 
     // 결제수단 삭제
     int deletePaymentMethod(PaymentMethodVO vo);
+    
+    // 카드 정보로 중복 확인 (카드명과 카드번호 기준)
+    int countDuplicateCard(PaymentMethodVO vo);
+    
+    // 중복된 결제수단 조회
+    PaymentMethodVO findDuplicateCard(PaymentMethodVO vo);
 }

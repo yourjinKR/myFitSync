@@ -267,30 +267,45 @@ const PaymentMethodRegister = () => {
         content: `${providerName} 결제수단을 등록하는 중입니다...` 
       });
 
-      // 빌링키 발급
+      // 1단계: 빌링키 발급
       const result = await PaymentUtil.issueBillingKey(provider);
       
       if (result !== null && result.billingKey) {
-        // 빌링키 저장
-        const saveResult = await PaymentUtil.saveBillingKey({
-          method_key: result.billingKey,
-          method_provider: provider,
+        // 2단계: 중복 체크
+        setMessage({ 
+          type: 'info', 
+          content: '카드 정보를 확인하는 중입니다...' 
         });
         
-        if (saveResult.success) {
-          setMessage({ 
-            type: 'success', 
-            content: `${providerName} 결제수단이 성공적으로 등록되었습니다!` 
-          });
-          
-          // 3초 후 결제수단 목록으로 이동
-          setTimeout(() => {
-            navigate('/payment/methods');
-          }, 3000);
+        const duplicateCheckResult = await PaymentUtil.checkDuplicatePaymentMethod(result.billingKey);
+        
+        if (duplicateCheckResult.success) {
+          if (duplicateCheckResult.isDuplicate) {
+            // 3단계: 중복된 카드가 있는 경우 사용자에게 확인
+            const cardInfo = duplicateCheckResult.cardInfo;
+            const cardName = cardInfo?.name || '알 수 없는 카드';
+            const cardNumber = cardInfo?.number || '****-****-****-****';
+            
+            const confirmMessage = `동일한 카드가 이미 등록되어 있습니다.\n\n카드 정보: ${cardName} (${cardNumber})\n\n기존 결제수단을 새로운 결제수단으로 교체하시겠습니까?\n\n"예": 기존 결제수단 삭제 후 새로 등록\n"아니요": 등록 취소`;
+            
+            if (window.confirm(confirmMessage)) {
+              // 사용자가 "예"를 선택한 경우 - 기존 결제수단 교체
+              await savePaymentMethodWithDuplicateHandling(result.billingKey, provider, true, providerName);
+            } else {
+              // 사용자가 "아니요"를 선택한 경우 - 등록 취소
+              setMessage({ 
+                type: 'info', 
+                content: '결제수단 등록이 취소되었습니다. 기존 결제수단이 유지됩니다.' 
+              });
+            }
+          } else {
+            // 중복되지 않은 경우 바로 저장
+            await savePaymentMethodWithDuplicateHandling(result.billingKey, provider, false, providerName);
+          }
         } else {
           setMessage({ 
             type: 'error', 
-            content: saveResult.message || '결제수단 저장에 실패했습니다.' 
+            content: duplicateCheckResult.message || '카드 정보 확인에 실패했습니다.' 
           });
         }
       } else {
@@ -317,6 +332,49 @@ const PaymentMethodRegister = () => {
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
+    }
+  };
+
+  // 중복 처리 후 결제수단 저장 헬퍼 함수
+  const savePaymentMethodWithDuplicateHandling = async (billingKey, provider, replaceExisting, providerName) => {
+    try {
+      setMessage({ 
+        type: 'info', 
+        content: replaceExisting ? '기존 결제수단을 교체하는 중입니다...' : '새로운 결제수단을 등록하는 중입니다...' 
+      });
+      
+      const saveResult = await PaymentUtil.saveBillingKeyWithDuplicateHandling({
+        billing_key: billingKey,
+        method_provider: provider,
+        method_name: PaymentUtil.setDefaultPaymentMethodName(provider),
+        replace_existing: replaceExisting
+      });
+      
+      if (saveResult.success) {
+        const successMessage = replaceExisting 
+          ? `${providerName} 결제수단이 성공적으로 교체되었습니다!`
+          : `${providerName} 결제수단이 성공적으로 등록되었습니다!`;
+          
+        setMessage({ 
+          type: 'success', 
+          content: successMessage
+        });
+        
+        setTimeout(() => {
+          navigate('/payment/methods');
+        }, 2000);
+      } else {
+        setMessage({ 
+          type: 'error', 
+          content: saveResult.message || '결제수단 저장에 실패했습니다.' 
+        });
+      }
+    } catch (error) {
+      console.error('결제수단 저장 중 오류:', error);
+      setMessage({ 
+        type: 'error', 
+        content: '결제수단 저장 중 오류가 발생했습니다.' 
+      });
     }
   };
 

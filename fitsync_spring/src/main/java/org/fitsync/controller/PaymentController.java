@@ -315,38 +315,89 @@ public class PaymentController {
         }
     }
 
-    // 빌링키로 카드 정보 조회 (결제수단 등록 시 사용)
-    @PostMapping("/bill/card-info")
-    public ResponseEntity<?> getCardInfoByBillingKey(@RequestBody Map<String, String> body, HttpSession session) {
-    	Object sessionMemberIdx = session.getAttribute("member_idx");
-    	if (sessionMemberIdx == null) {
-    		log.error("세션에 member_idx가 없습니다.");
-    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
-    	}
-    	
-    	String billingKey = body.get("billing_key");
-    	if (billingKey == null || billingKey.trim().isEmpty()) {
-    		log.error("billing_key가 요청에 없습니다.");
-    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "billing_key is required"));
-    	}
-    	
-    	try {
-    		Map<String, Object> cardInfo = payService.getCardInfoByBillingKey(billingKey);
-    		
-    		log.info("카드 정보 조회 결과: " + cardInfo);
-    		return ResponseEntity.ok(Map.of(
-    			"success", true,
-    			"message", "카드 정보 조회 성공",
-    			"cardInfo", cardInfo
-    		));
-    		
-    	} catch (Exception e) {
-    		log.error("카드 정보 조회 중 오류 발생: ", e);
-    		return ResponseEntity.status(500).body(Map.of(
-    			"success", false, 
-    			"message", "Internal server error: " + e.getMessage()
-    		));
-    	}
+    /**
+     * 결제수단 등록 전 중복 체크 API
+     * - 역할: 요청 검증, 세션 확인, 서비스 호출, 응답 형식 통일
+     */
+    @PostMapping("/bill/check-duplicate")
+    public ResponseEntity<?> checkDuplicatePaymentMethod(@RequestBody Map<String, String> body, HttpSession session) {
+        Object memberIdx = session.getAttribute("member_idx");
+        if (memberIdx == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+        }
+        
+        String billingKey = body.get("billing_key");
+        if (billingKey == null || billingKey.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "billing_key is required"));
+        }
+        
+        try {
+            log.info("중복 체크 요청 - 빌링키: " + billingKey + ", 회원ID: " + memberIdx);
+            
+            // 서비스 계층에서 비즈니스 로직 처리
+            Map<String, Object> result = payService.checkDuplicatePaymentMethod(billingKey, (int) memberIdx);
+            
+            log.info("중복 체크 결과: " + result);
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("중복 체크 중 오류 발생: ", e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false, 
+                "message", "중복 체크 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 중복 처리 후 결제수단 저장 API  
+     * - 역할: 요청 검증, 세션 확인, VO 생성, 서비스 호출, 응답 형식 통일
+     */
+    @PostMapping("/bill/save-with-duplicate-handling")
+    public ResponseEntity<?> saveBillingKeyWithDuplicateHandling(@RequestBody Map<String, Object> body, HttpSession session) {
+        Object memberIdx = session.getAttribute("member_idx");
+        if (memberIdx == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+        }
+        
+        // 요청 데이터 검증
+        String billingKey = (String) body.get("billing_key");
+        String methodProvider = (String) body.get("method_provider");
+        String methodName = (String) body.get("method_name");
+        Boolean replaceExisting = (Boolean) body.get("replace_existing");
+        
+        if (billingKey == null || methodProvider == null || replaceExisting == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Missing required parameters"));
+        }
+        
+        try {
+            log.info("중복 처리 후 저장 요청 - 빌링키: " + billingKey + ", 교체여부: " + replaceExisting);
+            
+            // VO 객체 생성
+            PaymentMethodVO vo = new PaymentMethodVO();
+            vo.setMember_idx((int) memberIdx);
+            vo.setMethod_key(billingKey);
+            vo.setMethod_provider(methodProvider);
+            vo.setMethod_name(methodName);
+            
+            // 서비스 계층에서 비즈니스 로직 처리
+            Map<String, Object> result = payService.saveBillingKeyWithDuplicateHandling(vo, replaceExisting);
+            
+            log.info("중복 처리 후 저장 결과: " + result);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+        } catch (Exception e) {
+            log.error("결제수단 저장 중 오류 발생: ", e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false, 
+                "message", "결제수단 저장 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
     }
     
 }

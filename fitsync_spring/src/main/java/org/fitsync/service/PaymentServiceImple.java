@@ -304,4 +304,122 @@ public class PaymentServiceImple implements PaymentService {
 			return errorInfo;
 		}
 	}
+	
+	/**
+	 * 결제수단 등록 전 중복 체크
+	 * @param billingKey 빌링키
+	 * @param memberIdx 회원 인덱스
+	 * @return 중복 체크 결과와 카드 정보
+	 */
+	@Override
+	public Map<String, Object> checkDuplicatePaymentMethod(String billingKey, int memberIdx) {
+		Map<String, Object> result = new HashMap<>();
+		
+		try {
+			// 1. 빌링키로 카드 정보 조회
+			Map<String, Object> cardInfo = getCardInfoByBillingKey(billingKey);
+			
+			if (cardInfo.containsKey("error")) {
+				result.put("success", false);
+				result.put("message", "카드 정보 조회에 실패했습니다.");
+				result.put("error", cardInfo.get("error"));
+				return result;
+			}
+			
+			// 2. 카드 정보로 중복 확인
+			PaymentMethodVO checkVO = new PaymentMethodVO();
+			checkVO.setMember_idx(memberIdx);
+			checkVO.setMethod_card((String) cardInfo.get("name"));
+			checkVO.setMethod_card_num((String) cardInfo.get("number"));
+			
+			int duplicateCount = paymentMethodMapper.countDuplicateCard(checkVO);
+			
+			result.put("success", true);
+			result.put("cardInfo", cardInfo);
+			result.put("isDuplicate", duplicateCount > 0);
+			result.put("duplicateCount", duplicateCount);
+			
+			if (duplicateCount > 0) {
+				PaymentMethodVO duplicateMethod = paymentMethodMapper.findDuplicateCard(checkVO);
+				result.put("duplicateMethod", duplicateMethod);
+				result.put("message", "동일한 카드가 이미 등록되어 있습니다.");
+			} else {
+				result.put("message", "새로운 카드입니다.");
+			}
+			
+			log.info("중복 체크 결과: " + result);
+			return result;
+			
+		} catch (Exception e) {
+			log.error("중복 체크 중 오류 발생: ", e);
+			result.put("success", false);
+			result.put("message", "중복 체크 중 오류가 발생했습니다: " + e.getMessage());
+			result.put("error", e.getClass().getSimpleName());
+			return result;
+		}
+	}
+	
+	/**
+	 * 중복 처리 후 결제수단 저장 (기존 삭제 후 새로 등록)
+	 * @param vo 새로운 결제수단 정보
+	 * @param replaceExisting 기존 결제수단 교체 여부
+	 * @return 처리 결과
+	 */
+	@Override
+	public Map<String, Object> saveBillingKeyWithDuplicateHandling(PaymentMethodVO vo, boolean replaceExisting) {
+		Map<String, Object> result = new HashMap<>();
+		
+		try {
+			// 1. 빌링키로 카드 정보 조회
+			Map<String, Object> cardInfo = getCardInfoByBillingKey(vo.getMethod_key());
+			
+			if (cardInfo.containsKey("error")) {
+				result.put("success", false);
+				result.put("message", "카드 정보 조회에 실패했습니다.");
+				return result;
+			}
+			
+			// 2. 카드 정보를 VO에 설정
+			String cardName = (String) cardInfo.get("name");
+			String cardNumber = (String) cardInfo.get("number");
+			
+			vo.setMethod_card(cardName != null ? cardName : "알 수 없는 카드");
+			vo.setMethod_card_num(cardNumber != null ? cardNumber : "****-****-****-****");
+			
+			// 3. 기존 결제수단 교체인 경우 삭제 먼저 처리
+			if (replaceExisting) {
+				PaymentMethodVO duplicateMethod = paymentMethodMapper.findDuplicateCard(vo);
+				if (duplicateMethod != null) {
+					PaymentMethodVO deleteVO = new PaymentMethodVO();
+					deleteVO.setMember_idx(vo.getMember_idx());
+					deleteVO.setMethod_idx(duplicateMethod.getMethod_idx());
+					
+					int deleteResult = paymentMethodMapper.deletePaymentMethod(deleteVO);
+					log.info("기존 중복 결제수단 삭제 결과: " + deleteResult);
+				}
+			}
+			
+			// 4. 새로운 결제수단 등록
+			int insertResult = paymentMethodMapper.insertPaymentMethod(vo);
+			
+			if (insertResult > 0) {
+				result.put("success", true);
+				result.put("message", replaceExisting ? "기존 결제수단이 새로운 결제수단으로 교체되었습니다." : "새로운 결제수단이 등록되었습니다.");
+				result.put("cardInfo", cardInfo);
+				result.put("method_idx", vo.getMethod_idx()); // 새로 등록된 결제수단 ID
+			} else {
+				result.put("success", false);
+				result.put("message", "결제수단 등록에 실패했습니다.");
+			}
+			
+		} catch (Exception e) {
+			log.error("결제수단 등록/교체 중 오류 발생: ", e);
+			result.put("success", false);
+			result.put("message", "결제수단 처리 중 오류가 발생했습니다: " + e.getMessage());
+			result.put("error", e.getClass().getSimpleName());
+		}
+		
+		return result;
+	}
+
 }

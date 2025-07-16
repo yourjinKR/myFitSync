@@ -186,7 +186,53 @@ export const PaymentUtil = {
             console.log('빌링키 결제 성공:', response);
             return response.data;
         } catch (error) {
+            console.error('빌링키 결제 중 오류:', error);
+            throw error;
+        }
+    },
+
+    /** 결제수단 등록 전 중복 체크 */
+    checkDuplicatePaymentMethod: async (billingKey) => {
+        try {
+            const response = await axios.post('/payment/bill/check-duplicate', {
+                billing_key: billingKey
+            }, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('중복 체크 결과:', response.data);
+            return response.data;
             
+        } catch (error) {
+            console.error('중복 체크 중 오류:', error);
+            throw error;
+        }
+    },
+
+    /** 중복 처리 후 결제수단 저장 */
+    saveBillingKeyWithDuplicateHandling: async ({ billing_key, method_provider, method_name, replace_existing }) => {
+        try {
+            const response = await axios.post('/payment/bill/save-with-duplicate-handling', {
+                billing_key,
+                method_provider,
+                method_name,
+                replace_existing
+            }, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('중복 처리 후 저장 결과:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('중복 처리 후 저장 중 오류:', error);
+            throw error;
         }
     },
 

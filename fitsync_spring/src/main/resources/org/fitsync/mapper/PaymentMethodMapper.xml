@@ -92,4 +92,23 @@
         WHERE method_idx = #{method_idx} AND member_idx = #{member_idx}
     </delete>
 
+    <!-- 중복 카드 개수 확인 (카드명과 카드번호 기준) -->
+    <select id="countDuplicateCard" parameterType="org.fitsync.domain.PaymentMethodVO" resultType="int">
+        SELECT COUNT(*)
+        FROM payment_method
+        WHERE member_idx = #{member_idx} 
+        AND method_card = #{method_card} 
+        AND method_card_num = #{method_card_num}
+    </select>
+    
+    <!-- 중복된 결제수단 조회 -->
+    <select id="findDuplicateCard" parameterType="org.fitsync.domain.PaymentMethodVO" resultType="org.fitsync.domain.PaymentMethodVO">
+        SELECT * 
+        FROM payment_method
+        WHERE member_idx = #{member_idx} 
+        AND method_card = #{method_card} 
+        AND method_card_num = #{method_card_num}
+        AND ROWNUM = 1
+    </select>
+
 </mapper>

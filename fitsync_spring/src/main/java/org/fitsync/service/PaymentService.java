@@ -23,4 +23,10 @@ public interface PaymentService {
 	public boolean deletePaymentMethod(int memberIdx, int methodIdx);
 	
 	public Map<String, Object> getCardInfoByBillingKey(String billingKey);
+	
+	// 결제수단 등록 전 중복 체크
+	public Map<String, Object> checkDuplicatePaymentMethod(String billingKey, int memberIdx);
+	
+	// 중복 처리 후 결제수단 저장 (기존 삭제 후 새로 등록)
+	public Map<String, Object> saveBillingKeyWithDuplicateHandling(PaymentMethodVO vo, boolean replaceExisting);
 }
