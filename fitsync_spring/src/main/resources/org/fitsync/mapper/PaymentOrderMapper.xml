@@ -3,26 +3,24 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.payment.mapper.PaymentOrderMapper">
+<mapper namespace="org.fitsync.mapper.PaymentOrderMapper">
 
     <!-- 결제 요청 저장 -->
-    <insert id="insertPaymentOrder" parameterType="PaymentOrderVO">
+    <insert id="insertPaymentOrder" parameterType="org.fitsync.mapper.PaymentOrderMapper">
         INSERT INTO payment_order (
             order_idx, member_idx, method_idx,
             payment_id, order_type, order_status,
-            order_name, order_price, order_currency,
-            order_regdate, order_paydate
+            order_name, order_price, order_currency, order_paydate
         )
         VALUES (
             payment_order_seq.nextval, #{member_idx}, #{method_idx},
             #{payment_id}, #{order_type}, #{order_status},
-            #{order_name}, #{order_price}, #{order_currency},
-            #{order_regdate}, #{order_paydate}
+            #{order_name}, #{order_price}, #{order_currency}, #{order_paydate}
         )
     </insert>
 
     <!-- 결제 상태 및 결제시간 갱신 -->
-    <update id="updatePaymentStatus" parameterType="PaymentOrderVO">
+    <update id="updatePaymentStatus" parameterType="org.fitsync.mapper.PaymentOrderMapper">
         UPDATE payment_order
         SET order_status = #{order_status},
             order_paydate = #{order_paydate}
@@ -30,14 +28,14 @@
     </update>
 
     <!-- 단건 결제 정보 조회 -->
-    <select id="selectPaymentOrderById" parameterType="int" resultType="PaymentOrderVO">
+    <select id="selectPaymentOrderById" parameterType="int" resultType="org.fitsync.mapper.PaymentOrderMapper">
         SELECT *
         FROM payment_order
         WHERE order_idx = #{order_idx}
     </select>
 
     <!-- 특정 회원의 결제 목록 조회 -->
-    <select id="selectPaymentOrdersByMember" parameterType="int" resultType="PaymentOrderVO">
+    <select id="selectPaymentOrdersByMember" parameterType="int" resultType="org.fitsync.mapper.PaymentOrderMapper">
         SELECT *
         FROM payment_order
         WHERE member_idx = #{member_idx}
