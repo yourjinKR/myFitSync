@@ -1,0 +1,368 @@
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { PaymentUtil } from '../../utils/PaymentUtil';
+
+const PaymentHistoryContainer = styled.div`
+  padding: 2rem;
+  background: var(--bg-primary);
+  min-height: 100vh;
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3rem;
+  text-align: center;
+`;
+
+const HistoryList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const PaymentCard = styled.div`
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid var(--border-light);
+  position: relative;
+`;
+
+const PaymentHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+`;
+
+const PaymentTitle = styled.h3`
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+`;
+
+const PaymentId = styled.p`
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+`;
+
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  
+  ${props => {
+    switch (props.status) {
+      case 'PAID':
+        return `
+          background: var(--success);
+          color: white;
+        `;
+      case 'FAILED':
+        return `
+          background: var(--warning);
+          color: white;
+        `;
+      case 'READY':
+        return `
+          background: var(--info);
+          color: white;
+        `;
+      default:
+        return `
+          background: var(--border-medium);
+          color: var(--text-primary);
+        `;
+    }
+  }}
+`;
+
+const PaymentDetails = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const DetailLabel = styled.span`
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+`;
+
+const DetailValue = styled.span`
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  
+  &.price {
+    color: var(--primary-blue);
+    font-size: 1.8rem;
+  }
+`;
+
+const DateInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
+  
+  @media (max-width: 500px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+`;
+
+const DateItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+`;
+
+const DateLabel = styled.span`
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+`;
+
+const DateValue = styled.span`
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+`;
+
+const LoadingWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+`;
+
+const ErrorWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 4rem 2rem;
+  text-align: center;
+`;
+
+const ErrorMessage = styled.p`
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+`;
+
+const RetryButton = styled.button`
+  background: var(--primary-blue);
+  color: white;
+  padding: 1.2rem 2.4rem;
+  border-radius: 8px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+  
+  &:active {
+    background: var(--primary-blue-dark);
+    transform: translateY(1px);
+  }
+`;
+
+const EmptyWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 6rem 2rem;
+  text-align: center;
+`;
+
+const EmptyIcon = styled.div`
+  width: 80px;
+  height: 80px;
+  background: var(--bg-tertiary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: var(--text-tertiary);
+`;
+
+const EmptyMessage = styled.p`
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+`;
+
+const PaymentHistory = () => {
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchPaymentHistory = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await PaymentUtil.getPaymentHistory();
+      
+      if (response.success) {
+        setPaymentHistory(response.data || []);
+      } else {
+        setError(response.message || '결제 내역 조회에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('결제 내역 조회 오류:', err);
+      setError(err.message || '결제 내역을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPaymentHistory();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('ko-KR').format(price);
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'PAID': return '결제완료';
+      case 'FAILED': return '결제실패';
+      case 'READY': return '결제대기';
+      default: return '알수없음';
+    }
+  };
+
+  if (loading) {
+    return (
+      <PaymentHistoryContainer>
+        <PageTitle>결제 내역</PageTitle>
+        <LoadingWrapper>
+          결제 내역을 불러오는 중...
+        </LoadingWrapper>
+      </PaymentHistoryContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PaymentHistoryContainer>
+        <PageTitle>결제 내역</PageTitle>
+        <ErrorWrapper>
+          <ErrorMessage>{error}</ErrorMessage>
+          <RetryButton onClick={fetchPaymentHistory}>
+            다시 시도
+          </RetryButton>
+        </ErrorWrapper>
+      </PaymentHistoryContainer>
+    );
+  }
+
+  if (paymentHistory.length === 0) {
+    return (
+      <PaymentHistoryContainer>
+        <PageTitle>결제 내역</PageTitle>
+        <EmptyWrapper>
+          <EmptyIcon>💳</EmptyIcon>
+          <EmptyMessage>
+            아직 결제 내역이 없습니다.<br />
+            첫 구독을 시작해보세요!
+          </EmptyMessage>
+        </EmptyWrapper>
+      </PaymentHistoryContainer>
+    );
+  }
+
+  return (
+    <PaymentHistoryContainer>
+      <PageTitle>결제 내역</PageTitle>
+      <HistoryList>
+        {paymentHistory.map((payment) => (
+          <PaymentCard key={payment.order_idx}>
+            <PaymentHeader>
+              <div>
+                <PaymentTitle>{payment.order_name}</PaymentTitle>
+                <PaymentId>#{payment.payment_id}</PaymentId>
+              </div>
+              <StatusBadge status={payment.order_status}>
+                {getStatusText(payment.order_status)}
+              </StatusBadge>
+            </PaymentHeader>
+            
+            <PaymentDetails>
+              <DetailItem>
+                <DetailLabel>결제 금액</DetailLabel>
+                <DetailValue className="price">
+                  {formatPrice(payment.order_price)}원
+                </DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel>결제 방식</DetailLabel>
+                <DetailValue>{payment.order_type}</DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel>통화</DetailLabel>
+                <DetailValue>{payment.order_currency}</DetailValue>
+              </DetailItem>
+              
+              <DetailItem>
+                <DetailLabel>주문 번호</DetailLabel>
+                <DetailValue>{payment.order_idx}</DetailValue>
+              </DetailItem>
+            </PaymentDetails>
+            
+            <DateInfo>
+              <DateItem>
+                <DateLabel>주문일</DateLabel>
+                <DateValue>{formatDate(payment.order_regdate)}</DateValue>
+              </DateItem>
+              
+              <DateItem>
+                <DateLabel>결제일</DateLabel>
+                <DateValue>{formatDate(payment.order_paydate)}</DateValue>
+              </DateItem>
+            </DateInfo>
+          </PaymentCard>
+        ))}
+      </HistoryList>
+    </PaymentHistoryContainer>
+  );
+};
+
+export default PaymentHistory;

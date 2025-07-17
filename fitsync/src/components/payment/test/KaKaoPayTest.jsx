@@ -2,6 +2,7 @@ import React, { use, useEffect, useState } from 'react';
 import { ButtonSubmit } from '../../../styles/FormStyles';
 import axios from 'axios';
 import { KAKAOPAY, PaymentUtil, TOSSPAYMENTS } from '../../../utils/PaymentUtil';
+import { useNavigate } from 'react-router-dom';
 
 const initwallet = {
     method_idx : null,
@@ -14,6 +15,7 @@ const initwallet = {
 
 const KaKaoPayTest = () => {
     const [wallet, setWallet] = useState([initwallet]);
+    const navigate = useNavigate();
 
     /** 난수 return 함수 (paymentId 전용)  */
     const randomId = () => {
@@ -146,6 +148,11 @@ const KaKaoPayTest = () => {
         }
     }
 
+    /** 결제 내역 UI 페이지로 이동 */
+    const goToPaymentHistory = () => {
+        navigate('/payment/history');
+    }
+
 
     return (
         <div>
@@ -154,7 +161,8 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 1})}>내 빌링키 정보 조회</ButtonSubmit>
             <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 1})}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
-            <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회</ButtonSubmit>
+            <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (콘솔)</ButtonSubmit>
+            <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
         </div>
     );
 };

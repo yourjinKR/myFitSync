@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Header from '../layout/Header';
-import { Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import Main from '../components/Main';
 import IsLoading from '../components/IsLoading';
 import styled from 'styled-components';
@@ -28,6 +28,7 @@ import IsLoading3 from '../components/IsLoading3';
 import PaymentContainer from '../components/payment/PaymentContainer';
 import PaymentMethodList from '../components/payment/PaymentMethodList';
 import PaymentMethodRegister from '../components/payment/PaymentMethodRegister';
+import PaymentHistory from '../components/payment/PaymentHistory';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
 import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
@@ -109,6 +110,7 @@ const Display = () => {
             <Route path='test' element={<KaKaoPayTest/>}/>
             <Route path='methods' element={<PaymentMethodList/>}/>
             <Route path='register' element={<PaymentMethodRegister/>}/>
+            <Route path='history' element={<PaymentHistory/>}/>
           </Route>
 
           <Route path='/admin' element={<AdminMain/>}>
