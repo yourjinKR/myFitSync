@@ -97,7 +97,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
               routine_list_idx : routineData.routine_list_idx,
               routine_memo: null,
               sets: [{
-                routins_idx: null,
+                routine_idx: null,
                 set_num: 1,
                 set_volume: 0,
                 set_count: 0,

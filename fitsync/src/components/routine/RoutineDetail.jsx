@@ -342,6 +342,24 @@ const RoutineDetail = () => {
   const targetDate = param.get('date');
 
 
+  // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
+  const omitCheckedAndSaveDate = (obj) => {
+    if (!obj || !obj.routines) {
+      console.log("⚠️ omitCheckedAndSaveDate: 객체가 null/undefined 또는 routines가 없음", obj);
+      return obj;
+    }
+    
+    const { saveDate, checked, id, update, ...cleanObj } = obj;
+    
+    return {
+      ...cleanObj,
+      routines: obj.routines.map(routine => ({
+        ...routine,
+        sets: routine.sets.map(({ checked, id, set_num, update, ...setRest }) => setRest)
+      }))
+    };
+  };
+
   // checked 필드를 제거한 새로운 객체 반환
   const omitChecked = (obj) => {
     if (!obj || !obj.routines) return obj;
@@ -349,33 +367,37 @@ const RoutineDetail = () => {
       ...obj,
       routines: obj.routines.map(routine => ({
         ...routine,
-        sets: routine.sets.map(({ checked, ...setRest }) => setRest)
+        sets: routine.sets.map(({ checked, id, set_num, ...setRest }) => setRest)
       }))
     };
   };
-
-  // checked 필드와 saveDate를 제거한 새로운 객체 반환 (비교용)
-  const omitCheckedAndSaveDate = (obj) => {
-    if (!obj || !obj.routines) return obj;
-    
-    const { saveDate, checked, ...cleanObj } = obj;
-    
-    return {
-      ...cleanObj,
-      routines: obj.routines.map(routine => ({
-        ...routine,
-        sets: routine.sets.map(({ checked, ...setRest }) => setRest)
-      }))
-    };
-  };
-
 
   // useEffect - data
   useEffect(() => {
-    if (data === null) return;
+    if (data === null || init === undefined) {
+      console.log("⚠️ data 또는 init이 null/undefined:", { data, init });
+      return;
+    }
+    
+    // 비교 전 데이터 구조 확인
+    const omitData = omitCheckedAndSaveDate(data);
+    console.log("🚀 omitData:", omitData);
+    console.log("🚀 omitData JSON:", JSON.stringify(omitData));
+    
+    const omitInit = omitCheckedAndSaveDate(init);
+    console.log("🚀 omitInit:", omitInit);
+    console.log("🚀 omitInit JSON:", JSON.stringify(omitInit));
+    
+    const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
+    console.log("🚀 isEqual:", isEqual);
+    console.log("🚀 JSON 비교:");
+    console.log("  data JSON length:", JSON.stringify(omitData)?.length);
+    console.log("  init JSON length:", JSON.stringify(omitInit)?.length);
+    console.log("====================================================================");
+    
     setNewData({
       ...data,
-      update: routine_list_idx === 'custom' || JSON.stringify(omitCheckedAndSaveDate(data)) !== JSON.stringify(omitCheckedAndSaveDate(init)),
+      update: routine_list_idx === 'custom' || !isEqual,
     });
 
     setRoutineData(data);
@@ -449,7 +471,7 @@ const RoutineDetail = () => {
         });
       }
     }
-  }, [data]);
+  }, [data, init]); // init도 의존성에 추가
   
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
@@ -496,18 +518,24 @@ const RoutineDetail = () => {
 
   // 세트 값 변경 공통 함수
   const handleSetValueChange = (routinePtIdx, index, field, value) => {
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r =>
-        r.pt_idx === routinePtIdx ? {
-          ...r,
-          sets: r.sets.map((s, i) =>
-            i === index ? { ...s, [field]: value } : s
-          )
-        }
-          : r
-      )
-    }));
+
+    setData(prev => {
+      const newData = {
+        ...prev,
+        routines: prev.routines.map(r => {
+          return r.pt_idx === routinePtIdx ? {
+            ...r,
+            sets: r.sets.map((s, i) => {
+              if (i === index) {
+                return { ...s, [field]: value };
+              }
+              return s;
+            })
+          } : r;
+        })
+      };
+      return newData;
+    });
     
   };
 
@@ -521,7 +549,12 @@ const RoutineDetail = () => {
         r.pt_idx === routinePtIdx
           ? {
             ...r,
-            sets: r.sets.filter((set, index) => index !== setIndex)
+            sets: r.sets
+              .filter((set, index) => index !== setIndex)
+              .map((set, index) => ({
+                ...set,
+                set_num: index + 1  // set_num 재계산
+              }))
           }
           : r
       )
@@ -566,8 +599,9 @@ const RoutineDetail = () => {
             sets: [
               ...r.sets,
               {
-                routins_idx: r.routine_idx,
-                set_num: r.sets.length + 1,
+                routine_list_idx: 0,
+                routine_idx: r.routine_idx,
+                set_num: r.sets.length + 1,  // 현재 세트 개수 + 1
                 set_volume: 0,
                 set_count: 0,
                 id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`,
@@ -722,21 +756,21 @@ const RoutineDetail = () => {
                         <div>
                           <input
                             type="number"
-                            value={set.set_volume || ''}
+                            value={set.set_volume || 0}
                             placeholder="0"
-                            onChange={e =>
-                              handleSetValueChange(routine.pt.idx, index, 'set_volume', e.target.value)
-                            }
+                            onChange={e => {
+                              handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value);
+                            }}
                           />
                         </div>
                         <div>
                           <input
                             type="number"
-                            value={set.set_count || ''}
+                            value={set.set_count || 0}
                             placeholder="0"
-                            onChange={e =>
-                              handleSetValueChange(routine.pt.idx, index, 'set_count', e.target.value)
-                            }
+                            onChange={e => {
+                              handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value);
+                            }}
                           />
                         </div>
                         <div>

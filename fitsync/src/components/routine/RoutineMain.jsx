@@ -249,10 +249,8 @@ const RoutineMain = () => {
         setIsSave(true);
       }
     }
-   
-    
-    
   },[routineData, unfinished, isSave , nav]);
+
   useEffect(() => {
     if(prev !== null && routineData === routineInit) {
       nav(prev);
@@ -280,6 +278,8 @@ const RoutineMain = () => {
     if(routine_list_idx !== 'custom'){
       if(newData.update) {
         setIsUpdate(true);
+      }else{
+        setIsUpdate(false);
       }
 
 
