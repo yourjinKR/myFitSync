@@ -65,6 +65,7 @@ const InputContainer = styled.div`
   gap: 10px;
 `;
 
+/* 수정된 AttachButton - 아이콘 중앙 정렬 개선 */
 const AttachButton = styled.button`
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border-medium);
@@ -75,6 +76,11 @@ const AttachButton = styled.button`
   color: var(--text-primary);
   transition: all 0.2s;
   transform: translateY(-1.5px);
+  display: flex; /* flex 추가 */
+  align-items: center; /* 수직 중앙 정렬 */
+  justify-content: center; /* 수평 중앙 정렬 */
+  width: 40px; /* 고정 너비 */
+  height: 40px; /* 고정 높이 */
   
   &:hover {
     background-color: var(--bg-tertiary);
@@ -85,6 +91,12 @@ const AttachButton = styled.button`
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  
+  /* SVG 아이콘 중앙 정렬 */
+  svg {
+    display: block; /* inline 요소의 기본 여백 제거 */
+    margin: 0; /* 마진 제거 */
   }
 `;
 
@@ -280,14 +292,14 @@ const MessageInput = ({ onSendMessage, disabled }) => {
 
       {/* 메시지 입력 영역 */}
       <InputContainer>
-        {/* 파일 첨부 버튼 */}
+        {/* 파일 첨부 버튼 - 수정된 부분 */}
         <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled} title="이미지 첨부">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
             fill="none"
-            stroke="white"
+            stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"

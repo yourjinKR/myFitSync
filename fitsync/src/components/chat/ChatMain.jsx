@@ -21,11 +21,6 @@ const Title = styled.h2`
   margin-bottom: 8px;
 `;
 
-const Subtitle = styled.p`
-  font-size: 1.4rem;
-  color: var(--text-secondary);
-`;
-
 const RoomList = styled.div`
   background: var(--bg-secondary);
   border-radius: 12px;
@@ -101,14 +96,19 @@ const RoomName = styled.div`
 const UnreadBadge = styled.div`
   background: #ff4757; /* 빨간색 배지 */
   color: white;
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 1.2rem;
+  border-radius: 50%; /* 완전한 원형으로 변경 */
+  font-size: 1.1rem; /* 폰트 크기 약간 축소 */
   font-weight: 600;
-  min-width: 20px;
-  text-align: center;
+  min-width: 22px; /* 최소 너비 조정 */
+  width: 22px; /* 고정 너비 */
+  height: 22px; /* 고정 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   animation: pulse 2s infinite;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 시스템 폰트 사용 */
   
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -116,7 +116,9 @@ const UnreadBadge = styled.div`
   }
 `;
 
-const LastMessage = styled.div`
+const LastMessage = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'hasUnread'
+})`
   font-size: 1.3rem;
   color: ${props => props.hasUnread ? 'var(--text-primary)' : 'var(--text-secondary)'};
   font-weight: ${props => props.hasUnread ? '500' : '400'};
@@ -275,11 +277,11 @@ const ChatMain = () => {
     if (room.trainer_idx === currentMemberIdx) {
       // 내가 트레이너인 경우 → 회원 이름 표시
       const userName = room.user_name || '회원';
-      return `${userName}님과의 상담`;
+      return `${userName} 회원님과 상담`;
     } else {
       // 내가 일반 사용자인 경우 → 트레이너 이름 표시
       const trainerName = room.trainer_name || '트레이너';
-      return `${trainerName}님과의 상담`;
+      return `${trainerName} 트레이너와 상담`;
     }
   };
 
@@ -322,11 +324,6 @@ const ChatMain = () => {
     // 긴 메시지는 잘라서 표시
     if (preview.length > 30) {
       preview = preview.substring(0, 30) + '...';
-    }
-    
-    // 내가 보낸 메시지인 경우 "나: " 접두사 추가
-    if (lastMessage.sender_idx === user.member_idx) {
-      preview = `나: ${preview}`;
     }
     
     return preview;
@@ -387,7 +384,7 @@ const ChatMain = () => {
     return (
       <Container>
         <Header>
-          <Title>채팅</Title>
+          <Title>채팅목록</Title>
         </Header>
         <IsLoading3 />
       </Container>
@@ -397,8 +394,7 @@ const ChatMain = () => {
   return (
     <Container>
       <Header>
-        <Title>채팅</Title>
-        <Subtitle>진행중인 상담 목록입니다</Subtitle>
+        <Title>채팅목록</Title>
       </Header>
 
       {rooms.length === 0 ? (

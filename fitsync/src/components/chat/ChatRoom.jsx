@@ -98,6 +98,8 @@ const ChatRoom = () => {
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false); // 읽지 않은 메시지로 스크롤 완료 여부
   const [isInitialLoad, setIsInitialLoad] = useState(true); // 첫 로드 여부
   const [searchResults, setSearchResults] = useState([]); // 검색 결과
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false); // 맨 아래 스크롤 플래그 추가
+  const [initialUnreadMessages, setInitialUnreadMessages] = useState([]); // 초기 읽지 않은 메시지 저장
 
   // 미확인 메시지 초기 읽음 처리 플래그
   const initialReadDone = useRef(false);
@@ -145,6 +147,13 @@ const ChatRoom = () => {
         return;
       }
 
+      // 상태 초기화 (재진입 시에도 초기 상태로 리셋)
+      setHasScrolledToUnread(false);
+      setIsInitialLoad(true);
+      setShouldScrollToBottom(false);
+      setInitialUnreadMessages([]); // 초기 읽지 않은 메시지 목록도 리셋
+      console.log('🔄 채팅방 초기화 - 모든 스크롤 상태 리셋');
+
       // 채팅용 member_idx 조회 및 세션스토리지 저장
       const memberIdx = await getMemberIdxForChat();
       if (!memberIdx) {
@@ -157,7 +166,7 @@ const ChatRoom = () => {
       }
 
       // 메시지 목록 로드
-      await loadMessages();
+      await loadMessages(memberIdx);
     };
 
     initializeChatRoom();
@@ -169,13 +178,34 @@ const ChatRoom = () => {
   }, [roomId, user, navigate, location.state]);
 
   // 메시지 목록 로드
-  const loadMessages = async () => {
+  const loadMessages = async (memberIdx = null) => {
     try {
       setLoading(true);
 
       // 백엔드 API 호출 (readMessageList 메서드와 정확히 일치)
       const messageList = await chatApi.readMessageList(parseInt(roomId));
       setMessages(messageList);
+
+      // memberIdx가 전달된 경우에만 읽지 않은 메시지 확인 (비동기 문제 해결)
+      if (memberIdx) {
+        // 읽지 않은 메시지들을 찾아서 저장 (스크롤 전에 읽음 처리되지 않도록)
+        const unreadMessages = messageList.filter(msg => 
+          msg.sender_idx !== memberIdx && !msg.message_readdate
+        );
+
+        // 초기 읽지 않은 메시지 목록 저장 (읽음 처리되기 전의 상태)
+        setInitialUnreadMessages(unreadMessages);
+
+        if (unreadMessages.length === 0) {
+          // 읽지 않은 메시지가 없으면 맨 아래 스크롤 플래그 설정
+          console.log('🔍 읽지 않은 메시지 없음 확인 - 맨 아래 스크롤 플래그 설정');
+          setShouldScrollToBottom(true);
+        } else {
+          // 읽지 않은 메시지가 있으면 플래그 해제 (읽지 않은 메시지로 스크롤 예정)
+          console.log('🔍 읽지 않은 메시지', unreadMessages.length, '개 있음 - 가장 오래된 읽지 않은 메시지로 스크롤 예정');
+          setShouldScrollToBottom(false);
+        }
+      }
 
       // 각 이미지 메시지의 첨부파일 정보 로드
       const attachmentsMap = {};
@@ -287,51 +317,24 @@ const ChatRoom = () => {
       connected &&
       currentMemberIdx &&
       messages.length > 0 &&
-      !initialReadDone.current
+      !initialReadDone.current &&
+      hasScrolledToUnread // 스크롤이 완료된 후에만 읽음 처리
     ) {
       initialReadDone.current = true;
+      
+      console.log('📖 스크롤 완료 후 읽음 처리 시작');
 
       messages.forEach(msg => {
         // 나에게 온(unread) 메시지인 경우에만
         if (msg.receiver_idx === currentMemberIdx && !msg.message_readdate) {
+          console.log('📖 읽음 처리:', msg.message_idx);
           markAsRead(msg.message_idx, parseInt(roomId, 10));
         }
       });
-    }
-  }, [connected, currentMemberIdx, messages, roomId, markAsRead]);
-
-  // 메시지 로드 후 스마트 스크롤 위치 설정
-  useEffect(() => {
-    if (messages.length > 0 && isInitialLoad && currentMemberIdx && !hasScrolledToUnread) {
-      // 1. 첫 번째 읽지 않은 메시지 찾기
-      const firstUnreadMessage = messages.find(msg => 
-        msg.sender_idx !== currentMemberIdx && !msg.message_readdate
-      );
-
-      if (firstUnreadMessage) {
-        // 2. 읽지 않은 메시지가 있으면 해당 메시지로 스크롤
-        console.log('📍 첫 번째 읽지 않은 메시지로 스크롤:', firstUnreadMessage.message_idx);
-        scrollToMessage(firstUnreadMessage.message_idx);
-      } else {
-        // 3. 읽지 않은 메시지가 없으면 가장 최신 메시지로 스크롤
-        console.log('📍 읽지 않은 메시지 없음 - 최신 메시지로 스크롤');
-        scrollToBottom(false); // 애니메이션 없이 즉시 이동
-      }
       
-      setHasScrolledToUnread(true);
-      setIsInitialLoad(false);
+      console.log('✅ 모든 읽지 않은 메시지 읽음 처리 완료');
     }
-  }, [messages, currentMemberIdx, isInitialLoad, hasScrolledToUnread]);
-
-  // 새 메시지 추가 시 자동 스크롤
-  useEffect(() => {
-    if (!isInitialLoad && messages.length > 0) {
-      // 사용자가 스크롤을 맨 아래에 두고 있을 때만 자동 스크롤
-      if (isScrollAtBottom()) {
-        scrollToBottom(true); // 애니메이션과 함께 이동
-      }
-    }
-  }, [messages.length, isInitialLoad]);
+  }, [connected, currentMemberIdx, messages, roomId, markAsRead, hasScrolledToUnread]);
 
   // 특정 메시지로 스크롤하는 함수
   const scrollToMessage = useCallback((messageIdx) => {
@@ -381,6 +384,66 @@ const ChatRoom = () => {
     return scrollTop + clientHeight >= scrollHeight - threshold;
   }, []);
 
+  // 메시지 로드 후 스마트 스크롤 위치 설정
+  useEffect(() => {
+    // 메시지가 로드되고, 초기 로드 상태이며, currentMemberIdx가 설정되었고, 아직 스크롤하지 않았을 때
+    if (messages.length > 0 && isInitialLoad && currentMemberIdx && !hasScrolledToUnread) {
+      
+      console.log('📍 스크롤 위치 결정 시작:', {
+        messagesCount: messages.length,
+        shouldScrollToBottom,
+        initialUnreadCount: initialUnreadMessages.length,
+        currentMemberIdx
+      });
+
+      // 이미지 메시지 로딩 완료를 위한 지연 추가
+      const scrollTimeout = setTimeout(() => {
+        if (shouldScrollToBottom) {
+          // 읽지 않은 메시지가 없는 경우 - 맨 아래로 스크롤
+          console.log('📍 플래그 기반: 읽지 않은 메시지 없음 - 최신 메시지로 스크롤');
+          scrollToBottom(false); // 애니메이션 없이 즉시 이동
+          setShouldScrollToBottom(false); // 플래그 리셋
+        } else {
+          // 초기에 저장된 읽지 않은 메시지 목록 사용 (읽음 처리되기 전 상태)
+          if (initialUnreadMessages.length > 0) {
+            // 가장 오래된 읽지 않은 메시지 (배열의 첫 번째 = 시간순으로 가장 오래된 것)
+            const oldestUnreadMessage = initialUnreadMessages[0];
+            console.log('📍 초기 읽지 않은 메시지 기준: 가장 오래된 읽지 않은 메시지로 스크롤:', {
+              messageIdx: oldestUnreadMessage.message_idx,
+              totalUnread: initialUnreadMessages.length
+            });
+            scrollToMessage(oldestUnreadMessage.message_idx);
+          } else {
+            // 초기 읽지 않은 메시지도 없으면 맨 아래로 스크롤
+            console.log('📍 초기 읽지 않은 메시지 없음 - 최신 메시지로 스크롤');
+            scrollToBottom(false); // 애니메이션 없이 즉시 이동
+          }
+        }
+        
+        setHasScrolledToUnread(true);
+        setIsInitialLoad(false);
+        console.log('✅ 초기 스크롤 완료');
+      }, 300); // 300ms로 지연 시간 증가 (이미지 로딩 충분히 대기)
+
+      return () => clearTimeout(scrollTimeout);
+    }
+  }, [messages, currentMemberIdx, isInitialLoad, hasScrolledToUnread, shouldScrollToBottom, initialUnreadMessages, scrollToMessage, scrollToBottom]);
+
+  // 새 메시지 추가 시 자동 스크롤 - 이미지 로딩 고려
+  useEffect(() => {
+    if (!isInitialLoad && messages.length > 0) {
+      // 이미지 메시지가 있을 경우를 위한 지연 스크롤
+      const scrollTimeout = setTimeout(() => {
+        // 사용자가 스크롤을 맨 아래에 두고 있을 때만 자동 스크롤
+        if (isScrollAtBottom()) {
+          scrollToBottom(true); // 애니메이션과 함께 이동
+        }
+      }, 100); // 100ms 지연으로 이미지 렌더링 대기
+
+      return () => clearTimeout(scrollTimeout);
+    }
+  }, [messages.length, isInitialLoad, isScrollAtBottom, scrollToBottom]);
+
   // 검색 결과 처리 함수
   const handleSearchResults = useCallback((results) => {
     setSearchResults(results);
@@ -392,6 +455,20 @@ const ChatRoom = () => {
     console.log('🔍 검색 결과로 스크롤 이동:', messageIdx);
     scrollToMessage(messageIdx);
   }, [scrollToMessage]);
+
+  // 첨부파일 상태 변경 시 스크롤 재조정
+  useEffect(() => {
+    if (!isInitialLoad && Object.keys(attachments).length > 0) {
+      // 첨부파일이 로드된 후 스크롤 위치 재조정
+      const adjustScrollTimeout = setTimeout(() => {
+        if (isScrollAtBottom()) {
+          scrollToBottom(false); // 부드러운 애니메이션 없이 즉시 조정
+        }
+      }, 150); // 첨부파일 로딩 완료 대기
+
+      return () => clearTimeout(adjustScrollTimeout);
+    }
+  }, [attachments, isInitialLoad, isScrollAtBottom, scrollToBottom]);
 
   // 메시지 전송 핸들러
   const handleSendMessage = async (messageContent, messageType = 'text', file = null) => {

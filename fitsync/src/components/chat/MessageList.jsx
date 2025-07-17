@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import MessageItem from './MessageItem';
 
@@ -37,9 +37,67 @@ const DateText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
+// 읽지 않은 메시지 구분선 컴포넌트
+const UnreadSeparator = styled.div`
+  text-align: center;
+  margin: 16px 0;
+  position: relative;
+  
+  /* 파란색 구분선 스타일 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--primary-blue) 20%, var(--primary-blue) 80%, transparent 100%);
+  }
+`;
+
+const UnreadText = styled.span`
+  background-color: var(--bg-secondary);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--border-light);
+`;
+
 // 메시지 목록 컴포넌트
 const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
   
+  // 가장 오래된 읽지 않은 메시지 ID를 고정하여 저장
+  const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
+
+  // 초기 읽지 않은 메시지 중 가장 오래된 메시지 ID 계산 (한 번만)
+  const initialOldestUnreadMessageIdx = useMemo(() => {
+    const unreadMessages = messages.filter(msg => 
+      msg.sender_idx !== currentMemberIdx && !msg.message_readdate
+    );
+    
+    if (unreadMessages.length === 0) return null;
+    
+    const oldestUnreadMessage = unreadMessages.reduce((oldest, current) => {
+      const oldestTime = new Date(oldest.message_senddate).getTime();
+      const currentTime = new Date(current.message_senddate).getTime();
+      return currentTime < oldestTime ? current : oldest;
+    });
+    
+    console.log('🔒 초기 가장 오래된 읽지 않은 메시지 ID 고정:', oldestUnreadMessage.message_idx);
+    return oldestUnreadMessage.message_idx;
+  }, [messages.length]); // messages.length가 변경될 때만 재계산 (새 메시지 추가 시)
+
+  // 🔧 고정된 가장 오래된 읽지 않은 메시지 ID 설정
+  useEffect(() => {
+    if (initialOldestUnreadMessageIdx && fixedOldestUnreadMessageIdx === null) {
+      setFixedOldestUnreadMessageIdx(initialOldestUnreadMessageIdx);
+      console.log('✅ 구분선 위치 고정:', initialOldestUnreadMessageIdx);
+    }
+  }, [initialOldestUnreadMessageIdx, fixedOldestUnreadMessageIdx]);
+
   // 날짜를 한국어 형식으로 포맷
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('ko-KR', {
@@ -62,7 +120,24 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
     return currentDate !== previousDate;
   };
 
-  // 발신자 이름 생성 (상대방 메시지에만 필요) - 수정된 부분
+  // 읽지 않은 메시지 구분선 표시 여부 결정 (고정된 ID 사용)
+  const shouldShowUnreadSeparator = (currentMessage) => {
+    // 고정된 가장 오래된 읽지 않은 메시지 ID가 없으면 구분선 표시하지 않음
+    if (!fixedOldestUnreadMessageIdx) return false;
+    
+    // 현재 메시지가 고정된 가장 오래된 읽지 않은 메시지인지 확인
+    const shouldShow = currentMessage.message_idx === fixedOldestUnreadMessageIdx;
+    
+    console.log('📍 읽지 않은 메시지 구분선 체크 (고정):', {
+      currentMessageIdx: currentMessage.message_idx,
+      fixedOldestUnreadMessageIdx: fixedOldestUnreadMessageIdx,
+      shouldShow: shouldShow
+    });
+    
+    return shouldShow;
+  };
+
+  // 발신자 이름 생성 (상대방 메시지에만 필요)
   const getSenderName = (message) => {
     // 내 메시지인 경우 이름 불필요
     if (message.sender_idx === currentMemberIdx) {
@@ -111,6 +186,13 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
               <DateSeparator>
                 <DateText>{formatDate(message.message_senddate)}</DateText>
               </DateSeparator>
+            )}
+            
+            {/* 읽지 않은 메시지 구분선 (고정된 위치에만 표시) */}
+            {shouldShowUnreadSeparator(message) && (
+              <UnreadSeparator>
+                <UnreadText>여기서부터 안읽음</UnreadText>
+              </UnreadSeparator>
             )}
             
             {/* 개별 메시지 컴포넌트 */}

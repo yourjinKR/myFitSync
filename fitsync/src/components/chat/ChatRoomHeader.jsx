@@ -102,14 +102,15 @@ const NavButton = styled.button`
   background: var(--bg-tertiary);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
-  width: 32px;
-  height: 32px;
+  width: 28px; /* 크기 조정 */
+  height: 28px; /* 크기 조정 */
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
+  font-size: 1.2rem; /* 폰트 크기도 조정 */
   
   &:hover:not(:disabled) {
     background: var(--bg-primary);
@@ -121,8 +122,10 @@ const NavButton = styled.button`
   }
 `;
 
-/* 수정된 SearchToggleButton - 호버와 활성화 상태 분리 */
-const SearchToggleButton = styled.button`
+/* 수정된 SearchToggleButton - DOM prop 전달 방지 */
+const SearchToggleButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isActive'
+})`
   background: var(--bg-secondary); /* 항상 동일한 배경색 */
   color: var(--text-primary);
   border: 1px solid var(--border-medium); /* 기본 테두리 색상 */
