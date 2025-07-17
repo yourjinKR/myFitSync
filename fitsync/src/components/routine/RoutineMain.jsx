@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { CheckInput, ChecklabelText } from '../../styles/commonStyle';
 
 const HeaderWrapper = styled.header`
   display: flex;
@@ -163,7 +164,6 @@ const H4 = styled.h4.withConfig({
 
 const ButtonGroup = styled.div`
   display: flex;
-  flex-direction: column;
   gap: 12px;
   width: 100%;
   margin-top: 8px;
@@ -189,18 +189,13 @@ const RoutineAddCTA = styled.button`
   border-radius: 5px;
 `;
 
-const RoutineNameInput = styled.input`
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 1.6rem;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  margin-top: 8px;
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
+const ChkBox = styled.div`
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+`;
+const ChkUpdate = styled.input`
+
 `;
 
 const RoutineMain = () => {
@@ -234,6 +229,8 @@ const RoutineMain = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [tempData, setTempData] = useState(localStorage.getItem('routineData') ? JSON.parse(localStorage.getItem('routineData')) : []);
   const [pendingNav, setPendingNav] = useState(false);  // 상태 반영 후 이동 예약
+
+  const checkedRef = useRef();
 
   
   useEffect(() => {
@@ -282,22 +279,6 @@ const RoutineMain = () => {
         setIsUpdate(false);
       }
 
-
-      // if(newData.update) {
-      //   setIsUpdate(true);
-      // } else {
-      //   if(newData.updateData) {
-      //     setIsUpdate(true);
-      //   }else{
-      //     setIsUpdate(false);
-      //   }
-      // }
-
-      // if(!newData.updateData && newData.updateData) {
-      //   setIsUpdate(true);
-      // }else{
-      //   setIsUpdate(false);
-      // }
     }else{
       setIsUpdate(false);
     }
@@ -305,7 +286,7 @@ const RoutineMain = () => {
   },[newData])
 
   useEffect(() => {
-    if(tempData === null || tempData.length === 0) return;
+    if(tempData === null) return;
     localStorage.setItem('routineData', JSON.stringify(tempData));
   },[tempData]);
 
@@ -326,13 +307,7 @@ const RoutineMain = () => {
       if(result.success) {
         alert(result.msg);
         setIsSave(true);
-        setTempData(prev => 
-          prev.map(item => 
-            item.saveDate === routineData.saveDate 
-              ? { ...item, save: true }
-              : item
-          )
-        );
+
         if(routine_list_idx !== 'custom'){
           nav("/routine/view");
         } 
@@ -351,9 +326,11 @@ const RoutineMain = () => {
 
   // 루틴 기록
   const handleRocordSubmit = () => {
+    if(newData === null) return;
     alertRef.current.style.display = "flex";
 
-    if(newData.update) {
+    
+    if(newData.update !== undefined && newData.update) {
       setIsUpdate(true);
     };
 
@@ -384,7 +361,7 @@ const RoutineMain = () => {
       closeAlert();
       return;
     }
-    
+
     try {
       const response = await axios.post(
         `/routine/record`,
@@ -393,14 +370,55 @@ const RoutineMain = () => {
       );
       const result = response.data;
       alertRef.current.style.display = "none";
+      
       if(isUpdate) {
         setIsUpdate(false);
       }
+      
       if(result.success) {
         alert(result.msg);
+
+        // 체크박스가 체크되어 있으면 루틴 등록 실행
+        if(checkedRef.current && checkedRef.current.checked) {
+          // 루틴 이름이 없으면 기본 이름 설정
+          let updatedRoutineData = { ...postData };
+          if(!updatedRoutineData.routine_name || updatedRoutineData.routine_name === "") {
+            updatedRoutineData.routine_name = `루틴_${postData.saveDate.slice(0, 10)}`;
+          }
+          
+          // 업데이트된 데이터로 루틴 등록
+          try {
+            const routineResponse = await axios.post(
+              "/routine/add",
+              { ...updatedRoutineData },
+              { withCredentials: true }
+            );
+            const routineResult = routineResponse.data;
+            
+            if(routineResult.success) {
+              alert(routineResult.msg);
+              // 상태도 업데이트
+              setRoutineData(updatedRoutineData);
+              setIsSave(true);
+            } else {
+              alert(routineResult.msg);
+            }
+          } catch (error) {
+            console.error("루틴 등록 오류:", error);
+            alert("루틴 등록에 실패했습니다.");
+          }
+        }
+        
+        // 운동 기록 시에만 tempData에서 제거
         if(routine_list_idx === 'custom') {
-          const newLocalData = tempData.filter(item => item.routine_name !== postData.routine_name);
+          const newLocalData = tempData.filter(item => {
+            return item.saveDate !== postData.saveDate;
+          });
           setTempData(newLocalData);
+        } else {
+          setTempData(prev => 
+            prev.filter(item => item.saveDate !== postData.saveDate)
+          );
         }
 
         nav("/routine/view");
@@ -409,6 +427,7 @@ const RoutineMain = () => {
         if(isUpdate) {
           setIsUpdate(false);
         }
+
         const saveCheck = tempData.find(item => item.saveDate === newData.saveDate)?.save;
         if(saveCheck === undefined || saveCheck === false) {
           setIsSave(false);
@@ -425,7 +444,6 @@ const RoutineMain = () => {
     if(isRecord) {
       handleRoutineRecord();
     } else {
-      
       closeAlert();
     }
   }
@@ -489,21 +507,12 @@ const RoutineMain = () => {
     }
    
   }   
-  
-  const handleTempSave = (type) => {
-    if(type) {
-      handleRoutineResponse();
-    }else{
-      // closeAlert();
-      setIsSave(true);
-    }
-  };
-
 
   const closeAlert = () => {
     alertRef.current.style.display = "none";
     setUnfinished([]);
     setIsUpdate(false);
+    if(checkedRef.current) checkedRef.current.checked = false;
   }
 
 
@@ -521,8 +530,6 @@ const RoutineMain = () => {
 
   // 루틴 운동 등록
   const handleButton = () => {
-
-
     if(routineData.routines.length > 0){
       setPendingNav(true); // 상태 반영 후 이동 예약
     }else{
@@ -533,6 +540,25 @@ const RoutineMain = () => {
   const handleAddWorkOut = () => {
     nav("/routine/add?prev=/routine/detail/" + routine_list_idx);
   }
+
+  const handleChkRef = (e) => {
+    checkedRef.current = e.target;
+    const chk = e.target.checked;
+    if( chk) {
+      console.log("루틴_${routineData.saveDate.slice(0, 10)}: ", `루틴_${routineData.saveDate.slice(0, 10)}`);
+      setRoutineData(prev => ({
+        ...prev,
+        routine_name: `루틴_${routineData.saveDate.slice(0, 10)}`,
+      }));
+    }else{
+      setRoutineData(prev => ({
+        ...prev,
+        routine_name: '',
+      }));
+    }
+  }
+
+
   
   return (
     <>
@@ -576,31 +602,6 @@ const RoutineMain = () => {
             </ButtonGroup>
           </AlertDiv>
         :
-          // !isSave && 
-          // tempData.find(item => item.saveDate === routineData.saveDate)?.save !== true &&
-          // routine_list_idx !== undefined &&
-          // routine_list_idx !== null &&
-          // routine_list_idx === 'custom' ?
-          // <AlertDiv>
-          //   <H4>루틴에 등록하시겠습니까?</H4>
-          //   <RoutineNameInput
-          //     placeholder="루틴 이름을 입력하세요"
-          //     type="text"
-          //     value={routineData.routine_name}
-          //     onChange={e => {
-          //       const value = e.target.value;
-          //       setRoutineData(prev => ({
-          //         ...prev,
-          //         routine_name: value
-          //       }));
-          //     }}
-          //   />
-          //   <ButtonGroup>
-          //     <button onClick={() => handleTempSave(true)}>등록</button>
-          //     <button onClick={() => handleTempSave(false)}>취소</button>
-          //   </ButtonGroup>
-          // </AlertDiv>
-          // :
           <AlertDiv>
             <WarrningText>
               {
@@ -622,6 +623,13 @@ const RoutineMain = () => {
               <button onClick={() => handleRecordData(true)}>예</button>
               <button onClick={() => handleRecordData(false)}>아니오</button>
             </ButtonGroup>
+            {
+              routine_list_idx === 'custom' && !routineData.routine_list_idx ?
+                <ChkBox>
+                  <CheckInput type='checkbox' id="chkUpdate" onChange={handleChkRef} ref={checkedRef} /><ChecklabelText htmlFor="chkUpdate"><p>루틴에 등록하기</p></ChecklabelText>
+                </ChkBox>
+              :<></>
+            }
           </AlertDiv>
         }
       </AlertBg>

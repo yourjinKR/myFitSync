@@ -345,7 +345,6 @@ const RoutineDetail = () => {
   // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
   const omitCheckedAndSaveDate = (obj) => {
     if (!obj || !obj.routines) {
-      console.log("⚠️ omitCheckedAndSaveDate: 객체가 null/undefined 또는 routines가 없음", obj);
       return obj;
     }
     
@@ -375,30 +374,25 @@ const RoutineDetail = () => {
   // useEffect - data
   useEffect(() => {
     if (data === null || init === undefined) {
-      console.log("⚠️ data 또는 init이 null/undefined:", { data, init });
       return;
     }
     
     // 비교 전 데이터 구조 확인
     const omitData = omitCheckedAndSaveDate(data);
-    console.log("🚀 omitData:", omitData);
-    console.log("🚀 omitData JSON:", JSON.stringify(omitData));
-    
     const omitInit = omitCheckedAndSaveDate(init);
-    console.log("🚀 omitInit:", omitInit);
-    console.log("🚀 omitInit JSON:", JSON.stringify(omitInit));
-    
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
-    console.log("🚀 isEqual:", isEqual);
-    console.log("🚀 JSON 비교:");
-    console.log("  data JSON length:", JSON.stringify(omitData)?.length);
-    console.log("  init JSON length:", JSON.stringify(omitInit)?.length);
-    console.log("====================================================================");
     
-    setNewData({
-      ...data,
-      update: routine_list_idx === 'custom' || !isEqual,
-    });
+    if(routine_list_idx !== 'custom'){
+      setNewData({
+        ...data,
+        update: !isEqual,
+      });
+    }else{
+      setNewData({
+        ...data,
+        update: false,
+      });
+    };
 
     setRoutineData(data);
 
