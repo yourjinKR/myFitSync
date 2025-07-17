@@ -7,14 +7,16 @@ import java.net.http.HttpResponse;
 import java.util.*;
 
 import org.fitsync.domain.PaymentMethodVO;
+import org.fitsync.domain.PaymentOrderVO;
 import org.fitsync.mapper.PaymentMethodMapper;
+import org.fitsync.mapper.PaymentOrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
@@ -43,6 +45,9 @@ public class PaymentServiceImple implements PaymentService {
 
 	@Autowired
 	private PaymentMethodMapper paymentMethodMapper;
+	
+	@Autowired
+	private PaymentOrderMapper paymentOrderMapper;
 	
 	// 결제수단 등록 (카드 정보 포함)
 	@Override
@@ -194,54 +199,145 @@ public class PaymentServiceImple implements PaymentService {
 	
 	// 빌링키로 결제 (api key, payment id, billing key == method key, channel key, ordername, amount, currency 
 	@Override
-	public Object payBillingKey(String paymentId, int methodIdx) {
+	@Transactional
+	public Object payBillingKey(String paymentId, int methodIdx, int memberIdx) {
+	    PaymentOrderVO order = null;
+	    
 	    try {
+	        // 1. 결제수단 정보 조회
 			PaymentMethodVO method = paymentMethodMapper.selectByMethodIdx(methodIdx);
+			if (method == null) {
+			    log.error("결제수단을 찾을 수 없습니다. methodIdx: " + methodIdx);
+			    Map<String, Object> errorResult = new HashMap<>();
+			    errorResult.put("success", false);
+			    errorResult.put("message", "결제수단을 찾을 수 없습니다.");
+			    return errorResult;
+			}
+			
 			String billingKey = method.getMethod_key();
 			String channelKey = getChannelKey(method.getMethod_provider());
+			
+			log.info("결제 시작 - PaymentId: " + paymentId + ", BillingKey: " + billingKey + ", ChannelKey: " + channelKey);
 
+			// 2. 결제 주문 정보 사전 저장 (READY 상태)
+			order = new PaymentOrderVO();
+			order.setMember_idx(memberIdx);
+			order.setMethod_idx(methodIdx);
+			order.setPayment_id(paymentId);
+			order.setOrder_type("DIRECT");
+			order.setOrder_status("READY");
+			order.setOrder_name("1개월 구독권");
+			order.setOrder_price(3000);
+			order.setOrder_currency("KRW");
+			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
+			
+			try {
+			    paymentOrderMapper.insertPaymentOrder(order);
+			    log.info("결제 주문 정보 저장 완료 - PaymentId: " + paymentId);
+			} catch (Exception dbEx) {
+			    log.error("결제 주문 정보 저장 실패: ", dbEx);
+			    Map<String, Object> errorResult = new HashMap<>();
+			    errorResult.put("success", false);
+			    errorResult.put("message", "결제 주문 정보 저장 실패: " + dbEx.getMessage());
+			    return errorResult;
+			}
+
+			// 3. PortOne API 호출
 	    	HttpRequest request = HttpRequest.newBuilder()
 	    		    .uri(URI.create("https://api.portone.io/payments/"+ paymentId +"/billing-key"))
 	    		    .header("Content-Type", "application/json")
 	    		    .header("Authorization", "PortOne " + apiSecretKey)
-	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync 구독\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
+	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"1" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync 구독\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
 	    		    .build();
-	    		HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 	    		
-	    		// 응답 로깅
-	    		System.out.println("Status Code: " + response.statusCode());
-	    		System.out.println("Response Body: " + response.body());
+	    	HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 	    		
-	    		// JSON 응답을 Map으로 파싱하여 반환
-	    		try {
-	    			ObjectMapper objectMapper = new ObjectMapper();
-	    			Object responseData = objectMapper.readValue(response.body(), Object.class);
+	    	// 응답 로깅
+	    	log.info("PortOne API Status Code: " + response.statusCode());
+	    	log.info("PortOne API Response Body: " + response.body());
+	    		
+	    	// 4. 응답 처리 및 주문 상태 업데이트
+	    	boolean isSuccess = response.statusCode() >= 200 && response.statusCode() < 300;
+	    	String orderStatus = isSuccess ? "PAID" : "FAILED";
+	    	
+	    	// 주문 상태 업데이트
+	    	order.setOrder_status(orderStatus);
+	    	if (isSuccess) {
+	    	    order.setOrder_paydate(new java.sql.Date(System.currentTimeMillis()));
+	    	}
+	    	
+	    	try {
+	    	    paymentOrderMapper.updatePaymentStatus(order);
+	    	    log.info("결제 상태 업데이트 완료 - PaymentId: " + paymentId + ", Status: " + orderStatus);
+	    	} catch (Exception updateEx) {
+	    	    log.error("결제 상태 업데이트 실패: ", updateEx);
+	    	    // 결제는 성공했지만 상태 업데이트 실패한 경우 별도 처리 필요
+	    	}
+	    		
+	    	// 5. JSON 응답 파싱 및 결과 반환
+	    	try {
+	    		ObjectMapper objectMapper = new ObjectMapper();
+	    		Object responseData = objectMapper.readValue(response.body(), Object.class);
 	    			
-	    			// 성공/실패 상태와 함께 응답 데이터 반환
-	    			Map<String, Object> result = new HashMap<>();
-	    			result.put("statusCode", response.statusCode());
-	    			result.put("success", response.statusCode() >= 200 && response.statusCode() < 300);
-	    			result.put("data", responseData);
-	    			result.put("message", response.statusCode() >= 200 && response.statusCode() < 300 ? "Payment successful" : "Payment failed");
+	    		Map<String, Object> result = new HashMap<>();
+	    		result.put("statusCode", response.statusCode());
+	    		result.put("success", isSuccess);
+	    		result.put("data", responseData);
+	    		result.put("message", isSuccess ? "Payment successful" : "Payment failed");
+	    		result.put("paymentId", paymentId);
+	    		result.put("orderStatus", orderStatus);
 	    			
-	    			return result;
-	    		} catch (Exception jsonEx) {
-	    			// JSON 파싱 실패 시 원본 응답 반환
-	    			Map<String, Object> result = new HashMap<>();
-	    			result.put("statusCode", response.statusCode());
-	    			result.put("success", false);
-	    			result.put("data", response.body());
-	    			result.put("message", "Failed to parse response");
-	    			return result;
-	    		}
+	    		return result;
+	    		
+	    	} catch (Exception jsonEx) {
+	    		log.error("JSON 파싱 실패: ", jsonEx);
+	    		Map<String, Object> result = new HashMap<>();
+	    		result.put("statusCode", response.statusCode());
+	    		result.put("success", false);
+	    		result.put("data", response.body());
+	    		result.put("message", "Failed to parse response");
+	    		result.put("paymentId", paymentId);
+	    		return result;
+	    	}
 	    		
 	    } catch (IOException | InterruptedException e) {
-	        e.printStackTrace();
-	        // 예외 발생 시 에러 정보 반환
+	        log.error("PortOne API 호출 실패: ", e);
+	        
+	        // API 호출 실패 시 주문 상태를 FAILED로 업데이트
+	        if (order != null) {
+	            try {
+	                order.setOrder_status("FAILED");
+	                paymentOrderMapper.updatePaymentStatus(order);
+	                log.info("API 실패로 인한 주문 상태 업데이트 완료 - PaymentId: " + paymentId);
+	            } catch (Exception updateEx) {
+	                log.error("API 실패 후 주문 상태 업데이트 실패: ", updateEx);
+	            }
+	        }
+	        
 	        Map<String, Object> errorResult = new HashMap<>();
 	        errorResult.put("success", false);
 	        errorResult.put("message", "Request failed: " + e.getMessage());
 	        errorResult.put("error", e.getClass().getSimpleName());
+	        errorResult.put("paymentId", paymentId);
+	        return errorResult;
+	    } catch (Exception e) {
+	        log.error("예상치 못한 오류 발생: ", e);
+	        
+	        // 예상치 못한 오류 시 주문 상태를 FAILED로 업데이트
+	        if (order != null) {
+	            try {
+	                order.setOrder_status("FAILED");
+	                paymentOrderMapper.updatePaymentStatus(order);
+	            } catch (Exception updateEx) {
+	                log.error("예외 발생 후 주문 상태 업데이트 실패: ", updateEx);
+	            }
+	        }
+	        
+	        Map<String, Object> errorResult = new HashMap<>();
+	        errorResult.put("success", false);
+	        errorResult.put("message", "Unexpected error: " + e.getMessage());
+	        errorResult.put("error", e.getClass().getSimpleName());
+	        errorResult.put("paymentId", paymentId);
 	        return errorResult;
 	    }
 	}

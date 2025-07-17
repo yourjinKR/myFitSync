@@ -157,7 +157,7 @@ public class PaymentController {
         log.info(payment_id + ", " + method_idx);
     	
     	try {
-    		Object result = payService.payBillingKey(payment_id, Integer.parseInt(method_idx));
+    		Object result = payService.payBillingKey(payment_id, Integer.parseInt(method_idx), (int)session_member_idx);
     		log.info("Payment result: " + result);
     		
     		// 결과가 Map이고 success 필드를 체크
