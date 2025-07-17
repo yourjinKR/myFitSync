@@ -8,6 +8,7 @@ import java.util.*;
 
 import org.fitsync.domain.PaymentMethodVO;
 import org.fitsync.domain.PaymentOrderVO;
+import org.fitsync.domain.PaymentOrderWithMethodVO;
 import org.fitsync.mapper.PaymentMethodMapper;
 import org.fitsync.mapper.PaymentOrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -560,6 +561,36 @@ public class PaymentServiceImple implements PaymentService {
 		} catch (Exception e) {
 			log.error("결제 기록 조회 중 오류 발생 - memberIdx: " + memberIdx, e);
 			throw new RuntimeException("결제 기록 조회 실패: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * 사용자별 결제 기록 조회 (결제 수단 정보 포함)
+	 * @param memberIdx 회원 인덱스
+	 * @return 결제 기록 리스트 (최신순, 결제 수단 정보 포함)
+	 */
+	@Override
+	public List<PaymentOrderWithMethodVO> getPaymentHistoryWithMethod(int memberIdx) {
+		try {
+			log.info("결제 기록 조회 시작 (JOIN) - memberIdx: " + memberIdx);
+			
+			List<PaymentOrderWithMethodVO> paymentHistory = paymentOrderMapper.selectPaymentOrdersByMemberWithMethod(memberIdx);
+			
+			log.info("결제 기록 조회 완료 (JOIN) - memberIdx: " + memberIdx + ", 건수: " + paymentHistory.size());
+			
+			// 로깅으로 데이터 확인
+			for (PaymentOrderWithMethodVO order : paymentHistory) {
+				log.info("주문정보: " + order.getOrder_name() + 
+						", 결제수단: " + order.getDisplayMethodName() + 
+						", 카드: " + order.getCardDisplayInfo() +
+						", 상태: " + order.getStatusDisplayName());
+			}
+			
+			return paymentHistory;
+			
+		} catch (Exception e) {
+			log.error("결제 기록 조회 실패 (JOIN) - memberIdx: " + memberIdx, e);
+			throw new RuntimeException("결제 기록 조회 중 오류가 발생했습니다.", e);
 		}
 	}
 

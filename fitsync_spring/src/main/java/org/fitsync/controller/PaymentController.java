@@ -7,7 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.PaymentMethodVO;
-import org.fitsync.domain.PaymentOrderVO;
+import org.fitsync.domain.PaymentOrderWithMethodVO;
 import org.fitsync.service.PaymentServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -415,7 +415,7 @@ public class PaymentController {
         }
         
         try {
-            List<PaymentOrderVO> paymentHistory = payService.getPaymentHistory((int) memberIdx);
+            List<PaymentOrderWithMethodVO> paymentHistory = payService.getPaymentHistoryWithMethod((int) memberIdx);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

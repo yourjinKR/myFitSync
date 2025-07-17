@@ -33,21 +33,31 @@ const PaymentCard = styled.div`
 const PaymentHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 500px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
 `;
 
 const PaymentTitle = styled.h3`
   font-size: 1.8rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
 `;
 
-const PaymentId = styled.p`
-  font-size: 1.3rem;
-  color: var(--text-secondary);
-  font-family: 'Courier New', monospace;
+const PriceDisplay = styled.div`
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  
+  @media (max-width: 500px) {
+    font-size: 1.8rem;
+  }
 `;
 
 const StatusBadge = styled.span`
@@ -87,12 +97,12 @@ const StatusBadge = styled.span`
 const PaymentDetails = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 1.5rem;
   
-  @media (max-width: 500px) {
+  @media (max-width: 400px) {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.2rem;
   }
 `;
 
@@ -267,6 +277,36 @@ const PaymentHistory = () => {
     }
   };
 
+  const getDisplayMethodName = (payment) => {
+    if (payment.method_name && 
+        payment.method_name !== '카카오페이' && 
+        payment.method_name !== '토스페이먼츠') {
+      return payment.method_name;
+    }
+    
+    switch (payment.method_provider) {
+      case 'KAKAOPAY': return '카카오페이';
+      case 'TOSSPAYMENTS': return '토스페이먼츠';
+      default: return '기타 결제수단';
+    }
+  };
+
+  const getCardDisplayInfo = (payment) => {
+    if (!payment.method_card_num || payment.method_card_num.length < 4) {
+      return '****-****-****-****';
+    }
+    
+    const cardName = payment.method_card && 
+                    !payment.method_card.includes('실패') && 
+                    !payment.method_card.includes('알 수 없는') 
+                    ? payment.method_card : '카드';
+    
+    const last4 = payment.method_card_num.substring(payment.method_card_num.length - 4);
+    const maskedNumber = '****-****-****-' + last4;
+    
+    return `${cardName} ${maskedNumber}`;
+  };
+
   if (loading) {
     return (
       <PaymentHistoryContainer>
@@ -316,7 +356,9 @@ const PaymentHistory = () => {
             <PaymentHeader>
               <div>
                 <PaymentTitle>{payment.order_name}</PaymentTitle>
-                <PaymentId>#{payment.payment_id}</PaymentId>
+                <PriceDisplay>
+                  {formatPrice(payment.order_price)}원
+                </PriceDisplay>
               </div>
               <StatusBadge status={payment.order_status}>
                 {getStatusText(payment.order_status)}
@@ -325,25 +367,15 @@ const PaymentHistory = () => {
             
             <PaymentDetails>
               <DetailItem>
-                <DetailLabel>결제 금액</DetailLabel>
-                <DetailValue className="price">
-                  {formatPrice(payment.order_price)}원
+                <DetailLabel>결제수단</DetailLabel>
+                <DetailValue>
+                  {payment.displayMethodName || getDisplayMethodName(payment)}
                 </DetailValue>
               </DetailItem>
               
               <DetailItem>
-                <DetailLabel>결제 방식</DetailLabel>
-                <DetailValue>{payment.order_type}</DetailValue>
-              </DetailItem>
-              
-              <DetailItem>
-                <DetailLabel>통화</DetailLabel>
-                <DetailValue>{payment.order_currency}</DetailValue>
-              </DetailItem>
-              
-              <DetailItem>
-                <DetailLabel>주문 번호</DetailLabel>
-                <DetailValue>{payment.order_idx}</DetailValue>
+                <DetailLabel>카드정보</DetailLabel>
+                <DetailValue>{payment.cardDisplayInfo || getCardDisplayInfo(payment)}</DetailValue>
               </DetailItem>
             </PaymentDetails>
             
@@ -353,10 +385,12 @@ const PaymentHistory = () => {
                 <DateValue>{formatDate(payment.order_regdate)}</DateValue>
               </DateItem>
               
-              <DateItem>
-                <DateLabel>결제일</DateLabel>
-                <DateValue>{formatDate(payment.order_paydate)}</DateValue>
-              </DateItem>
+              {payment.order_paydate && (
+                <DateItem>
+                  <DateLabel>결제일</DateLabel>
+                  <DateValue>{formatDate(payment.order_paydate)}</DateValue>
+                </DateItem>
+              )}
             </DateInfo>
           </PaymentCard>
         ))}

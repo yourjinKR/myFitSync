@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.fitsync.domain.PaymentMethodVO;
 import org.fitsync.domain.PaymentOrderVO;
+import org.fitsync.domain.PaymentOrderWithMethodVO;
 
 import io.jsonwebtoken.io.IOException;
 
@@ -31,6 +32,9 @@ public interface PaymentService {
 	// 중복 처리 후 결제수단 저장 (기존 삭제 후 새로 등록)
 	public Map<String, Object> saveBillingKeyWithDuplicateHandling(PaymentMethodVO vo, boolean replaceExisting);
 	
-	// 사용자별 결제 기록 조회
+	// 사용자별 결제 기록 조회 (기존)
 	public List<PaymentOrderVO> getPaymentHistory(int memberIdx);
+	
+	// 사용자별 결제 기록 조회 (결제 수단 정보 포함)
+	public List<PaymentOrderWithMethodVO> getPaymentHistoryWithMethod(int memberIdx);
 }
