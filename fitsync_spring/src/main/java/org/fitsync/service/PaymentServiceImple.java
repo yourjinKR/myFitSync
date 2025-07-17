@@ -247,7 +247,7 @@ public class PaymentServiceImple implements PaymentService {
 	    		    .uri(URI.create("https://api.portone.io/payments/"+ paymentId +"/billing-key"))
 	    		    .header("Content-Type", "application/json")
 	    		    .header("Authorization", "PortOne " + apiSecretKey)
-	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"1" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync 구독\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
+	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync 구독\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
 	    		    .build();
 	    		
 	    	HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
