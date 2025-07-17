@@ -438,29 +438,39 @@ const RoutineDetail = () => {
         data.routines.forEach(routine => {
           const checkedSets = routine.sets.filter(set => set.checked === true);
           if (checkedSets.length > 0) {
-            // const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
-            // const diffDate = getTimeDifference(findData.saveDate);
-        
+            
+            const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
+            let diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
             if(data.saveDate === null || data.saveDate === undefined || data.saveDate === "") {
-              setData(prev => ({
-                ...prev,
-                saveDate : formatDate(),
-              }));
+              const target = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
+              if(diffDate > 0 || target === undefined) {
+                setData(prev => ({
+                  ...prev,
+                  saveDate : formatDate(),
+                }));
+                return;
+              }else{
+                setData(prev => ({
+                  ...prev,
+                  saveDate : findData.saveDate,
+                }));
+                return;
+              }
             }
             
-            
-            setTempData(prev => {
-              const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
-              
-              // if (diffDate.days > 0 || existingIndex !== -1) {
-              if (existingIndex !== -1) {
-                return prev.map((item, index) =>
-                  index === existingIndex ? data : item
-                );
-              } else {
-                return [...prev, data];
-              }
-            });
+            if(tempData !== null ){
+              setTempData(prev => {
+                const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
+                
+                if (diffDate < 1 && existingIndex !== -1) {
+                  return prev.map((item, index) =>
+                    index === existingIndex ? data : item
+                  );
+                } else {
+                  return [...prev, data];
+                }
+              });
+            }
           }
         });
       }
