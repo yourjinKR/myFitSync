@@ -67,14 +67,7 @@ const RoutineView = () => {
   return (
     <RoutineWrapper>
       <button onClick={() => handleAddRoutine("custom")}>빠른 기록&emsp;+ </button>
-      <>
-        <div className='section-top'>
-          <h3>내 루틴</h3>
-          <button onClick={handleAddRoutine}><AddIcon/></button>
-        </div>
-        <RoutineList />
-      </>
-
+      {/* 최대 두개 노출 이후 더보기 */}
       {tempData.length > 0 ?
         <>
           <div className='section-top'>
@@ -87,7 +80,17 @@ const RoutineView = () => {
               ))
             }
           </TempDataWrapper>
-        </> : <></>}
+        </> : <></>
+      }
+
+      <>
+        <div className='section-top'>
+          <h3>내 루틴</h3>
+          <button onClick={handleAddRoutine}><AddIcon/></button>
+        </div>
+        <RoutineList />
+      </>
+
     </RoutineWrapper>
   );
 };

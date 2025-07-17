@@ -10,7 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
 import dateFormat from '../../utils/dateFormat';
-const { formatDate } = dateFormat;
+const { formatDate, getTimeDifference } = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
   padding: 20px;
@@ -326,13 +326,12 @@ const TimerCTA = styled.button`
 
 
 const RoutineDetail = () => {
-  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, handleUpdateData, tempData, setTempData } = useOutletContext();
+  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
 
   const [time, setTime] = useState({
     minutes: 0,
     seconds: 0,
   });
-  const [init, setInit] = useState(null);
   const [data, setData] = useState(init);
   const [isLoading, setIsLoading] = useState(true);
   const [isTimerShow, setIsTimerShow] = useState(false);
@@ -355,13 +354,28 @@ const RoutineDetail = () => {
     };
   };
 
+  // checked 필드와 saveDate를 제거한 새로운 객체 반환 (비교용)
+  const omitCheckedAndSaveDate = (obj) => {
+    if (!obj || !obj.routines) return obj;
+    
+    const { saveDate, checked, ...cleanObj } = obj;
+    
+    return {
+      ...cleanObj,
+      routines: obj.routines.map(routine => ({
+        ...routine,
+        sets: routine.sets.map(({ checked, ...setRest }) => setRest)
+      }))
+    };
+  };
+
+
   // useEffect - data
   useEffect(() => {
     if (data === null) return;
-
     setNewData({
       ...data,
-      update: routine_list_idx === 'custom' || JSON.stringify(omitChecked(data)) !== JSON.stringify(omitChecked(init)),
+      update: routine_list_idx === 'custom' || JSON.stringify(omitCheckedAndSaveDate(data)) !== JSON.stringify(omitCheckedAndSaveDate(init)),
     });
 
     setRoutineData(data);
@@ -388,17 +402,19 @@ const RoutineDetail = () => {
 
       // routine_name이 있고 routines가 있을 때만 저장
       if (data.routines.length !== 0 && data.saveDate !== null && data.saveDate !== "") {
-        setTempData(prev => {
-          const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
-
-          if (existingIndex !== -1) {
-            return prev.map((item, index) =>
-              index === existingIndex ? data : item
-            );
-          } else {
-            return [...prev, data];
-          }
-        });
+        if(data.routine_name === null || data.routine_name === undefined || data.routine_name === "") {
+          setTempData(prev => {
+            const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
+  
+            if (existingIndex !== -1) {
+              return prev.map((item, index) =>
+                index === existingIndex ? data : item
+              );
+            } else {
+              return [...prev, data];
+            }
+          });
+        }
       }
     } else {
       // 일반 루틴에서 체크된 세트 확인
@@ -406,6 +422,9 @@ const RoutineDetail = () => {
         data.routines.forEach(routine => {
           const checkedSets = routine.sets.filter(set => set.checked === true);
           if (checkedSets.length > 0) {
+            // const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
+            // const diffDate = getTimeDifference(findData.saveDate);
+        
             if(data.saveDate === null || data.saveDate === undefined || data.saveDate === "") {
               setData(prev => ({
                 ...prev,
@@ -413,9 +432,11 @@ const RoutineDetail = () => {
               }));
             }
             
+            
             setTempData(prev => {
               const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
-
+              
+              // if (diffDate.days > 0 || existingIndex !== -1) {
               if (existingIndex !== -1) {
                 return prev.map((item, index) =>
                   index === existingIndex ? data : item
@@ -429,10 +450,11 @@ const RoutineDetail = () => {
       }
     }
   }, [data]);
-
+  
   // 데이터 로드 시 고유 ID 생성
   useEffect(() => {
     if (routineData === null) return;
+    
     if (routine_list_idx !== 'custom' && JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))) {
       const handleRoutineData = async () => {
         try {
@@ -486,6 +508,7 @@ const RoutineDetail = () => {
           : r
       )
     }));
+    
   };
 
   // 세트 삭제 - setId 대신 setIndex 사용
@@ -702,7 +725,7 @@ const RoutineDetail = () => {
                             value={set.set_volume || ''}
                             placeholder="0"
                             onChange={e =>
-                              handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value)
+                              handleSetValueChange(routine.pt.idx, index, 'set_volume', e.target.value)
                             }
                           />
                         </div>
@@ -712,7 +735,7 @@ const RoutineDetail = () => {
                             value={set.set_count || ''}
                             placeholder="0"
                             onChange={e =>
-                              handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value)
+                              handleSetValueChange(routine.pt.idx, index, 'set_count', e.target.value)
                             }
                           />
                         </div>

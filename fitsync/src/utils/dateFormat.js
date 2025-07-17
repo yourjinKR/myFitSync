@@ -22,6 +22,7 @@ function getTimeDifference(targetDate) {
   
   const now = new Date();
   const target = new Date(targetDate);
+  console.log("🚀  :  getTimeDifference  :  target:", target)
   
   const diffTime = Math.abs(now - target);
   
