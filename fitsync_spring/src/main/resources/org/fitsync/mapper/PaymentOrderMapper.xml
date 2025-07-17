@@ -40,7 +40,7 @@
         SELECT *
         FROM payment_order
         WHERE member_idx = #{member_idx}
-        ORDER BY order_regdate DESC
+        ORDER BY order_idx DESC
     </select>
 
 </mapper>

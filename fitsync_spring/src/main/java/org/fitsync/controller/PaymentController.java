@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.PaymentMethodVO;
+import org.fitsync.domain.PaymentOrderVO;
 import org.fitsync.service.PaymentServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.io.IOException;
-import io.portone.sdk.server.common.Country.Pa;
-import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
@@ -395,6 +394,43 @@ public class PaymentController {
             return ResponseEntity.status(500).body(Map.of(
                 "success", false, 
                 "message", "결제수단 저장 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 사용자별 결제 기록 조회 API
+     * - 역할: 세션 확인, 서비스 호출, 응답 형식 통일
+     */
+    @GetMapping("/history")
+    public ResponseEntity<?> getPaymentHistory(HttpSession session) {
+        Object memberIdx = session.getAttribute("member_idx");
+        if (memberIdx == null) {
+            log.error("세션에 member_idx가 없습니다.");
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false, 
+                "message", "사용자 인증이 필요합니다.",
+                "errorCode", "AUTHENTICATION_REQUIRED"
+            ));
+        }
+        
+        try {
+            List<PaymentOrderVO> paymentHistory = payService.getPaymentHistory((int) memberIdx);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "결제 기록 조회 성공",
+                "data", paymentHistory,
+                "totalCount", paymentHistory.size()
+            ));
+            
+        } catch (Exception e) {
+            log.error("결제 기록 조회 중 오류 발생: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "결제 기록 조회 중 오류가 발생했습니다.",
+                "error", e.getClass().getSimpleName(),
+                "errorCode", "PAYMENT_HISTORY_FETCH_FAILED"
             ));
         }
     }

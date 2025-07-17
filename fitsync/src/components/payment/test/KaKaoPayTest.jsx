@@ -30,6 +30,7 @@ const KaKaoPayTest = () => {
 
             const response = await axios.post('/payment/bill/pay', {
                 payment_id,
+                method_idx: "1"  // 실제 결제수단 ID로 변경 필요
             });
             
             console.log("빌링키 결제 응답 상태:", response.status);
@@ -126,16 +127,34 @@ const KaKaoPayTest = () => {
         }
     }
 
+    /** 결제 내역 조회 함수 */
+    const handleGetPaymentHistory = async () => {
+        try {
+            const response = await PaymentUtil.getPaymentHistory();
+            
+            if (response.success) {
+                const history = response.data;
+                console.log("📋 결제 내역:", history);
+                console.log(`📊 총 ${response.totalCount}건의 결제 기록이 있습니다.`);
+
+            } else {
+                alert(`조회 실패: ${response.message}`);
+            }
+        } catch (error) {
+            console.error("결제 내역 조회 중 오류:", error);
+            alert(`오류: ${error.message}`);
+        }
+    }
+
 
     return (
         <div>
-            
-
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 31})}>내 빌링키 정보 조회</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 31})}>빌링키 결제</ButtonSubmit>
+            <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 1})}>내 빌링키 정보 조회</ButtonSubmit>
+            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 1})}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
+            <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회</ButtonSubmit>
         </div>
     );
 };

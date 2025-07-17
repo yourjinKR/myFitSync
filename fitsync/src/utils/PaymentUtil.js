@@ -166,28 +166,6 @@ export const PaymentUtil = {
         }
     },
 
-    /** 빌링키 결제 */
-    payBillingKey : async ({ method_idx, method_provider, member_idx }) => {
-        const payment_id = randomId();
-
-        try {
-            const response = await axios.post('/payment/bill/pay', {
-                payment_id,
-                method_idx,
-            }, {
-                withCredentials: true,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log('빌링키 결제 성공:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('빌링키 결제 중 오류:', error);
-            throw error;
-        }
-    },
-
     /** 결제수단 등록 전 중복 체크 */
     checkDuplicatePaymentMethod: async (billingKey) => {
         try {
@@ -233,4 +211,55 @@ export const PaymentUtil = {
         }
     },
 
+    /** 빌링키 결제 */
+    payBillingKey : async ({ method_idx, method_provider, member_idx }) => {
+        const payment_id = randomId();
+
+        try {
+            const response = await axios.post('/payment/bill/pay', {
+                payment_id,
+                method_idx,
+            }, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('빌링키 결제 성공:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('빌링키 결제 중 오류:', error);
+            throw error;
+        }
+    },
+
+    /** 사용자별 결제 내역 조회 */
+    getPaymentHistory: async () => {
+        try {
+            const response = await axios.get('/payment/history', {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('결제 내역 조회 성공:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('결제 내역 조회 중 오류:', error);
+            
+            if (error.response) {
+                console.error('서버 응답 오류:', error.response.data);
+                throw new Error(`서버 오류: ${error.response.data?.message || error.response.status}`);
+            } else if (error.request) {
+                console.error('네트워크 오류:', error.request);
+                throw new Error('네트워크 오류가 발생했습니다. 연결을 확인해주세요.');
+            } else {
+                console.error('기타 오류:', error.message);
+                throw new Error(`오류: ${error.message}`);
+            }
+        }
+    }
+    
 }

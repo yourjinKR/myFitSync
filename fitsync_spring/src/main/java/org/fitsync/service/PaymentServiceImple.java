@@ -542,4 +542,25 @@ public class PaymentServiceImple implements PaymentService {
 		return result;
 	}
 
+	/**
+	 * 사용자별 결제 기록 조회
+	 * @param memberIdx 회원 인덱스
+	 * @return 결제 기록 리스트 (최신순)
+	 */
+	@Override
+	public List<PaymentOrderVO> getPaymentHistory(int memberIdx) {
+		try {
+			log.info("결제 기록 조회 시작 - memberIdx: " + memberIdx);
+			
+			List<PaymentOrderVO> paymentHistory = paymentOrderMapper.selectPaymentOrdersByMember(memberIdx);
+			
+			log.info("결제 기록 조회 완료 - memberIdx: " + memberIdx + ", 건수: " + paymentHistory.size());
+			return paymentHistory;
+			
+		} catch (Exception e) {
+			log.error("결제 기록 조회 중 오류 발생 - memberIdx: " + memberIdx, e);
+			throw new RuntimeException("결제 기록 조회 실패: " + e.getMessage(), e);
+		}
+	}
+
 }
