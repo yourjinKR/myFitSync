@@ -456,7 +456,33 @@ public class PaymentServiceImple implements PaymentService {
 				.method("POST", HttpRequest.BodyPublishers.ofString("{\"payment\":{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"1개월 구독권\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"},\"timeToPay\":\"" + timeToPay + "\"}"))
 				.build();
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-			System.out.println(response.body());
+			
+			log.info("결제 예약 API 응답 - Status: " + response.statusCode());
+			log.info("결제 예약 API 응답 - Body: " + response.body());
+
+			// schedule_id 추출
+			String scheduleId = null;
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				try {
+					ObjectMapper objectMapper = new ObjectMapper();
+					@SuppressWarnings("unchecked")
+					Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+					
+					// schedule 객체에서 id 추출
+					@SuppressWarnings("unchecked")
+					Map<String, Object> schedule = (Map<String, Object>) responseData.get("schedule");
+					if (schedule != null) {
+						scheduleId = (String) schedule.get("id");
+						log.info("추출된 schedule_id: " + scheduleId);
+					} else {
+						log.warn("응답에서 schedule 객체를 찾을 수 없습니다.");
+					}
+				} catch (Exception parseEx) {
+					log.error("응답 파싱 중 오류 발생: ", parseEx);
+				}
+			} else {
+				log.error("결제 예약 API 호출 실패 - Status: " + response.statusCode());
+			}
 
 			// 결제 내역에 저장
 			PaymentOrderVO order = new PaymentOrderVO();
@@ -470,11 +496,19 @@ public class PaymentServiceImple implements PaymentService {
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
 			
+			// 추출된 schedule_id 설정
+			if (scheduleId != null) {
+				order.setSchedule_id(scheduleId);
+				log.info("schedule_id 설정 완료: " + scheduleId);
+			} else {
+				log.warn("schedule_id가 null입니다. 기본값으로 설정하지 않음.");
+			}
+			
 			// LocalDateTime을 java.sql.Timestamp로 안전하게 변환
 			java.sql.Timestamp scheduleTimestamp = java.sql.Timestamp.valueOf(scheduleTime);
 			order.setSchedule_date(scheduleTimestamp);
 			
-			log.info("결제 예약 정보 저장 - PaymentId: " + paymentId + ", ScheduleTime: " + scheduleTimestamp);
+			log.info("결제 예약 정보 저장 - PaymentId: " + paymentId + ", ScheduleTime: " + scheduleTimestamp + ", ScheduleId: " + scheduleId);
 
 			paymentOrderMapper.insertPaymentOrder(order);
 			
