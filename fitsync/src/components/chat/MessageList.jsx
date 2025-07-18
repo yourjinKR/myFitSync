@@ -66,8 +66,14 @@ const UnreadText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
-// 메시지 목록 컴포넌트
-const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
+// onImageLoad 콜백 props 추가
+const MessageList = ({ 
+  messages, 
+  currentMemberIdx, 
+  attachments, 
+  roomData,
+  onImageLoad = null // 이미지 로딩 완료 콜백 추가
+}) => {
   
   // 가장 오래된 읽지 않은 메시지 ID를 고정하여 저장
   const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
@@ -90,7 +96,7 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
     return oldestUnreadMessage.message_idx;
   }, [messages.length]); // messages.length가 변경될 때만 재계산 (새 메시지 추가 시)
 
-  // 🔧 고정된 가장 오래된 읽지 않은 메시지 ID 설정
+  // 고정된 가장 오래된 읽지 않은 메시지 ID 설정
   useEffect(() => {
     if (initialOldestUnreadMessageIdx && fixedOldestUnreadMessageIdx === null) {
       setFixedOldestUnreadMessageIdx(initialOldestUnreadMessageIdx);
@@ -172,6 +178,14 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
     return currentMessage.sender_idx === previousMessage.sender_idx && timeDiff < fiveMinutes;
   };
 
+  // 이미지 로딩 완료 핸들러 - 부모 컴포넌트로 전달
+  const handleImageLoad = (messageIdx) => {
+    console.log('📷 MessageList: 이미지 로딩 완료 콜백 수신:', messageIdx);
+    if (onImageLoad) {
+      onImageLoad(messageIdx);
+    }
+  };
+
   return (
     <Container>
       {messages.map((message, index) => {
@@ -201,6 +215,7 @@ const MessageList = ({ messages, currentMemberIdx, attachments, roomData }) => {
               isCurrentUser={message.sender_idx === currentMemberIdx}
               attachments={attachments[message.message_idx] || null} // 단일 객체 전달
               senderName={isConsecutive ? null : senderName} // 연속 메시지가 아닐 때만 이름 표시
+              onImageLoad={handleImageLoad} // 이미지 로딩 완료 콜백 전달
             />
           </React.Fragment>
         );
