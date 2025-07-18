@@ -443,8 +443,10 @@ public class PaymentServiceImple implements PaymentService {
 		String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
 		String channelKey = getChannelKey(paymentMethodMapper.selectByMethodIdx(methodIdx).getMethod_provider());
 
-		// 사용자가 입력한 날짜/시간을 LocalDateTime으로 변환
+		// 한국 시간대 설정
+		java.time.ZoneId koreaZone = java.time.ZoneId.of("Asia/Seoul");
 		java.time.LocalDateTime scheduleTime;
+		java.time.ZonedDateTime koreaZonedTime;
 		String timeToPay;
 		
 		try {
@@ -457,14 +459,27 @@ public class PaymentServiceImple implements PaymentService {
 				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime.replace(" ", "T"));
 			}
 			
-			// PortOne API 형식으로 변환 (ISO 8601 + 타임존)
-			timeToPay = scheduleTime.toString() + "+09:00";
+			// 입력받은 시간을 한국 시간대의 LocalDateTime으로 해석
+			koreaZonedTime = scheduleTime.atZone(koreaZone);
 			
-			log.info("결제 예약 시간 설정 - 입력: " + scheduleDateTime + ", 변환: " + timeToPay);
+			// PortOne API 형식으로 변환 (ISO 8601 형식)
+			timeToPay = koreaZonedTime.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			
+			log.info("결제 예약 시간 설정 - 입력: " + scheduleDateTime + 
+					", LocalDateTime: " + scheduleTime + 
+					", Korea ZonedDateTime: " + koreaZonedTime + 
+					", API 전송 형식: " + timeToPay);
+			
+			// 현재 한국 시간과 비교하여 유효성 검사
+			java.time.ZonedDateTime nowKorea = java.time.ZonedDateTime.now(koreaZone);
+			if (koreaZonedTime.isBefore(nowKorea) || koreaZonedTime.isEqual(nowKorea)) {
+				log.error("예약 시간이 현재 시간보다 이전입니다 - 현재: " + nowKorea + ", 예약: " + koreaZonedTime);
+				throw new IllegalArgumentException("예약 시간은 현재 시간보다 미래여야 합니다.");
+			}
 			
 		} catch (Exception dateEx) {
 			log.error("날짜 형식 오류 - 입력값: " + scheduleDateTime, dateEx);
-			throw new IllegalArgumentException("잘못된 날짜 형식입니다. 올바른 형식: 'yyyy-MM-dd HH:mm:ss' 또는 'yyyy-MM-ddTHH:mm:ss'");
+			throw new IllegalArgumentException("잘못된 날짜 형식이거나 시간이 유효하지 않습니다. 올바른 형식: 'yyyy-MM-dd HH:mm:ss' 또는 'yyyy-MM-ddTHH:mm:ss'");
 		}
 
 		try {
@@ -521,14 +536,19 @@ public class PaymentServiceImple implements PaymentService {
 				order.setSchedule_id(scheduleId);
 				log.info("schedule_id 설정 완료: " + scheduleId);
 			} else {
+				order.setOrder_status("FAILED");
 				log.warn("schedule_id가 null입니다. 기본값으로 설정하지 않음.");
 			}
 			
-			// LocalDateTime을 java.sql.Timestamp로 안전하게 변환
+			// 한국 시간대의 LocalDateTime을 java.sql.Timestamp로 변환
+			// scheduleTime은 이미 한국 시간대로 해석된 LocalDateTime
 			java.sql.Timestamp scheduleTimestamp = java.sql.Timestamp.valueOf(scheduleTime);
 			order.setSchedule_date(scheduleTimestamp);
 			
-			log.info("결제 예약 정보 저장 - PaymentId: " + paymentId + ", ScheduleTime: " + scheduleTimestamp + ", ScheduleId: " + scheduleId);
+			log.info("결제 예약 정보 저장 - PaymentId: " + paymentId + 
+					", Korea LocalDateTime: " + scheduleTime + 
+					", DB Timestamp: " + scheduleTimestamp + 
+					", ScheduleId: " + scheduleId);
 
 			paymentOrderMapper.insertPaymentOrder(order);
 			
@@ -541,6 +561,8 @@ public class PaymentServiceImple implements PaymentService {
 			result.put("paymentId", paymentId);
 			result.put("scheduleId", scheduleId);
 			result.put("scheduleDateTime", scheduleTime.toString());
+			result.put("koreaZonedDateTime", koreaZonedTime.toString());
+			result.put("apiTimeToPay", timeToPay);
 			result.put("orderIdx", order.getOrder_idx());
 			
 			return result;

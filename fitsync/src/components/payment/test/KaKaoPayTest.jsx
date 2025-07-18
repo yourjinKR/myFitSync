@@ -106,16 +106,26 @@ const KaKaoPayTest = () => {
     /** 빌링키 결제 예약 테스트 (사용자 입력 날짜) */
     const handleScheduleBillingKey = async () => {
         try {
-            // 현재 시간에서 1시간 후로 설정 (테스트용)
-            const scheduleDate = new Date();
-            scheduleDate.setHours(scheduleDate.getHours() + 1);
+            // 현재 한국 시간에서 1시간 후로 설정 (테스트용)
+            const now = new Date();
             
-            // yyyy-MM-dd HH:mm:ss 형식으로 변환
-            const scheduleDateTime = scheduleDate.toISOString()
-                .slice(0, 19) // YYYY-MM-DDTHH:mm:ss
-                .replace('T', ' '); // 공백으로 구분
+            // 한국 시간대로 변환 (UTC+9)
+            const koreaTime = new Date(now.getTime() + (1 * 60 * 60 * 1000));
+            // koreaTime.setHours(koreaTime.getHours() + 1);
             
-            console.log("예약 날짜/시간:", scheduleDateTime);
+            // yyyy-MM-dd HH:mm:ss 형식으로 변환 (한국 시간 기준)
+            const year = koreaTime.getFullYear();
+            const month = String(koreaTime.getMonth() + 1).padStart(2, '0');
+            const day = String(koreaTime.getDate()).padStart(2, '0');
+            const hours = String(koreaTime.getHours()).padStart(2, '0');
+            const minutes = String(koreaTime.getMinutes()).padStart(2, '0');
+            const seconds = String(koreaTime.getSeconds()).padStart(2, '0');
+            
+            const scheduleDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            
+            console.log("현재 로컬 시간:", now);
+            console.log("한국 시간 (+1시간):", koreaTime);
+            console.log("서버 전송 형식:", scheduleDateTime);
             
             const response = await PaymentUtil.scheduleBillingKey({ 
                 method_idx: 32,
@@ -125,7 +135,7 @@ const KaKaoPayTest = () => {
             if (response.success) {
                 console.log("✅ 결제 예약 성공!");
                 console.log("예약 정보:", response.data);
-                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간: ${scheduleDateTime}`);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간 (한국시간): ${scheduleDateTime}`);
             } else {
                 console.log("❌ 결제 예약 실패!");
                 console.log("실패 원인:", response.message);
@@ -155,12 +165,19 @@ const KaKaoPayTest = () => {
         setShowCalendar(false);
         
         try {
-            // yyyy-MM-dd HH:mm:ss 형식으로 변환
-            const scheduleDateTime = selectedDateTime.toISOString()
-                .slice(0, 19) // YYYY-MM-DDTHH:mm:ss
-                .replace('T', ' '); // 공백으로 구분
+            // 선택된 시간을 한국 시간 기준으로 처리
+            // selectedDateTime은 이미 사용자가 의도한 한국 시간
+            const year = selectedDateTime.getFullYear();
+            const month = String(selectedDateTime.getMonth() + 1).padStart(2, '0');
+            const day = String(selectedDateTime.getDate()).padStart(2, '0');
+            const hours = String(selectedDateTime.getHours()).padStart(2, '0');
+            const minutes = String(selectedDateTime.getMinutes()).padStart(2, '0');
+            const seconds = String(selectedDateTime.getSeconds()).padStart(2, '0');
             
-            console.log("달력에서 선택한 예약 날짜/시간:", scheduleDateTime);
+            const scheduleDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            
+            console.log("달력에서 선택한 원본 시간:", selectedDateTime);
+            console.log("한국 시간 기준 서버 전송 형식:", scheduleDateTime);
             
             const response = await PaymentUtil.scheduleBillingKey({ 
                 method_idx: 32,
@@ -170,7 +187,7 @@ const KaKaoPayTest = () => {
             if (response.success) {
                 console.log("✅ 달력 UI 결제 예약 성공!");
                 console.log("예약 정보:", response.data);
-                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간: ${scheduleDateTime}`);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간 (한국시간): ${scheduleDateTime}`);
             } else {
                 console.log("❌ 결제 예약 실패!");
                 console.log("실패 원인:", response.message);

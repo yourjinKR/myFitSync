@@ -235,13 +235,27 @@ const DateTimePicker = ({ onSelect, onCancel, initialDate = null }) => {
         const finalDateTime = new Date(selectedDate);
         finalDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         
-        // 과거 시간 체크
-        if (finalDateTime <= new Date()) {
+        // 현재 한국 시간과 비교
+        const nowKorea = new Date();
+        if (finalDateTime <= nowKorea) {
             alert('현재 시간보다 미래 시간을 선택해주세요.');
             return;
         }
         
-        onSelect(finalDateTime);
+        // 한국 시간대 기준으로 명시적으로 처리
+        // getTimezoneOffset()은 분 단위로 UTC와의 차이를 반환 (한국은 UTC+9이므로 -540)
+        const koreaOffset = -540; // 한국 표준시 UTC+9 (분 단위)
+        const userOffset = finalDateTime.getTimezoneOffset();
+        
+        // 사용자 로컬 시간을 한국 시간으로 조정
+        const adjustedDateTime = new Date(finalDateTime.getTime() + (userOffset - koreaOffset) * 60000);
+        
+        console.log('선택된 로컬 시간:', finalDateTime);
+        console.log('한국 시간으로 조정:', adjustedDateTime);
+        console.log('사용자 시간대 오프셋:', userOffset, '분');
+        console.log('한국 시간대 오프셋:', koreaOffset, '분');
+        
+        onSelect(finalDateTime); // 원본 시간을 전달 (서버에서 한국시간으로 해석)
     };
 
     return (
