@@ -21,25 +21,39 @@ const ModalOverlay = styled.div`
   }
 `;
 
+// 모달 크기 고정: 이미지 크기와 상관없이 일정한 크기 유지
 const ModalContent = styled.div`
   background: var(--bg-secondary);
   border-radius: 12px;
-  max-width: 95vw;
-  max-height: 95vh;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   animation: scaleIn 0.2s ease;
   
+  /* 🎯 고정 크기 설정 - 2번째 이미지 모달 크기와 유사하게 */
+  width: 500px;
+  height: 600px;
+  
   @keyframes scaleIn {
     from { transform: scale(0.9); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
   }
   
+  /* 모바일에서는 약간 작게 조정 */
   @media (max-width: 768px) {
-    max-width: 98vw;
-    max-height: 98vh;
+    width: 90vw;
+    height: 70vh;
+    max-width: 450px;
+    max-height: 550px;
+  }
+  
+  /* 아주 작은 화면에서는 더욱 축소 */
+  @media (max-width: 480px) {
+    width: 95vw;
+    height: 65vh;
+    max-width: 400px;
+    max-height: 500px;
   }
 `;
 
@@ -50,6 +64,7 @@ const ModalHeader = styled.div`
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-tertiary);
+  flex-shrink: 0; /* 헤더가 축소되지 않도록 */
 `;
 
 const ModalTitle = styled.h2`
@@ -57,6 +72,16 @@ const ModalTitle = styled.h2`
   color: var(--text-primary);
   margin: 0;
   font-weight: 600;
+  /* 긴 파일명 처리 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 350px;
+  
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+    max-width: 250px;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -73,6 +98,7 @@ const CloseButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* 버튼이 축소되지 않도록 */
   
   &:hover {
     color: var(--text-primary);
@@ -86,6 +112,7 @@ const CloseButton = styled.button`
   }
 `;
 
+// 이미지 컨테이너 크기 고정 및 중앙 정렬
 const ImageContainer = styled.div`
   flex: 1;
   display: flex;
@@ -94,17 +121,37 @@ const ImageContainer = styled.div`
   overflow: hidden;
   background: #000;
   position: relative;
-  min-height: 300px;
-  max-height: 70vh;
+  
+  /* 🎯 고정 높이 설정하여 일관된 크기 유지 */
+  min-height: 400px;
+  max-height: 400px;
+  
+  @media (max-width: 768px) {
+    min-height: 300px;
+    max-height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    min-height: 250px;
+    max-height: 250px;
+  }
 `;
 
+// 이미지 크기 조정: 컨테이너에 맞게 자동 조정되면서 비율 유지
 const StyledImage = styled.img`
+  /* 🎯 컨테이너 크기에 맞춰 자동 조정, 비율은 유지 */
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* 이미지 비율 유지하면서 컨테이너에 맞춤 */
   user-select: none;
   transform-origin: center;
-  will-change: transform; /* 성능 최적화 */
+  will-change: transform;
+  
+  /* 작은 이미지의 경우 확대하지 않고 원본 크기 유지 */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 `;
 
 const ModalControls = styled.div`
@@ -114,6 +161,7 @@ const ModalControls = styled.div`
   padding: 16px 20px;
   border-top: 1px solid var(--border-light);
   background: var(--bg-tertiary);
+  flex-shrink: 0; /* 컨트롤이 축소되지 않도록 */
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -126,6 +174,10 @@ const ZoomInfo = styled.div`
   font-size: 1.4rem;
   color: var(--text-secondary);
   font-weight: 500;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 const ControlButtons = styled.div`
@@ -228,7 +280,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
       setScale(1);
       setPosition({ x: 0, y: 0 });
       setIsDragging(false);
-      console.log('🖼️ 이미지 모달 열림:', originalFilename);
+      console.log('🖼️ 이미지 모달 열림 (고정 크기):', originalFilename);
     }
   }, [isOpen, originalFilename]);
 
@@ -237,7 +289,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
     e.preventDefault(); // 기본 스크롤 동작 방지
     
     const delta = e.deltaY > 0 ? -0.1 : 0.1; // 휠 방향에 따른 확대/축소 비율
-    const newScale = Math.max(0.05, Math.min(3, scale + delta)); // 최소 5%, 최대 300%로 제한
+    const newScale = Math.max(0.1, Math.min(5, scale + delta)); // 최소 10%, 최대 500%로 제한
     
     setScale(newScale);
     console.log('🔍 확대/축소:', `${Math.round(newScale * 100)}%`);
@@ -256,7 +308,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
         x: e.clientX - position.x,
         y: e.clientY - position.y
       });
-      console.log('🖱️ 드래그 시작');
+      console.log('🖱️ 드래그 시작 (고정 모달)');
     }
   }, [scale, position]);
 
@@ -272,7 +324,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
-      console.log('🖱️ 드래그 종료');
+      console.log('🖱️ 드래그 종료 (고정 모달)');
     }
   }, [isDragging]);
 
@@ -292,7 +344,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
   // 원본 파일명으로 다운로드 기능 (핵심 기능)
   const handleDownload = useCallback(async () => {
     try {
-      console.log('📥 다운로드 시작:', originalFilename);
+      console.log('📥 다운로드 시작 (고정 모달):', originalFilename);
       
       // 1. Cloudinary URL에서 이미지 데이터 가져오기
       const response = await fetch(imageUrl);
@@ -318,7 +370,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       
-      console.log('✅ 이미지 다운로드 완료:', originalFilename);
+      console.log('✅ 이미지 다운로드 완료 (고정 모달):', originalFilename);
     } catch (error) {
       console.error('❌ 이미지 다운로드 실패:', error);
       alert('이미지 다운로드에 실패했습니다.');
@@ -349,7 +401,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
           </CloseButton>
         </ModalHeader>
 
-        {/* 이미지 컨테이너 */}
+        {/* 고정 크기 이미지 컨테이너 */}
         <ImageContainer>
           <StyledImage
             ref={imageRef}
@@ -373,14 +425,14 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
           </ZoomInfo>
           <ControlButtons>
             <ZoomButton 
-              onClick={() => setScale(Math.max(0.05, scale - 0.2))}
-              disabled={scale <= 0.5}
+              onClick={() => setScale(Math.max(0.1, scale - 0.2))}
+              disabled={scale <= 0.2}
               aria-label="축소"
             >
               -
             </ZoomButton>
             <ZoomButton 
-              onClick={() => setScale(Math.min(3, scale + 0.2))}
+              onClick={() => setScale(Math.min(5, scale + 0.2))}
               disabled={scale >= 5}
               aria-label="확대"
             >
