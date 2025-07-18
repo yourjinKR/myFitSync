@@ -22,9 +22,9 @@ import ChatRoom from '../components/chat/ChatRoom';
 import AdminApiContainer from '../components/admin/AdminApiContainer';
 import AdminMain from '../components/admin/AdminMain';
 import RoutineDetail from '../components/routine/RoutineDetail';
-import IsLoading2 from '../components/IsLoading2';
+import BarbellLoading from '../components/BarbellLoading';
 import AiServiceContainer from '../components/ai/AiServiceContainer';
-import IsLoading3 from '../components/IsLoading3';
+import ChatLoading from '../components/ChatLoading';
 import PaymentContainer from '../components/payment/PaymentContainer';
 import PaymentMethodList from '../components/payment/PaymentMethodList';
 import PaymentMethodRegister from '../components/payment/PaymentMethodRegister';
@@ -98,8 +98,8 @@ const Display = () => {
           <Route path='/chat' element={<ChatMain/>}/>
           <Route path='/chat/:roomId' element={<ChatRoom/>}/>
           <Route path='/loading' element={<IsLoading/>}/>
-          <Route path='/loading2' element={<IsLoading2/>}/>
-          <Route path='/loading3' element={<IsLoading3/>}/>
+          <Route path='/BarbellLoading' element={<BarbellLoading/>}/>
+          <Route path='/ChatLoading' element={<ChatLoading/>}/>
           <Route path='/Timer' element={<Timer/>}/>
 
           <Route path='/ai' element={<AiServiceContainer/>}>

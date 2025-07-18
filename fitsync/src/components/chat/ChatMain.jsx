@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ChatApi from '../../utils/ChatApi';
-import IsLoading3 from '../../components/IsLoading3';
+import ChatLoading from '../../components/ChatLoading';
 
 const Container = styled.div`
   padding: 20px;
@@ -386,7 +386,7 @@ const ChatMain = () => {
         <Header>
           <Title>채팅목록</Title>
         </Header>
-        <IsLoading3 />
+        <ChatLoading />
       </Container>
     );
   }

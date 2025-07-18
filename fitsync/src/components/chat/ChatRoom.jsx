@@ -7,7 +7,7 @@ import chatApi from '../../utils/ChatApi';
 import axios from 'axios';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import IsLoading3 from '../../components/IsLoading3';
+import ChatLoading from '../../components/ChatLoading';
 import ChatRoomHeader from './ChatRoomHeader';
 
 const Container = styled.div`
@@ -802,7 +802,7 @@ const ChatRoom = () => {
           onScrollToSearchResult={() => {}}
           messages={[]}
         />
-        <IsLoading3 />
+        <ChatLoading />
       </Container>
     );
   }
