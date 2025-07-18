@@ -580,6 +580,16 @@ public class PaymentServiceImple implements PaymentService {
 			
 			// 로깅으로 데이터 확인
 			for (PaymentOrderWithMethodVO order : paymentHistory) {
+				// 포트원 API에서 주문번호로 결제 단건 조회
+				HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create("https://api.portone.io/payments/" + order.getPayment_id()))
+					.header("Content-Type", "application/json")
+					.header("Authorization", "PortOne " + apiSecretKey)
+					.method("GET", HttpRequest.BodyPublishers.ofString("{}"))
+					.build();
+				HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+				System.out.println(response.body());
+
 				log.info("주문정보: " + order.getOrder_name() + 
 						", 결제수단: " + order.getDisplayMethodName() + 
 						", 카드: " + order.getCardDisplayInfo() +

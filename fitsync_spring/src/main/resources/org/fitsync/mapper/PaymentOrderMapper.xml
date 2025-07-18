@@ -45,35 +45,10 @@
 
     <!-- 특정 회원의 결제 목록 조회 (결제 수단 정보 포함) -->
     <select id="selectPaymentOrdersByMemberWithMethod" parameterType="int" resultType="org.fitsync.domain.PaymentOrderWithMethodVO">
-        SELECT
-            po.order_idx,
-            po.member_idx,
-            po.method_idx,
-            po.payment_id,
-            po.order_type,
-            po.order_status,
-            po.order_name,
-            po.order_price,
-            po.order_currency,
-            TO_CHAR(po.order_regdate, 'YYYY-MM-DD HH24:MI:SS') AS order_regdate,
-            TO_CHAR(po.order_paydate, 'YYYY-MM-DD HH24:MI:SS') AS order_paydate,
-            
-            pm.method_key,
-            pm.method_provider,
-            pm.method_name,
-            pm.method_card,
-            pm.method_card_num,
-            TO_CHAR(pm.method_regdate, 'YYYY-MM-DD HH24:MI:SS') AS method_regdate
-        FROM
-            payment_order po
-        JOIN
-            payment_method pm
-        ON
-            po.method_idx = pm.method_idx
-        WHERE
-            po.member_idx = #{member_idx}
-        ORDER BY 
-            po.order_idx DESC
+        SELECT *
+        FROM payment_order
+        WHERE member_idx = #{member_idx}
+        ORDER BY order_idx DESC
     </select>
 
 </mapper>

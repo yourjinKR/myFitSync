@@ -159,7 +159,7 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
             <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 1})}>내 빌링키 정보 조회</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 2})}>빌링키 결제</ButtonSubmit>
+            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 33})}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (콘솔)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
