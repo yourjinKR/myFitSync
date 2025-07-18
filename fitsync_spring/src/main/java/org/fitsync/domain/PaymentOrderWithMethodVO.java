@@ -31,6 +31,7 @@ public class PaymentOrderWithMethodVO {
     private String method_regdate;   // TO_CHAR로 변환된 문자열
     
     // API에서 조회한 결제 수단 정보 (PortOne API 응답)
+    private String apiMethodType;      // 결제 수단 타입 (카드, 간편결제 등)
     private String apiMethodProvider;  // API에서 조회한 결제 수단 제공자
     private String apiCardName;        // API에서 조회한 카드명
     private String apiCardNumber;      // API에서 조회한 카드번호
@@ -40,23 +41,45 @@ public class PaymentOrderWithMethodVO {
     private String apiCardType;        // API에서 조회한 카드 타입 (DEBIT/CREDIT)
     
     /**
+     * 카드 결제 방식인지 확인
+     * @return 카드 결제 여부
+     */
+    public boolean isCardPayment() {
+        return "card".equals(apiMethodType);
+    }
+
+    /**
+     * 간편결제 방식인지 확인
+     * @return 간편결제 여부
+     */
+    public boolean isEasyPayment() {
+        return "easyPay".equals(apiMethodType);
+    }
+    
+    /**
      * 결제 수단 표시명 반환 (사용자 친화적)
      * API 정보가 있으면 우선 사용, 없으면 DB 정보 사용
      */
     public String getDisplayMethodName() {
         // API 정보 우선 사용
-        if (apiMethodProvider != null && !apiMethodProvider.trim().isEmpty()) {
-            switch (apiMethodProvider) {
-                case "KAKAOPAY":
-                    return "카카오페이";
-                case "TOSSPAYMENTS":
-                    return "토스페이먼츠";
-                default:
-                    return "카드 결제";
+        if (apiMethodType != null && !apiMethodType.trim().isEmpty()) {
+            if (isEasyPayment()) {
+                // 간편결제의 경우 결제 채널명 표시
+                switch (apiMethodProvider != null ? apiMethodProvider : "UNKNOWN") {
+                    case "KAKAOPAY": return "카카오페이";
+                    case "TOSSPAYMENTS": return "토스페이먼츠";
+                    default: return "간편결제";
+                }
+            } else if (isCardPayment()) {
+                // 카드 결제의 경우 "카드 결제" 표시
+                return "카드 결제";
+            } else {
+                // 기타
+                return "기타 결제수단";
             }
         }
         
-        // DB 정보 사용 (기존 로직)
+        // API 정보가 없는 경우 기존 DB 정보 사용 (하위 호환성)
         if (method_name != null && !method_name.trim().isEmpty() && 
             !method_name.equals("카카오페이") && !method_name.equals("토스페이먼츠")) {
             return method_name;
@@ -103,24 +126,30 @@ public class PaymentOrderWithMethodVO {
     
     /**
      * 카드 정보 표시 (카드사 + 마스킹된 번호)
-     * API 정보가 있으면 우선 사용, 없으면 DB 정보 사용
+     * 카드 결제일 때만 카드 정보 표시, 간편결제는 결제수단명만 표시
      */
     public String getCardDisplayInfo() {
-        String cardName = null;
-        
-        // API 정보 우선 사용
-        if (apiCardName != null && !apiCardName.trim().isEmpty()) {
-            cardName = apiCardName;
-        } else if (method_card != null && !method_card.equals("정보 조회 실패") && !method_card.equals("알 수 없는 카드")) {
-            cardName = method_card;
+        if (isCardPayment() && apiCardName != null && apiCardNumber != null) {
+            // 카드 결제: 카드명 + 번호 표시
+            return apiCardName + " " + apiCardNumber;
+        } else if (isEasyPayment()) {
+            // 간편결제: 결제수단명만 표시
+            return getDisplayMethodName();
+        } else {
+            // API 정보가 없는 경우 기존 DB 정보 사용 (하위 호환성)
+            String cardName = null;
+            
+            if (method_card != null && !method_card.equals("정보 조회 실패") && !method_card.equals("알 수 없는 카드")) {
+                cardName = method_card;
+            }
+            
+            if (cardName == null || cardName.trim().isEmpty()) {
+                return getDisplayMethodName();
+            }
+            
+            String maskedNumber = getMaskedCardNumber();
+            return cardName + " " + maskedNumber;
         }
-        
-        if (cardName == null || cardName.trim().isEmpty()) {
-            cardName = "카드";
-        }
-        
-        String maskedNumber = getMaskedCardNumber();
-        return cardName + " " + maskedNumber;
     }
     
     /**

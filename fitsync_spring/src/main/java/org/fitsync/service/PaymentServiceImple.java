@@ -57,14 +57,25 @@ public class PaymentServiceImple implements PaymentService {
 			// 빌링키로 카드 정보 조회
 			Map<String, Object> cardInfo = getCardInfoByBillingKey(vo.getMethod_key());
 			
-			// 카드 정보를 VO에 설정
-			String cardName = (String) cardInfo.get("name");
-			String cardNumber = (String) cardInfo.get("number");
+			// methodType 확인
+			String methodType = (String) cardInfo.get("methodType");
 			
-			vo.setMethod_card(cardName != null ? cardName : "알 수 없는 카드");
-			vo.setMethod_card_num(cardNumber != null ? cardNumber : "****-****-****-****");
-			
-			log.info("카드 정보와 함께 결제수단 저장: " + cardName + " (" + cardNumber + ")");
+			// 카드 결제인 경우에만 카드 정보 설정
+			if ("card".equals(methodType)) {
+				String cardName = (String) cardInfo.get("name");
+				String cardNumber = (String) cardInfo.get("number");
+				
+				vo.setMethod_card(cardName != null ? cardName : "알 수 없는 카드");
+				vo.setMethod_card_num(cardNumber != null ? cardNumber : "****-****-****-****");
+				
+				log.info("카드 정보와 함께 결제수단 저장: " + cardName + " (" + cardNumber + ")");
+			} else {
+				// 간편결제 등 카드가 아닌 경우 null로 설정
+				vo.setMethod_card(null);
+				vo.setMethod_card_num(null);
+				
+				log.info("간편결제 수단 저장 - 타입: " + methodType);
+			}
 			
 			return paymentMethodMapper.insertPaymentMethod(vo);
 			
@@ -186,6 +197,33 @@ public class PaymentServiceImple implements PaymentService {
 				cardInfo.put("bin", card.get("bin"));             // BIN 코드
 				
 				log.info("카드 정보 추출 성공 - 방식: " + methodType + ", 카드명: " + card.get("name"));
+			}
+
+			// 간편결제("PaymentMethodEasyPay")일 경우 카드 정보를 담지 않음
+			if ("PaymentMethodEasyPay".equals(methodType)) {
+				log.info("간편결제 방식으로 카드 정보가 없습니다.");
+				cardInfo.put("name", null);
+				cardInfo.put("number", null);
+				cardInfo.put("publisher", null);
+				cardInfo.put("issuer", null);
+			}
+
+			// 결제 수단 타입 저장
+			switch (methodType) {
+				case "PaymentMethodCard":
+					cardInfo.put("methodType", "card");
+					break;
+				case "PaymentMethodEasyPay":
+					cardInfo.put("methodType", "easyPay");
+					break;
+				case "BillingKeyPaymentMethodCard":
+					cardInfo.put("methodType", "card");
+					break;
+				case "BillingKeyPaymentMethodEasyPay":
+					cardInfo.put("methodType", "easyPay");
+					break;
+				default:
+					break;
 			}
 			
 			// 4. 카드 정보가 없는 경우 기본값 설정
@@ -469,25 +507,36 @@ public class PaymentServiceImple implements PaymentService {
 				return result;
 			}
 			
-			// 2. 카드 정보로 중복 확인
-			PaymentMethodVO checkVO = new PaymentMethodVO();
-			checkVO.setMember_idx(memberIdx);
-			checkVO.setMethod_card((String) cardInfo.get("name"));
-			checkVO.setMethod_card_num((String) cardInfo.get("number"));
+			String methodType = (String) cardInfo.get("methodType");
 			
-			int duplicateCount = paymentMethodMapper.countDuplicateCard(checkVO);
-			
-			result.put("success", true);
-			result.put("cardInfo", cardInfo);
-			result.put("isDuplicate", duplicateCount > 0);
-			result.put("duplicateCount", duplicateCount);
-			
-			if (duplicateCount > 0) {
-				PaymentMethodVO duplicateMethod = paymentMethodMapper.findDuplicateCard(checkVO);
-				result.put("duplicateMethod", duplicateMethod);
-				result.put("message", "동일한 카드가 이미 등록되어 있습니다.");
+			// 2. 카드 결제인 경우에만 중복 확인
+			if ("card".equals(methodType)) {
+				PaymentMethodVO checkVO = new PaymentMethodVO();
+				checkVO.setMember_idx(memberIdx);
+				checkVO.setMethod_card((String) cardInfo.get("name"));
+				checkVO.setMethod_card_num((String) cardInfo.get("number"));
+				
+				int duplicateCount = paymentMethodMapper.countDuplicateCard(checkVO);
+				
+				result.put("success", true);
+				result.put("cardInfo", cardInfo);
+				result.put("isDuplicate", duplicateCount > 0);
+				result.put("duplicateCount", duplicateCount);
+				
+				if (duplicateCount > 0) {
+					PaymentMethodVO duplicateMethod = paymentMethodMapper.findDuplicateCard(checkVO);
+					result.put("duplicateMethod", duplicateMethod);
+					result.put("message", "동일한 카드가 이미 등록되어 있습니다.");
+				} else {
+					result.put("message", "새로운 카드입니다.");
+				}
 			} else {
-				result.put("message", "새로운 카드입니다.");
+				// 간편결제 등 카드가 아닌 경우는 중복 체크 안함
+				result.put("success", true);
+				result.put("cardInfo", cardInfo);
+				result.put("isDuplicate", false);
+				result.put("duplicateCount", 0);
+				result.put("message", "새로운 " + methodType + " 결제수단입니다.");
 			}
 			
 			log.info("중복 체크 결과: " + result);
@@ -522,24 +571,33 @@ public class PaymentServiceImple implements PaymentService {
 				return result;
 			}
 			
-			// 2. 카드 정보를 VO에 설정
-			String cardName = (String) cardInfo.get("name");
-			String cardNumber = (String) cardInfo.get("number");
+			String methodType = (String) cardInfo.get("methodType");
 			
-			vo.setMethod_card(cardName != null ? cardName : "알 수 없는 카드");
-			vo.setMethod_card_num(cardNumber != null ? cardNumber : "****-****-****-****");
-			
-			// 3. 기존 결제수단 교체인 경우 삭제 먼저 처리
-			if (replaceExisting) {
-				PaymentMethodVO duplicateMethod = paymentMethodMapper.findDuplicateCard(vo);
-				if (duplicateMethod != null) {
-					PaymentMethodVO deleteVO = new PaymentMethodVO();
-					deleteVO.setMember_idx(vo.getMember_idx());
-					deleteVO.setMethod_idx(duplicateMethod.getMethod_idx());
-					
-					int deleteResult = paymentMethodMapper.deletePaymentMethod(deleteVO);
-					log.info("기존 중복 결제수단 삭제 결과: " + deleteResult);
+			// 2. 결제수단 타입에 따라 카드 정보 설정
+			if ("card".equals(methodType)) {
+				// 카드 결제인 경우에만 카드 정보 설정
+				String cardName = (String) cardInfo.get("name");
+				String cardNumber = (String) cardInfo.get("number");
+				
+				vo.setMethod_card(cardName != null ? cardName : "알 수 없는 카드");
+				vo.setMethod_card_num(cardNumber != null ? cardNumber : "****-****-****-****");
+				
+				// 3. 기존 결제수단 교체인 경우 삭제 먼저 처리 (카드인 경우에만)
+				if (replaceExisting) {
+					PaymentMethodVO duplicateMethod = paymentMethodMapper.findDuplicateCard(vo);
+					if (duplicateMethod != null) {
+						PaymentMethodVO deleteVO = new PaymentMethodVO();
+						deleteVO.setMember_idx(vo.getMember_idx());
+						deleteVO.setMethod_idx(duplicateMethod.getMethod_idx());
+						
+						int deleteResult = paymentMethodMapper.deletePaymentMethod(deleteVO);
+						log.info("기존 중복 결제수단 삭제 결과: " + deleteResult);
+					}
 				}
+			} else {
+				// 간편결제 등 카드가 아닌 경우 카드 정보 null로 설정
+				vo.setMethod_card(null);
+				vo.setMethod_card_num(null);
 			}
 			
 			// 4. 새로운 결제수단 등록
@@ -631,13 +689,27 @@ public class PaymentServiceImple implements PaymentService {
 						Map<String, Object> cardInfo = extractCardInfo(responseData);
 						
 						// PaymentOrderWithMethodVO에 API 정보 설정
-						order.setApiCardName((String) cardInfo.get("name"));
-						order.setApiCardNumber((String) cardInfo.get("number"));
-						order.setApiCardPublisher((String) cardInfo.get("publisher"));
-						order.setApiCardIssuer((String) cardInfo.get("issuer"));
-						order.setApiCardBrand((String) cardInfo.get("brand"));
-						order.setApiCardType((String) cardInfo.get("type"));
+						String methodType = (String) cardInfo.get("methodType");
+						order.setApiMethodType(methodType);
 						
+						// 카드 결제인 경우에만 카드 정보 설정
+						if ("card".equals(methodType)) {
+							order.setApiCardName((String) cardInfo.get("name"));
+							order.setApiCardNumber((String) cardInfo.get("number"));
+							order.setApiCardPublisher((String) cardInfo.get("publisher"));
+							order.setApiCardIssuer((String) cardInfo.get("issuer"));
+							order.setApiCardBrand((String) cardInfo.get("brand"));
+							order.setApiCardType((String) cardInfo.get("type"));
+						} else {
+							// 간편결제 등 카드가 아닌 경우 카드 정보 null로 설정
+							order.setApiCardName(null);
+							order.setApiCardNumber(null);
+							order.setApiCardPublisher(null);
+							order.setApiCardIssuer(null);
+							order.setApiCardBrand(null);
+							order.setApiCardType(null);
+						}
+
 						// channel 정보에서 결제 채널 확인
 						@SuppressWarnings("unchecked")
 						Map<String, Object> channel = (Map<String, Object>) responseData.get("channel");
@@ -686,6 +758,7 @@ public class PaymentServiceImple implements PaymentService {
 	 */
 	private void setDefaultApiMethodInfo(PaymentOrderWithMethodVO order) {
 		order.setApiMethodProvider("UNKNOWN");
+		order.setApiMethodType("unknown");
 		order.setApiCardName("정보 조회 실패");
 		order.setApiCardNumber("****-****-****-****");
 		order.setApiCardPublisher("UNKNOWN");
