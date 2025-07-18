@@ -186,7 +186,15 @@ public class PaymentController {
     
       // 빌링키로 결제 예약
     @PostMapping("/bill/schedule")
-    public ResponseEntity<?> scheduleBillingKey() throws IOException {
+    public ResponseEntity<?> scheduleBillingKey(@RequestBody Map<String, Object> body, HttpSession session) throws IOException {
+        String paymentId = (String) body.get("payment_id");
+        int methodIdx = Integer.parseInt(body.get("method_idx").toString());
+        int memberIdx = Integer.parseInt(session.getAttribute("member_idx").toString());
+
+        log.info("Scheduling billing key payment - Payment ID: " + paymentId + ", Method Index: " + methodIdx + ", Member Index: " + memberIdx);
+
+        // 서비스 호출하여 예약 처리
+        payService.scheduleBillingKey(paymentId, methodIdx, memberIdx);
     	return null;
     }    
     

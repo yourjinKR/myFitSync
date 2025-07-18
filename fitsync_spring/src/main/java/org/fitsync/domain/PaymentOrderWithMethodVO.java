@@ -21,6 +21,8 @@ public class PaymentOrderWithMethodVO {
     private String order_currency;
     private String order_regdate;    // TO_CHAR로 변환된 문자열
     private String order_paydate;    // TO_CHAR로 변환된 문자열
+    private String schedule_id;      // 정기 결제 예약 ID (정기 결제 시만 값 존재)
+    private String schedule_date;    // 정기 결제 예약 시간 (정기 결제 시만 값 존재)
     
     // 결제 수단 정보 (payment_method)
     private String method_key;

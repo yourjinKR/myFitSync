@@ -21,4 +21,6 @@ public class PaymentOrderVO {
     private String order_currency; // 결제 통화 (기본값 'KRW')
     private Date order_regdate; // 결제 요청 시간 (시분초 포함, SYSDATE 기본값)
     private Date order_paydate; // 결제 완료 시간 (성공 시만 값 존재)
+    private String schedule_id; // 정기 결제 예약 ID (정기 결제 시만 값 존재)
+    private Date schedule_date; // 정기 결제 예약 시간 (정기 결제 시만 값 존재)
 }

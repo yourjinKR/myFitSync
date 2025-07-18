@@ -260,6 +260,29 @@ export const PaymentUtil = {
                 throw new Error(`오류: ${error.message}`);
             }
         }
+    },
+
+    /** 빌링키 결제 예약 */
+    scheduleBillingKey: async ({ method_idx }) => {
+        const payment_id = randomId();
+        try {
+            const response = await axios.post('/payment/bill/schedule', {
+                payment_id,
+                method_idx,
+            }, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('빌링키 결제 예약 성공:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('빌링키 결제 예약 중 오류:', error);
+            throw error;
+        }
     }
     
 }

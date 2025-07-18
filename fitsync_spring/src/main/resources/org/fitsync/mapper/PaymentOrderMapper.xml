@@ -10,12 +10,26 @@
         INSERT INTO payment_order (
             order_idx, member_idx, method_idx,
             payment_id, order_type, order_status,
-            order_name, order_price, order_currency, order_regdate
+            order_name, order_price, order_currency,
+            <if test="schedule_id != null">
+                schedule_id,
+            </if>
+            <if test="schedule_date != null">
+                schedule_date,
+            </if>
+            order_regdate
         )
         VALUES (
             payment_order_seq.nextval, #{member_idx}, #{method_idx},
             #{payment_id}, #{order_type}, #{order_status},
-            #{order_name}, #{order_price}, #{order_currency}, #{order_regdate}
+            #{order_name}, #{order_price}, #{order_currency},
+            <if test="schedule_id != null">
+                #{schedule_id},
+            </if>
+            <if test="schedule_date != null">
+                #{schedule_date},
+            </if>
+            #{order_regdate}
         )
     </insert>
 

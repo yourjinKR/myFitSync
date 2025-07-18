@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
@@ -328,10 +329,13 @@ public class PaymentServiceImple implements PaymentService {
 	    	}
 	    	
 	    	try {
+				log.info("결제 주문 정보 업데이트 - " + order);
 	    	    paymentOrderMapper.updatePaymentStatus(order);
+				System.out.println("결제 완료했으니 상태 변경함." + orderStatus);
 	    	    log.info("결제 상태 업데이트 완료 - PaymentId: " + paymentId + ", Status: " + orderStatus);
 	    	} catch (Exception updateEx) {
 	    	    log.error("결제 상태 업데이트 실패: ", updateEx);
+				System.out.println("업데이트 중 오류 발생함." + updateEx.getMessage());
 	    	    // 결제는 성공했지만 상태 업데이트 실패한 경우 별도 처리 필요
 	    	}
 	    		
@@ -403,10 +407,31 @@ public class PaymentServiceImple implements PaymentService {
 	    }
 	}
 
-	
+	// 결제 예약
 	@Override
-	public Object scheduleBillingKey() {
-		// TODO Auto-generated method stub
+	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx) {
+		String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
+		String channelKey = getChannelKey(paymentMethodMapper.selectByMethodIdx(methodIdx).getMethod_provider());
+
+		// 테스트용으로 현시각 기준 10초 후 예약
+		String timeToPay = java.time.LocalDateTime.now().plusSeconds(10).toString() + "+09:00";
+
+		try {
+			// 포트원 API 호출
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payments/"+ paymentId +"/schedule"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("POST", HttpRequest.BodyPublishers.ofString("{\"payment\":{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"1개월 구독권\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"},\"timeToPay\":\"" + timeToPay + "\"}"))
+				.build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+			
+
+			System.out.println(response.body());
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 		return null;
 	}
 	
