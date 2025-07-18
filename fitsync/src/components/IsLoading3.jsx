@@ -74,13 +74,16 @@ const DotsContainer = styled.div`
   margin-top: 1rem;
 `;
 
-const Dot = styled.div`
+// shouldForwardProp으로 delay prop 전달 방지
+const Dot = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== '$delay'
+})`
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background: linear-gradient(45deg, var(--primary-blue), var(--primary-blue-light));
   animation: ${pulse} 1s ease-in-out infinite;
-  animation-delay: ${props => props.delay}s;
+  animation-delay: ${props => props.$delay}s;
   box-shadow: 0 0 10px var(--primary-blue);
 `;
 
@@ -131,10 +134,10 @@ const IsLoading3 = () => {
       </ProgressText>
       
       <DotsContainer>
-        <Dot delay={0} />
-        <Dot delay={0.3} />
-        <Dot delay={0.6} />
-        <Dot delay={0.9} />
+        <Dot $delay={0} />
+        <Dot $delay={0.3} />
+        <Dot $delay={0.6} />
+        <Dot $delay={0.9} />
       </DotsContainer>
     </LoadingContainer>
   );

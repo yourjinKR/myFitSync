@@ -82,31 +82,32 @@ const MessagesContainer = styled.div`
 // 개별 채팅방 화면 컴포넌트
 const ChatRoom = () => {
   // React Router hooks
-  const { roomId } = useParams(); // URL에서 채팅방 ID 추출
-  const location = useLocation(); // 이전 페이지에서 전달된 state 정보
+  const { roomId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // Redux에서 현재 사용자 정보 가져오기
   const { user } = useSelector(state => state.user);
 
   // 컴포넌트 상태 관리
-  const [messages, setMessages] = useState([]); // 메시지 목록
-  const [loading, setLoading] = useState(true); // 로딩 상태
-  const [roomData, setRoomData] = useState(null); // 채팅방 정보
-  const [attachments, setAttachments] = useState({}); // 첨부파일 정보 (message_idx를 key로 하는 객체)
-  const [currentMemberIdx, setCurrentMemberIdx] = useState(null); // 현재 사용자의 member_idx
-  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false); // 읽지 않은 메시지로 스크롤 완료 여부
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // 첫 로드 여부
-  const [searchResults, setSearchResults] = useState([]); // 검색 결과
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false); // 맨 아래 스크롤 플래그 추가
-  const [initialUnreadMessages, setInitialUnreadMessages] = useState([]); // 초기 읽지 않은 메시지 저장
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [roomData, setRoomData] = useState(null);
+  const [attachments, setAttachments] = useState({});
+  const [currentMemberIdx, setCurrentMemberIdx] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [searchResults, setSearchResults] = useState([]);
+  const [initialUnreadMessages, setInitialUnreadMessages] = useState([]);
+  
+  // 완전히 새로운 접근: 즉시 스크롤 + 필요시에만 이미지 대기
+  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(false);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
 
-  // 미확인 메시지 초기 읽음 처리 플래그
+  // ref 관리
   const initialReadDone = useRef(false);
-  // 자동 스크롤을 위한 ref
   const messagesEndRef = useRef(null);
-  // 메시지 컨테이너 참조
   const messagesContainerRef = useRef(null);
+  const scrollAdjustmentTimerRef = useRef(null);
 
   // WebSocket 연결 및 기능들
   const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket();
@@ -114,7 +115,6 @@ const ChatRoom = () => {
   // 채팅용 member_idx 조회 및 세션스토리지 저장
   const getMemberIdxForChat = async () => {
     try {
-
       const response = await axios.get('/api/chat/member-info', {
         withCredentials: true
       });
@@ -122,7 +122,7 @@ const ChatRoom = () => {
       if (response.data.success) {
         const memberIdx = response.data.member_idx.toString();
         sessionStorage.setItem('chat_member_idx', memberIdx);
-        setCurrentMemberIdx(parseInt(memberIdx)); // 상태에도 저장
+        setCurrentMemberIdx(parseInt(memberIdx));
         return parseInt(memberIdx);
       } else {
         if (response.data.message.includes('로그인')) {
@@ -141,91 +141,72 @@ const ChatRoom = () => {
   // 컴포넌트 마운트 시 초기화
   useEffect(() => {
     const initializeChatRoom = async () => {
-      // 로그인 확인 (Redux 사용)
       if (!user || !user.isLogin) {
         navigate('/login');
         return;
       }
 
-      // 상태 초기화 (재진입 시에도 초기 상태로 리셋)
-      setHasScrolledToUnread(false);
+      // 상태 초기화
       setIsInitialLoad(true);
+      setHasPerformedInitialScroll(false);
       setShouldScrollToBottom(false);
-      setInitialUnreadMessages([]); // 초기 읽지 않은 메시지 목록도 리셋
-      console.log('🔄 채팅방 초기화 - 모든 스크롤 상태 리셋');
+      setInitialUnreadMessages([]);
+      
+      console.log('🔄 채팅방 초기화');
 
-      // 채팅용 member_idx 조회 및 세션스토리지 저장
       const memberIdx = await getMemberIdxForChat();
-      if (!memberIdx) {
-        return; // 실패 시 이미 navigate 처리됨
-      }
+      if (!memberIdx) return;
 
-      // 이전 페이지에서 전달된 채팅방 데이터 설정
       if (location.state?.roomData) {
         setRoomData(location.state.roomData);
       }
 
-      // 메시지 목록 로드
       await loadMessages(memberIdx);
     };
 
     initializeChatRoom();
 
-    // 채팅방 퇴장 시 세션스토리지 정리
     return () => {
       sessionStorage.removeItem('chat_member_idx');
+      if (scrollAdjustmentTimerRef.current) {
+        clearTimeout(scrollAdjustmentTimerRef.current);
+      }
     };
   }, [roomId, user, navigate, location.state]);
 
-  // 메시지 목록 로드
+  // 완전히 새로운 접근: 메시지 로드 후 즉시 스크롤, 이미지는 백그라운드에서 처리
   const loadMessages = async (memberIdx = null) => {
     try {
       setLoading(true);
 
-      // 백엔드 API 호출 (readMessageList 메서드와 정확히 일치)
       const messageList = await chatApi.readMessageList(parseInt(roomId));
       setMessages(messageList);
 
-      // memberIdx가 전달된 경우에만 읽지 않은 메시지 확인 (비동기 문제 해결)
+      // 읽지 않은 메시지 분석
       if (memberIdx) {
-        // 읽지 않은 메시지들을 찾아서 저장 (스크롤 전에 읽음 처리되지 않도록)
         const unreadMessages = messageList.filter(msg => 
           msg.sender_idx !== memberIdx && !msg.message_readdate
         );
-
-        // 초기 읽지 않은 메시지 목록 저장 (읽음 처리되기 전의 상태)
         setInitialUnreadMessages(unreadMessages);
 
         if (unreadMessages.length === 0) {
-          // 읽지 않은 메시지가 없으면 맨 아래 스크롤 플래그 설정
-          console.log('🔍 읽지 않은 메시지 없음 확인 - 맨 아래 스크롤 플래그 설정');
+          console.log('🔍 읽지 않은 메시지 없음 - 맨 아래 스크롤 예정');
           setShouldScrollToBottom(true);
         } else {
-          // 읽지 않은 메시지가 있으면 플래그 해제 (읽지 않은 메시지로 스크롤 예정)
-          console.log('🔍 읽지 않은 메시지', unreadMessages.length, '개 있음 - 가장 오래된 읽지 않은 메시지로 스크롤 예정');
+          console.log('🔍 읽지 않은 메시지', unreadMessages.length, '개 - 가장 오래된 읽지 않은 메시지로 스크롤 예정');
           setShouldScrollToBottom(false);
         }
       }
 
-      // 각 이미지 메시지의 첨부파일 정보 로드
-      const attachmentsMap = {};
-      for (const message of messageList) {
-        if (message.message_type === 'image' && message.attach_idx && message.attach_idx > 0) {
-          try {
-            // 단일 첨부파일 객체 조회
-            const attachment = await chatApi.readFile(message.message_idx);
-            attachmentsMap[message.message_idx] = attachment;
-          } catch (error) {
-            console.error(`메시지 ${message.message_idx} 첨부파일 로드 실패:`, error);
-          }
-        }
+      // 첨부파일은 백그라운드에서 비동기 로드 (스크롤 차단하지 않음)
+      const imageMessages = messageList.filter(msg => msg.message_type === 'image');
+      if (imageMessages.length > 0) {
+        console.log('📷 백그라운드에서 첨부파일 로드 시작...', imageMessages.length, '개');
+        loadAttachmentsInBackground(imageMessages);
       }
-      setAttachments(attachmentsMap);
 
     } catch (error) {
       console.error('메시지 로드 실패:', error);
-
-      // 에러 처리
       if (error.response?.status === 404) {
         alert('존재하지 않는 채팅방입니다.');
         navigate('/chat');
@@ -238,109 +219,160 @@ const ChatRoom = () => {
     }
   };
 
-  // WebSocket 구독 설정(실시간 새메시지 읽음확인)
+  // 백그라운드에서 첨부파일 로드 (스크롤 차단하지 않음)
+  const loadAttachmentsInBackground = async (imageMessages) => {
+    const attachmentsMap = {};
+
+    // 비동기로 첨부파일 로드 (await 사용하지 않음)
+    imageMessages.forEach(async (message, index) => {
+      if (message.attach_idx && message.attach_idx > 0) {
+        try {
+          const attachment = await chatApi.readFile(message.message_idx);
+          
+          // 실시간으로 첨부파일 추가
+          setAttachments(prev => ({
+            ...prev,
+            [message.message_idx]: attachment
+          }));
+          
+          console.log(`📷 백그라운드 첨부파일 로드 완료: ${index + 1}/${imageMessages.length} (message_idx: ${message.message_idx})`);
+          
+          // 각 이미지 로드 완료 시 스크롤 위치 미세 조정
+          if (!isInitialLoad) {
+            adjustScrollPosition();
+          }
+          
+        } catch (error) {
+          console.error(`첨부파일 로드 실패 (message_idx: ${message.message_idx}):`, error);
+        }
+      }
+    });
+  };
+
+  // 메시지 로드 완료 후 즉시 스크롤 실행 (이미지 대기하지 않음)
+  useEffect(() => {
+    if (messages.length > 0 && isInitialLoad && currentMemberIdx && !hasPerformedInitialScroll) {
+      console.log('📍 즉시 스크롤 실행 - 이미지 로딩 대기하지 않음');
+      
+      // DOM 렌더링 완료 대기만 최소한으로
+      setTimeout(() => {
+        performInitialScroll();
+      }, 100);
+    }
+  }, [messages, currentMemberIdx, isInitialLoad, hasPerformedInitialScroll]);
+
+  // 새로운 함수: 초기 스크롤 실행
+  const performInitialScroll = () => {
+    console.log('🎯 초기 스크롤 실행:', {
+      shouldScrollToBottom,
+      unreadCount: initialUnreadMessages.length
+    });
+
+    if (shouldScrollToBottom) {
+      console.log('📍 맨 아래로 스크롤');
+      scrollToBottom(false);
+    } else if (initialUnreadMessages.length > 0) {
+      const oldestUnreadMessage = initialUnreadMessages[0];
+      console.log('📍 가장 오래된 읽지 않은 메시지로 스크롤:', oldestUnreadMessage.message_idx);
+      scrollToMessage(oldestUnreadMessage.message_idx);
+    } else {
+      console.log('📍 읽지 않은 메시지 없음 - 맨 아래로 스크롤');
+      scrollToBottom(false);
+    }
+
+    setHasPerformedInitialScroll(true);
+    
+    // 스크롤 완료 후 읽음 처리
+    setTimeout(() => {
+      setIsInitialLoad(false);
+      performInitialReadMark();
+    }, 300);
+  };
+
+  // 새로운 함수: 초기 읽음 처리
+  const performInitialReadMark = () => {
+    if (connected && currentMemberIdx && messages.length > 0 && !initialReadDone.current) {
+      initialReadDone.current = true;
+      console.log('📖 초기 읽음 처리 시작');
+
+      messages.forEach(msg => {
+        if (msg.receiver_idx === currentMemberIdx && !msg.message_readdate) {
+          markAsRead(msg.message_idx, parseInt(roomId, 10));
+        }
+      });
+      
+      console.log('✅ 초기 읽음 처리 완료');
+    }
+  };
+
+  // WebSocket 구독 설정
   useEffect(() => {
     if (connected && roomId && currentMemberIdx) {
-
       const unsubscribe = subscribeToRoom(
         parseInt(roomId),
-
         // 새 메시지 수신 콜백
         async (newMessage) => {
-
-          // 중복 메시지 방지
           setMessages(prev => {
-            // 동일한 message_idx가 이미 존재하는지 확인
             const existingMessage = prev.find(msg => msg.message_idx === newMessage.message_idx);
-            if (existingMessage) {
-              return prev; // 중복이면 기존 상태 유지
-            }
-            return [...prev, newMessage]; // 새 메시지만 추가
+            if (existingMessage) return prev;
+            return [...prev, newMessage];
           });
+
+          // 새 메시지 수신 시 맨 아래로 스크롤 (조건 없이)
+          console.log('📨 새 메시지 수신 - 맨 아래로 스크롤');
+          setTimeout(() => {
+            scrollToBottom(true);
+          }, 100);
 
           // 이미지 메시지인 경우 첨부파일 정보도 로드
           if (newMessage.message_type === 'image' && newMessage.attach_idx && newMessage.attach_idx > 0) {
-            try {
-              // 약간의 딜레이 후 첨부파일 정보 로드 (서버에서 파일 처리 완료 대기)
-              setTimeout(async () => {
-                try {
-                  const attachment = await chatApi.readFile(newMessage.message_idx);
-                  setAttachments(prev => ({
-                    ...prev,
-                    [newMessage.message_idx]: attachment
-                  }));
-                } catch (error) {
-                  console.error(`실시간 메시지 ${newMessage.message_idx} 첨부파일 로드 실패:`, error);
-                }
-              }, 1000); // 1초 대기
-            } catch (error) {
-              console.error('실시간 이미지 메시지 첨부파일 로드 실패:', error);
-            }
+            setTimeout(async () => {
+              try {
+                const attachment = await chatApi.readFile(newMessage.message_idx);
+                setAttachments(prev => ({
+                  ...prev,
+                  [newMessage.message_idx]: attachment
+                }));
+                
+                // 🔧 첨부파일 로드 후 스크롤 재조정
+                setTimeout(() => {
+                  adjustScrollPosition();
+                }, 100);
+                
+              } catch (error) {
+                console.error(`실시간 메시지 ${newMessage.message_idx} 첨부파일 로드 실패:`, error);
+              }
+            }, 1000);
           }
 
           // 받은 메시지인 경우 자동으로 읽음 처리
           if (newMessage.receiver_idx === currentMemberIdx) {
-            // 약간의 지연 후 읽음 처리 (메시지가 화면에 렌더링된 후)
             setTimeout(() => {
               markAsRead(newMessage.message_idx, parseInt(roomId));
             }, 100);
           }
         },
-
         // 읽음 확인 수신 콜백
         (readData) => {
-          // 해당 메시지의 읽음 상태 업데이트
-          setMessages(prev => {
-            const updatedMessages = prev.map(msg => {
-              if (msg.message_idx === readData.message_idx) {
-                return {
-                  ...msg,
-                  message_readdate: new Date().toISOString() // 현재 시간으로 설정
-                };
-              }
-              return msg;
-            });
-
-            return updatedMessages;
-          });
+          setMessages(prev => prev.map(msg => {
+            if (msg.message_idx === readData.message_idx) {
+              return { ...msg, message_readdate: new Date().toISOString() };
+            }
+            return msg;
+          }));
         }
       );
 
-      // 컴포넌트 언마운트 시 구독 해제
       return unsubscribe;
     }
   }, [connected, roomId, subscribeToRoom, markAsRead, currentMemberIdx]);
 
-  // 방 입장 직후, 과거(unread) 메시지 전부 읽음 처리
-  useEffect(() => {
-    if (
-      connected &&
-      currentMemberIdx &&
-      messages.length > 0 &&
-      !initialReadDone.current &&
-      hasScrolledToUnread // 스크롤이 완료된 후에만 읽음 처리
-    ) {
-      initialReadDone.current = true;
-      
-      console.log('📖 스크롤 완료 후 읽음 처리 시작');
-
-      messages.forEach(msg => {
-        // 나에게 온(unread) 메시지인 경우에만
-        if (msg.receiver_idx === currentMemberIdx && !msg.message_readdate) {
-          console.log('📖 읽음 처리:', msg.message_idx);
-          markAsRead(msg.message_idx, parseInt(roomId, 10));
-        }
-      });
-      
-      console.log('✅ 모든 읽지 않은 메시지 읽음 처리 완료');
-    }
-  }, [connected, currentMemberIdx, messages, roomId, markAsRead, hasScrolledToUnread]);
-
-  // 특정 메시지로 스크롤하는 함수
-  const scrollToMessage = useCallback((messageIdx) => {
+  // 특정 메시지로 스크롤 함수 (재시도 로직 포함)
+  const scrollToMessage = useCallback((messageIdx, retryCount = 0) => {
+    const maxRetries = 5;
     const messageElement = document.getElementById(`message-${messageIdx}`);
+    
     if (messageElement && messagesContainerRef.current) {
-      // 해당 메시지가 컨테이너 중앙에 오도록 스크롤
       const containerRect = messagesContainerRef.current.getBoundingClientRect();
       const messageRect = messageElement.getBoundingClientRect();
       
@@ -360,89 +392,62 @@ const ChatRoom = () => {
       }, 2000);
       
       console.log('✅ 메시지로 스크롤 완료:', messageIdx);
+      return true;
+    } else if (retryCount < maxRetries) {
+      console.log(`⏳ 메시지 DOM 대기 중... 재시도 ${retryCount + 1}/${maxRetries}`);
+      setTimeout(() => scrollToMessage(messageIdx, retryCount + 1), 100);
+      return false;
+    } else {
+      console.warn('❌ 메시지 요소를 찾을 수 없음 - 맨 아래로 스크롤:', messageIdx);
+      scrollToBottom(false);
+      return false;
     }
   }, []);
 
-  // 맨 아래로 스크롤하는 함수
-  const scrollToBottom = useCallback((smooth = true) => {
+  // 맨 아래로 스크롤 함수 (재시도 로직 포함)
+  const scrollToBottom = useCallback((smooth = true, retryCount = 0) => {
+    const maxRetries = 5;
+    
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
         behavior: smooth ? 'smooth' : 'auto',
         block: 'end'
       });
       console.log('✅ 맨 아래로 스크롤 완료');
+      return true;
+    } else if (retryCount < maxRetries) {
+      console.log(`⏳ 스크롤 대상 DOM 대기 중... 재시도 ${retryCount + 1}/${maxRetries}`);
+      setTimeout(() => scrollToBottom(smooth, retryCount + 1), 100);
+      return false;
+    } else {
+      console.warn('❌ 스크롤 대상을 찾을 수 없음');
+      return false;
     }
   }, []);
 
-  // 현재 스크롤이 맨 아래에 있는지 확인하는 함수
-  const isScrollAtBottom = useCallback(() => {
-    if (!messagesContainerRef.current) return false;
-    
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    const threshold = 100; // 100px 이내면 맨 아래로 간주
-    
-    return scrollTop + clientHeight >= scrollHeight - threshold;
-  }, []);
-
-  // 메시지 로드 후 스마트 스크롤 위치 설정
-  useEffect(() => {
-    // 메시지가 로드되고, 초기 로드 상태이며, currentMemberIdx가 설정되었고, 아직 스크롤하지 않았을 때
-    if (messages.length > 0 && isInitialLoad && currentMemberIdx && !hasScrolledToUnread) {
+  // 스크롤 위치 미세 조정 (이미지 로드 완료 후)
+  const adjustScrollPosition = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 150; // 150px 여유
       
-      console.log('📍 스크롤 위치 결정 시작:', {
-        messagesCount: messages.length,
-        shouldScrollToBottom,
-        initialUnreadCount: initialUnreadMessages.length,
-        currentMemberIdx
-      });
-
-      // 이미지 메시지 로딩 완료를 위한 지연 추가
-      const scrollTimeout = setTimeout(() => {
-        if (shouldScrollToBottom) {
-          // 읽지 않은 메시지가 없는 경우 - 맨 아래로 스크롤
-          console.log('📍 플래그 기반: 읽지 않은 메시지 없음 - 최신 메시지로 스크롤');
-          scrollToBottom(false); // 애니메이션 없이 즉시 이동
-          setShouldScrollToBottom(false); // 플래그 리셋
-        } else {
-          // 초기에 저장된 읽지 않은 메시지 목록 사용 (읽음 처리되기 전 상태)
-          if (initialUnreadMessages.length > 0) {
-            // 가장 오래된 읽지 않은 메시지 (배열의 첫 번째 = 시간순으로 가장 오래된 것)
-            const oldestUnreadMessage = initialUnreadMessages[0];
-            console.log('📍 초기 읽지 않은 메시지 기준: 가장 오래된 읽지 않은 메시지로 스크롤:', {
-              messageIdx: oldestUnreadMessage.message_idx,
-              totalUnread: initialUnreadMessages.length
-            });
-            scrollToMessage(oldestUnreadMessage.message_idx);
-          } else {
-            // 초기 읽지 않은 메시지도 없으면 맨 아래로 스크롤
-            console.log('📍 초기 읽지 않은 메시지 없음 - 최신 메시지로 스크롤');
-            scrollToBottom(false); // 애니메이션 없이 즉시 이동
-          }
-        }
-        
-        setHasScrolledToUnread(true);
-        setIsInitialLoad(false);
-        console.log('✅ 초기 스크롤 완료');
-      }, 300); // 300ms로 지연 시간 증가 (이미지 로딩 충분히 대기)
-
-      return () => clearTimeout(scrollTimeout);
+      // 맨 아래 근처에 있으면 맨 아래로 조정
+      if (isNearBottom) {
+        console.log('🔧 스크롤 위치 미세 조정 - 맨 아래로');
+        scrollToBottom(false);
+      }
     }
-  }, [messages, currentMemberIdx, isInitialLoad, hasScrolledToUnread, shouldScrollToBottom, initialUnreadMessages, scrollToMessage, scrollToBottom]);
+  }, [scrollToBottom]);
 
-  // 새 메시지 추가 시 자동 스크롤 - 이미지 로딩 고려
-  useEffect(() => {
-    if (!isInitialLoad && messages.length > 0) {
-      // 이미지 메시지가 있을 경우를 위한 지연 스크롤
-      const scrollTimeout = setTimeout(() => {
-        // 사용자가 스크롤을 맨 아래에 두고 있을 때만 자동 스크롤
-        if (isScrollAtBottom()) {
-          scrollToBottom(true); // 애니메이션과 함께 이동
-        }
-      }, 100); // 100ms 지연으로 이미지 렌더링 대기
-
-      return () => clearTimeout(scrollTimeout);
-    }
-  }, [messages.length, isInitialLoad, isScrollAtBottom, scrollToBottom]);
+  // 이미지 로딩 완료 핸들러 (스크롤 조정만)
+  const handleImageLoad = useCallback((messageIdx) => {
+    console.log('📷 이미지 로딩 완료:', messageIdx);
+    
+    // 로딩 완료 후 스크롤 위치 조정
+    setTimeout(() => {
+      adjustScrollPosition();
+    }, 50);
+  }, [adjustScrollPosition]);
 
   // 검색 결과 처리 함수
   const handleSearchResults = useCallback((results) => {
@@ -456,59 +461,43 @@ const ChatRoom = () => {
     scrollToMessage(messageIdx);
   }, [scrollToMessage]);
 
-  // 첨부파일 상태 변경 시 스크롤 재조정
-  useEffect(() => {
-    if (!isInitialLoad && Object.keys(attachments).length > 0) {
-      // 첨부파일이 로드된 후 스크롤 위치 재조정
-      const adjustScrollTimeout = setTimeout(() => {
-        if (isScrollAtBottom()) {
-          scrollToBottom(false); // 부드러운 애니메이션 없이 즉시 조정
-        }
-      }, 150); // 첨부파일 로딩 완료 대기
-
-      return () => clearTimeout(adjustScrollTimeout);
-    }
-  }, [attachments, isInitialLoad, isScrollAtBottom, scrollToBottom]);
-
-  // 메시지 전송 핸들러
+  // 메시지 전송 핸들러 - 무조건 맨 아래로 스크롤
   const handleSendMessage = async (messageContent, messageType = 'text', file = null) => {
     if (!connected || !roomId || !currentMemberIdx) {
       console.warn('WebSocket 연결이 되어있지 않거나 채팅방 ID가 없습니다.');
       return;
     }
 
-    // 상대방 인덱스 계산
     const otherMemberIdx = roomData?.trainer_idx === currentMemberIdx
-      ? roomData?.user_idx      // 내가 트레이너면 → 상대방은 회원
-      : roomData?.trainer_idx;  // 내가 회원이면 → 상대방은 트레이너
+      ? roomData?.user_idx
+      : roomData?.trainer_idx;
 
-    // 메시지 데이터 구성
     const messageData = {
       room_idx: parseInt(roomId),
-      // sender_idx: currentMemberIdx, - useWebSocket에서 자동으로 추가
       receiver_idx: otherMemberIdx,
       message_content: messageContent,
       message_type: messageType
     };
 
-    // WebSocket으로 메시지 전송 (실시간 전송)
     sendMessage(messageData);
 
-    // 파일 업로드 처리 (이미지인 경우)
-    if (file && messageType === 'image') {
+    // 메시지 전송 즉시 맨 아래로 스크롤 (조건 없이)
+    console.log('📤 메시지 전송 - 즉시 맨 아래로 스크롤');
+    setTimeout(() => {
+      scrollToBottom(true);
+    }, 50);
 
-      // 메시지가 서버에 저장될 때까지 잠시 대기 후 파일 업로드
+    // 파일 업로드 처리
+    if (file && messageType === 'image') {
+      console.log('📷 이미지 파일 업로드 시작');
+      
       setTimeout(async () => {
         try {
-          // 최신 메시지 목록에서 방금 전송한 메시지 찾기
           const messageList = await chatApi.readMessageList(parseInt(roomId));
           const latestMessage = messageList[messageList.length - 1];
 
           if (latestMessage && latestMessage.sender_idx === currentMemberIdx) {
-            // 파일 업로드 및 메시지 연결
             const uploadResult = await chatApi.uploadFile(file, latestMessage.message_idx);
-
-            // 첨부파일 상태 업데이트 (단일 객체)
             setAttachments(prev => ({
               ...prev,
               [latestMessage.message_idx]: {
@@ -519,47 +508,47 @@ const ChatRoom = () => {
                 mime_type: uploadResult.mimeType
               }
             }));
+            
+            // 파일 업로드 완료 후 스크롤 재조정
+            console.log('📷 이미지 업로드 완료 - 스크롤 재조정');
+            setTimeout(() => {
+              scrollToBottom(false);
+            }, 200);
           }
         } catch (error) {
           console.error('파일 업로드 실패:', error);
           alert('파일 업로드에 실패했습니다.');
         }
-      }, 500); // 500ms 대기
+      }, 500);
     }
   };
 
   // 채팅방 표시 이름 생성
   const getRoomDisplayName = () => {
-    // 백엔드에서 가져온 실제 이름 사용 (roomData에 상대방 이름이 포함되어 있음)
     if (roomData && currentMemberIdx) {
       if (roomData.trainer_idx === currentMemberIdx) {
-        // 내가 트레이너인 경우 → 회원 이름 표시
         const userName = roomData.user_name || '회원';
         return `${userName}님과의 상담`;
       } else {
-        // 내가 일반 사용자인 경우 → 트레이너 이름 표시
         const trainerName = roomData.trainer_name || '트레이너';
         return `${trainerName}님과의 상담`;
       }
     }
 
-    // 2순위: 기존 room_name 파싱
     if (roomData?.room_name) {
       const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
       if (nameMatch) {
         if (roomData.trainer_idx === currentMemberIdx) {
-          return `회원님과의 상담`; // 트레이너인 경우 임시 표시
+          return `회원님과의 상담`;
         } else {
-          return roomData.room_name; // 기존 이름 유지
+          return roomData.room_name;
         }
       }
       return roomData.room_name;
     }
 
-    // 3순위: 트레이너 정보에서 이름
     if (location.state?.trainerInfo?.member_name) {
       const trainerName = location.state.trainerInfo.member_name;
-
       if (roomData?.trainer_idx === currentMemberIdx) {
         return `회원님과의 상담`;
       } else {
@@ -567,7 +556,6 @@ const ChatRoom = () => {
       }
     }
 
-    // 4순위: 기본 표시명
     if (roomData?.trainer_idx === currentMemberIdx) {
       return `회원님과의 상담`;
     } else {
@@ -588,7 +576,6 @@ const ChatRoom = () => {
           <BackButton onClick={handleBackClick}>
             ←
           </BackButton>
-
           <UserInfo>
             <UserName>채팅방</UserName>
           </UserInfo>
@@ -600,7 +587,6 @@ const ChatRoom = () => {
 
   return (
     <Container>
-      {/* 채팅방 헤더 */}
       <ChatRoomHeader 
         roomDisplayName={getRoomDisplayName()} 
         onSearchResults={handleSearchResults} 
@@ -608,19 +594,17 @@ const ChatRoom = () => {
         messages={messages}
       />
 
-      {/* 메시지 목록 */}
       <MessagesContainer ref={messagesContainerRef}>
         <MessageList
           messages={messages}
-          currentMemberIdx={currentMemberIdx} // currentUser 대신 currentMemberIdx 전달
+          currentMemberIdx={currentMemberIdx}
           attachments={attachments}
-          roomData={roomData} // roomData 전달 추가
+          roomData={roomData}
+          onImageLoad={handleImageLoad}
         />
-        {/* 자동 스크롤을 위한 더미 요소 */}
         <div ref={messagesEndRef} />
       </MessagesContainer>
 
-      {/* 메시지 입력창 */}
       <MessageInput
         onSendMessage={handleSendMessage}
         disabled={!connected}

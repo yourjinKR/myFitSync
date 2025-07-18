@@ -65,7 +65,7 @@ const InputContainer = styled.div`
   gap: 10px;
 `;
 
-/* 수정된 AttachButton - 아이콘 중앙 정렬 개선 */
+/* 첨부 버튼 */
 const AttachButton = styled.button`
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border-medium);
@@ -76,11 +76,11 @@ const AttachButton = styled.button`
   color: var(--text-primary);
   transition: all 0.2s;
   transform: translateY(-1.5px);
-  display: flex; /* flex 추가 */
-  align-items: center; /* 수직 중앙 정렬 */
-  justify-content: center; /* 수평 중앙 정렬 */
-  width: 40px; /* 고정 너비 */
-  height: 40px; /* 고정 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   
   &:hover {
     background-color: var(--bg-tertiary);
@@ -93,10 +93,9 @@ const AttachButton = styled.button`
     cursor: not-allowed;
   }
   
-  /* SVG 아이콘 중앙 정렬 */
   svg {
-    display: block; /* inline 요소의 기본 여백 제거 */
-    margin: 0; /* 마진 제거 */
+    display: block;
+    margin: 0;
   }
 `;
 
@@ -175,21 +174,27 @@ const MessageInput = ({ onSendMessage, disabled }) => {
   const fileInputRef = useRef(null); // 파일 입력 요소 참조
   const textAreaRef = useRef(null); // 텍스트에어리어 참조
 
-  // 텍스트 또는 파일이 있을 때 전송 처리
+  // 전송 처리 (파일과 텍스트 함께 전송)
   const handleSend = () => {
-    // 전송할 내용이 없으면 리턴
+    // 텍스트와 파일 모두 없으면 리턴
     if (!messageText.trim() && !selectedFile) return;
 
     if (selectedFile) {
-      // 파일이 선택된 경우 이미지 메시지로 전송
-      console.log('이미지 메시지 전송:', selectedFile.name);
-      onSendMessage('[이미지]', 'image', selectedFile);
+      // 파일이 선택된 경우
+      console.log('이미지 + 텍스트 메시지 전송:', {
+        file: selectedFile.name,
+        text: messageText.trim() || '[이미지]'
+      });
+      
+      // 텍스트가 있으면 텍스트와 함께, 없으면 기본 '[이미지]' 메시지로 전송
+      const messageContent = messageText.trim() || '[이미지]';
+      onSendMessage(messageContent, 'image', selectedFile);
       
       // 파일 선택 상태 초기화
       setSelectedFile(null);
       setPreviewUrl(null);
     } else {
-      // 텍스트 메시지 전송
+      // 텍스트만 있는 경우
       console.log('텍스트 메시지 전송:', messageText.trim());
       onSendMessage(messageText.trim());
     }
@@ -221,7 +226,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
     textArea.style.height = textArea.scrollHeight + 'px';
   };
 
-  // 파일 선택 핸들러(유효성 검사 및 미리보기)
+  // 파일 선택 핸들러 (자동 포커스 추가)
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -241,6 +246,14 @@ const MessageInput = ({ onSendMessage, disabled }) => {
     }
 
     setSelectedFile(file);
+    
+    // 파일 선택 후 텍스트 입력창에 자동 포커스
+    setTimeout(() => {
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
+        console.log('✅ 파일 선택 후 텍스트 입력창에 포커스');
+      }
+    }, 100); // 짧은 지연 후 포커스 (상태 업데이트 완료 대기)
     
     // FileReader를 사용하여 미리보기 URL 생성
     const reader = new FileReader();
@@ -292,7 +305,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
 
       {/* 메시지 입력 영역 */}
       <InputContainer>
-        {/* 파일 첨부 버튼 - 수정된 부분 */}
+        {/* 파일 첨부 버튼 */}
         <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled} title="이미지 첨부">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -324,7 +337,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
             value={messageText}
             onChange={handleTextChange}
             onKeyPress={handleKeyPress}
-            placeholder="메시지를 입력하세요..."
+            placeholder={selectedFile ? "이미지와 함께 보낼 메시지를 입력하세요..." : "메시지를 입력하세요..."}
             disabled={disabled}
             rows={1}
           />
