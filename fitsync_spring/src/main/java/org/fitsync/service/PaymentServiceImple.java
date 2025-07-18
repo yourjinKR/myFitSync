@@ -444,7 +444,8 @@ public class PaymentServiceImple implements PaymentService {
 		String channelKey = getChannelKey(paymentMethodMapper.selectByMethodIdx(methodIdx).getMethod_provider());
 
 		// 테스트용으로 현시각 기준 10초 후 예약
-		String timeToPay = java.time.LocalDateTime.now().plusSeconds(10).toString() + "+09:00";
+		java.time.LocalDateTime scheduleTime = java.time.LocalDateTime.now().plusSeconds(10);
+		String timeToPay = scheduleTime.toString() + "+09:00";
 
 		try {
 			// 포트원 API 호출
@@ -455,12 +456,33 @@ public class PaymentServiceImple implements PaymentService {
 				.method("POST", HttpRequest.BodyPublishers.ofString("{\"payment\":{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"1개월 구독권\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"},\"timeToPay\":\"" + timeToPay + "\"}"))
 				.build();
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-			
-
 			System.out.println(response.body());
+
+			// 결제 내역에 저장
+			PaymentOrderVO order = new PaymentOrderVO();
+			order.setMember_idx(memberIdx);
+			order.setMethod_idx(methodIdx);
+			order.setPayment_id(paymentId);
+			order.setOrder_type("SCHEDULE");
+			order.setOrder_status("READY");
+			order.setOrder_name("1개월 구독권");
+			order.setOrder_price(3000);
+			order.setOrder_currency("KRW");
+			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
+			
+			// LocalDateTime을 java.sql.Timestamp로 안전하게 변환
+			java.sql.Timestamp scheduleTimestamp = java.sql.Timestamp.valueOf(scheduleTime);
+			order.setSchedule_date(scheduleTimestamp);
+			
+			log.info("결제 예약 정보 저장 - PaymentId: " + paymentId + ", ScheduleTime: " + scheduleTimestamp);
+
+			paymentOrderMapper.insertPaymentOrder(order);
+			
+			log.info("결제 예약 저장 완료 - PaymentId: " + paymentId);
+
 		} catch (Exception e) {
-			// TODO: handle exception
+			log.error("결제 예약 중 오류 발생: ", e);
+			e.printStackTrace();
 		}
 		return null;
 	}
