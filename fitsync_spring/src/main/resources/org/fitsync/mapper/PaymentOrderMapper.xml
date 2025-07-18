@@ -6,8 +6,7 @@
 <mapper namespace="org.fitsync.mapper.PaymentOrderMapper">
 
     <!-- 결제 요청 저장 -->
-    <insert id="insertPaymentOrder" parameterType="org.fitsync.domain.PaymentOrderVO" 
-            useGeneratedKeys="true" keyProperty="order_idx" keyColumn="order_idx">
+    <insert id="insertPaymentOrder" parameterType="org.fitsync.domain.PaymentOrderVO">
         INSERT INTO payment_order (
             order_idx, member_idx, method_idx,
             payment_id, order_type, order_status,
