@@ -278,6 +278,7 @@ const PaymentHistory = () => {
       case 'PAID': return '결제완료';
       case 'FAILED': return '결제실패';
       case 'READY': return '결제대기';
+      case 'CANCELLED': return '결제취소';
       default: return '알수없음';
     }
   };
