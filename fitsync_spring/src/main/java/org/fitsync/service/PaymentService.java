@@ -18,7 +18,11 @@ public interface PaymentService {
 	
 	public Object payBillingKey(String paymentId, int methodIdx, int memberIdx) throws IOException;
 	
+	// 결제 예약 추가
 	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime) throws IOException;
+
+	// 결제 예약 취소
+	public Object cancelScheduledPayment(int orderIdx, int memberIdx) throws IOException;
 	
 	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName);
 	

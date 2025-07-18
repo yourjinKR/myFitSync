@@ -89,6 +89,26 @@ const KaKaoPayTest = () => {
                 console.log("📋 결제 내역:", history);
                 console.log(`📊 총 ${response.totalCount}건의 결제 기록이 있습니다.`);
 
+                // order_idx 목록을 별도로 출력하여 취소 테스트에 활용
+                const orderIndexes = history
+                    .filter(item => item.order_status === 'READY' && item.order_type === 'SCHEDULE')
+                    .map(item => ({
+                        order_idx: item.order_idx,
+                        order_name: item.order_name,
+                        schedule_date: item.schedule_date,
+                        order_status: item.order_status
+                    }));
+
+                if (orderIndexes.length > 0) {
+                    console.log("🔢 취소 가능한 예약 주문 번호들:");
+                    console.table(orderIndexes);
+                    
+                    const orderIdxList = orderIndexes.map(item => item.order_idx).join(', ');
+                    alert(`취소 가능한 예약 주문 번호들:\n${orderIdxList}\n\n콘솔에서 상세 정보를 확인하세요.`);
+                } else {
+                    alert("취소 가능한 예약이 없습니다.\n(READY 상태의 SCHEDULE 타입 주문만 취소 가능)");
+                }
+
             } else {
                 alert(`조회 실패: ${response.message}`);
             }
@@ -250,6 +270,77 @@ const KaKaoPayTest = () => {
         }
     }
 
+    /** 결제 예약 취소 테스트 */
+    const handleCancelScheduledPayment = async () => {
+        const orderIdx = prompt("취소할 주문 번호(order_idx)를 입력하세요:", "");
+        
+        if (!orderIdx) {
+            alert("주문 번호를 입력해주세요.");
+            return;
+        }
+        
+        const isConfirmed = window.confirm(`주문 번호 ${orderIdx}의 결제 예약을 취소하시겠습니까?`);
+        if (!isConfirmed) {
+            return;
+        }
+        
+        try {
+            const response = await PaymentUtil.cancelScheduledPayment(parseInt(orderIdx));
+            
+            console.log("✅ 결제 예약 취소 성공!");
+            console.log("취소 결과:", response);
+            alert(`결제 예약이 성공적으로 취소되었습니다!\n주문 번호: ${orderIdx}`);
+            
+        } catch (error) {
+            console.error("결제 예약 취소 중 오류:", error);
+            alert(`결제 예약 취소 실패: ${error.message}`);
+        }
+    }
+
+    /** 최근 예약 자동 취소 (간편 테스트용) */
+    const handleCancelLatestSchedule = async () => {
+        try {
+            // 먼저 결제 내역을 조회하여 최신 예약을 찾기
+            const response = await PaymentUtil.getPaymentHistory();
+            
+            if (!response.success) {
+                alert(`내역 조회 실패: ${response.message}`);
+                return;
+            }
+
+            const history = response.data;
+            const latestSchedule = history
+                .filter(item => item.order_status === 'READY' && item.order_type === 'SCHEDULE')
+                .sort((a, b) => new Date(b.order_regdate) - new Date(a.order_regdate))[0];
+
+            if (!latestSchedule) {
+                alert("취소할 수 있는 최근 예약이 없습니다.");
+                return;
+            }
+
+            const isConfirmed = window.confirm(
+                `최근 예약을 취소하시겠습니까?\n` +
+                `주문번호: ${latestSchedule.order_idx}\n` +
+                `주문명: ${latestSchedule.order_name}\n` +
+                `예약일시: ${latestSchedule.schedule_date}`
+            );
+
+            if (!isConfirmed) {
+                return;
+            }
+
+            const cancelResponse = await PaymentUtil.cancelScheduledPayment(latestSchedule.order_idx);
+            
+            console.log("✅ 최근 예약 취소 성공!");
+            console.log("취소 결과:", cancelResponse);
+            alert(`최근 예약이 성공적으로 취소되었습니다!\n주문 번호: ${latestSchedule.order_idx}`);
+            
+        } catch (error) {
+            console.error("최근 예약 취소 중 오류:", error);
+            alert(`최근 예약 취소 실패: ${error.message}`);
+        }
+    }
+
 
     return (
         <div>
@@ -258,10 +349,12 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 1})}>내 빌링키 정보 조회</ButtonSubmit>
             <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 32})}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
-            <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (콘솔)</ButtonSubmit>
+            <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (order_idx 확인)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
             <ButtonSubmit onClick={handleScheduleBillingKey}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
             <ButtonSubmit onClick={handleCustomScheduleBillingKey}>📅 결제 예약 (사용자 입력)</ButtonSubmit>
+            <ButtonSubmit onClick={handleCancelScheduledPayment}>❌ 결제 예약 취소 (order_idx 입력)</ButtonSubmit>
+            <ButtonSubmit onClick={handleCancelLatestSchedule}>🔄 최근 예약 자동 취소</ButtonSubmit>
             
             <CalendarContainer>
                 <DateTimeButton onClick={handleCalendarSchedule}>

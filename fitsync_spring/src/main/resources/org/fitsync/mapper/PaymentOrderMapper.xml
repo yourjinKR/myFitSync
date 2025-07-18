@@ -36,11 +36,14 @@
         )
     </insert>
 
-    <!-- 결제 상태 및 결제시간 갱신 -->
+    <!-- 결제 상태 및 결제시간 갱신 (if 문 사용하여 유동적으로 처리) -->
     <update id="updatePaymentStatus" parameterType="org.fitsync.domain.PaymentOrderVO">
         UPDATE payment_order
-        SET order_status = #{order_status},
-            order_paydate = #{order_paydate}
+        SET 
+            <if test="order_paydate != null">
+                order_paydate = #{order_paydate},
+            </if>
+            order_status = #{order_status}
         WHERE order_idx = #{order_idx}
     </update>
 

@@ -583,6 +583,45 @@ public class PaymentServiceImple implements PaymentService {
 	}
 
 	// 빌링키 결제 예약 취소
+	@Override
+	public Object cancelScheduledPayment(int orderIdx, int memberIdx) {
+		// 예약 취소를 위해 order_idx로 schedule_id 조회
+		PaymentOrderVO order = paymentOrderMapper.selectPaymentOrderById(orderIdx);
+		String scheduleId = order != null ? order.getSchedule_id() : null;
+		if (order == null || scheduleId == null) {
+			log.error("예약 취소 실패 - order_idx: " + orderIdx + "에 해당하는 예약이 없습니다.");
+			return Map.of("success", false, "message", "예약을 찾을 수 없습니다.");
+		}
+
+		try {			
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("DELETE", HttpRequest.BodyPublishers.ofString("{\"scheduleIds\":[\"" + scheduleId + "\"]}"))
+				.build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			System.out.println(response.body());
+
+			// 성공시 예약 상태 업데이트
+			if (response.statusCode() >= 200 && response.statusCode() < 300)
+			{
+				log.info("예약 취소 성공 - ScheduleId: " + scheduleId);
+				
+				// 예약 상태를 CANCELLED로 업데이트
+				order.setOrder_status("CANCELLED");
+				paymentOrderMapper.updatePaymentStatus(order);
+				
+				return Map.of("success", true, "message", "예약이 성공적으로 취소되었습니다.", "orderIdx", orderIdx);
+			} else {
+				log.error("예약 취소 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
+				return Map.of("success", false, "message", "예약 취소에 실패했습니다. 상태 코드: " + response.statusCode());
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null; // TODO: 예약 취소 로직 구현 필요
+	}
 	
 	
 	@Override

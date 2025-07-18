@@ -243,7 +243,16 @@ public class PaymentController {
             ));
         }
     }    
-    
+
+    // 결제 예약 취소
+    @DeleteMapping("/bill/cancel")
+    public Object cancelBillingKey(@RequestBody Map<String, Object> requestData, HttpSession session) {
+        int orderIdx = Integer.parseInt(requestData.get("order_idx").toString());
+        int memberIdx = Integer.parseInt(session.getAttribute("member_idx").toString());
+
+        return payService.cancelScheduledPayment(orderIdx, memberIdx);
+    }
+
     // 결제수단 이름 변경
     @PatchMapping("/bill/rename")
     public ResponseEntity<Map<String, Object>> renameBillingKey(
