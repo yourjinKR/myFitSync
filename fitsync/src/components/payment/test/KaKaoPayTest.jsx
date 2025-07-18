@@ -1,73 +1,23 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ButtonSubmit } from '../../../styles/FormStyles';
-import axios from 'axios';
 import { KAKAOPAY, PaymentUtil, TOSSPAYMENTS } from '../../../utils/PaymentUtil';
 import { useNavigate } from 'react-router-dom';
+import DateTimePicker from '../DateTimePicker';
+import styled from 'styled-components';
 
-const initwallet = {
-    method_idx : null,
-    member_idx : null,
-    method_key : null,
-    method_provider : null,
-    method_name : "결제수단을 등록해주세요",
-    method_regdate : null
-};
+const CalendarContainer = styled.div`
+    position: relative;
+    display: inline-block;
+    margin: 10px 0;
+`;
+
+const DateTimeButton = styled(ButtonSubmit)`
+    margin-right: 10px;
+`;
 
 const KaKaoPayTest = () => {
-    const [wallet, setWallet] = useState([initwallet]);
+    const [showCalendar, setShowCalendar] = useState(false);
     const navigate = useNavigate();
-
-    /** 난수 return 함수 (paymentId 전용)  */
-    const randomId = () => {
-        return [...crypto.getRandomValues(new Uint32Array(2))]
-            .map((word) => word.toString(16).padStart(8, "0"))
-            .join("");
-    }
-
-    /** 빌링키 결제 */
-    const handlePortOneBillingPaymentTest = async () => {
-        try {
-            const payment_id = randomId();
-            console.log("Generated Payment ID:", payment_id);
-
-            const response = await axios.post('/payment/bill/pay', {
-                payment_id,
-                method_idx: "1"  // 실제 결제수단 ID로 변경 필요
-            });
-            
-            console.log("빌링키 결제 응답 상태:", response.status);
-            console.log("빌링키 결제 결과:", response.data);
-            
-            // 응답 데이터 구조 확인
-            if (response.data.success) {
-                console.log("✅ 결제 성공!");
-                console.log("결제 데이터:", response.data.data);
-                alert("결제가 성공적으로 완료되었습니다!");
-            } else {
-                console.log("❌ 결제 실패!");
-                console.log("실패 원인:", response.data.message);
-                alert(`결제 실패: ${response.data.message}`);
-            }
-            
-        } catch (error) {
-            console.error("빌링키 결제 요청 중 오류 발생:", error);
-            
-            if (error.response) {
-                // 서버에서 응답을 받았지만 에러 상태
-                console.log("에러 상태 코드:", error.response.status);
-                console.log("에러 응답 데이터:", error.response.data);
-                alert(`서버 오류: ${error.response.data?.message || '알 수 없는 오류'}`);
-            } else if (error.request) {
-                // 요청은 전송되었지만 응답을 받지 못함
-                console.log("요청이 전송되었지만 응답을 받지 못함:", error.request);
-                alert("서버에서 응답이 없습니다. 네트워크를 확인해주세요.");
-            } else {
-                // 요청 설정 중 오류 발생
-                console.log("요청 설정 오류:", error.message);
-                alert(`요청 오류: ${error.message}`);
-            }
-        }
-    }
 
     /** 빌링키 발급 및 저장 */
     const billingKey = async (e) => {
@@ -79,7 +29,7 @@ const KaKaoPayTest = () => {
             
             if (result !== null) {
                 // 빌링키 저장
-                const saveResponse = await PaymentUtil.saveBillingKey({
+                await PaymentUtil.saveBillingKey({
                     method_key: result.billingKey,
                     method_provider: name,
                 });
@@ -113,7 +63,7 @@ const KaKaoPayTest = () => {
             
             if (response.success) {
                 const methods = response.data;
-                setWallet(methods);
+                console.log('결제수단 목록:', methods);
                 return methods.length > 0 ? methods : null;
             } else {
                 alert(`조회 실패: ${response.message}`);
@@ -153,6 +103,136 @@ const KaKaoPayTest = () => {
         navigate('/payment/history');
     }
 
+    /** 빌링키 결제 예약 테스트 (사용자 입력 날짜) */
+    const handleScheduleBillingKey = async () => {
+        try {
+            // 현재 시간에서 1시간 후로 설정 (테스트용)
+            const scheduleDate = new Date();
+            scheduleDate.setHours(scheduleDate.getHours() + 1);
+            
+            // yyyy-MM-dd HH:mm:ss 형식으로 변환
+            const scheduleDateTime = scheduleDate.toISOString()
+                .slice(0, 19) // YYYY-MM-DDTHH:mm:ss
+                .replace('T', ' '); // 공백으로 구분
+            
+            console.log("예약 날짜/시간:", scheduleDateTime);
+            
+            const response = await PaymentUtil.scheduleBillingKey({ 
+                method_idx: 32,
+                schedule_datetime: scheduleDateTime
+            });
+            
+            if (response.success) {
+                console.log("✅ 결제 예약 성공!");
+                console.log("예약 정보:", response.data);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간: ${scheduleDateTime}`);
+            } else {
+                console.log("❌ 결제 예약 실패!");
+                console.log("실패 원인:", response.message);
+                alert(`결제 예약 실패: ${response.message}`);
+            }
+            
+        } catch (error) {
+            console.error("결제 예약 중 오류:", error);
+            
+            if (error.response) {
+                console.log("서버 응답 오류:", error.response.data);
+                alert(`서버 오류: ${error.response.data?.message || '알 수 없는 오류'}`);
+            } else {
+                console.log("기타 오류:", error.message);
+                alert(`오류: ${error.message}`);
+            }
+        }
+    }
+
+    /** 달력 UI를 통한 결제 예약 */
+    const handleCalendarSchedule = () => {
+        setShowCalendar(true);
+    }
+
+    /** 달력에서 날짜/시간 선택 완료 */
+    const handleDateTimeSelect = async (selectedDateTime) => {
+        setShowCalendar(false);
+        
+        try {
+            // yyyy-MM-dd HH:mm:ss 형식으로 변환
+            const scheduleDateTime = selectedDateTime.toISOString()
+                .slice(0, 19) // YYYY-MM-DDTHH:mm:ss
+                .replace('T', ' '); // 공백으로 구분
+            
+            console.log("달력에서 선택한 예약 날짜/시간:", scheduleDateTime);
+            
+            const response = await PaymentUtil.scheduleBillingKey({ 
+                method_idx: 32,
+                schedule_datetime: scheduleDateTime
+            });
+            
+            if (response.success) {
+                console.log("✅ 달력 UI 결제 예약 성공!");
+                console.log("예약 정보:", response.data);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간: ${scheduleDateTime}`);
+            } else {
+                console.log("❌ 결제 예약 실패!");
+                console.log("실패 원인:", response.message);
+                alert(`결제 예약 실패: ${response.message}`);
+            }
+            
+        } catch (error) {
+            console.error("달력 UI 결제 예약 중 오류:", error);
+            
+            if (error.response) {
+                console.log("서버 응답 오류:", error.response.data);
+                alert(`서버 오류: ${error.response.data?.message || '알 수 없는 오류'}`);
+            } else {
+                console.log("기타 오류:", error.message);
+                alert(`오류: ${error.message}`);
+            }
+        }
+    }
+
+    /** 달력 취소 */
+    const handleCalendarCancel = () => {
+        setShowCalendar(false);
+    }
+
+    /** 사용자 정의 시간으로 결제 예약 */
+    const handleCustomScheduleBillingKey = async () => {
+        const customDateTime = prompt("결제 예약 날짜/시간을 입력하세요 (형식: yyyy-MM-dd HH:mm:ss)", "2025-01-20 14:30:00");
+        
+        if (!customDateTime) {
+            alert("날짜/시간을 입력해주세요.");
+            return;
+        }
+        
+        try {
+            const response = await PaymentUtil.scheduleBillingKey({ 
+                method_idx: 32,
+                schedule_datetime: customDateTime
+            });
+            
+            if (response.success) {
+                console.log("✅ 사용자 정의 결제 예약 성공!");
+                console.log("예약 정보:", response.data);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간: ${customDateTime}`);
+            } else {
+                console.log("❌ 결제 예약 실패!");
+                console.log("실패 원인:", response.message);
+                alert(`결제 예약 실패: ${response.message}`);
+            }
+            
+        } catch (error) {
+            console.error("결제 예약 중 오류:", error);
+            
+            if (error.response) {
+                console.log("서버 응답 오류:", error.response.data);
+                alert(`서버 오류: ${error.response.data?.message || '알 수 없는 오류'}`);
+            } else {
+                console.log("기타 오류:", error.message);
+                alert(`오류: ${error.message}`);
+            }
+        }
+    }
+
 
     return (
         <div>
@@ -163,7 +243,21 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (콘솔)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.scheduleBillingKey({ method_idx: 32 })}>빌링키 결제 예약 테스트</ButtonSubmit>
+            <ButtonSubmit onClick={handleScheduleBillingKey}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
+            <ButtonSubmit onClick={handleCustomScheduleBillingKey}>📅 결제 예약 (사용자 입력)</ButtonSubmit>
+            
+            <CalendarContainer>
+                <DateTimeButton onClick={handleCalendarSchedule}>
+                    🗓️ 달력으로 결제 예약
+                </DateTimeButton>
+                {showCalendar && (
+                    <DateTimePicker
+                        onSelect={handleDateTimeSelect}
+                        onCancel={handleCalendarCancel}
+                        initialDate={new Date()}
+                    />
+                )}
+            </CalendarContainer>
         </div>
     );
 };

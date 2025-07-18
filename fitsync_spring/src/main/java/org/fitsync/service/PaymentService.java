@@ -18,7 +18,7 @@ public interface PaymentService {
 	
 	public Object payBillingKey(String paymentId, int methodIdx, int memberIdx) throws IOException;
 	
-	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx) throws IOException;
+	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime) throws IOException;
 	
 	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName);
 	

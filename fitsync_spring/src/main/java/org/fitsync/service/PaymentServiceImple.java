@@ -437,15 +437,35 @@ public class PaymentServiceImple implements PaymentService {
 	    }
 	}
 
-	// 결제 예약
+	// 빌링키 결제 예약
 	@Override
-	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx) {
+	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime) {
 		String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
 		String channelKey = getChannelKey(paymentMethodMapper.selectByMethodIdx(methodIdx).getMethod_provider());
 
-		// 테스트용으로 현시각 기준 10초 후 예약
-		java.time.LocalDateTime scheduleTime = java.time.LocalDateTime.now().plusSeconds(10);
-		String timeToPay = scheduleTime.toString() + "+09:00";
+		// 사용자가 입력한 날짜/시간을 LocalDateTime으로 변환
+		java.time.LocalDateTime scheduleTime;
+		String timeToPay;
+		
+		try {
+			// 입력 형식: "yyyy-MM-dd HH:mm:ss" 또는 "yyyy-MM-ddTHH:mm:ss"
+			if (scheduleDateTime.contains("T")) {
+				// ISO 형식인 경우
+				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime);
+			} else {
+				// 일반 형식인 경우 (공백으로 구분)
+				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime.replace(" ", "T"));
+			}
+			
+			// PortOne API 형식으로 변환 (ISO 8601 + 타임존)
+			timeToPay = scheduleTime.toString() + "+09:00";
+			
+			log.info("결제 예약 시간 설정 - 입력: " + scheduleDateTime + ", 변환: " + timeToPay);
+			
+		} catch (Exception dateEx) {
+			log.error("날짜 형식 오류 - 입력값: " + scheduleDateTime, dateEx);
+			throw new IllegalArgumentException("잘못된 날짜 형식입니다. 올바른 형식: 'yyyy-MM-dd HH:mm:ss' 또는 'yyyy-MM-ddTHH:mm:ss'");
+		}
 
 		try {
 			// 포트원 API 호출
@@ -513,13 +533,35 @@ public class PaymentServiceImple implements PaymentService {
 			paymentOrderMapper.insertPaymentOrder(order);
 			
 			log.info("결제 예약 저장 완료 - PaymentId: " + paymentId);
+			
+			// 성공 응답 반환
+			Map<String, Object> result = new HashMap<>();
+			result.put("success", true);
+			result.put("message", "결제 예약이 성공적으로 등록되었습니다.");
+			result.put("paymentId", paymentId);
+			result.put("scheduleId", scheduleId);
+			result.put("scheduleDateTime", scheduleTime.toString());
+			result.put("orderIdx", order.getOrder_idx());
+			
+			return result;
 
 		} catch (Exception e) {
 			log.error("결제 예약 중 오류 발생: ", e);
 			e.printStackTrace();
+			
+			// 오류 응답 반환
+			Map<String, Object> errorResult = new HashMap<>();
+			errorResult.put("success", false);
+			errorResult.put("message", "결제 예약 처리 중 오류가 발생했습니다: " + e.getMessage());
+			errorResult.put("error", e.getClass().getSimpleName());
+			errorResult.put("paymentId", paymentId);
+			
+			return errorResult;
 		}
-		return null;
 	}
+
+	// 빌링키 결제 예약 취소
+	
 	
 	@Override
 	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName) {

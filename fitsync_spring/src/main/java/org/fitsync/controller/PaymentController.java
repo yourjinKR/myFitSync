@@ -187,15 +187,61 @@ public class PaymentController {
       // 빌링키로 결제 예약
     @PostMapping("/bill/schedule")
     public ResponseEntity<?> scheduleBillingKey(@RequestBody Map<String, Object> body, HttpSession session) throws IOException {
+        Object memberIdxObj = session.getAttribute("member_idx");
+        if (memberIdxObj == null) {
+            log.error("세션에 member_idx가 없습니다.");
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+        }
+        
         String paymentId = (String) body.get("payment_id");
-        int methodIdx = Integer.parseInt(body.get("method_idx").toString());
-        int memberIdx = Integer.parseInt(session.getAttribute("member_idx").toString());
+        Object methodIdxObj = body.get("method_idx");
+        String scheduleDateTime = (String) body.get("schedule_datetime");
+        
+        // 필수 파라미터 검증
+        if (paymentId == null || methodIdxObj == null || scheduleDateTime == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false, 
+                "message", "필수 파라미터가 누락되었습니다. (payment_id, method_idx, schedule_datetime)"
+            ));
+        }
+        
+        try {
+            int methodIdx = Integer.parseInt(methodIdxObj.toString());
+            int memberIdx = Integer.parseInt(memberIdxObj.toString());
 
-        log.info("Scheduling billing key payment - Payment ID: " + paymentId + ", Method Index: " + methodIdx + ", Member Index: " + memberIdx);
+            log.info("결제 예약 요청 - Payment ID: " + paymentId + ", Method Index: " + methodIdx + ", Member Index: " + memberIdx + ", Schedule: " + scheduleDateTime);
 
-        // 서비스 호출하여 예약 처리
-        payService.scheduleBillingKey(paymentId, methodIdx, memberIdx);
-    	return null;
+            // 서비스 호출하여 예약 처리
+            Object result = payService.scheduleBillingKey(paymentId, methodIdx, memberIdx, scheduleDateTime);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "결제 예약이 완료되었습니다.");
+            response.put("data", result);
+            response.put("paymentId", paymentId);
+            response.put("scheduleDateTime", scheduleDateTime);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (NumberFormatException e) {
+            log.error("숫자 형식 오류: ", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false, 
+                "message", "잘못된 숫자 형식입니다."
+            ));
+        } catch (IllegalArgumentException e) {
+            log.error("날짜 형식 오류: ", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false, 
+                "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("결제 예약 중 오류 발생: ", e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false, 
+                "message", "결제 예약 처리 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
     }    
     
     // 결제수단 이름 변경

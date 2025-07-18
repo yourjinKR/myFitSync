@@ -263,12 +263,13 @@ export const PaymentUtil = {
     },
 
     /** 빌링키 결제 예약 */
-    scheduleBillingKey: async ({ method_idx }) => {
+    scheduleBillingKey: async ({ method_idx, schedule_datetime }) => {
         const payment_id = randomId();
         try {
             const response = await axios.post('/payment/bill/schedule', {
                 payment_id,
                 method_idx,
+                schedule_datetime
             }, {
                 withCredentials: true,
                 headers: {
