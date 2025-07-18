@@ -30,10 +30,33 @@ public class PaymentOrderWithMethodVO {
     private String method_card_num;
     private String method_regdate;   // TO_CHAR로 변환된 문자열
     
+    // API에서 조회한 결제 수단 정보 (PortOne API 응답)
+    private String apiMethodProvider;  // API에서 조회한 결제 수단 제공자
+    private String apiCardName;        // API에서 조회한 카드명
+    private String apiCardNumber;      // API에서 조회한 카드번호
+    private String apiCardPublisher;   // API에서 조회한 카드사
+    private String apiCardIssuer;      // API에서 조회한 발급사
+    private String apiCardBrand;       // API에서 조회한 카드 브랜드
+    private String apiCardType;        // API에서 조회한 카드 타입 (DEBIT/CREDIT)
+    
     /**
      * 결제 수단 표시명 반환 (사용자 친화적)
+     * API 정보가 있으면 우선 사용, 없으면 DB 정보 사용
      */
     public String getDisplayMethodName() {
+        // API 정보 우선 사용
+        if (apiMethodProvider != null && !apiMethodProvider.trim().isEmpty()) {
+            switch (apiMethodProvider) {
+                case "KAKAOPAY":
+                    return "카카오페이";
+                case "TOSSPAYMENTS":
+                    return "토스페이먼츠";
+                default:
+                    return "카드 결제";
+            }
+        }
+        
+        // DB 정보 사용 (기존 로직)
         if (method_name != null && !method_name.trim().isEmpty() && 
             !method_name.equals("카카오페이") && !method_name.equals("토스페이먼츠")) {
             return method_name;
@@ -52,23 +75,50 @@ public class PaymentOrderWithMethodVO {
     
     /**
      * 마스킹된 카드번호 반환
+     * API 정보가 있으면 우선 사용, 없으면 DB 정보 사용
      */
     public String getMaskedCardNumber() {
-        if (method_card_num == null || method_card_num.length() < 4) {
+        String cardNumber = null;
+        
+        // API 정보 우선 사용
+        if (apiCardNumber != null && !apiCardNumber.trim().isEmpty()) {
+            cardNumber = apiCardNumber;
+        } else if (method_card_num != null && !method_card_num.trim().isEmpty()) {
+            cardNumber = method_card_num;
+        }
+        
+        if (cardNumber == null || cardNumber.length() < 4) {
             return "****-****-****-****";
         }
         
+        // 이미 마스킹된 번호인지 확인
+        if (cardNumber.contains("*")) {
+            return cardNumber;
+        }
+        
         // 마지막 4자리만 표시
-        String last4 = method_card_num.substring(method_card_num.length() - 4);
+        String last4 = cardNumber.substring(cardNumber.length() - 4);
         return "****-****-****-" + last4;
     }
     
     /**
      * 카드 정보 표시 (카드사 + 마스킹된 번호)
+     * API 정보가 있으면 우선 사용, 없으면 DB 정보 사용
      */
     public String getCardDisplayInfo() {
-        String cardName = method_card != null && !method_card.equals("정보 조회 실패") && !method_card.equals("알 수 없는 카드") 
-                         ? method_card : "카드";
+        String cardName = null;
+        
+        // API 정보 우선 사용
+        if (apiCardName != null && !apiCardName.trim().isEmpty()) {
+            cardName = apiCardName;
+        } else if (method_card != null && !method_card.equals("정보 조회 실패") && !method_card.equals("알 수 없는 카드")) {
+            cardName = method_card;
+        }
+        
+        if (cardName == null || cardName.trim().isEmpty()) {
+            cardName = "카드";
+        }
+        
         String maskedNumber = getMaskedCardNumber();
         return cardName + " " + maskedNumber;
     }

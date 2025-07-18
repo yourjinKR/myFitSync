@@ -140,7 +140,7 @@ public class PaymentServiceImple implements PaymentService {
 	}
 	
 	/**
-	 * PortOne 빌링키 응답에서 카드 정보를 추출하는 메서드
+	 * PortOne API 응답에서 카드 정보를 추출하는 메서드 (빌링키 조회 & 결제 단건 조회 모두 지원)
 	 * @param responseData PortOne API 응답 데이터
 	 * @return 추출된 카드 정보 (name, number, publisher, issuer 등)
 	 */
@@ -149,30 +149,52 @@ public class PaymentServiceImple implements PaymentService {
 		Map<String, Object> cardInfo = new HashMap<>();
 		
 		try {
-			// methods 배열에서 첫 번째 요소의 카드 정보 추출
-			List<Map<String, Object>> methods = (List<Map<String, Object>>) responseData.get("methods");
-			if (methods != null && !methods.isEmpty()) {
-				Map<String, Object> method = methods.get(0);
-				if ("BillingKeyPaymentMethodCard".equals(method.get("type"))) {
-					Map<String, Object> card = (Map<String, Object>) method.get("card");
-					if (card != null) {
-						cardInfo.put("name", card.get("name"));           // 카드 이름 (예: "기업은행카드")
-						cardInfo.put("number", card.get("number"));       // 카드 번호 (마스킹됨)
-						cardInfo.put("publisher", card.get("publisher")); // 발행사
-						cardInfo.put("issuer", card.get("issuer"));       // 발급사
-						cardInfo.put("brand", card.get("brand"));         // 브랜드
-						cardInfo.put("type", card.get("type"));           // 카드 타입 (DEBIT/CREDIT)
-						cardInfo.put("bin", card.get("bin"));             // BIN 코드
+			Map<String, Object> card = null;
+			String methodType = null;
+			
+			// 1. 결제 단건 조회 응답 구조 체크 (method 객체)
+			Map<String, Object> method = (Map<String, Object>) responseData.get("method");
+			if (method != null) {
+				methodType = (String) method.get("type");
+				if ("PaymentMethodCard".equals(methodType)) {
+					card = (Map<String, Object>) method.get("card");
+					log.info("결제 단건 조회 응답에서 카드 정보 추출 시도");
+				}
+			}
+			
+			// 2. 빌링키 조회 응답 구조 체크 (methods 배열)
+			if (card == null) {
+				List<Map<String, Object>> methods = (List<Map<String, Object>>) responseData.get("methods");
+				if (methods != null && !methods.isEmpty()) {
+					Map<String, Object> firstMethod = methods.get(0);
+					methodType = (String) firstMethod.get("type");
+					if ("BillingKeyPaymentMethodCard".equals(methodType)) {
+						card = (Map<String, Object>) firstMethod.get("card");
+						log.info("빌링키 조회 응답에서 카드 정보 추출 시도");
 					}
 				}
 			}
 			
-			// 카드 정보가 없는 경우 기본값 설정
+			// 3. 카드 정보 추출
+			if (card != null) {
+				cardInfo.put("name", card.get("name"));           // 카드 이름 (예: "기업은행카드")
+				cardInfo.put("number", card.get("number"));       // 카드 번호 (마스킹됨)
+				cardInfo.put("publisher", card.get("publisher")); // 발행사
+				cardInfo.put("issuer", card.get("issuer"));       // 발급사
+				cardInfo.put("brand", card.get("brand"));         // 브랜드
+				cardInfo.put("type", card.get("type"));           // 카드 타입 (DEBIT/CREDIT)
+				cardInfo.put("bin", card.get("bin"));             // BIN 코드
+				
+				log.info("카드 정보 추출 성공 - 방식: " + methodType + ", 카드명: " + card.get("name"));
+			}
+			
+			// 4. 카드 정보가 없는 경우 기본값 설정
 			if (cardInfo.isEmpty()) {
 				cardInfo.put("name", "알 수 없는 카드");
 				cardInfo.put("number", "****-****-****-****");
 				cardInfo.put("publisher", "UNKNOWN");
 				cardInfo.put("issuer", "UNKNOWN");
+				log.warn("카드 정보를 찾을 수 없어 기본값 설정");
 			}
 			
 		} catch (Exception e) {
@@ -572,36 +594,106 @@ public class PaymentServiceImple implements PaymentService {
 	@Override
 	public List<PaymentOrderWithMethodVO> getPaymentHistoryWithMethod(int memberIdx) {
 		try {
-			log.info("결제 기록 조회 시작 (JOIN) - memberIdx: " + memberIdx);
+			System.out.println("=== 결제 기록 조회 (API) 함수 시작 ===");
+			log.info("결제 기록 조회 시작 (API) - memberIdx: " + memberIdx);
 			
+			// DB에서 기본 결제 주문 정보만 조회 (JOIN 없이)
 			List<PaymentOrderWithMethodVO> paymentHistory = paymentOrderMapper.selectPaymentOrdersByMemberWithMethod(memberIdx);
 			
-			log.info("결제 기록 조회 완료 (JOIN) - memberIdx: " + memberIdx + ", 건수: " + paymentHistory.size());
+			System.out.println("DB 조회 완료 - 건수: " + paymentHistory.size());
+			log.info("결제 기록 조회 완료 (API) - memberIdx: " + memberIdx + ", 건수: " + paymentHistory.size());
 			
-			// 로깅으로 데이터 확인
+			// 각 결제에 대해 PortOne API로 결제 수단 정보 조회
 			for (PaymentOrderWithMethodVO order : paymentHistory) {
-				// 포트원 API에서 주문번호로 결제 단건 조회
-				HttpRequest request = HttpRequest.newBuilder()
-					.uri(URI.create("https://api.portone.io/payments/" + order.getPayment_id()))
-					.header("Content-Type", "application/json")
-					.header("Authorization", "PortOne " + apiSecretKey)
-					.method("GET", HttpRequest.BodyPublishers.ofString("{}"))
-					.build();
-				HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-				System.out.println(response.body());
-
-				log.info("주문정보: " + order.getOrder_name() + 
-						", 결제수단: " + order.getDisplayMethodName() + 
-						", 카드: " + order.getCardDisplayInfo() +
-						", 상태: " + order.getStatusDisplayName());
+				System.out.println("처리 중인 결제 ID: " + order.getPayment_id());
+				try {
+					// PortOne API에서 결제 단건 조회
+					System.out.println("PortOne API 호출 중 - PaymentId: " + order.getPayment_id());
+					HttpRequest request = HttpRequest.newBuilder()
+						.uri(URI.create("https://api.portone.io/payments/" + order.getPayment_id()))
+						.header("Content-Type", "application/json")
+						.header("Authorization", "PortOne " + apiSecretKey)
+						.method("GET", HttpRequest.BodyPublishers.noBody())
+						.build();
+					
+					HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+					System.out.println("API 응답 상태: " + response.statusCode());
+					
+					if (response.statusCode() >= 200 && response.statusCode() < 300) {
+						// JSON 응답 파싱
+						ObjectMapper objectMapper = new ObjectMapper();
+						@SuppressWarnings("unchecked")
+						Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+						
+						System.out.println("API 응답 파싱 완료");
+						
+						// 카드 정보 추출 (개선된 extractCardInfo 함수 사용)
+						Map<String, Object> cardInfo = extractCardInfo(responseData);
+						
+						// PaymentOrderWithMethodVO에 API 정보 설정
+						order.setApiCardName((String) cardInfo.get("name"));
+						order.setApiCardNumber((String) cardInfo.get("number"));
+						order.setApiCardPublisher((String) cardInfo.get("publisher"));
+						order.setApiCardIssuer((String) cardInfo.get("issuer"));
+						order.setApiCardBrand((String) cardInfo.get("brand"));
+						order.setApiCardType((String) cardInfo.get("type"));
+						
+						// channel 정보에서 결제 채널 확인
+						@SuppressWarnings("unchecked")
+						Map<String, Object> channel = (Map<String, Object>) responseData.get("channel");
+						if (channel != null) {
+							String pgProvider = (String) channel.get("pgProvider");
+							order.setApiMethodProvider(pgProvider != null ? pgProvider : "UNKNOWN");
+						} else {
+							order.setApiMethodProvider("UNKNOWN");
+						}
+						
+						System.out.println("결제 정보 업데이트 완료 - PaymentId: " + order.getPayment_id() + 
+								", 카드: " + order.getApiCardName() + " " + order.getApiCardNumber());
+						
+					} else {
+						System.out.println("API 호출 실패 - Status: " + response.statusCode());
+						log.warn("PortOne API 호출 실패 - PaymentId: " + order.getPayment_id() + 
+								", Status: " + response.statusCode());
+						// API 호출 실패 시 기본값 설정
+						setDefaultApiMethodInfo(order);
+					}
+					
+				} catch (Exception apiEx) {
+					System.out.println("API 호출 중 예외: " + apiEx.getMessage());
+					apiEx.printStackTrace();
+					log.error("PortOne API 호출 중 오류 발생 - PaymentId: " + order.getPayment_id(), apiEx);
+					// API 호출 실패 시 기본값 설정
+					setDefaultApiMethodInfo(order);
+				}
 			}
 			
+			System.out.println("=== 결제 기록 조회 (API) 함수 완료 ===");
+			log.info("결제 기록 조회 및 API 정보 업데이트 완료 - memberIdx: " + memberIdx);
 			return paymentHistory;
 			
 		} catch (Exception e) {
-			log.error("결제 기록 조회 실패 (JOIN) - memberIdx: " + memberIdx, e);
+			System.out.println("전체 프로세스 중 예외 발생: " + e.getMessage());
+			e.printStackTrace();
+			log.error("결제 기록 조회 실패 (API) - memberIdx: " + memberIdx, e);
 			throw new RuntimeException("결제 기록 조회 중 오류가 발생했습니다.", e);
 		}
 	}
+	
+	/**
+	 * API 정보 조회 실패 시 기본값 설정
+	 * @param order 결제 주문 VO
+	 */
+	private void setDefaultApiMethodInfo(PaymentOrderWithMethodVO order) {
+		order.setApiMethodProvider("UNKNOWN");
+		order.setApiCardName("정보 조회 실패");
+		order.setApiCardNumber("****-****-****-****");
+		order.setApiCardPublisher("UNKNOWN");
+		order.setApiCardIssuer("UNKNOWN");
+		order.setApiCardBrand("UNKNOWN");
+		order.setApiCardType("UNKNOWN");
+	}
 
+
+	
 }
