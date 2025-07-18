@@ -296,6 +296,12 @@ public class PaymentServiceImple implements PaymentService {
 			try {
 			    paymentOrderMapper.insertPaymentOrder(order);
 			    log.info("결제 주문 정보 저장 완료 - PaymentId: " + paymentId);
+			    log.info("생성된 order_idx: " + order.getOrder_idx());
+			    
+			    if (order.getOrder_idx() <= 0) {
+			        log.error("order_idx가 생성되지 않았습니다: " + order.getOrder_idx());
+			    }
+			    
 			} catch (Exception dbEx) {
 			    log.error("결제 주문 정보 저장 실패: ", dbEx);
 			    Map<String, Object> errorResult = new HashMap<>();
@@ -322,20 +328,44 @@ public class PaymentServiceImple implements PaymentService {
 	    	boolean isSuccess = response.statusCode() >= 200 && response.statusCode() < 300;
 	    	String orderStatus = isSuccess ? "PAID" : "FAILED";
 	    	
+	    	log.info("=== 결제 상태 업데이트 시작 ===");
+	    	log.info("결제 결과 - isSuccess: " + isSuccess + ", orderStatus: " + orderStatus);
+	    	log.info("업데이트할 주문 정보 - payment_id: " + paymentId + ", order_idx: " + order.getOrder_idx());
+	    	
 	    	// 주문 상태 업데이트
 	    	order.setOrder_status(orderStatus);
 	    	if (isSuccess) {
 	    	    order.setOrder_paydate(new java.sql.Date(System.currentTimeMillis()));
+	    	    log.info("결제 성공 - 결제일시 설정: " + order.getOrder_paydate());
 	    	}
+	    	
+	    	log.info("업데이트 직전 order 객체 전체: " + order);
 	    	
 	    	try {
 				log.info("결제 주문 정보 업데이트 - " + order);
 	    	    paymentOrderMapper.updatePaymentStatus(order);
 				System.out.println("결제 완료했으니 상태 변경함." + orderStatus);
 	    	    log.info("결제 상태 업데이트 완료 - PaymentId: " + paymentId + ", Status: " + orderStatus);
+	    	    
+	    	    // 업데이트 후 실제 DB 상태 확인
+	    	    try {
+	    	        PaymentOrderVO updatedOrder = paymentOrderMapper.selectByPaymentId(paymentId);
+	    	        if (updatedOrder != null) {
+	    	            log.info("업데이트 후 DB 상태: " + updatedOrder);
+	    	            if (!"PAID".equals(updatedOrder.getOrder_status()) && isSuccess) {
+	    	                log.error("업데이트가 반영되지 않았습니다! 예상: PAID, 실제: " + updatedOrder.getOrder_status());
+	    	            }
+	    	        } else {
+	    	            log.error("업데이트 후 주문을 찾을 수 없습니다!");
+	    	        }
+	    	    } catch (Exception selectEx) {
+	    	        log.error("업데이트 후 조회 실패: ", selectEx);
+	    	    }
+	    	    
 	    	} catch (Exception updateEx) {
 	    	    log.error("결제 상태 업데이트 실패: ", updateEx);
 				System.out.println("업데이트 중 오류 발생함." + updateEx.getMessage());
+	    	    updateEx.printStackTrace();
 	    	    // 결제는 성공했지만 상태 업데이트 실패한 경우 별도 처리 필요
 	    	}
 	    		

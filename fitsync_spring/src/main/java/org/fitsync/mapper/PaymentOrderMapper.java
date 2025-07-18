@@ -20,4 +20,7 @@ public interface PaymentOrderMapper {
     
     // 사용자별 결제 목록 조회 (결제 수단 정보 포함)
     List<PaymentOrderWithMethodVO> selectPaymentOrdersByMemberWithMethod(int member_idx);
+    
+    // 디버깅용: payment_id로 주문 조회
+    PaymentOrderVO selectByPaymentId(String paymentId);
 }

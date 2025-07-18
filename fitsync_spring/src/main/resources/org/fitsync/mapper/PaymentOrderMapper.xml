@@ -7,6 +7,9 @@
 
     <!-- 결제 요청 저장 -->
     <insert id="insertPaymentOrder" parameterType="org.fitsync.domain.PaymentOrderVO">
+        <selectKey keyProperty="order_idx" resultType="int" order="BEFORE">
+            SELECT payment_order_seq.nextval FROM dual
+        </selectKey>
         INSERT INTO payment_order (
             order_idx, member_idx, method_idx,
             payment_id, order_type, order_status,
@@ -20,7 +23,7 @@
             order_regdate
         )
         VALUES (
-            payment_order_seq.nextval, #{member_idx}, #{method_idx},
+            #{order_idx}, #{member_idx}, #{method_idx},
             #{payment_id}, #{order_type}, #{order_status},
             #{order_name}, #{order_price}, #{order_currency},
             <if test="schedule_id != null">
@@ -62,6 +65,13 @@
         FROM payment_order
         WHERE member_idx = #{member_idx}
         ORDER BY order_idx DESC
+    </select>
+
+    <!-- 디버깅용: payment_id로 주문 조회 -->
+    <select id="selectByPaymentId" parameterType="string" resultType="org.fitsync.domain.PaymentOrderVO">
+        SELECT *
+        FROM payment_order
+        WHERE payment_id = #{payment_id}
     </select>
 
 </mapper>
