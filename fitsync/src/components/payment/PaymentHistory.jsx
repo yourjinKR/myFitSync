@@ -100,6 +100,11 @@ const PaymentDetails = styled.div`
   gap: 2rem;
   margin-bottom: 1.5rem;
   
+  /* 카드 정보가 없는 경우 단일 컬럼으로 표시 */
+  &.single-column {
+    grid-template-columns: 1fr;
+  }
+  
   @media (max-width: 400px) {
     grid-template-columns: 1fr;
     gap: 1.2rem;
@@ -307,6 +312,30 @@ const PaymentHistory = () => {
     return `${cardName} ${maskedNumber}`;
   };
 
+  // 카드 결제인지 확인하는 함수
+  const isCardPayment = (payment) => {
+    // API에서 받은 타입 정보 우선 확인
+    if (payment.apiMethodType) {
+      return payment.apiMethodType === 'card';
+    }
+    
+    // 간편결제 제공업체 확인
+    const easyPayProviders = ['KAKAOPAY', 'TOSSPAYMENTS', 'NAVERPAY', 'PAYCO'];
+    if (easyPayProviders.includes(payment.method_provider)) {
+      return false;
+    }
+    
+    // 간편결제 이름 확인
+    const methodName = payment.method_name || '';
+    const easyPayNames = ['카카오페이', '토스페이먼츠', '네이버페이', 'PAYCO'];
+    if (easyPayNames.some(name => methodName.includes(name))) {
+      return false;
+    }
+    
+    // 기본적으로 카드 결제로 간주
+    return true;
+  };
+
   if (loading) {
     return (
       <PaymentHistoryContainer>
@@ -365,7 +394,7 @@ const PaymentHistory = () => {
               </StatusBadge>
             </PaymentHeader>
             
-            <PaymentDetails>
+            <PaymentDetails className={!isCardPayment(payment) ? 'single-column' : ''}>
               <DetailItem>
                 <DetailLabel>결제수단</DetailLabel>
                 <DetailValue>
@@ -373,10 +402,12 @@ const PaymentHistory = () => {
                 </DetailValue>
               </DetailItem>
               
-              <DetailItem>
-                <DetailLabel>카드정보</DetailLabel>
-                <DetailValue>{payment.cardDisplayInfo || getCardDisplayInfo(payment)}</DetailValue>
-              </DetailItem>
+              {isCardPayment(payment) && (
+                <DetailItem>
+                  <DetailLabel>카드정보</DetailLabel>
+                  <DetailValue>{payment.cardDisplayInfo || getCardDisplayInfo(payment)}</DetailValue>
+                </DetailItem>
+              )}
             </PaymentDetails>
             
             <DateInfo>
