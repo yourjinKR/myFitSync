@@ -66,16 +66,22 @@
     <select id="selectPaymentOrdersByMemberWithMethod" parameterType="int" resultType="org.fitsync.domain.PaymentOrderWithMethodVO">
         SELECT *
         FROM payment_order
-        WHERE member_idx = #{member_idx} AND order_status = 'PAID'
+        WHERE member_idx = #{member_idx}
         ORDER BY order_idx DESC
     </select>
 
-    <!-- 특정 회원의 결재 대기건 조회 -->
+    <!-- 특정 회원의 결재 대기건 조회 (가장 최근 1개) -->
     <select id="selectScheduledPaymentOrderByMember" parameterType="int" resultType="org.fitsync.domain.PaymentOrderWithMethodVO">
-        SELECT *
-        FROM payment_order
-        WHERE member_idx = #{member_idx} AND order_status = 'READY' AND order_type = 'SCHEDULE'
-        ORDER BY order_idx DESC
+	    SELECT *
+	    FROM (
+	        SELECT *
+	        FROM payment_order
+	        WHERE member_idx = #{member_idx}
+	          AND order_status = 'READY'
+	          AND order_type = 'SCHEDULE'
+	        ORDER BY order_idx DESC
+	    )
+	    WHERE ROWNUM = 1
     </select>
 
     <!-- 디버깅용: payment_id로 주문 조회 -->
