@@ -497,5 +497,45 @@ public class PaymentController {
             ));
         }
     }
+
+    // 결제 예약 조회 (정기 결제 예약)
+    @GetMapping("/bill/schedule")
+    public ResponseEntity<?> getScheduledPaymentOrder(HttpSession session) {
+        Object memberIdx = session.getAttribute("member_idx");
+        if (memberIdx == null) {
+            log.error("세션에 member_idx가 없습니다.");
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false, 
+                "message", "사용자 인증이 필요합니다.",
+                "errorCode", "AUTHENTICATION_REQUIRED"
+            ));
+        }
+        
+        try {
+            PaymentOrderWithMethodVO scheduledOrder = payService.getScheduledPaymentOrder((int) memberIdx);
+            log.info("order : " + scheduledOrder);
+            if (scheduledOrder != null) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "결제 예약 조회 성공",
+                    "data", scheduledOrder
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "결제 예약이 없습니다."
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("결제 예약 조회 중 오류 발생: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "결제 예약 조회 중 오류가 발생했습니다.",
+                "error", e.getClass().getSimpleName(),
+                "errorCode", "SCHEDULED_PAYMENT_FETCH_FAILED"
+            ));
+        }
+    }
     
 }

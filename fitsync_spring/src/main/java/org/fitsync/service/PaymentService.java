@@ -41,4 +41,7 @@ public interface PaymentService {
 	
 	// 사용자별 결제 기록 조회 (결제 수단 정보 포함)
 	public List<PaymentOrderWithMethodVO> getPaymentHistoryWithMethod(int memberIdx);
+
+	// 결제 예약 조회 (정기 결제 예약)
+	public PaymentOrderWithMethodVO getScheduledPaymentOrder(int memberIdx);
 }

@@ -981,6 +981,60 @@ public class PaymentServiceImple implements PaymentService {
 		order.setApiCardType("UNKNOWN");
 	}
 
+	// 결제 예약 정보 조회
+	@Override
+	public PaymentOrderWithMethodVO getScheduledPaymentOrder(int memberIdx) {
+		try {
+			PaymentOrderWithMethodVO scheduleOrder = paymentOrderMapper.selectScheduledPaymentOrderByMember(memberIdx);
+			if (scheduleOrder == null) {
+				log.warn("예약된 결제 주문이 없습니다. memberIdx: " + memberIdx);
+				return null;
+			}
+			// schedule_id로 PortOne API에서 결제 예약 정보 조회
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules/" + scheduleOrder.getSchedule_id() + "?storeId=" + storeId))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("GET", HttpRequest.BodyPublishers.ofString("{}"))
+				.build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			System.out.println(response.body());
 
-	
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				ObjectMapper objectMapper = new ObjectMapper();
+				@SuppressWarnings("unchecked")
+				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+				
+				// billingKey 추출
+				String billingKey = (String) responseData.get("billingKey");
+				if (billingKey != null) {
+					System.out.println("빌링키 조회 성공 - billingKey: " + billingKey);
+				} else {
+					System.out.println("응답에서 billingKey를 찾을 수 없습니다.");
+				}
+				// billingKey의 카드 정보 추출
+				Map<String, Object> cardInfo = getCardInfoByBillingKey(billingKey);
+				if (cardInfo != null && !cardInfo.isEmpty()) {
+					scheduleOrder.setApiCardName((String) cardInfo.get("name"));
+					scheduleOrder.setApiCardNumber((String) cardInfo.get("number"));
+					scheduleOrder.setApiMethodType((String) cardInfo.get("methodType"));
+					scheduleOrder.setApiMethodProvider((String) cardInfo.get("provider"));
+					scheduleOrder.setApiCardPublisher((String) cardInfo.get("publisher"));
+					scheduleOrder.setApiCardIssuer((String) cardInfo.get("issuer"));
+					scheduleOrder.setApiCardBrand((String) cardInfo.get("brand"));
+					scheduleOrder.setApiCardType((String) cardInfo.get("type"));
+				} else {
+					System.out.println("카드 정보 조회 실패 또는 카드가 아닙니다.");
+				}
+				
+			} else {
+				System.out.println("PortOne API 호출 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
+			}
+
+			return scheduleOrder;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null; // TODO: 예외 처리 로직 추가 필요
+		}
+	}
 }
