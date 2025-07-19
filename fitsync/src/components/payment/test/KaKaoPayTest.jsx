@@ -351,7 +351,7 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (order_idx 확인)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
-            <ButtonSubmit onClick={() => handleScheduleBillingKey({method_idx: 2})}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
+            <ButtonSubmit onClick={() => handleScheduleBillingKey({method_idx: 1})}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
             <ButtonSubmit onClick={handleCustomScheduleBillingKey}>📅 결제 예약 (사용자 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelScheduledPayment}>❌ 결제 예약 취소 (order_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelLatestSchedule}>🔄 최근 예약 자동 취소</ButtonSubmit>
