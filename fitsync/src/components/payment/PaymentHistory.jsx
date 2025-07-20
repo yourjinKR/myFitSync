@@ -243,7 +243,7 @@ const PaymentHistory = () => {
       const response = await PaymentUtil.getPaymentHistory();
       
       if (response.success) {
-        setPaymentHistory(response.data || []);
+        setPaymentHistory(response.data.history || []);
       } else {
         setError(response.message || '결제 내역 조회에 실패했습니다.');
       }

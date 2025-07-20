@@ -41,156 +41,195 @@ public class PaymentController {
     @Autowired
     private PaymentServiceImple payService;
 
-    // 결제창을 통해 생성한 빌링키를 저장
+    /**
+     * 공통 응답 생성 헬퍼 메서드들
+     */
+    private ResponseEntity<Map<String, Object>> createSuccessResponse(String message, Object data) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", message);
+        response.put("data", data);
+        response.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(response);
+    }
+    
+    private ResponseEntity<Map<String, Object>> createSuccessResponse(String message) {
+        return createSuccessResponse(message, null);
+    }
+    
+    private ResponseEntity<Map<String, Object>> createErrorResponse(HttpStatus status, String message, String errorCode) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", message);
+        response.put("errorCode", errorCode);
+        response.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.status(status).body(response);
+    }
+    
+    private Integer getMemberIdxFromSession(HttpSession session) {
+        Object memberIdx = session.getAttribute("member_idx");
+        return memberIdx != null ? (Integer) memberIdx : null;
+    }
+
+    /**
+     * 결제창을 통해 생성한 빌링키를 발급 후 결제수단을 저장
+     * @param body {method_key: string, method_provider: string, method_name?: string}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: PaymentMethodVO, timestamp: number}
+     */
     @PostMapping(value = "/bill/issue", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> issueBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
-    	
-    	Object memberIdx = session.getAttribute("member_idx");
-    	if (memberIdx == null) {
-    		return ResponseEntity.badRequest().body("User not logged in");
-    	}
-    	
-    	log.info(body);
-    	String billingKey = body.get("method_key");
-		String methodProvider = body.get("method_provider");
-		String methodName = body.get("method_name");
+    public ResponseEntity<Map<String, Object>> issueBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
+        
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        log.info("빌링키 발급 요청: " + body);
+        
+        String billingKey = body.get("method_key");
+        String methodProvider = body.get("method_provider");
+        String methodName = body.get("method_name");
 
-		if (billingKey == null || methodProvider == null) {
-			return ResponseEntity.badRequest().body("Missing required parameters");
-		}
+        if (billingKey == null || methodProvider == null) {
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "필수 파라미터가 누락되었습니다. (method_key, method_provider)", "MISSING_PARAMETERS");
+        }
 
-		PaymentMethodVO vo = new PaymentMethodVO();
-		vo.setMember_idx((int) memberIdx);
-		vo.setMethod_key(billingKey);
-		vo.setMethod_provider(methodProvider);
-		vo.setMethod_name(methodName);
-		
-		try {
-			int result = payService.saveBillingKey(vo);
-			if (result > 0) {
-				log.info("Billing key saved successfully: " + billingKey);
-				return ResponseEntity.ok(Map.of("success", true, "message", "Billing key saved successfully"));
-			} else {
-				log.error("Failed to save billing key: " + billingKey);
-				return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Failed to save billing key"));
-			}
-		} catch (Exception e) {
-			log.error("Exception while saving billing key: ", e);
-			return ResponseEntity.status(500).body(Map.of("success", false, "message", "Internal server error"));
-		}
+        PaymentMethodVO vo = new PaymentMethodVO();
+        vo.setMember_idx(memberIdx);
+        vo.setMethod_key(billingKey);
+        vo.setMethod_provider(methodProvider);
+        vo.setMethod_name(methodName);
+        
+        try {
+            int result = payService.saveBillingKey(vo);
+            if (result > 0) {
+                log.info("빌링키 저장 성공: " + billingKey);
+                return createSuccessResponse("결제수단이 성공적으로 등록되었습니다.", vo);
+            } else {
+                log.error("빌링키 저장 실패: " + billingKey);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, "결제수단 등록에 실패했습니다.", "BILLING_KEY_SAVE_FAILED");
+            }
+        } catch (Exception e) {
+            log.error("빌링키 저장 중 예외 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.", "INTERNAL_SERVER_ERROR");
+        }
     }
 
-    
-    // 내 결제수단 목록 조회 (빌링키 제외)
+    /**
+     * 내 결제수단 목록 조회 (빌링키 제외)
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data: PaymentMethodVO[], timestamp: number}
+     */
     @GetMapping("/bill/list")
-    public ResponseEntity<?> getPaymentMethods(HttpSession session) {
-    	Object memberIdx = session.getAttribute("member_idx");
-    	if (memberIdx == null) {
-    		log.error("세션에 member_idx가 없습니다.");
-    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
-    	}
-    	
-    	try {
-    		List<PaymentMethodVO> paymentMethods = payService.getPaymentMethods((int) memberIdx);
-    		return ResponseEntity.ok(Map.of(
-    			"success", true, 
-    			"message", "Payment methods retrieved successfully",
-    			"data", paymentMethods
-    		));
-    		
-    	} catch (Exception e) {
-    		log.error("결제수단 목록 조회 중 오류 발생: ", e);
-    		return ResponseEntity.status(500).body(Map.of(
-    			"success", false, 
-    			"message", "Internal server error"
-    		));
-    	}
+    public ResponseEntity<Map<String, Object>> getPaymentMethods(HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        try {
+            List<PaymentMethodVO> paymentMethods = payService.getPaymentMethods(memberIdx);
+            return createSuccessResponse("결제수단 목록 조회 성공", paymentMethods);
+            
+        } catch (Exception e) {
+            log.error("결제수단 목록 조회 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제수단 목록 조회 중 오류가 발생했습니다.", "FETCH_METHODS_FAILED");
+        }
     }
     
-    // 빌링키 정보
+    /**
+     * 빌링키 정보 조회
+     * @param body {method_idx: string}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: Object, timestamp: number}
+     */
     @PostMapping("/bill/info")
-    public ResponseEntity<?> getBillingKeyInfo(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
-    	Object sessionMemberIdx = session.getAttribute("member_idx");
-    	if (sessionMemberIdx == null) {
-    		log.error("세션에 member_idx가 없습니다.");
-    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
-    	}
-    	
-    	Object methodIdx = body.get("method_idx");
-    	if (methodIdx == null) {
-    		log.error("method_idx가 요청에 없습니다.");
-    		return ResponseEntity.badRequest().body(Map.of("success", false, "message", "method_idx is required"));
-    	}
-    	
-    	try {
-    		int methodIdxInt = Integer.parseInt(methodIdx.toString());
-    		Object result = payService.getBillingKeyInfo(methodIdxInt);
-    		
-    		log.info("빌링키 정보 조회 결과: " + result);
-    		return ResponseEntity.ok(result);
-    		
-    	} catch (NumberFormatException e) {
-    		log.error("method_idx 형식 오류: ", e);
-    		return ResponseEntity.badRequest().body(Map.of(
-    			"success", false, 
-    			"message", "잘못된 method_idx 형식입니다."
-    		));
-    	} catch (Exception e) {
-    		log.error("빌링키 정보 조회 중 오류 발생: ", e);
-    		return ResponseEntity.status(500).body(Map.of(
-    			"success", false, 
-    			"message", "Internal server error: " + e.getMessage()
-    		));
-    	}
+    public ResponseEntity<Map<String, Object>> getBillingKeyInfo(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        String methodIdxStr = body.get("method_idx");
+        if (methodIdxStr == null) {
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "method_idx는 필수 파라미터입니다.", "MISSING_METHOD_IDX");
+        }
+        
+        try {
+            int methodIdx = Integer.parseInt(methodIdxStr);
+            Object result = payService.getBillingKeyInfo(methodIdx);
+            
+            log.info("빌링키 정보 조회 결과: " + result);
+            return createSuccessResponse("빌링키 정보 조회 성공", result);
+            
+        } catch (NumberFormatException e) {
+            log.error("method_idx 형식 오류: ", e);
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 method_idx 형식입니다.", "INVALID_METHOD_IDX_FORMAT");
+        } catch (Exception e) {
+            log.error("빌링키 정보 조회 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "빌링키 정보 조회 중 오류가 발생했습니다.", "FETCH_BILLING_INFO_FAILED");
+        }
     }
     
-    
-    
-    // 빌링키로 결제
+    /**
+     * 빌링키로 즉시 결제
+     * @param body {payment_id: string, method_idx: string}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: PaymentResult, timestamp: number}
+     */
     @PostMapping(value = "/bill/pay")
-    public ResponseEntity<?> payBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
-    	Object session_member_idx = session.getAttribute("member_idx");
-    	String payment_id = body.get("payment_id");
-    	String method_idx = body.get("method_idx");
-    	 	
-        log.info(payment_id + ", " + method_idx);
-    	
-    	try {
-    		Object result = payService.payBillingKey(payment_id, Integer.parseInt(method_idx), (int)session_member_idx);
-    		log.info("Payment result: " + result);
-    		
-    		// 결과가 Map이고 success 필드를 체크
-    		if (result instanceof Map) {
-    			@SuppressWarnings("unchecked")
-    			Map<String, Object> resultMap = (Map<String, Object>) result;
-    			Boolean success = (Boolean) resultMap.get("success");
-    			
-    			if (success != null && success) {
-    				return ResponseEntity.ok(result);
-    			} else {
-    				return ResponseEntity.badRequest().body(result);
-    			}
-    		}
-    		
-    		return ResponseEntity.ok(result);
-    		
-    	} catch (Exception e) {
-    		log.error("Payment processing error: ", e);
-    		Map<String, Object> errorResponse = new java.util.HashMap<>();
-    		errorResponse.put("success", false);
-    		errorResponse.put("message", "Payment processing failed");
-    		errorResponse.put("error", e.getMessage());
-    		return ResponseEntity.status(500).body(errorResponse);
-    	}
+    public ResponseEntity<Map<String, Object>> payBillingKey(@RequestBody Map<String, String> body, HttpSession session) throws IOException {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        String paymentId = body.get("payment_id");
+        String methodIdxStr = body.get("method_idx");
+        
+        if (paymentId == null || methodIdxStr == null) {
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "필수 파라미터가 누락되었습니다. (payment_id, method_idx)", "MISSING_PARAMETERS");
+        }
+        
+        log.info("즉시 결제 요청 - PaymentId: " + paymentId + ", MethodIdx: " + methodIdxStr);
+        
+        try {
+            int methodIdx = Integer.parseInt(methodIdxStr);
+            Object result = payService.payBillingKey(paymentId, methodIdx, memberIdx);
+            
+            log.info("결제 처리 결과: " + result);
+            
+            // 결과가 Map이고 success 필드를 체크
+            if (result instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> resultMap = (Map<String, Object>) result;
+                Boolean success = (Boolean) resultMap.get("success");
+                
+                if (success != null && success) {
+                    return createSuccessResponse("결제가 성공적으로 처리되었습니다.", result);
+                } else {
+                    return createErrorResponse(HttpStatus.BAD_REQUEST, "결제 처리에 실패했습니다.", "PAYMENT_FAILED");
+                }
+            }
+            
+            return createSuccessResponse("결제 처리 완료", result);
+            
+        } catch (NumberFormatException e) {
+            log.error("method_idx 형식 오류: ", e);
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 method_idx 형식입니다.", "INVALID_METHOD_IDX_FORMAT");
+        } catch (Exception e) {
+            log.error("결제 처리 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다.", "PAYMENT_PROCESS_FAILED");
+        }
     }
     
-      // 빌링키로 결제 예약
+    /**
+     * 빌링키로 결제 예약
+     * @param body {payment_id: string, method_idx: number, schedule_datetime: string}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: ScheduleResult, timestamp: number}
+     */
     @PostMapping("/bill/schedule")
-    public ResponseEntity<?> scheduleBillingKey(@RequestBody Map<String, Object> body, HttpSession session) throws IOException {
-        Object memberIdxObj = session.getAttribute("member_idx");
-        if (memberIdxObj == null) {
-            log.error("세션에 member_idx가 없습니다.");
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+    public ResponseEntity<Map<String, Object>> scheduleBillingKey(@RequestBody Map<String, Object> body, HttpSession session) throws IOException {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
         }
         
         String paymentId = (String) body.get("payment_id");
@@ -199,85 +238,78 @@ public class PaymentController {
         
         // 필수 파라미터 검증
         if (paymentId == null || methodIdxObj == null || scheduleDateTime == null) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false, 
-                "message", "필수 파라미터가 누락되었습니다. (payment_id, method_idx, schedule_datetime)"
-            ));
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "필수 파라미터가 누락되었습니다. (payment_id, method_idx, schedule_datetime)", "MISSING_PARAMETERS");
         }
         
         try {
             int methodIdx = Integer.parseInt(methodIdxObj.toString());
-            int memberIdx = Integer.parseInt(memberIdxObj.toString());
-
-            log.info("결제 예약 요청 - Payment ID: " + paymentId + ", Method Index: " + methodIdx + ", Member Index: " + memberIdx + ", Schedule: " + scheduleDateTime);
+            
+            log.info("결제 예약 요청 - PaymentId: " + paymentId + ", MethodIdx: " + methodIdx + ", Schedule: " + scheduleDateTime);
 
             // 서비스 호출하여 예약 처리
             Object result = payService.scheduleBillingKey(paymentId, methodIdx, memberIdx, scheduleDateTime);
             
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "결제 예약이 완료되었습니다.");
-            response.put("data", result);
-            response.put("paymentId", paymentId);
-            response.put("scheduleDateTime", scheduleDateTime);
-            
-            return ResponseEntity.ok(response);
+            return createSuccessResponse("결제 예약이 완료되었습니다.", result);
             
         } catch (NumberFormatException e) {
             log.error("숫자 형식 오류: ", e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false, 
-                "message", "잘못된 숫자 형식입니다."
-            ));
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 숫자 형식입니다.", "INVALID_NUMBER_FORMAT");
         } catch (IllegalArgumentException e) {
             log.error("날짜 형식 오류: ", e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false, 
-                "message", e.getMessage()
-            ));
+            return createErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage(), "INVALID_DATE_FORMAT");
         } catch (Exception e) {
             log.error("결제 예약 중 오류 발생: ", e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false, 
-                "message", "결제 예약 처리 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 예약 처리 중 오류가 발생했습니다.", "SCHEDULE_FAILED");
         }
     }    
 
-    // 결제 예약 취소
-    @DeleteMapping("/bill/cancel")
-    public Object cancelBillingKey(@RequestBody Map<String, Object> requestData, HttpSession session) {
-        int orderIdx = Integer.parseInt(requestData.get("order_idx").toString());
-        int memberIdx = Integer.parseInt(session.getAttribute("member_idx").toString());
-
-        return payService.cancelScheduledPayment(orderIdx, memberIdx);
+    /**
+     * 결제 예약 취소
+     * @param requestData {order_idx: number}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: Object, timestamp: number}
+     */
+    @DeleteMapping("/bill/schedule")
+    public ResponseEntity<Map<String, Object>> cancelBillingKey(@RequestBody Map<String, Object> requestData, HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        try {
+            int orderIdx = Integer.parseInt(requestData.get("order_idx").toString());
+            Object result = payService.cancelScheduledPayment(orderIdx, memberIdx);
+            
+            return createSuccessResponse("결제 예약이 취소되었습니다.", result);
+            
+        } catch (NumberFormatException e) {
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 order_idx 형식입니다.", "INVALID_ORDER_IDX_FORMAT");
+        } catch (Exception e) {
+            log.error("결제 예약 취소 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 예약 취소 중 오류가 발생했습니다.", "CANCEL_SCHEDULE_FAILED");
+        }
     }
 
-    // 결제수단 이름 변경
+    /**
+     * 결제수단 이름 변경
+     * @param requestData {method_idx: number, method_name: string}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, timestamp: number}
+     */
     @PatchMapping("/bill/rename")
     public ResponseEntity<Map<String, Object>> renameBillingKey(
             @RequestBody Map<String, Object> requestData,
             HttpSession session) {
-    	log.info(requestData);
-    	
+        
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        log.info("결제수단 이름 변경 요청: " + requestData);
+        
         try {
-            // 세션에서 사용자 ID 가져오기
-            Object memberIdxObj = session.getAttribute("member_idx");
-            if (memberIdxObj == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            }
-            
-            int memberIdx = (Integer) memberIdxObj;
-            
             // 요청 데이터 검증
             if (requestData.get("method_idx") == null || requestData.get("method_name") == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "필수 데이터가 누락되었습니다.");
-                return ResponseEntity.badRequest().body(errorResponse);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, "필수 데이터가 누락되었습니다. (method_idx, method_name)", "MISSING_PARAMETERS");
             }
             
             int methodIdx = Integer.parseInt(requestData.get("method_idx").toString());
@@ -285,64 +317,46 @@ public class PaymentController {
             
             // 이름 길이 검증
             if (methodName.length() == 0 || methodName.length() > 50) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "결제수단 이름은 1~50자 사이여야 합니다.");
-                return ResponseEntity.badRequest().body(errorResponse);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, "결제수단 이름은 1~50자 사이여야 합니다.", "INVALID_METHOD_NAME_LENGTH");
             }
             
             // 서비스 호출하여 이름 변경
             boolean success = payService.renameBillingKey(memberIdx, methodIdx, methodName);
             
-            Map<String, Object> response = new HashMap<>();
             if (success) {
-                response.put("success", true);
-                response.put("message", "결제수단 이름이 성공적으로 변경되었습니다.");
-                return ResponseEntity.ok(response);
+                return createSuccessResponse("결제수단 이름이 성공적으로 변경되었습니다.");
             } else {
-                response.put("success", false);
-                response.put("message", "결제수단을 찾을 수 없거나 변경 권한이 없습니다.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return createErrorResponse(HttpStatus.NOT_FOUND, "결제수단을 찾을 수 없거나 변경 권한이 없습니다.", "METHOD_NOT_FOUND_OR_NO_PERMISSION");
             }
             
         } catch (NumberFormatException e) {
             log.error("잘못된 숫자 형식: ", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "잘못된 데이터 형식입니다.");
-            return ResponseEntity.badRequest().body(errorResponse);
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 데이터 형식입니다.", "INVALID_NUMBER_FORMAT");
         } catch (Exception e) {
             log.error("결제수단 이름 변경 중 오류 발생: ", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "서버 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.", "RENAME_FAILED");
         }
     }
     
-    // 결제수단 삭제
+    /**
+     * 결제수단 삭제
+     * @param requestData {method_idx: number}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, timestamp: number}
+     */
     @DeleteMapping("/bill/delete")
     public ResponseEntity<Map<String, Object>> deletePaymentMethod(
             @RequestBody Map<String, Object> requestData,
             HttpSession session) {
+        
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
         try {
-            // 세션에서 사용자 ID 가져오기
-            Object memberIdxObj = session.getAttribute("member_idx");
-            if (memberIdxObj == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            }
-            
-            int memberIdx = (Integer) memberIdxObj;
-            
             // 요청 데이터 검증
             if (requestData.get("method_idx") == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "결제수단 ID가 누락되었습니다.");
-                return ResponseEntity.badRequest().body(errorResponse);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, "결제수단 ID가 누락되었습니다.", "MISSING_METHOD_IDX");
             }
             
             int methodIdx = Integer.parseInt(requestData.get("method_idx").toString());
@@ -350,75 +364,63 @@ public class PaymentController {
             // 서비스 호출하여 결제수단 삭제
             boolean success = payService.deletePaymentMethod(memberIdx, methodIdx);
             
-            Map<String, Object> response = new HashMap<>();
             if (success) {
-                response.put("success", true);
-                response.put("message", "결제수단이 성공적으로 삭제되었습니다.");
-                return ResponseEntity.ok(response);
+                return createSuccessResponse("결제수단이 성공적으로 삭제되었습니다.");
             } else {
-                response.put("success", false);
-                response.put("message", "결제수단을 찾을 수 없거나 삭제 권한이 없습니다.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return createErrorResponse(HttpStatus.NOT_FOUND, "결제수단을 찾을 수 없거나 삭제 권한이 없습니다.", "METHOD_NOT_FOUND_OR_NO_PERMISSION");
             }
             
         } catch (NumberFormatException e) {
             log.error("잘못된 숫자 형식: ", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "잘못된 데이터 형식입니다.");
-            return ResponseEntity.badRequest().body(errorResponse);
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 데이터 형식입니다.", "INVALID_NUMBER_FORMAT");
         } catch (Exception e) {
             log.error("결제수단 삭제 중 오류 발생: ", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "서버 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.", "DELETE_FAILED");
         }
     }
 
     /**
      * 결제수단 등록 전 중복 체크 API
-     * - 역할: 요청 검증, 세션 확인, 서비스 호출, 응답 형식 통일
+     * @param body {billing_key: string}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: DuplicateCheckResult, timestamp: number}
      */
-    @PostMapping("/bill/check-duplicate")
-    public ResponseEntity<?> checkDuplicatePaymentMethod(@RequestBody Map<String, String> body, HttpSession session) {
-        Object memberIdx = session.getAttribute("member_idx");
+    @PostMapping("/bill/check")
+    public ResponseEntity<Map<String, Object>> checkDuplicatePaymentMethod(@RequestBody Map<String, String> body, HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
         if (memberIdx == null) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
         }
         
         String billingKey = body.get("billing_key");
         if (billingKey == null || billingKey.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "billing_key is required"));
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "billing_key는 필수 파라미터입니다.", "MISSING_BILLING_KEY");
         }
         
         try {
             log.info("중복 체크 요청 - 빌링키: " + billingKey + ", 회원ID: " + memberIdx);
             
             // 서비스 계층에서 비즈니스 로직 처리
-            Map<String, Object> result = payService.checkDuplicatePaymentMethod(billingKey, (int) memberIdx);
+            Map<String, Object> result = payService.checkDuplicatePaymentMethod(billingKey, memberIdx);
             
             log.info("중복 체크 결과: " + result);
-            return ResponseEntity.ok(result);
+            return createSuccessResponse("중복 체크 완료", result);
             
         } catch (Exception e) {
             log.error("중복 체크 중 오류 발생: ", e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false, 
-                "message", "중복 체크 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "중복 체크 중 오류가 발생했습니다.", "DUPLICATE_CHECK_FAILED");
         }
     }
     
     /**
      * 중복 처리 후 결제수단 저장 API  
-     * - 역할: 요청 검증, 세션 확인, VO 생성, 서비스 호출, 응답 형식 통일
+     * @param body {billing_key: string, method_provider: string, method_name?: string, replace_existing: boolean}
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: PaymentMethodVO, timestamp: number}
      */
-    @PostMapping("/bill/save-with-duplicate-handling")
-    public ResponseEntity<?> saveBillingKeyWithDuplicateHandling(@RequestBody Map<String, Object> body, HttpSession session) {
-        Object memberIdx = session.getAttribute("member_idx");
+    @PostMapping("/bill/save")
+    public ResponseEntity<Map<String, Object>> saveBillingKeyWithDuplicateHandling(@RequestBody Map<String, Object> body, HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
         if (memberIdx == null) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not logged in"));
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "AUTHENTICATION_REQUIRED");
         }
         
         // 요청 데이터 검증
@@ -428,7 +430,7 @@ public class PaymentController {
         Boolean replaceExisting = (Boolean) body.get("replace_existing");
         
         if (billingKey == null || methodProvider == null || replaceExisting == null) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Missing required parameters"));
+            return createErrorResponse(HttpStatus.BAD_REQUEST, "필수 파라미터가 누락되었습니다. (billing_key, method_provider, replace_existing)", "MISSING_PARAMETERS");
         }
         
         try {
@@ -436,7 +438,7 @@ public class PaymentController {
             
             // VO 객체 생성
             PaymentMethodVO vo = new PaymentMethodVO();
-            vo.setMember_idx((int) memberIdx);
+            vo.setMember_idx(memberIdx);
             vo.setMethod_key(billingKey);
             vo.setMethod_provider(methodProvider);
             vo.setMethod_name(methodName);
@@ -446,96 +448,69 @@ public class PaymentController {
             
             log.info("중복 처리 후 저장 결과: " + result);
             
-            if ((Boolean) result.get("success")) {
-                return ResponseEntity.ok(result);
+            Boolean success = (Boolean) result.get("success");
+            if (success != null && success) {
+                return createSuccessResponse((String) result.get("message"), result.get("data"));
             } else {
-                return ResponseEntity.badRequest().body(result);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, (String) result.get("message"), "SAVE_WITH_DUPLICATE_HANDLING_FAILED");
             }
             
         } catch (Exception e) {
             log.error("결제수단 저장 중 오류 발생: ", e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false, 
-                "message", "결제수단 저장 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제수단 저장 중 오류가 발생했습니다.", "SAVE_FAILED");
         }
     }
     
     /**
      * 사용자별 결제 기록 조회 API
-     * - 역할: 세션 확인, 서비스 호출, 응답 형식 통일
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data: {history: PaymentOrderWithMethodVO[], totalCount: number}, timestamp: number}
      */
     @GetMapping("/history")
-    public ResponseEntity<?> getPaymentHistory(HttpSession session) {
-        Object memberIdx = session.getAttribute("member_idx");
+    public ResponseEntity<Map<String, Object>> getPaymentHistory(HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
         if (memberIdx == null) {
-            log.error("세션에 member_idx가 없습니다.");
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false, 
-                "message", "사용자 인증이 필요합니다.",
-                "errorCode", "AUTHENTICATION_REQUIRED"
-            ));
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.", "AUTHENTICATION_REQUIRED");
         }
         
         try {
-            List<PaymentOrderWithMethodVO> paymentHistory = payService.getPaymentHistoryWithMethod((int) memberIdx);
+            List<PaymentOrderWithMethodVO> paymentHistory = payService.getPaymentHistoryWithMethod(memberIdx);
             
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "결제 기록 조회 성공",
-                "data", paymentHistory,
-                "totalCount", paymentHistory.size()
-            ));
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("history", paymentHistory);
+            responseData.put("totalCount", paymentHistory.size());
+            
+            return createSuccessResponse("결제 기록 조회 성공", responseData);
             
         } catch (Exception e) {
             log.error("결제 기록 조회 중 오류 발생: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "success", false,
-                "message", "결제 기록 조회 중 오류가 발생했습니다.",
-                "error", e.getClass().getSimpleName(),
-                "errorCode", "PAYMENT_HISTORY_FETCH_FAILED"
-            ));
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 기록 조회 중 오류가 발생했습니다.", "PAYMENT_HISTORY_FETCH_FAILED");
         }
     }
 
-    // 결제 예약 조회 (정기 결제 예약)
+    /**
+     * 결제 예약 조회 (정기 결제 예약)
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data?: PaymentOrderWithMethodVO, timestamp: number}
+     */
     @GetMapping("/bill/schedule")
-    public ResponseEntity<?> getScheduledPaymentOrder(HttpSession session) {
-        Object memberIdx = session.getAttribute("member_idx");
+    public ResponseEntity<Map<String, Object>> getScheduledPaymentOrder(HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
         if (memberIdx == null) {
-            log.error("세션에 member_idx가 없습니다.");
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false, 
-                "message", "사용자 인증이 필요합니다.",
-                "errorCode", "AUTHENTICATION_REQUIRED"
-            ));
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.", "AUTHENTICATION_REQUIRED");
         }
         
         try {
-            PaymentOrderWithMethodVO scheduledOrder = payService.getScheduledPaymentOrder((int) memberIdx);
-            log.info("order : " + scheduledOrder);
+            PaymentOrderWithMethodVO scheduledOrder = payService.getScheduledPaymentOrder(memberIdx);
+            log.info("예약 결제 조회 결과: " + scheduledOrder);
+            
             if (scheduledOrder != null) {
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "결제 예약 조회 성공",
-                    "data", scheduledOrder
-                ));
+                return createSuccessResponse("결제 예약 조회 성공", scheduledOrder);
             } else {
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "결제 예약이 없습니다."
-                ));
+                return createSuccessResponse("결제 예약이 없습니다.", null);
             }
             
         } catch (Exception e) {
             log.error("결제 예약 조회 중 오류 발생: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "success", false,
-                "message", "결제 예약 조회 중 오류가 발생했습니다.",
-                "error", e.getClass().getSimpleName(),
-                "errorCode", "SCHEDULED_PAYMENT_FETCH_FAILED"
-            ));
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 예약 조회 중 오류가 발생했습니다.", "SCHEDULED_PAYMENT_FETCH_FAILED");
         }
     }
-    
 }

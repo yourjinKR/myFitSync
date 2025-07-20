@@ -279,10 +279,18 @@ const PaymentMethodRegister = () => {
         
         const duplicateCheckResult = await PaymentUtil.checkDuplicatePaymentMethod(result.billingKey);
         
-        if (duplicateCheckResult.success) {
-          if (duplicateCheckResult.isDuplicate) {
+        console.log('🔍 중복 체크 결과 전체:', duplicateCheckResult);
+        console.log('🔍 중복 체크 data:', duplicateCheckResult.data);
+        
+        if (duplicateCheckResult.success && duplicateCheckResult.data) {
+          const duplicateData = duplicateCheckResult.data;
+          
+          console.log('🔍 duplicateData.isDuplicate:', duplicateData.isDuplicate);
+          console.log('🔍 duplicateData.cardInfo:', duplicateData.cardInfo);
+          
+          if (duplicateData.isDuplicate) {
             // 3단계: 중복된 카드가 있는 경우 사용자에게 확인
-            const cardInfo = duplicateCheckResult.cardInfo;
+            const cardInfo = duplicateData.cardInfo;
             const cardName = cardInfo?.name || '알 수 없는 카드';
             const cardNumber = cardInfo?.number || '****-****-****-****';
             
@@ -303,9 +311,11 @@ const PaymentMethodRegister = () => {
             await savePaymentMethodWithDuplicateHandling(result.billingKey, provider, false, providerName);
           }
         } else {
+          // 중복 체크 실패 시
+          const errorMessage = duplicateCheckResult.message || '카드 정보 확인에 실패했습니다.';
           setMessage({ 
             type: 'error', 
-            content: duplicateCheckResult.message || '카드 정보 확인에 실패했습니다.' 
+            content: errorMessage 
           });
         }
       } else {

@@ -169,7 +169,7 @@ export const PaymentUtil = {
     /** 결제수단 등록 전 중복 체크 */
     checkDuplicatePaymentMethod: async (billingKey) => {
         try {
-            const response = await axios.post('/payment/bill/check-duplicate', {
+            const response = await axios.post('/payment/bill/check', {
                 billing_key: billingKey
             }, {
                 withCredentials: true,
@@ -190,7 +190,7 @@ export const PaymentUtil = {
     /** 중복 처리 후 결제수단 저장 */
     saveBillingKeyWithDuplicateHandling: async ({ billing_key, method_provider, method_name, replace_existing }) => {
         try {
-            const response = await axios.post('/payment/bill/save-with-duplicate-handling', {
+            const response = await axios.post('/payment/bill/save', {
                 billing_key,
                 method_provider,
                 method_name,
@@ -289,7 +289,7 @@ export const PaymentUtil = {
     /** 결제 예약 취소 */
     cancelScheduledPayment: async (order_idx) => {
         try {
-            const response = await axios.delete('/payment/bill/cancel', {
+            const response = await axios.delete('/payment/bill/schedule', {
                 data: {
                     order_idx: order_idx
                 },
