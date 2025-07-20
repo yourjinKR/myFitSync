@@ -44,4 +44,7 @@ public interface PaymentService {
 
 	// 결제 예약 조회 (정기 결제 예약)
 	public PaymentOrderWithMethodVO getScheduledPaymentOrder(int memberIdx);
+	
+	// 다음 달 자동 결제 예약 (정기 결제용)
+	public Object scheduleNextMonthPayment(PaymentOrderVO completedOrder);
 }

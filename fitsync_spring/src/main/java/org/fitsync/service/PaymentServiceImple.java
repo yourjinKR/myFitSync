@@ -1285,4 +1285,91 @@ public class PaymentServiceImple implements PaymentService {
 			return errorInfo;
 		}
 	}
+
+	/**
+	 * 다음 달 자동 결제 예약 (정기 결제용)
+	 * 결제 성공 시 31일 후 동일한 결제수단으로 자동 예약
+	 * @param completedOrder 완료된 결제 주문 정보
+	 * @return 예약 결과
+	 */
+	@Override
+	public Object scheduleNextMonthPayment(PaymentOrderVO completedOrder) {
+		try {
+			log.info("다음 달 자동 결제 예약 시작 - CompletedOrderIdx: " + completedOrder.getOrder_idx() + 
+					", MemberIdx: " + completedOrder.getMember_idx() + ", MethodIdx: " + completedOrder.getMethod_idx());
+			
+			// 1. 결제수단이 여전히 유효한지 확인
+			PaymentMethodVO paymentMethod = paymentMethodMapper.selectByMethodIdx(completedOrder.getMethod_idx());
+			if (paymentMethod == null) {
+				log.warn("결제수단을 찾을 수 없음 - MethodIdx: " + completedOrder.getMethod_idx());
+				return Map.of("success", false, "message", "결제수단을 찾을 수 없습니다.");
+			}
+			
+			// 2. 다음 결제일 계산 (31일 후)
+			java.time.LocalDateTime nextPaymentDateTime = java.time.LocalDateTime.now()
+					.plusDays(31)
+					.withHour(9)  // 오전 9시로 고정
+					.withMinute(0)
+					.withSecond(0)
+					.withNano(0);
+			
+			log.info("다음 결제 예정일: " + nextPaymentDateTime);
+			
+			// 3. 새로운 PaymentId 생성
+			String nextPaymentId = generatePaymentId();
+			
+			// 4. 다음 달 결제 예약 호출
+			String scheduleDateTime = nextPaymentDateTime.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+			Object scheduleResult = scheduleBillingKey(
+				nextPaymentId, 
+				completedOrder.getMethod_idx(), 
+				completedOrder.getMember_idx(), 
+				scheduleDateTime
+			);
+			
+			// 5. 결과 확인 및 로깅
+			@SuppressWarnings("unchecked")
+			Map<String, Object> result = (Map<String, Object>) scheduleResult;
+			boolean isSuccess = (boolean) result.get("success");
+			
+			if (isSuccess) {
+				log.info("다음 달 자동 결제 예약 성공 - NextPaymentId: " + nextPaymentId + 
+						", NextPaymentDate: " + nextPaymentDateTime + ", ScheduleId: " + result.get("scheduleId"));
+				System.out.println("🔄 [자동 예약] 다음 달 결제 예약 완료 - MemberIdx: " + completedOrder.getMember_idx() + 
+						", 예약일: " + nextPaymentDateTime.toLocalDate());
+						
+				// 성공 응답에 추가 정보 포함
+				result.put("originalOrderIdx", completedOrder.getOrder_idx());
+				result.put("nextPaymentDate", nextPaymentDateTime.toString());
+				result.put("isAutoScheduled", true);
+			} else {
+				log.error("다음 달 자동 결제 예약 실패 - " + result.get("message"));
+				System.err.println("❌ [자동 예약] 다음 달 결제 예약 실패 - MemberIdx: " + completedOrder.getMember_idx());
+			}
+			
+			return result;
+			
+		} catch (Exception e) {
+			log.error("다음 달 자동 결제 예약 중 오류 발생 - CompletedOrderIdx: " + completedOrder.getOrder_idx(), e);
+			
+			Map<String, Object> errorResult = new HashMap<>();
+			errorResult.put("success", false);
+			errorResult.put("message", "다음 달 자동 결제 예약 중 오류가 발생했습니다: " + e.getMessage());
+			errorResult.put("error", e.getClass().getSimpleName());
+			errorResult.put("originalOrderIdx", completedOrder.getOrder_idx());
+			errorResult.put("isAutoScheduled", true);
+			
+			return errorResult;
+		}
+	}
+
+	/**
+	 * PaymentId 생성 유틸리티 메서드
+	 * @return 고유한 PaymentId
+	 */
+	private String generatePaymentId() {
+		return "auto_" + System.currentTimeMillis() + "_" + 
+			   java.util.UUID.randomUUID().toString().substring(0, 8);
+	}
 }
+

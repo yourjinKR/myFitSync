@@ -1,6 +1,7 @@
 package org.fitsync.service;
 
 import org.fitsync.domain.PaymentOrderVO;
+import org.fitsync.domain.PaymentOrderWithMethodVO;
 import org.fitsync.mapper.PaymentOrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,9 @@ public class ScheduledPaymentMonitor {
     @Autowired
     private PaymentOrderMapper paymentOrderMapper;
     
+    @Autowired
+    private PaymentService paymentService;
+    
     @Value("${portone.api.secret}")
     private String apiSecretKey;
     
@@ -41,6 +45,12 @@ public class ScheduledPaymentMonitor {
      */
     @Value("${payment.monitor.enabled:false}")
     private boolean monitorEnabled;
+    
+    /**
+     * 자동 예약 기능 활성화 여부 (기본값: true)
+     */
+    @Value("${payment.auto.schedule.enabled:true}")
+    private boolean autoScheduleEnabled;
     
     /**
      * 서버 식별용 이름 (로깅용)
@@ -363,7 +373,7 @@ public class ScheduledPaymentMonitor {
     }
 
     /**
-     * 결제 완료/실패 알림 처리 (선택사항)
+     * 결제 완료/실패 알림 처리 및 정기 결제 자동 예약
      */
     private void sendPaymentNotification(PaymentOrderVO order, String status) {
         try {
@@ -372,6 +382,14 @@ public class ScheduledPaymentMonitor {
             // 결제 성공 시 추가 비즈니스 로직
             if ("PAID".equals(status)) {
                 log.info("💎 구독 활성화 처리 - MemberIdx: " + order.getMember_idx());
+                
+                // 정기 결제인 경우 다음 달 자동 예약 처리 (설정으로 제어)
+                if ("SCHEDULE".equals(order.getOrder_type()) && autoScheduleEnabled) {
+                    scheduleNextMonthAutoPayment(order);
+                } else if ("SCHEDULE".equals(order.getOrder_type()) && !autoScheduleEnabled) {
+                    log.info("⚠️ 자동 예약 기능이 비활성화됨 - MemberIdx: " + order.getMember_idx());
+                }
+                
                 // TODO: 구독 활성화 로직 구현
             }
             
@@ -382,11 +400,57 @@ public class ScheduledPaymentMonitor {
     }
     
     /**
+     * 다음 달 자동 결제 예약 처리 (정기 결제용)
+     * 결제 성공 시 비동기로 다음 달 결제를 자동 예약
+     */
+    private void scheduleNextMonthAutoPayment(PaymentOrderVO completedOrder) {
+        try {
+            log.info("🔄 다음 달 자동 결제 예약 시작 - OrderIdx: " + completedOrder.getOrder_idx() + 
+                    ", MemberIdx: " + completedOrder.getMember_idx());
+            
+            // 기존 다음 달 예약이 있는지 확인 (중복 예약 방지)
+            PaymentOrderWithMethodVO existingSchedule = paymentOrderMapper.selectScheduledPaymentOrderByMember(completedOrder.getMember_idx());
+            
+            if (existingSchedule != null && !"CANCELLED".equals(existingSchedule.getOrder_status())) {
+                log.info("⚠️ 이미 다음 달 예약이 존재함 - ExistingOrderIdx: " + existingSchedule.getOrder_idx() + 
+                        ", Status: " + existingSchedule.getOrder_status());
+                System.out.println("ℹ️ [자동 예약] 이미 다음 달 예약 존재 - MemberIdx: " + completedOrder.getMember_idx());
+                return;
+            }
+            
+            // PaymentService를 통해 다음 달 결제 예약
+            Object scheduleResult = paymentService.scheduleNextMonthPayment(completedOrder);
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = (Map<String, Object>) scheduleResult;
+            boolean isSuccess = (boolean) result.get("success");
+            
+            if (isSuccess) {
+                log.info("✅ 다음 달 자동 결제 예약 성공 - OriginalOrderIdx: " + completedOrder.getOrder_idx() + 
+                        ", NewScheduleId: " + result.get("scheduleId") + ", NextPaymentDate: " + result.get("nextPaymentDate"));
+                System.out.println("🎯 [자동 예약] 성공! MemberIdx: " + completedOrder.getMember_idx() + 
+                        ", 다음 결제일: " + result.get("nextPaymentDate"));
+            } else {
+                log.error("❌ 다음 달 자동 결제 예약 실패 - OriginalOrderIdx: " + completedOrder.getOrder_idx() + 
+                        ", Error: " + result.get("message"));
+                System.err.println("⚠️ [자동 예약] 실패! MemberIdx: " + completedOrder.getMember_idx() + 
+                        ", 이유: " + result.get("message"));
+            }
+            
+        } catch (Exception e) {
+            log.error("다음 달 자동 결제 예약 처리 중 오류 발생 - OrderIdx: " + completedOrder.getOrder_idx(), e);
+            System.err.println("💥 [자동 예약] 오류 발생 - MemberIdx: " + completedOrder.getMember_idx() + 
+                    ", 오류: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 모니터링 상태 확인용 메서드 (디버깅/관리용)
      */
     public String getMonitorStatus() {
         return "서버명: " + serverName + 
                ", 모니터링 활성화: " + monitorEnabled + 
+               ", 자동 예약 활성화: " + autoScheduleEnabled + 
                ", 현재 API 호출 횟수: " + currentApiCallCount.get() + "/" + maxApiCallsPerMinute;
     }
 }
