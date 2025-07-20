@@ -364,6 +364,8 @@ export const PaymentUtil = {
             console.error('구독자 상태 조회 중 오류:', error);
             throw error;
         }
-    }
+    },
+
+
 
 }

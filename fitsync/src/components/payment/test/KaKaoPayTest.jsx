@@ -348,7 +348,7 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
             <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 1})}>내 빌링키 정보 조회</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 10})}>빌링키 결제</ButtonSubmit>
+            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 20})}>빌링키 결제</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (order_idx 확인)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
@@ -357,7 +357,8 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={handleCancelScheduledPayment}>❌ 결제 예약 취소 (order_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelLatestSchedule}>🔄 최근 예약 자동 취소</ButtonSubmit>
             <ButtonSubmit onClick={()=> PaymentUtil.consultScheduledPayment()}>결제 예약 조회</ButtonSubmit>
-            
+            <ButtonSubmit onClick={()=> PaymentUtil.checkSubscriptionStatus()}>구독자 확인</ButtonSubmit>
+
             <CalendarContainer>
                 <DateTimeButton onClick={handleCalendarSchedule}>
                     🗓️ 달력으로 결제 예약

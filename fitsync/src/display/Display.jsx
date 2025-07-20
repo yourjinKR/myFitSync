@@ -32,6 +32,10 @@ import PaymentHistory from '../components/payment/PaymentHistory';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
 import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
+import SubscriptionContainer from '../components/subscription/SubscriptionContainer';
+import SubscriptionMain from '../components/subscription/SubscriptionMain';
+import SubscriptionPaymentMethods from '../components/subscription/SubscriptionPaymentMethods';
+import SubscriptionPaymentHistory from '../components/subscription/SubscriptionPaymentHistory';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -111,6 +115,12 @@ const Display = () => {
             <Route path='methods' element={<PaymentMethodList/>}/>
             <Route path='register' element={<PaymentMethodRegister/>}/>
             <Route path='history' element={<PaymentHistory/>}/>
+          </Route>
+
+          <Route path='/subscription' element={<SubscriptionContainer/>}>
+            <Route index element={<SubscriptionMain/>}/>
+            <Route path='methods' element={<SubscriptionPaymentMethods/>}/>
+            <Route path='history' element={<SubscriptionPaymentHistory/>}/>
           </Route>
 
           <Route path='/admin' element={<AdminMain/>}>
