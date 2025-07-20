@@ -140,4 +140,15 @@
         FETCH FIRST 1 ROWS ONLY
     </select>
 
+    <!-- 특정 결제수단의 예약 결제 조회 -->
+    <select id="selectScheduledPaymentsByMethodIdx" parameterType="int" resultType="org.fitsync.domain.PaymentOrderVO">
+        SELECT *
+        FROM payment_order
+        WHERE method_idx = #{method_idx}
+            AND order_type = 'SCHEDULE'
+            AND order_status = 'READY'
+            AND schedule_id IS NOT NULL
+        ORDER BY schedule_date ASC
+    </select>
+
 </mapper>

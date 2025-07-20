@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.portone.sdk.server.common.Country.St;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
@@ -582,45 +581,65 @@ public class PaymentServiceImple implements PaymentService {
 		}
 	}
 
-	// 빌링키 결제 예약 취소
+	// 빌링키 결제 예약 취소 (단건)
 	@Override
 	public Object cancelScheduledPayment(int orderIdx, int memberIdx) {
-		// 예약 취소를 위해 order_idx로 schedule_id 조회
-		PaymentOrderVO order = paymentOrderMapper.selectPaymentOrderById(orderIdx);
-		String scheduleId = order != null ? order.getSchedule_id() : null;
-		if (order == null || scheduleId == null) {
-			log.error("예약 취소 실패 - order_idx: " + orderIdx + "에 해당하는 예약이 없습니다.");
-			return Map.of("success", false, "message", "예약을 찾을 수 없습니다.");
-		}
+		try {
+			// 예약 취소를 위해 order_idx로 schedule_id 조회
+			PaymentOrderVO order = paymentOrderMapper.selectPaymentOrderById(orderIdx);
+			if (order == null) {
+				log.error("예약 취소 실패 - order_idx: " + orderIdx + "에 해당하는 주문이 없습니다.");
+				return Map.of("success", false, "message", "주문을 찾을 수 없습니다.");
+			}
+			
+			String scheduleId = order.getSchedule_id();
+			if (scheduleId == null) {
+				log.error("예약 취소 실패 - schedule_id가 없습니다. order_idx: " + orderIdx);
+				return Map.of("success", false, "message", "예약 정보를 찾을 수 없습니다.");
+			}
+			
+			log.info("단건 예약 취소 시작 - orderIdx: " + orderIdx + ", scheduleId: " + scheduleId);
 
-		try {			
+			// PortOne API로 예약 취소
 			HttpRequest request = HttpRequest.newBuilder()
 				.uri(URI.create("https://api.portone.io/payment-schedules"))
 				.header("Content-Type", "application/json")
 				.header("Authorization", "PortOne " + apiSecretKey)
 				.method("DELETE", HttpRequest.BodyPublishers.ofString("{\"scheduleIds\":[\"" + scheduleId + "\"]}"))
 				.build();
+			
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-			System.out.println(response.body());
+			log.info("예약 취소 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
 
-			// 성공시 예약 상태 업데이트
-			if (response.statusCode() >= 200 && response.statusCode() < 300)
-			{
-				log.info("예약 취소 성공 - ScheduleId: " + scheduleId);
+			// API 호출 성공 시 DB 상태 업데이트
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				// API 응답 파싱하여 실제 취소된 스케줄 ID 확인
+				ObjectMapper objectMapper = new ObjectMapper();
+				@SuppressWarnings("unchecked")
+				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
 				
-				// 예약 상태를 CANCELLED로 업데이트
-				order.setOrder_status("CANCELLED");
-				paymentOrderMapper.updatePaymentStatus(order);
+				@SuppressWarnings("unchecked")
+				List<String> revokedScheduleIds = (List<String>) responseData.get("revokedScheduleIds");
 				
-				return Map.of("success", true, "message", "예약이 성공적으로 취소되었습니다.", "orderIdx", orderIdx);
+				if (revokedScheduleIds != null && revokedScheduleIds.contains(scheduleId)) {
+					// 예약 상태를 CANCELLED로 업데이트
+					order.setOrder_status("CANCELLED");
+					paymentOrderMapper.updatePaymentStatus(order);
+					
+					log.info("단건 예약 취소 성공 - ScheduleId: " + scheduleId + " -> CANCELLED");
+					return Map.of("success", true, "message", "예약이 성공적으로 취소되었습니다.", "orderIdx", orderIdx, "scheduleId", scheduleId);
+				} else {
+					log.warn("API 응답에서 해당 스케줄 ID를 찾을 수 없습니다: " + scheduleId);
+					return Map.of("success", false, "message", "예약 취소 확인 실패");
+				}
 			} else {
-				log.error("예약 취소 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
+				log.error("예약 취소 API 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
 				return Map.of("success", false, "message", "예약 취소에 실패했습니다. 상태 코드: " + response.statusCode());
 			}
 		} catch (Exception e) {
-			// TODO: handle exception
+			log.error("예약 취소 중 오류 발생 - orderIdx: " + orderIdx, e);
+			return Map.of("success", false, "message", "예약 취소 처리 중 오류가 발생했습니다: " + e.getMessage());
 		}
-		return null; // TODO: 예약 취소 로직 구현 필요
 	}
 	
 	
@@ -641,19 +660,128 @@ public class PaymentServiceImple implements PaymentService {
 		}
 	}
 	
+	// 결제수단별 모든 예약 취소 (내부 메서드)
+	private void cancelAllSchedulesByMethodIdx(int methodIdx) throws Exception {
+		try {
+			// 해당 결제수단의 모든 예약 조회
+			List<PaymentOrderVO> scheduledPayments = paymentOrderMapper.selectScheduledPaymentsByMethodIdx(methodIdx);
+			
+			if (scheduledPayments.isEmpty()) {
+				log.info("취소할 예약이 없습니다. methodIdx: " + methodIdx);
+				return;
+			}
+			
+			// 빌링키 조회
+			PaymentMethodVO paymentMethod = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx);
+			if (paymentMethod == null) {
+				throw new RuntimeException("결제수단을 찾을 수 없습니다. methodIdx: " + methodIdx);
+			}
+			
+			String billingKey = paymentMethod.getMethod_key();
+			log.info("빌링키로 모든 예약 취소 시작 - billingKey: " + billingKey + ", 예약 건수: " + scheduledPayments.size());
+			
+			// PortOne API로 빌링키의 모든 예약 취소
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("DELETE", HttpRequest.BodyPublishers.ofString("{\"billingKey\":\"" + billingKey + "\"}"))
+				.build();
+			
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			log.info("예약 취소 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
+			
+			if (response.statusCode() < 200 || response.statusCode() >= 300) {
+				throw new RuntimeException("예약 취소 API 호출 실패. Status: " + response.statusCode() + ", Body: " + response.body());
+			}
+			
+			// API 응답 파싱하여 취소된 스케줄 ID 확인
+			ObjectMapper objectMapper = new ObjectMapper();
+			@SuppressWarnings("unchecked")
+			Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+			
+			@SuppressWarnings("unchecked")
+			List<String> revokedScheduleIds = (List<String>) responseData.get("revokedScheduleIds");
+			
+			if (revokedScheduleIds != null && !revokedScheduleIds.isEmpty()) {
+				// DB에서 해당 예약들의 상태를 CANCELLED로 업데이트
+				for (PaymentOrderVO scheduledPayment : scheduledPayments) {
+					String scheduleId = scheduledPayment.getSchedule_id();
+					if (scheduleId != null && revokedScheduleIds.contains(scheduleId)) {
+						scheduledPayment.setOrder_status("CANCELLED");
+						paymentOrderMapper.updatePaymentStatus(scheduledPayment);
+						log.info("예약 상태 업데이트 완료 - scheduleId: " + scheduleId + " -> CANCELLED");
+					}
+				}
+				log.info("총 " + revokedScheduleIds.size() + "개의 예약이 취소되었습니다.");
+			} else {
+				log.warn("API 응답에서 취소된 스케줄 ID를 찾을 수 없습니다.");
+			}
+			
+		} catch (Exception e) {
+			log.error("예약 취소 중 오류 발생: ", e);
+			throw new RuntimeException("예약 취소 실패: " + e.getMessage(), e);
+		}
+	}
+
+	// 결제수단 및 빌링키 삭제 (트랜잭션 필요)
+	@Transactional(rollbackFor = Exception.class) // 모든 Exception에 대해 롤백
 	@Override
 	public boolean deletePaymentMethod(int memberIdx, int methodIdx) {
 		try {
-			// VO 객체 생성하여 파라미터 전달
+			log.info("결제수단 삭제 시작 - memberIdx: " + memberIdx + ", methodIdx: " + methodIdx);
+			
+			// 1. 먼저 해당 결제수단의 모든 예약 취소 (PortOne API + DB 업데이트)
+			cancelAllSchedulesByMethodIdx(methodIdx);
+			
+			// 2. 빌링키 조회
+			PaymentMethodVO paymentMethod = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx);
+			if (paymentMethod == null) {
+				throw new RuntimeException("결제수단을 찾을 수 없습니다. methodIdx: " + methodIdx);
+			}
+			
+			String billingKey = paymentMethod.getMethod_key();
+			log.info("빌링키 삭제 시작 - billingKey: " + billingKey);
+			
+			// 3. PortOne API로 빌링키 삭제
+			if (billingKey != null && !billingKey.isEmpty()) {
+				HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create("https://api.portone.io/billing-keys/" + billingKey + "?storeId=" + storeId))
+					.header("Content-Type", "application/json")
+					.header("Authorization", "PortOne " + apiSecretKey)
+					.method("DELETE", HttpRequest.BodyPublishers.ofString("{}"))
+					.build();
+				
+				HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+				log.info("빌링키 삭제 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
+				
+				// 빌링키 삭제 실패시 예외 발생으로 트랜잭션 롤백
+				if (response.statusCode() < 200 || response.statusCode() >= 300) {
+					throw new RuntimeException("빌링키 삭제에 실패했습니다. 상태 코드: " + response.statusCode() + ", 응답: " + response.body());
+				}
+				
+				log.info("빌링키 삭제 성공 - billingKey: " + billingKey);
+			}
+			
+			// 4. DB에서 결제수단 삭제
 			PaymentMethodVO vo = new PaymentMethodVO();
 			vo.setMember_idx(memberIdx);
 			vo.setMethod_idx(methodIdx);
 			
 			int deletedRows = paymentMethodMapper.deletePaymentMethod(vo);
-			return deletedRows > 0;
+			log.info("DB 결제수단 삭제 결과: " + deletedRows + "건");
+			
+			if (deletedRows == 0) {
+				throw new RuntimeException("DB에서 결제수단 삭제 실패. 해당 결제수단이 존재하지 않거나 권한이 없습니다.");
+			}
+			
+			log.info("결제수단 삭제 완료 - memberIdx: " + memberIdx + ", methodIdx: " + methodIdx);
+			return true;
+			
 		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
+			log.error("결제수단 삭제 중 오류 발생 - memberIdx: " + memberIdx + ", methodIdx: " + methodIdx, e);
+			// RuntimeException을 다시 throw하여 트랜잭션 롤백 발생
+			throw new RuntimeException("결제수단 삭제 실패: " + e.getMessage(), e);
 		}
 	}
 

@@ -6,8 +6,6 @@ import java.util.List;
 import org.fitsync.domain.PaymentOrderVO;
 import org.fitsync.domain.PaymentOrderWithMethodVO;
 
-import io.portone.sdk.server.payment.Payment;
-
 public interface PaymentOrderMapper {
     // 결제 요청 저장
     void insertPaymentOrder(PaymentOrderVO order);
@@ -41,4 +39,7 @@ public interface PaymentOrderMapper {
 
     // 구독자 판별
     PaymentOrderVO selectActiveSubscription(int member_idx);
+    
+    // 특정 결제수단의 예약 결제 조회
+    List<PaymentOrderVO> selectScheduledPaymentsByMethodIdx(int method_idx);
 }

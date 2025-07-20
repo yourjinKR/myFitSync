@@ -287,6 +287,7 @@ const KaKaoPayTest = () => {
         try {
             const response = await PaymentUtil.cancelScheduledPayment(parseInt(orderIdx));
             
+
             console.log("✅ 결제 예약 취소 성공!");
             console.log("취소 결과:", response);
             alert(`결제 예약이 성공적으로 취소되었습니다!\n주문 번호: ${orderIdx}`);
@@ -351,7 +352,7 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (order_idx 확인)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
-            <ButtonSubmit onClick={() => handleScheduleBillingKey({method_idx: 1})}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
+            <ButtonSubmit onClick={() => handleScheduleBillingKey({method_idx: 9})}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
             <ButtonSubmit onClick={handleCustomScheduleBillingKey}>📅 결제 예약 (사용자 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelScheduledPayment}>❌ 결제 예약 취소 (order_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelLatestSchedule}>🔄 최근 예약 자동 취소</ButtonSubmit>

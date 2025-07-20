@@ -271,7 +271,7 @@ public class ScheduledPaymentMonitor {
                 newStatus = "FAILED";
                 resultType = "FAILED";
                 break;
-            case "CANCELLED":
+            case "REVOKED":
                 newStatus = "CANCELLED";
                 resultType = "FAILED";
                 break;
