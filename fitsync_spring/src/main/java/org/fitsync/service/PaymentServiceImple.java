@@ -361,6 +361,28 @@ public class PaymentServiceImple implements PaymentService {
 	    	        log.error("업데이트 후 조회 실패: ", selectEx);
 	    	    }
 	    	    
+	    	    // 🎯 단건 결제 성공 시 다음 달 자동 결제 예약
+	    	    if (isSuccess && "DIRECT".equals(order.getOrder_type())) {
+	    	        try {
+	    	            log.info("🎯 단건 결제 성공 - 다음 달 자동 결제 예약 시작");
+	    	            Object autoScheduleResult = scheduleNextMonthPayment(order);
+	    	            
+	    	            @SuppressWarnings("unchecked")
+	    	            Map<String, Object> scheduleResult = (Map<String, Object>) autoScheduleResult;
+	    	            boolean autoSuccess = (boolean) scheduleResult.get("success");
+	    	            
+	    	            if (autoSuccess) {
+	    	                log.info("✅ 단건 결제 후 다음 달 자동 예약 성공 - PaymentId: " + paymentId + 
+	    	                        ", NextPaymentId: " + scheduleResult.get("paymentId"));
+	    	            } else {
+	    	                log.warn("⚠️ 단건 결제 후 다음 달 자동 예약 실패 - PaymentId: " + paymentId + 
+	    	                        ", Reason: " + scheduleResult.get("message"));
+	    	            }
+	    	        } catch (Exception autoEx) {
+	    	            log.error("❌ 단건 결제 후 자동 예약 중 예외 발생 - PaymentId: " + paymentId, autoEx);
+	    	        }
+	    	    }
+	    	    
 	    	} catch (Exception updateEx) {
 	    	    log.error("결제 상태 업데이트 실패: ", updateEx);
 				System.out.println("업데이트 중 오류 발생함." + updateEx.getMessage());
