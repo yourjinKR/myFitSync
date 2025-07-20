@@ -347,4 +347,23 @@ export const PaymentUtil = {
         }
     },
 
+    /** 구독자 판별 */
+    checkSubscriptionStatus: async () => {
+        try {
+            const response = await axios.get('/payment/subscription', {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('구독자 상태 조회 성공:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('구독자 상태 조회 중 오류:', error);
+            throw error;
+        }
+    }
+
 }

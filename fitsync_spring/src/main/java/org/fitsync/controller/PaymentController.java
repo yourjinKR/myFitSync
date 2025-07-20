@@ -513,4 +513,53 @@ public class PaymentController {
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 예약 조회 중 오류가 발생했습니다.", "SCHEDULED_PAYMENT_FETCH_FAILED");
         }
     }
+
+    /**
+     * 해당 유저가 구독자인지 여부를 확인하는 API
+     * @param session HTTP 세션
+     * @return 구독 상태 정보
+     */
+    @GetMapping("/subscription")
+    public ResponseEntity<Map<String, Object>> getSubscriptionStatus(HttpSession session) {
+        log.info("=== 구독자 상태 확인 API 시작 ===");
+        
+        try {
+            // 1. 세션에서 사용자 정보 조회
+            Integer memberIdx = (Integer) session.getAttribute("member_idx");
+            
+            if (memberIdx == null) {
+                log.warn("❌ 세션에 memberIdx 정보가 없음");
+                return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "LOGIN_REQUIRED");
+            }
+            
+            log.info("구독자 상태 확인 요청 - memberIdx: " + memberIdx);
+            
+            // 2. 구독 상태 확인 서비스 호출
+            Map<String, Object> subscriptionInfo = payService.checkSubscriptionStatus(memberIdx);
+            
+            if (subscriptionInfo.containsKey("error")) {
+                log.error("구독 상태 확인 서비스 오류: " + subscriptionInfo.get("message"));
+                return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+                    subscriptionInfo.get("message").toString(), 
+                    "CHECK_FAILED");
+            }
+            
+            // 3. 성공 응답 생성
+            boolean isSubscriber = (Boolean) subscriptionInfo.get("isSubscriber");
+            String message = isSubscriber ? 
+                "구독자입니다. 단건 결제는 이용할 수 없습니다." : 
+                "비구독자입니다. 구독권 구매가 가능합니다.";
+            
+            log.info("✅ 구독 상태 확인 완료 - memberIdx: " + memberIdx + 
+                    ", isSubscriber: " + isSubscriber);
+            
+            return createSuccessResponse(message, subscriptionInfo);
+            
+        } catch (Exception e) {
+            log.error("구독자 상태 확인 API 예외 발생", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "구독 상태 확인 중 시스템 오류가 발생했습니다: " + e.getMessage(), 
+                "SYSTEM_ERROR");
+        }
+    }
 }

@@ -1393,5 +1393,107 @@ public class PaymentServiceImple implements PaymentService {
 		return "auto_" + System.currentTimeMillis() + "_" + 
 			   java.util.UUID.randomUUID().toString().substring(0, 8);
 	}
+
+	/**
+	 * 구독자 여부 확인 및 상세 정보 반환
+	 * @param memberIdx 회원 인덱스
+	 * @return 구독 상태 정보
+	 */
+	@Override
+	public Map<String, Object> checkSubscriptionStatus(int memberIdx) {
+		Map<String, Object> result = new HashMap<>();
+		
+		try {
+			log.info("구독자 상태 확인 시작 - memberIdx: " + memberIdx);
+			
+			// 1. 활성 구독 확인
+			PaymentOrderVO activeSubscription = paymentOrderMapper.selectActiveSubscription(memberIdx);
+			
+			boolean isSubscriber = (activeSubscription != null);
+			result.put("isSubscriber", isSubscriber);
+			result.put("memberIdx", memberIdx);
+			
+			if (isSubscriber) {
+				// 2. 구독 상세 정보 설정
+				result.put("subscriptionType", activeSubscription.getOrder_type());
+				result.put("subscriptionStatus", activeSubscription.getOrder_status());
+				
+				// 3. 구독 유효기간 계산
+				if ("PAID".equals(activeSubscription.getOrder_status()) && activeSubscription.getOrder_paydate() != null) {
+					// 결제 완료된 구독의 경우
+					java.util.Date payDate = activeSubscription.getOrder_paydate();
+					java.util.Calendar cal = java.util.Calendar.getInstance();
+					cal.setTime(payDate);
+					cal.add(java.util.Calendar.DAY_OF_MONTH, 31);
+					java.util.Date expiryDate = cal.getTime();
+					
+					result.put("lastPaymentDate", payDate);
+					result.put("subscriptionExpiryDate", expiryDate);
+					result.put("subscriptionDaysLeft", calculateDaysLeft(expiryDate));
+					
+					log.info("✅ 활성 구독자 - 마지막 결제일: " + payDate + ", 만료일: " + expiryDate);
+					
+				} else if ("READY".equals(activeSubscription.getOrder_status()) && activeSubscription.getSchedule_date() != null) {
+					// 예약 결제 대기 중인 구독의 경우
+					result.put("nextPaymentDate", activeSubscription.getSchedule_date());
+					result.put("scheduleId", activeSubscription.getSchedule_id());
+					
+					log.info("📅 예약 구독자 - 다음 결제 예정일: " + activeSubscription.getSchedule_date());
+				}
+				
+				// 4. 결제 수단 정보 (있는 경우)
+				if (activeSubscription.getMethod_idx() > 0) {
+					result.put("paymentMethodIdx", activeSubscription.getMethod_idx());
+				}
+				
+				// 5. 구독 시작 정보
+				result.put("subscriptionStartDate", activeSubscription.getOrder_regdate());
+				result.put("subscriptionAmount", activeSubscription.getOrder_price());
+				result.put("orderIdx", activeSubscription.getOrder_idx());
+				
+			} else {
+				log.info("❌ 비구독자 - memberIdx: " + memberIdx);
+				result.put("message", "현재 유효한 구독이 없습니다.");
+			}
+			
+			// 6. 최근 구독 내역 조회 (비구독자도 과거 내역 확인)
+			PaymentOrderVO latestPayment = paymentOrderMapper.selectLatestSubscriptionPayment(memberIdx);
+			if (latestPayment != null) {
+				Map<String, Object> latestInfo = new HashMap<>();
+				latestInfo.put("orderIdx", latestPayment.getOrder_idx());
+				latestInfo.put("orderType", latestPayment.getOrder_type());
+				latestInfo.put("orderStatus", latestPayment.getOrder_status());
+				latestInfo.put("paymentDate", latestPayment.getOrder_paydate());
+				latestInfo.put("scheduleDate", latestPayment.getSchedule_date());
+				latestInfo.put("amount", latestPayment.getOrder_price());
+				
+				result.put("latestSubscriptionInfo", latestInfo);
+			}
+			
+			result.put("checkTimestamp", System.currentTimeMillis());
+			log.info("구독자 상태 확인 완료 - memberIdx: " + memberIdx + ", isSubscriber: " + isSubscriber);
+			
+			return result;
+			
+		} catch (Exception e) {
+			log.error("구독자 상태 확인 중 오류 발생 - memberIdx: " + memberIdx, e);
+			result.put("isSubscriber", false);
+			result.put("error", true);
+			result.put("message", "구독 상태 확인 중 오류가 발생했습니다: " + e.getMessage());
+			return result;
+		}
+	}
+	
+	/**
+	 * 만료일까지 남은 일수 계산
+	 * @param expiryDate 만료일
+	 * @return 남은 일수 (음수면 만료됨)
+	 */
+	private int calculateDaysLeft(java.util.Date expiryDate) {
+		long currentTime = System.currentTimeMillis();
+		long expiryTime = expiryDate.getTime();
+		long diffTime = expiryTime - currentTime;
+		return (int) (diffTime / (1000 * 60 * 60 * 24));
+	}
 }
 

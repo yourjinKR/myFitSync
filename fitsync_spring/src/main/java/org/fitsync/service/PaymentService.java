@@ -47,4 +47,7 @@ public interface PaymentService {
 	
 	// 다음 달 자동 결제 예약 (정기 결제용)
 	public Object scheduleNextMonthPayment(PaymentOrderVO completedOrder);
+	
+	// 구독자 여부 확인
+	public Map<String, Object> checkSubscriptionStatus(int memberIdx);
 }

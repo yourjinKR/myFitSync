@@ -118,6 +118,7 @@
 
     <!-- 시간 범위 내 예약 결제 조회 (스마트 폴링용) -->
     <select id="selectScheduledPaymentsByTimeRange" resultType="org.fitsync.domain.PaymentOrderVO">
+        <![CDATA[
         SELECT *
         FROM payment_order
         WHERE order_type = 'SCHEDULE'
@@ -125,19 +126,47 @@
           AND schedule_date BETWEEN #{param1} AND #{param2}
           AND schedule_id IS NOT NULL
         ORDER BY schedule_date ASC
+        ]]>
     </select>
 
     <!-- 현재 사용자가 유효한 구독 중인지 여부를 확인 -->
-    <select id="selectActiveSubscription" parameterType="org.fitsync.domain.PaymentOrderVO" resultType="org.fitsync.domain.PaymentOrderVO">
+    <select id="selectActiveSubscription" parameterType="int" resultType="org.fitsync.domain.PaymentOrderVO">
+        <![CDATA[
         SELECT *
-        FROM payment_order
-        WHERE member_idx = #{member_idx}
-            AND order_type = 'SCHEDULE'
-            AND order_status = 'PAID'
-            AND order_paydate IS NOT NULL
-            AND order_paydate + 31 &gt;= SYSDATE
-        ORDER BY order_paydate DESC
-        FETCH FIRST 1 ROWS ONLY
+        FROM (
+            SELECT *
+            FROM payment_order
+            WHERE member_idx = #{member_idx}
+                AND (
+                    (order_status = 'PAID' AND order_paydate IS NOT NULL AND order_paydate + 31 >= SYSDATE)
+                    OR
+                    (order_type = 'SCHEDULE' AND order_status = 'READY' AND schedule_date >= SYSDATE)
+                )
+            ORDER BY 
+                CASE WHEN order_status = 'PAID' THEN 1 ELSE 2 END,
+                order_paydate DESC,
+                schedule_date ASC
+        )
+        WHERE ROWNUM = 1
+        ]]>
+    </select>
+
+    <!-- 최근 구독 결제 내역 조회 (상세 정보용) -->
+    <select id="selectLatestSubscriptionPayment" parameterType="int" resultType="org.fitsync.domain.PaymentOrderVO">
+        <![CDATA[
+        SELECT *
+        FROM (
+            SELECT *
+            FROM payment_order
+            WHERE member_idx = #{member_idx}
+                AND order_status IN ('PAID', 'READY')
+                AND (order_paydate + 31 >= SYSDATE OR schedule_date >= SYSDATE)
+            ORDER BY 
+                order_paydate DESC NULLS LAST,
+                schedule_date ASC NULLS LAST
+        )
+        WHERE ROWNUM = 1
+        ]]>
     </select>
 
     <!-- 특정 결제수단의 예약 결제 조회 -->
