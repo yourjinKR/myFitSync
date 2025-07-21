@@ -119,8 +119,7 @@
 		    ROUTINE_LIST_SEQ.nextval,
 		    #{member_idx},
 		    #{routine_name},
-		    #{writer_idx},
-		    NVL((SELECT MAX(routine_arr) FROM ROUTINELIST WHERE MEMBER_IDX = 41), 0) + 1
+		    #{writer_idx}
 		)
 	</insert>
 
