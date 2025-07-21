@@ -686,46 +686,77 @@ const ChatRoom = () => {
     scrollToMessage(messageIdx); // 검색 시에는 중앙 위치로 스크롤
   }, [scrollToMessage]);
 
-  // 메시지 전송 핸들러 - 무조건 맨 아래로 스크롤
+  // 메시지 전송 핸들러 - Promise 기반 순차 처리
   const handleSendMessage = async (messageContent, messageType = 'text', file = null) => {
     if (!connected || !roomId || !currentMemberIdx) {
       console.warn('WebSocket 연결이 되어있지 않거나 채팅방 ID가 없습니다.');
-      return;
+      return Promise.reject('WebSocket 연결 오류');
     }
 
-    const otherMemberIdx = roomData?.trainer_idx === currentMemberIdx
-      ? roomData?.user_idx
-      : roomData?.trainer_idx;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const otherMemberIdx = roomData?.trainer_idx === currentMemberIdx
+          ? roomData?.user_idx
+          : roomData?.trainer_idx;
 
-    const messageData = {
-      room_idx: parseInt(roomId),
-      receiver_idx: otherMemberIdx,
-      message_content: messageContent,
-      message_type: messageType
-    };
+        // 고유한 메시지 식별자 생성 (시간 + 랜덤)
+        const messageTimestamp = Date.now();
+        const messageId = `${messageTimestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
-    sendMessage(messageData);
+        const messageData = {
+          room_idx: parseInt(roomId),
+          receiver_idx: otherMemberIdx,
+          message_content: messageContent,
+          message_type: messageType,
+          unique_id: messageId // 고유 식별자 추가
+        };
 
-    // 메시지 전송 즉시 맨 아래로 스크롤 (조건 없이)
-    console.log('📤 메시지 전송 - 즉시 맨 아래로 스크롤');
-    setTimeout(() => {
-      scrollToBottom(true);
-    }, 50);
+        console.log('📤 메시지 전송 시작:', messageData);
+        sendMessage(messageData);
 
-    // 파일 업로드 처리
-    if (file && messageType === 'image') {
-      console.log('📷 이미지 파일 업로드 시작');
-      
-      setTimeout(async () => {
-        try {
-          const messageList = await chatApi.readMessageList(parseInt(roomId));
-          const latestMessage = messageList[messageList.length - 1];
+        // 메시지 전송 즉시 맨 아래로 스크롤
+        setTimeout(() => {
+          scrollToBottom(true);
+        }, 50);
 
-          if (latestMessage && latestMessage.sender_idx === currentMemberIdx) {
-            const uploadResult = await chatApi.uploadFile(file, latestMessage.message_idx);
+        // 파일 업로드 처리 (순차 처리)
+        if (file && messageType === 'image') {
+          console.log('📷 이미지 파일 업로드 시작:', file.name);
+          
+          // 메시지 저장 완료까지 대기
+          await new Promise(resolve => setTimeout(resolve, 800)); // 충분한 대기 시간
+          
+          try {
+            // 현재 메시지에 해당하는 message_idx 찾기
+            const messageList = await chatApi.readMessageList(parseInt(roomId));
+            
+            // 방금 전송한 메시지 찾기 (시간 기준으로 가장 최근 + 내용 일치)
+            const targetMessage = messageList
+              .filter(msg => 
+                msg.sender_idx === currentMemberIdx && 
+                msg.message_content === messageContent &&
+                msg.message_type === 'image' &&
+                (!msg.attach_idx || msg.attach_idx === 0)
+              )
+              .sort((a, b) => new Date(b.message_senddate) - new Date(a.message_senddate))[0];
+
+            if (!targetMessage) {
+              throw new Error('업로드할 메시지를 찾을 수 없습니다.');
+            }
+
+            console.log('📷 업로드 대상 메시지 찾음:', {
+              message_idx: targetMessage.message_idx,
+              content: targetMessage.message_content,
+              sendDate: targetMessage.message_senddate
+            });
+            
+            // 파일 업로드 실행
+            const uploadResult = await chatApi.uploadFile(file, targetMessage.message_idx);
+            
+            // 첨부파일 정보 저장
             setAttachments(prev => ({
               ...prev,
-              [latestMessage.message_idx]: {
+              [targetMessage.message_idx]: {
                 attach_idx: uploadResult.attachIdx,
                 original_filename: uploadResult.originalFilename,
                 cloudinary_url: uploadResult.cloudinaryUrl,
@@ -734,18 +765,30 @@ const ChatRoom = () => {
               }
             }));
             
+            console.log('✅ 이미지 업로드 완료:', uploadResult.originalFilename);
+            
             // 파일 업로드 완료 후 스크롤 재조정
-            console.log('📷 이미지 업로드 완료 - 스크롤 재조정');
             setTimeout(() => {
               scrollToBottom(false);
             }, 200);
+            
+            resolve(targetMessage); // 성공 시 메시지 정보 반환
+            
+          } catch (uploadError) {
+            console.error('❌ 파일 업로드 실패:', uploadError);
+            reject(uploadError);
           }
-        } catch (error) {
-          console.error('파일 업로드 실패:', error);
-          alert('파일 업로드에 실패했습니다.');
+        } else {
+          // 텍스트 메시지는 바로 완료
+          setTimeout(() => {
+            resolve({ content: messageContent, type: messageType });
+          }, 100);
         }
-      }, 500);
-    }
+      } catch (error) {
+        console.error('❌ 메시지 전송 실패:', error);
+        reject(error);
+      }
+    });
   };
 
   // 채팅방 표시 이름 생성

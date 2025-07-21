@@ -14,7 +14,7 @@ const pulse = keyframes`
   50% { opacity: 1; }
 `;
 
-// 메시지 컨테이너 - 내 메시지는 오른쪽, 상대방 메시지는 왼쪽 정렬
+// 메시지 컨테이너 - 내 메시지는 오른쪽, 상대방 메시지는 왼쪽 정렬 + 프로필 이미지 공간 확보
 const MessageContainer = styled.div`
   display: flex;
   justify-content: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
@@ -24,6 +24,37 @@ const MessageContainer = styled.div`
   transition: background-color 0.3s ease;
   padding: 4px 8px;
   border-radius: 8px;
+  gap: 8px; /* 프로필 이미지와 메시지 사이 간격 */
+`;
+
+// 프로필 이미지 컴포넌트
+const ProfileImage = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  &.default-avatar {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.4rem;
+  }
+  
+  &.invisible {
+    opacity: 0; /* 연속 메시지에서는 보이지 않지만 공간은 유지 */
+  }
 `;
 
 // 사용자 이름 표시 (상대방 메시지에만)
@@ -39,9 +70,11 @@ const MessageGroup = styled.div`
   display: flex;
   flex-direction: column;
   max-width: 70%;
+  min-width: 0; /* flexbox에서 축소 허용 */
+  word-wrap: break-word; /* 추가 안전장치 */
 `;
 
-// 메시지 말풍선 - 상대방 메시지 배경색과 텍스트 색상 수정
+// 메시지 말풍선 - 텍스트 오버플로우 방지 추가
 const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
@@ -51,13 +84,22 @@ const MessageBubble = styled.div`
   position: relative;
   word-wrap: break-word;
   border: ${props => props.$isCurrentUser ? 'none' : '1px solid var(--border-light)'};
+  max-width: 100%; /* 부모 컨테이너 너비 제한 */
+  min-width: 0; /* flexbox에서 축소 허용 */
+  overflow: hidden; /* 내용이 넘치지 않도록 */
 `;
 
+// 텍스트 오버플로우 방지를 위한 스타일 대폭 강화
 const MessageText = styled.div`
   line-height: 1.4;
   white-space: pre-wrap; /* 줄바꿈 보존 */
   font-size: 1.4rem;
   color: inherit; /* 부모 색상 상속 */
+  word-wrap: break-word; /* 긴 단어 강제 줄바꿈 */
+  word-break: break-word; /* 모든 문자에서 줄바꿈 허용 */
+  overflow-wrap: break-word; /* 추가 안전장치 */
+  max-width: 100%; /* 부모 컨테이너 초과 방지 */
+  hyphens: auto; /* 하이픈 자동 삽입 */
 `;
 
 // shouldForwardProp으로 progress prop 전달 방지
@@ -178,12 +220,14 @@ const ReadTime = styled.span`
   color: var(--text-tertiary);
 `;
 
-// 이미지 로딩 완료 시 부모 컴포넌트에 알리는 props 추가
+// 프로필 이미지, 시간 표시 여부 props 추가
 const MessageItem = ({ 
   message, 
   isCurrentUser, 
   attachments = null, 
   senderName = null,
+  senderImage = null, // 프로필 이미지 추가
+  showTime = true, // 시간 표시 여부 추가
   onImageLoad = null // 이미지 로딩 완료 콜백 추가
 }) => {
 
@@ -262,6 +306,42 @@ const MessageItem = ({
     });
   };
 
+  // 프로필 이미지 렌더링 (연속 메시지 처리 개선)
+  const renderProfileImage = () => {
+    // 내 메시지는 프로필 이미지 표시하지 않음
+    if (isCurrentUser) return null;
+    
+    const hasValidImage = senderImage && 
+                         typeof senderImage === 'string' && 
+                         senderImage.trim() !== '' &&
+                         senderImage.startsWith('http');
+    
+    // senderName이 없으면 (연속 메시지) 투명한 공간만 확보
+    if (!senderName) {
+      return <ProfileImage className="invisible" />;
+    }
+    
+    return (
+      <ProfileImage>
+        {hasValidImage ? (
+          <img 
+            src={senderImage} 
+            alt={`${senderName} 프로필`}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.classList.add('default-avatar');
+              e.target.parentElement.textContent = senderName?.charAt(0).toUpperCase() || '?';
+            }}
+          />
+        ) : (
+          <div className="default-avatar">
+            {senderName.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </ProfileImage>
+    );
+  };
+
   // 읽음 상태 정보 생성
   const getReadStatusInfo = () => {
     // 상대방 메시지인 경우 읽음 상태 표시하지 않음
@@ -286,6 +366,9 @@ const MessageItem = ({
   return (
     <>
     <MessageContainer id={`message-${message.message_idx}`} $isCurrentUser={isCurrentUser}>
+      {/* 상대방 메시지인 경우 프로필 이미지 표시 */}
+      {renderProfileImage()}
+      
       <MessageGroup>
         {/* 상대방 메시지인 경우에만 이름 표시 */}
         {!isCurrentUser && senderName && (
@@ -329,18 +412,20 @@ const MessageItem = ({
             )}
           </MessageBubble>
           
-          {/* 읽음 상태를 말풍선 옆에 표시 */}
-          <MessageInfo $isCurrentUser={isCurrentUser}>
-            <MessageTime>
-              {formatTime(message.message_senddate)}
-            </MessageTime>
-            {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
-            {readStatusInfo && (
-              <ReadStatus>
-                <ReadTime>{readStatusInfo.text}</ReadTime>
-              </ReadStatus>
-            )}
-          </MessageInfo>
+          {/* 시간 표시 (showTime이 true일 때만) */}
+          {showTime && (
+            <MessageInfo $isCurrentUser={isCurrentUser}>
+              <MessageTime>
+                {formatTime(message.message_senddate)}
+              </MessageTime>
+              {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
+              {readStatusInfo && (
+                <ReadStatus>
+                  <ReadTime>{readStatusInfo.text}</ReadTime>
+                </ReadStatus>
+              )}
+            </MessageInfo>
+          )}
         </MessageWithInfo>
       </MessageGroup>
     </MessageContainer>
