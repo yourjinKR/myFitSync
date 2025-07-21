@@ -9,6 +9,7 @@ import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import ChatLoading from '../../components/ChatLoading';
 import ChatRoomHeader from './ChatRoomHeader';
+import BarbellLoading from '../BarbellLoading';
 
 const Container = styled.div`
   display: flex;
@@ -802,7 +803,7 @@ const ChatRoom = () => {
           onScrollToSearchResult={() => {}}
           messages={[]}
         />
-        <ChatLoading />
+        <BarbellLoading />
       </Container>
     );
   }
