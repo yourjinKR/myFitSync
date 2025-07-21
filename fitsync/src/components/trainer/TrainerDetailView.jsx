@@ -145,8 +145,9 @@ const TrainerDetailView = () => {
           reviewList: data.reviews || [],
           intro: data.member_intro || '',
           specialties: data.specialties || [],
+          profile_image: data.member_image
         };
-
+        
         // 레슨 데이터도 함께 불러오기
         const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
         const lessons = lessonRes.data || [];

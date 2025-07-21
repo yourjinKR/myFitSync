@@ -1,5 +1,7 @@
 package org.fitsync.service;
 
+import java.util.List;
+
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.mapper.AwardsMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +17,13 @@ public class AwardsServiceImple implements AwardsService {
 	private AwardsMapper mapper;
 
 	@Override
-	public int registerAwards(AwardsVO vo) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int insertAward(AwardsVO vo) {
+		return mapper.insertAward(vo);
+	}
+	
+	@Override
+	public List<AwardsVO> getApprovedAwards(int trainerIdx) {
+		return mapper.selectApprovedAwards(trainerIdx);
 	}
 
 }

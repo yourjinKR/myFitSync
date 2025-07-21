@@ -9,12 +9,14 @@ const ProfileHeader = styled.div`
   background: var(--bg-secondary);
 `;
 
-const ProfileImage = styled.div`
+const ProfileImage = styled.img`
   width: 100px;
   height: 100px;
   margin: 0 auto 14px;
   background-color: var(--border-medium);
   border-radius: 50%;
+  object-fit: cover;
+  display: block;
 `;
 
 const NameWrapper = styled.div`
@@ -92,9 +94,11 @@ const SummaryItem = styled.div`
 `;
 
 const TrainerProfileHeader = ({ trainer, isEdit, onChange, onEditToggle, loginUserId }) => {
+  console.log(trainer.profile_image);
+  
   return (
     <ProfileHeader>
-      <ProfileImage />
+      <ProfileImage src={trainer.profile_image}/> 
 
       <NameWrapper>
         <Name>{trainer.name} 선생님</Name>

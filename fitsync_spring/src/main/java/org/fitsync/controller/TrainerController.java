@@ -14,6 +14,7 @@ import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
+import org.fitsync.service.AwardsService;
 import org.fitsync.service.CloudinaryService;
 import org.fitsync.service.LessonService;
 import org.fitsync.service.MatchingService;
@@ -50,6 +51,8 @@ public class TrainerController {
     private MatchingService matchingService;
     @Autowired
     private CloudinaryService cloudinaryService;
+    @Autowired
+    private AwardsService awardsService;
 
    
     
@@ -283,6 +286,40 @@ public class TrainerController {
         }
     }
     
-    
+    // 자격증 검증 요청
+    @PostMapping("/{trainerIdx}/award")
+    public ResponseEntity<?> insertAward(
+            @PathVariable("trainerIdx") int trainerIdx,
+            @RequestParam("category") String category,
+            @RequestParam("name") String name,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            // 1. 파일 업로드 (예: Cloudinary 등)
+        	ChatAttachVO uploaded = cloudinaryService.uploadFile(file);
+
+            // 2. VO 객체에 담기
+            AwardsVO vo = new AwardsVO();
+            vo.setTrainer_idx(trainerIdx);
+            vo.setAwards_category(category);
+            vo.setAwards_name(name);
+            vo.setAwards_certificate(uploaded.getCloudinary_url());
+            vo.setAwards_approval("N"); // 기본은 미승인
+
+            // 3. DB insert
+            awardsService.insertAward(vo);
+
+            return ResponseEntity.ok("등록 성공");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류 발생: " + e.getMessage());
+        }
+    }
+
+    // 특정 트레이너의 승인된 수상 경력 리스트 조회
+    @GetMapping("/{trainerIdx}/awards")
+    public ResponseEntity<List<AwardsVO>> getApprovedAwards(@PathVariable int trainerIdx) {
+        List<AwardsVO> awards = awardsService.getApprovedAwards(trainerIdx);
+        return ResponseEntity.ok(awards);
+    }
     
 }

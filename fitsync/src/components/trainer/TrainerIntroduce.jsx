@@ -95,7 +95,6 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
       const res = await onImageUpload(formData);
       const { attach_idx, url } = res;
 
-      // ✅ 여기서 확인
       console.log('[업로드 결과]', res);              // { attach_idx, url }
       console.log('[수정 전 images]', images);        // 이전 이미지 배열
       console.log('[새로 들어갈 위치]', index);       // 어디에 들어가는지
@@ -116,7 +115,7 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
     inputRefs.current[index]?.click();
   };
 
-  // 새로 추가: 삭제 핸들러
+  // 삭제 핸들러
   const handleRemove = async (index) => {
     const attachIdToDelete = images[index]?.id;
     if (!attachIdToDelete) return;

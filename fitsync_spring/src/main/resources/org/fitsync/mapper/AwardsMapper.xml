@@ -3,5 +3,31 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.AwardsMapper">
-
+	<insert id="insertAward" parameterType="org.fitsync.domain.AwardsVO">
+	  INSERT INTO awards (
+	    trainer_idx,
+	    awards_category,
+	    awards_name,
+	    awards_certificate,
+	    awards_approval,
+	    awards_idx
+	  ) VALUES (
+	    #{trainer_idx},
+	    #{awards_category},
+	    #{awards_name},
+	    #{awards_certificate},
+	    #{awards_approval},
+	    awards_seq.nextVal
+	  )
+	</insert>
+	
+	<!-- 승인된 수상 경력 조회 -->
+	<select id="selectApprovedAwards" resultType="org.fitsync.domain.AwardsVO">
+	  SELECT *
+	  FROM AWARDS
+	  WHERE TRAINER_IDX = #{trainerIdx}
+	    AND AWARDS_APPROVAL = 'Y'
+	  ORDER BY AWARDS_IDX DESC
+	</select>
+	
 </mapper>
