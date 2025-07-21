@@ -1330,7 +1330,7 @@ public class PaymentServiceImple implements PaymentService {
 			// 2. 다음 결제일 계산 (31일 후)
 			java.time.LocalDateTime nextPaymentDateTime = java.time.LocalDateTime.now()
 					.plusDays(31)
-					.withHour(9)  // 오전 9시로 고정
+					.withHour(0)  // 자정으로 고정
 					.withMinute(0)
 					.withSecond(0)
 					.withNano(0);

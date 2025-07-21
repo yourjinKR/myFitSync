@@ -56,6 +56,45 @@ const KaKaoPayTest = () => {
         }
     }
 
+    /** 빌링키 정보 조회 함수 */
+    const handleGetBillingKeyInfo = async () => {
+        const methodIdx = prompt("결제수단 번호(method_idx)를 입력하세요:", "");
+        
+        if (!methodIdx) {
+            alert("결제수단 번호를 입력해주세요.");
+            return;
+        }
+        
+        try {
+            console.log("빌링키 정보 조회 - method_idx:", methodIdx);
+            const result = await PaymentUtil.getBillingKeyInfo({method_idx: parseInt(methodIdx)});
+            console.log("빌링키 정보 조회 결과:", result);
+        } catch (error) {
+            console.error("빌링키 정보 조회 중 오류:", error);
+            alert(`빌링키 정보 조회 실패: ${error.message}`);
+        }
+    }
+
+    /** 빌링키 결제 함수 */
+    const handlePayBillingKey = async () => {
+        const methodIdx = prompt("결제수단 번호(method_idx)를 입력하세요:", "");
+        
+        if (!methodIdx) {
+            alert("결제수단 번호를 입력해주세요.");
+            return;
+        }
+        
+        try {
+            console.log("빌링키 결제 - method_idx:", methodIdx);
+            const result = await PaymentUtil.payBillingKey({method_idx: parseInt(methodIdx)});
+            console.log("빌링키 결제 결과:", result);
+            alert("빌링키 결제가 완료되었습니다! 콘솔에서 결과를 확인하세요.");
+        } catch (error) {
+            console.error("빌링키 결제 중 오류:", error);
+            alert(`빌링키 결제 실패: ${error.message}`);
+        }
+    }
+
     /** 내 결제수단 목록 리턴 함수 */
     const handleGetPaymentMethods = async () => {
         try {
@@ -124,7 +163,14 @@ const KaKaoPayTest = () => {
     }
 
     /** 빌링키 결제 예약 테스트 (사용자 입력 날짜) */
-    const handleScheduleBillingKey = async ({method_idx}) => {
+    const handleScheduleBillingKey = async () => {
+        const methodIdx = prompt("결제수단 번호(method_idx)를 입력하세요:", "");
+        
+        if (!methodIdx) {
+            alert("결제수단 번호를 입력해주세요.");
+            return;
+        }
+        
         try {
             // 현재 한국 시간에서 1시간 후로 설정 (테스트용)
             const now = new Date();
@@ -146,16 +192,17 @@ const KaKaoPayTest = () => {
             console.log("현재 로컬 시간:", now);
             console.log("한국 시간 (+1시간):", koreaTime);
             console.log("서버 전송 형식:", scheduleDateTime);
+            console.log("사용할 method_idx:", methodIdx);
             
             const response = await PaymentUtil.scheduleBillingKey({ 
-                method_idx,
+                method_idx: parseInt(methodIdx),
                 schedule_datetime: scheduleDateTime
             });
             
             if (response.success) {
                 console.log("✅ 결제 예약 성공!");
                 console.log("예약 정보:", response.data);
-                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간 (한국시간): ${scheduleDateTime}`);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n결제수단: ${methodIdx}\n예약 시간 (한국시간): ${scheduleDateTime}`);
             } else {
                 console.log("❌ 결제 예약 실패!");
                 console.log("실패 원인:", response.message);
@@ -184,6 +231,13 @@ const KaKaoPayTest = () => {
     const handleDateTimeSelect = async (selectedDateTime) => {
         setShowCalendar(false);
         
+        const methodIdx = prompt("결제수단 번호(method_idx)를 입력하세요:", "");
+        
+        if (!methodIdx) {
+            alert("결제수단 번호를 입력해주세요.");
+            return;
+        }
+        
         try {
             // 선택된 시간을 한국 시간 기준으로 처리
             // selectedDateTime은 이미 사용자가 의도한 한국 시간
@@ -198,16 +252,17 @@ const KaKaoPayTest = () => {
             
             console.log("달력에서 선택한 원본 시간:", selectedDateTime);
             console.log("한국 시간 기준 서버 전송 형식:", scheduleDateTime);
+            console.log("사용할 method_idx:", methodIdx);
             
             const response = await PaymentUtil.scheduleBillingKey({ 
-                method_idx: 10,
+                method_idx: parseInt(methodIdx),
                 schedule_datetime: scheduleDateTime
             });
             
             if (response.success) {
                 console.log("✅ 달력 UI 결제 예약 성공!");
                 console.log("예약 정보:", response.data);
-                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간 (한국시간): ${scheduleDateTime}`);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n결제수단: ${methodIdx}\n예약 시간 (한국시간): ${scheduleDateTime}`);
             } else {
                 console.log("❌ 결제 예약 실패!");
                 console.log("실패 원인:", response.message);
@@ -234,6 +289,13 @@ const KaKaoPayTest = () => {
 
     /** 사용자 정의 시간으로 결제 예약 */
     const handleCustomScheduleBillingKey = async () => {
+        const methodIdx = prompt("결제수단 번호(method_idx)를 입력하세요:", "");
+        
+        if (!methodIdx) {
+            alert("결제수단 번호를 입력해주세요.");
+            return;
+        }
+        
         const customDateTime = prompt("결제 예약 날짜/시간을 입력하세요 (형식: yyyy-MM-dd HH:mm:ss)", "2025-01-20 14:30:00");
         
         if (!customDateTime) {
@@ -242,15 +304,18 @@ const KaKaoPayTest = () => {
         }
         
         try {
+            console.log("사용할 method_idx:", methodIdx);
+            console.log("예약 시간:", customDateTime);
+            
             const response = await PaymentUtil.scheduleBillingKey({ 
-                method_idx: 10,
+                method_idx: parseInt(methodIdx),
                 schedule_datetime: customDateTime
             });
             
             if (response.success) {
                 console.log("✅ 사용자 정의 결제 예약 성공!");
                 console.log("예약 정보:", response.data);
-                alert(`결제 예약이 성공적으로 완료되었습니다!\n예약 시간: ${customDateTime}`);
+                alert(`결제 예약이 성공적으로 완료되었습니다!\n결제수단: ${methodIdx}\n예약 시간: ${customDateTime}`);
             } else {
                 console.log("❌ 결제 예약 실패!");
                 console.log("실패 원인:", response.message);
@@ -347,12 +412,12 @@ const KaKaoPayTest = () => {
         <div>
             <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
             <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.getBillingKeyInfo({method_idx: 1})}>내 빌링키 정보 조회</ButtonSubmit>
-            <ButtonSubmit onClick={() => PaymentUtil.payBillingKey({method_idx: 20})}>빌링키 결제</ButtonSubmit>
+            <ButtonSubmit onClick={handleGetBillingKeyInfo}>내 빌링키 정보 조회 (method_idx 입력)</ButtonSubmit>
+            <ButtonSubmit onClick={handlePayBillingKey}>빌링키 결제 (method_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentHistory}>📋 결제 내역 조회 (order_idx 확인)</ButtonSubmit>
             <ButtonSubmit onClick={goToPaymentHistory}>🎨 결제 내역 UI 페이지</ButtonSubmit>
-            <ButtonSubmit onClick={() => handleScheduleBillingKey({method_idx: 14})}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
+            <ButtonSubmit onClick={handleScheduleBillingKey}>⏰ 결제 예약 (1시간 후)</ButtonSubmit>
             <ButtonSubmit onClick={handleCustomScheduleBillingKey}>📅 결제 예약 (사용자 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelScheduledPayment}>❌ 결제 예약 취소 (order_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleCancelLatestSchedule}>🔄 최근 예약 자동 취소</ButtonSubmit>

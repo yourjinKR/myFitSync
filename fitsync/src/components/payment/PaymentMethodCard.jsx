@@ -228,7 +228,7 @@ const PaymentMethodCard = ({ method, onRenamed, onDeleted, onError }) => {
     <Card>
       <MethodInfo>
         <MethodDetails>
-          <MethodName>{method.method_name}</MethodName>
+          <MethodName>{method.method_name} #{method.method_idx}</MethodName>
           <MethodMeta>
             <ProviderBadge provider={method.method_provider}>
               {method.method_provider === 'KAKAOPAY' ? '카카오페이' : '토스페이먼츠'}

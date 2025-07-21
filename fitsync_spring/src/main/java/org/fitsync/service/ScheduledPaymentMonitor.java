@@ -88,10 +88,10 @@ public class ScheduledPaymentMonitor {
     private final AtomicInteger currentApiCallCount = new AtomicInteger(0);
     
     /**
-     * 예약 결제 상태 모니터링 (매 1분마다 실행)
+     * 예약 결제 상태 모니터링 (매분의 30초에 실행)
      * 마스터 서버에서만 실행됨
      */
-    @Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "30 * * * * ?")
     public void monitorScheduledPayments() {
         
         // 모니터링이 비활성화된 서버는 실행하지 않음

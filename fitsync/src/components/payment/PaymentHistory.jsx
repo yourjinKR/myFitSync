@@ -385,7 +385,7 @@ const PaymentHistory = () => {
           <PaymentCard key={payment.order_idx}>
             <PaymentHeader>
               <div>
-                <PaymentTitle>{payment.order_name}</PaymentTitle>
+                <PaymentTitle>{payment.order_name} #{payment.method_idx}</PaymentTitle>
                 <PriceDisplay>
                   {formatPrice(payment.order_price)}원
                 </PriceDisplay>
@@ -417,7 +417,12 @@ const PaymentHistory = () => {
                 <DateValue>{formatDate(payment.order_regdate)}</DateValue>
               </DateItem>
               
-              {payment.order_paydate && (
+              {payment.order_status === 'READY' && payment.schedule_date ? (
+                <DateItem>
+                  <DateLabel>예정일</DateLabel>
+                  <DateValue>{formatDate(payment.schedule_date)}</DateValue>
+                </DateItem>
+              ) : payment.order_paydate && (
                 <DateItem>
                   <DateLabel>결제일</DateLabel>
                   <DateValue>{formatDate(payment.order_paydate)}</DateValue>
