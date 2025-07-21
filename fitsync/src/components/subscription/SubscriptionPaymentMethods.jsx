@@ -61,10 +61,6 @@ const Card = styled.div`
   border: 1px solid var(--border-light);
   transition: all 0.2s ease;
   overflow: hidden;
-  
-  &:active {
-    transform: scale(0.98);
-  }
 `;
 
 // 카드 헤더 (메뉴 버튼 포함)
@@ -102,7 +98,6 @@ const MenuButton = styled.button`
   }
   
   &::before {
-    content: '⋯';
     line-height: 1;
     letter-spacing: 1px;
   }
@@ -183,17 +178,18 @@ const CardBrand = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px !important;
+  font-size: 8px !important;
   font-weight: 600;
   color: var(--text-primary);
   
   @media (min-width: 375px) {
-    font-size: 14px !important;
+    font-size: 12px !important;
   }
   
   @media (min-width: 414px) {
-    font-size: 15px !important;
+    font-size: 13px !important;
   }
+  color: var(--text-secondary);
 `;
 
 const CardNumber = styled.div`
@@ -493,6 +489,7 @@ const SubscriptionPaymentMethods = () => {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [originalName, setOriginalName] = useState('');
   const [editingName, setEditingName] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null); // 메뉴 상태 관리
   const [confirmDialog, setConfirmDialog] = useState(null);
@@ -581,6 +578,7 @@ const SubscriptionPaymentMethods = () => {
   const handleEditStart = (method) => {
     setEditingId(method.method_idx);
     setEditingName(method.method_name);
+    setOriginalName(method.method_name); // 원래 이름 저장
     handleMenuClose(); // 메뉴 닫기
   };
 
@@ -609,6 +607,13 @@ const SubscriptionPaymentMethods = () => {
   // 카드명 편집 완료
   const handleEditComplete = async () => {
     if (editingId && editingName.trim()) {
+      if (editingName.trim() === originalName) {
+        // 이름이 변경되지 않은 경우
+        setEditingId(null);
+        setEditingName('');
+        return;
+      }
+
       try {
         const response = await PaymentUtil.renameBillingKey({
           method_idx: editingId, 
@@ -828,13 +833,10 @@ const SubscriptionPaymentMethods = () => {
                     <CardInfoSection>
                       <CardBrandSection>
                         <CardBrand>
-                          <span>{getPaymentIcon(method)}</span>
-                          <span>
                             {isEasyPay 
                               ? (method.method_provider === 'KAKAOPAY' ? '카카오페이' : method.method_provider)
                               : method.method_card
                             }
-                          </span>
                         </CardBrand>
                         
                         {/* 카드 번호는 카드결제일 때만 우측에 표시 */}

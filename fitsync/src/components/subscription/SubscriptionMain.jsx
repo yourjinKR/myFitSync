@@ -375,47 +375,6 @@ const SubscriptionMain = () => {
           </>
         )}
       </StatusCard>
-
-      {/* 액션 버튼들 */}
-      <ActionGrid $columns={isSubscriber ? 3 : 2}>
-        {isSubscriber ? (
-          <>
-            <ActionButton 
-              $variant="primary" 
-              onClick={handleManagePayments}
-            >
-              📅 예약 관리
-            </ActionButton>
-            <ActionButton 
-              $variant="secondary" 
-              onClick={handleManageMethods}
-            >
-              💳 결제수단
-            </ActionButton>
-            <ActionButton 
-              $variant="secondary" 
-              onClick={handleViewHistory}
-            >
-              📊 결제 내역
-            </ActionButton>
-          </>
-        ) : (
-          <>
-            <ActionButton 
-              $variant="success" 
-              onClick={handleSubscribe}
-            >
-              🚀 구독 시작
-            </ActionButton>
-            <ActionButton 
-              $variant="secondary" 
-              onClick={handleManageMethods}
-            >
-              💳 결제수단 등록
-            </ActionButton>
-          </>
-        )}
-      </ActionGrid>
     </Container>
   );
 };
