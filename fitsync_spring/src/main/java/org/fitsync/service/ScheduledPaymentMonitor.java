@@ -88,95 +88,125 @@ public class ScheduledPaymentMonitor {
     private final AtomicInteger currentApiCallCount = new AtomicInteger(0);
     
     /**
-     * 예약 결제 상태 모니터링 (매분의 30초에 실행)
+     * 일일 배치 - 예약 결제 상태 모니터링 (매일 00시 10분에 실행)
+     * 당일(00:00:00 ~ 23:59:59) 예약된 모든 결제를 일괄 처리
      * 마스터 서버에서만 실행됨
      */
-    @Scheduled(cron = "30 * * * * ?")
-    public void monitorScheduledPayments() {
+    @Scheduled(cron = "0 10 0 * * ?")
+    public void processDailyPaymentBatch() {
         
         // 모니터링이 비활성화된 서버는 실행하지 않음
         if (!monitorEnabled) {
-            log.debug("모니터링 비활성화 서버 (" + serverName + ") - 스케줄러 건너뛰기");
+            log.debug("일일 배치 비활성화 서버 (" + serverName + ") - 스케줄러 건너뛰기");
             return;
         }
         
-        // API 호출 카운터 초기화 (매분)
+        // API 호출 카운터 초기화
         currentApiCallCount.set(0);
         
         long startTime = System.currentTimeMillis();
+        java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
         
         try {
-            log.info("=== 예약 결제 상태 모니터링 시작 (마스터 서버: " + serverName + ") ===");
+            log.info("🌅 === 일일 결제 배치 처리 시작 (날짜: " + today + ", 서버: " + serverName + ") ===");
+            System.out.println("🌅 [" + serverName + "] " + today + " 일일 결제 배치 시작");
             
-            // 1. 모니터링 대상 시간 범위 계산
-            Timestamp now = new Timestamp(System.currentTimeMillis());
-            Timestamp rangeStart = new Timestamp(now.getTime() - (timeRangeMinutes * 60 * 1000));
-            Timestamp rangeEnd = new Timestamp(now.getTime() + (timeRangeMinutes * 60 * 1000));
+            // 1. 당일(00:00:00 ~ 23:59:59) 예약 결제 조회
+            java.time.LocalDateTime todayStart = today.atTime(0, 0, 0);
+            java.time.LocalDateTime todayEnd = today.atTime(23, 59, 59);
             
-            // 2. 모니터링 대상 예약 결제 조회
-            List<PaymentOrderVO> targetOrders = paymentOrderMapper
-                .selectScheduledPaymentsByTimeRange(rangeStart, rangeEnd);
+            Timestamp batchStart = Timestamp.valueOf(todayStart);
+            Timestamp batchEnd = Timestamp.valueOf(todayEnd);
             
-            if (targetOrders.isEmpty()) {
-                log.debug("모니터링 대상 예약 결제가 없습니다. (서버: " + serverName + ")");
+            log.info("📅 배치 처리 범위: " + todayStart + " ~ " + todayEnd);
+            
+            // 2. 당일 예약 결제 조회 (정각에 설정된 예약들)
+            List<PaymentOrderVO> todayScheduledOrders = paymentOrderMapper
+                .selectScheduledPaymentsByTimeRange(batchStart, batchEnd);
+            
+            if (todayScheduledOrders.isEmpty()) {
+                log.info("✅ 당일 처리할 예약 결제가 없습니다. (날짜: " + today + ")");
+                System.out.println("✅ [" + serverName + "] 당일 처리할 예약 결제 없음");
                 return;
             }
             
-            log.info("모니터링 대상 예약 결제: " + targetOrders.size() + "건 (시간 범위: " + rangeStart + " ~ " + rangeEnd + ")");
-            System.out.println("[" + serverName + "] 모니터링 대상 예약 결제: " + targetOrders.size() + "건");
+            log.info("📋 당일 처리 대상 예약 결제: " + todayScheduledOrders.size() + "건");
+            System.out.println("📋 [" + serverName + "] 당일 처리 대상: " + todayScheduledOrders.size() + "건");
             
-            // 3. API 호출 제한 적용
-            int processableCount = Math.min(targetOrders.size(), maxApiCallsPerMinute);
-            if (targetOrders.size() > processableCount) {
-                log.warn("API 호출 제한으로 인해 " + targetOrders.size() + "건 중 " + processableCount + "건만 처리합니다.");
-            }
-            
-            // 4. 각 예약 결제 상태 확인 및 업데이트
+            // 3. 각 예약 결제를 일괄 처리
+            int totalProcessed = 0;
             int successCount = 0;
             int failureCount = 0;
             int unchangedCount = 0;
             int skippedCount = 0;
             
-            for (int i = 0; i < processableCount; i++) {
-                PaymentOrderVO order = targetOrders.get(i);
+            log.info("🔄 일괄 처리 시작...");
+            
+            for (PaymentOrderVO order : todayScheduledOrders) {
+                totalProcessed++;
                 
-                // API 호출 제한 체크
-                if (currentApiCallCount.get() >= maxApiCallsPerMinute) {
-                    log.warn("API 호출 제한 도달 - 남은 " + (targetOrders.size() - i) + "건은 다음 분에 처리");
-                    skippedCount = targetOrders.size() - i;
+                // API 호출 제한 체크 (안전장치)
+                if (currentApiCallCount.get() >= maxApiCallsPerMinute * 2) { // 배치용으로 제한 완화
+                    log.warn("⚠️ API 호출 제한 초과 - 남은 " + (todayScheduledOrders.size() - totalProcessed) + "건은 다음 배치에서 처리");
+                    skippedCount = todayScheduledOrders.size() - totalProcessed + 1;
                     break;
                 }
                 
                 String result = checkAndUpdateScheduledPayment(order);
                 
                 switch (result) {
-                    case "SUCCESS": successCount++; break;
-                    case "FAILED": failureCount++; break;
-                    case "UNCHANGED": unchangedCount++; break;
-                    case "API_LIMIT_EXCEEDED": skippedCount++; break;
+                    case "SUCCESS": 
+                        successCount++; 
+                        System.out.println("✅ [배치] 결제 성공 - OrderIdx: " + order.getOrder_idx());
+                        break;
+                    case "FAILED": 
+                        failureCount++; 
+                        System.out.println("❌ [배치] 결제 실패 - OrderIdx: " + order.getOrder_idx());
+                        break;
+                    case "UNCHANGED": 
+                        unchangedCount++; 
+                        System.out.println("⏳ [배치] 대기 중 - OrderIdx: " + order.getOrder_idx());
+                        break;
+                    case "API_LIMIT_EXCEEDED": 
+                        skippedCount++; 
+                        break;
                 }
                 
-                // API 호출 간격 조절
-                if (i < processableCount - 1) { // 마지막이 아닌 경우만
+                // 배치 처리 간격 조절 (API 부하 방지)
+                if (totalProcessed < todayScheduledOrders.size()) {
                     try {
-                        Thread.sleep(apiDelayMs);
+                        Thread.sleep(500); // 0.5초 간격 (배치용으로 단축)
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        log.warn("API 호출 간격 대기 중 인터럽트 발생");
+                        log.warn("배치 처리 간격 대기 중 인터럽트 발생");
                         break;
                     }
                 }
             }
             
             long executionTime = System.currentTimeMillis() - startTime;
-            log.info("=== 예약 결제 상태 모니터링 완료 (서버: " + serverName + ", 실행시간: " + executionTime + "ms) === " +
-                "성공: " + successCount + "건, 실패: " + failureCount + "건, 변경없음: " + unchangedCount + "건, 건너뜀: " + skippedCount + "건");
-            System.out.println("[" + serverName + "] 모니터링 완료 - 성공: " + successCount + "건, 실패: " + failureCount + "건, 변경없음: " + unchangedCount + "건");
+            
+            log.info("🌅 === 일일 결제 배치 처리 완료 (날짜: " + today + ", 서버: " + serverName + 
+                    ", 실행시간: " + executionTime + "ms) ===");
+            log.info("📊 처리 결과 - 총 처리: " + totalProcessed + "건 중 " + 
+                    "성공: " + successCount + "건, 실패: " + failureCount + "건, " + 
+                    "대기: " + unchangedCount + "건, 건너뜀: " + skippedCount + "건");
+            
+            System.out.println("🌅 [" + serverName + "] " + today + " 일일 배치 완료!");
+            System.out.println("📊 [결과] 성공: " + successCount + "건, 실패: " + failureCount + "건, " + 
+                             "대기: " + unchangedCount + "건 (총 " + totalProcessed + "건 처리)");
+            
+            // 성과 요약 로깅
+            if (successCount > 0 || failureCount > 0) {
+                System.out.println("💰 [" + serverName + "] " + today + " 결제 처리: " + 
+                                 successCount + "건 완료, " + failureCount + "건 실패");
+            }
             
         } catch (Exception e) {
             long executionTime = System.currentTimeMillis() - startTime;
-            log.error("예약 결제 모니터링 중 오류 발생 (서버: " + serverName + ", 실행시간: " + executionTime + "ms): ", e);
-            System.err.println("[" + serverName + "] 모니터링 오류: " + e.getMessage());
+            log.error("일일 결제 배치 처리 중 오류 발생 (날짜: " + today + ", 서버: " + serverName + 
+                     ", 실행시간: " + executionTime + "ms): ", e);
+            System.err.println("💥 [" + serverName + "] 일일 배치 오류: " + e.getMessage());
         }
     }
     

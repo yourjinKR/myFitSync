@@ -9,6 +9,7 @@ import javax.servlet.http.HttpSession;
 import org.fitsync.domain.PaymentMethodVO;
 import org.fitsync.domain.PaymentOrderWithMethodVO;
 import org.fitsync.service.PaymentServiceImple;
+import org.fitsync.service.ScheduledPaymentMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.io.IOException;
@@ -40,6 +42,9 @@ public class PaymentController {
     
     @Autowired
     private PaymentServiceImple payService;
+
+    @Autowired
+    private ScheduledPaymentMonitor scheduledPaymentMonitor;
 
     /**
      * 공통 응답 생성 헬퍼 메서드들
@@ -560,6 +565,17 @@ public class PaymentController {
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
                 "구독 상태 확인 중 시스템 오류가 발생했습니다: " + e.getMessage(), 
                 "SYSTEM_ERROR");
+        }
+    }
+
+    @PostMapping("/monitor/manual")
+    public ResponseEntity<String> triggerManualPaymentMonitor(@RequestParam(defaultValue = "false") boolean force) {
+        if (force) {
+            scheduledPaymentMonitor.processDailyPaymentBatch();
+            return ResponseEntity.ok("✅ 결제 모니터링 강제 실행 완료 (forceRun=true)");
+        } else {
+            scheduledPaymentMonitor.processDailyPaymentBatch(); // monitorEnabled 값 따름
+            return ResponseEntity.ok("✅ 결제 모니터링 실행 완료 (forceRun=false)");
         }
     }
 }

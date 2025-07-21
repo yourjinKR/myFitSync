@@ -423,6 +423,8 @@ const KaKaoPayTest = () => {
             <ButtonSubmit onClick={handleCancelLatestSchedule}>🔄 최근 예약 자동 취소</ButtonSubmit>
             <ButtonSubmit onClick={()=> PaymentUtil.consultScheduledPayment()}>결제 예약 조회</ButtonSubmit>
             <ButtonSubmit onClick={()=> PaymentUtil.checkSubscriptionStatus()}>구독자 확인</ButtonSubmit>
+            <ButtonSubmit onClick={()=> PaymentUtil.testPaymentMonitor()}>모니터링 테스트</ButtonSubmit>
+
 
             <CalendarContainer>
                 <DateTimeButton onClick={handleCalendarSchedule}>

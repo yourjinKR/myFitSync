@@ -366,6 +366,25 @@ export const PaymentUtil = {
         }
     },
 
+    /** 모니터링 테스트 */
+    testPaymentMonitor: async () => {
+        try {
+            const response = await axios.post('/payment/monitor/manual', {}, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('모니터링 테스트 성공:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('모니터링 테스트 중 오류:', error);
+            throw error;
+        }
+    }
+
 
 
 }
