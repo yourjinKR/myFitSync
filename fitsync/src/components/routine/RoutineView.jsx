@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RoutineList from './RoutineList';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import AddIcon from '@mui/icons-material/Add';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import Routine from './Routine';
 
 
@@ -52,9 +52,23 @@ const TempDataWrapper = styled.div`
   margin-top: 10px;
 `;
 
+const MoreCTA = styled.button`
+  width: 100%;
+  padding: 0 10px;
+  text-align: center;
+  font-size: 1.8rem;
+
+  svg {
+    width: 35px;
+    height: 35px;
+  }
+`;
+
 
 const RoutineView = () => {
   const { tempData, setTempData } = useOutletContext();
+  const [isView, setIsView] = useState(2); // 최대 노출 개수
+
   const nav = useNavigate();
   const handleAddRoutine = (type) => {
     if (type === "custom") {
@@ -67,7 +81,6 @@ const RoutineView = () => {
   return (
     <RoutineWrapper>
       <button onClick={() => handleAddRoutine("custom")}>빠른 기록&emsp;+ </button>
-      {/* 최대 두개 노출 이후 더보기 */}
       {tempData.length > 0 ?
         <>
           <div className='section-top'>
@@ -75,9 +88,17 @@ const RoutineView = () => {
           </div>
           <TempDataWrapper >
             {
-              tempData.map((item, idx) => (
+              tempData.filter((item, idx) => idx < isView).map((item, idx) => (
                 <Routine key={idx} data={item} type="custom" setTempData={setTempData} />
               ))
+            }
+            {
+              isView < tempData.length ?
+                <MoreCTA onClick={() => setIsView(tempData.length)}>
+                  {/* 더보기 */}
+                  <KeyboardDoubleArrowDownIcon />
+                </MoreCTA>
+              :<></>
             }
           </TempDataWrapper>
         </> : <></>
@@ -86,9 +107,8 @@ const RoutineView = () => {
       <>
         <div className='section-top'>
           <h3>내 루틴</h3>
-          <button onClick={handleAddRoutine}><AddIcon/></button>
         </div>
-        <RoutineList />
+        <RoutineList handleAddRoutine={handleAddRoutine}/>
       </>
 
     </RoutineWrapper>

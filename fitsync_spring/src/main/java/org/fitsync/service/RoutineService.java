@@ -17,4 +17,6 @@ public interface RoutineService {
 	public boolean deleteRoutine(RoutineMemberDTO rmdto);
 	// 루틴 운동 기록
 	public boolean updateRoutine(Map<String, Object> body, int member_idx);
+	// 정렬 업데이트
+	public boolean sortUpdate(List<Integer> body, int member_idx);
 }

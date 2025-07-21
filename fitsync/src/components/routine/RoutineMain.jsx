@@ -545,7 +545,6 @@ const RoutineMain = () => {
     checkedRef.current = e.target;
     const chk = e.target.checked;
     if( chk) {
-      console.log("루틴_${routineData.saveDate.slice(0, 10)}: ", `루틴_${routineData.saveDate.slice(0, 10)}`);
       setRoutineData(prev => ({
         ...prev,
         routine_name: `루틴_${routineData.saveDate.slice(0, 10)}`,
@@ -571,7 +570,7 @@ const RoutineMain = () => {
               location.pathname !== `/routine/detail/${routine_list_idx}` ? 
               <HeaderCTA disabled={location.pathname !== '/routine/set' ? true : false} onClick={handleDataSubmit}>저장</HeaderCTA>
               :
-              <HeaderCTA disabled={isEdit} onClick={handleRocordSubmit}>마치기</HeaderCTA>
+              <HeaderCTA disabled={isEdit || routineData?.routines.length === 0} onClick={handleRocordSubmit}>마치기</HeaderCTA>
             }
           </HeaderWrapper> : <></>}
       {

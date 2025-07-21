@@ -31,6 +31,7 @@ const GlobalStyle = createGlobalStyle`
     --border-light: #404040;
     --border-medium: #606060;
     --border-dark: #808080;
+    --border-white: #ffffff;
 
     --check-green: #4CAF50; /* 체크박스 체크 색상 */
 
