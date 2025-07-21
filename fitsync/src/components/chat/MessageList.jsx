@@ -66,7 +66,7 @@ const UnreadText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
-// onImageLoad 콜백 props 추가
+// 카카오톡 스타일 메시지 그룹핑과 프로필 이미지 추가
 const MessageList = ({ 
   messages, 
   currentMemberIdx, 
@@ -143,39 +143,69 @@ const MessageList = ({
     return shouldShow;
   };
 
-  // 발신자 이름 생성 (상대방 메시지에만 필요)
-  const getSenderName = (message) => {
-    // 내 메시지인 경우 이름 불필요
-    if (message.sender_idx === currentMemberIdx) {
-      return null;
-    }
-    
-    // 상대방 메시지인 경우
-    // roomData에서 상대방 정보 확인
-    if (roomData && currentMemberIdx) {
-      // 현재 사용자가 트레이너인지 일반 사용자인지 확인
-      if (roomData.trainer_idx === currentMemberIdx) {
-        // 내가 트레이너면 상대방은 회원 - roomData.user_name 사용
-        return roomData.user_name || '회원';
-      } else {
-        // 내가 일반 사용자면 상대방은 트레이너 - roomData.trainer_name 사용
-        return roomData.trainer_name || '트레이너';
-      }
-    }
-    
-    // 기본값
-    return '상대방';
-  };
-
-  // 연속 메시지 체크 (같은 발신자의 연속 메시지인지 확인)
+  // 카카오톡 스타일: 분 단위로 메시지 그룹핑 체크
   const isConsecutiveMessage = (currentMessage, previousMessage) => {
     if (!previousMessage) return false;
     
-    // 같은 발신자이고, 시간 차이가 5분 이내인 경우
-    const timeDiff = new Date(currentMessage.message_senddate) - new Date(previousMessage.message_senddate);
-    const fiveMinutes = 5 * 60 * 1000;
+    // 같은 발신자이고, 같은 분(minute) 내의 메시지인지 확인
+    const currentTime = new Date(currentMessage.message_senddate);
+    const previousTime = new Date(previousMessage.message_senddate);
     
-    return currentMessage.sender_idx === previousMessage.sender_idx && timeDiff < fiveMinutes;
+    const isSameSender = currentMessage.sender_idx === previousMessage.sender_idx;
+    const isSameMinute = currentTime.getFullYear() === previousTime.getFullYear() &&
+                         currentTime.getMonth() === previousTime.getMonth() &&
+                         currentTime.getDate() === previousTime.getDate() &&
+                         currentTime.getHours() === previousTime.getHours() &&
+                         currentTime.getMinutes() === previousTime.getMinutes();
+    
+    return isSameSender && isSameMinute;
+  };
+
+  // 그룹의 마지막 메시지인지 확인 (시간 표시 여부 결정용)
+  const isLastInGroup = (currentMessage, nextMessage) => {
+    if (!nextMessage) return true; // 마지막 메시지
+    
+    // 다음 메시지가 다른 발신자이거나 다른 분(minute)이면 그룹의 마지막
+    const currentTime = new Date(currentMessage.message_senddate);
+    const nextTime = new Date(nextMessage.message_senddate);
+    
+    const isDifferentSender = currentMessage.sender_idx !== nextMessage.sender_idx;
+    const isDifferentMinute = currentTime.getFullYear() !== nextTime.getFullYear() ||
+                              currentTime.getMonth() !== nextTime.getMonth() ||
+                              currentTime.getDate() !== nextTime.getDate() ||
+                              currentTime.getHours() !== nextTime.getHours() ||
+                              currentTime.getMinutes() !== nextTime.getMinutes();
+    
+    return isDifferentSender || isDifferentMinute;
+  };
+
+  // 상대방 프로필 이미지 및 정보 가져오기 (첫 메시지에만 표시)
+  const getOtherPersonInfo = (message, isConsecutive) => {
+    if (!roomData) return { name: '상대방', image: null };
+    
+    // 메시지 발신자가 현재 사용자가 아닌 경우 (상대방 메시지)
+    if (message.sender_idx !== currentMemberIdx) {
+      // 연속 메시지인 경우 프로필 정보 반환하지 않음
+      if (isConsecutive) {
+        return { name: null, image: null };
+      }
+      
+      if (roomData.trainer_idx === currentMemberIdx) {
+        // 내가 트레이너면 상대방은 회원
+        return {
+          name: roomData.user_name || '회원',
+          image: roomData.user_image
+        };
+      } else {
+        // 내가 일반 사용자면 상대방은 트레이너
+        return {
+          name: roomData.trainer_name || '트레이너',
+          image: roomData.trainer_image
+        };
+      }
+    }
+    
+    return { name: null, image: null }; // 내 메시지는 프로필 불필요
   };
 
   // 이미지 로딩 완료 핸들러 - 부모 컴포넌트로 전달
@@ -190,8 +220,10 @@ const MessageList = ({
     <Container>
       {messages.map((message, index) => {
         const previousMessage = messages[index - 1];
+        const nextMessage = messages[index + 1];
         const isConsecutive = isConsecutiveMessage(message, previousMessage);
-        const senderName = getSenderName(message);
+        const isLastMessage = isLastInGroup(message, nextMessage);
+        const otherPersonInfo = getOtherPersonInfo(message, isConsecutive);
         
         return (
           <React.Fragment key={message.message_idx}>
@@ -214,7 +246,9 @@ const MessageList = ({
               message={message}
               isCurrentUser={message.sender_idx === currentMemberIdx}
               attachments={attachments[message.message_idx] || null} // 단일 객체 전달
-              senderName={isConsecutive ? null : senderName} // 연속 메시지가 아닐 때만 이름 표시
+              senderName={isConsecutive ? null : otherPersonInfo.name} // 연속 메시지가 아닐 때만 이름 표시
+              senderImage={isConsecutive ? null : otherPersonInfo.image} // 연속 메시지가 아닐 때만 이미지 표시
+              showTime={isLastMessage} // 그룹의 마지막 메시지에만 시간 표시
               onImageLoad={handleImageLoad} // 이미지 로딩 완료 콜백 전달
             />
           </React.Fragment>
