@@ -353,21 +353,32 @@ const SubscriptionPaymentHistory = () => {
 
   // 날짜 포맷팅 - API 응답의 날짜 필드 사용
   const formatDate = (payment) => {
-    const dateString = payment.order_paydate || payment.order_regdate;
+    let dateString = null;
+    // 타입별 분기
+    if (payment.order_status === 'PAID') {
+      dateString = payment.order_paydate || payment.order_regdate;
+    } else if (payment.order_status === 'READY') {
+      dateString = payment.schedule_date || payment.order_regdate;
+    } else {
+      dateString = payment.order_regdate || payment.order_paydate;
+    }
+
     if (!dateString) return 'N/A';
     
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
+    const parseDate = date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
+      day: 'numeric', 
       hour: '2-digit',
       minute: '2-digit'
     });
+
+    return parseDate;
   };
 
   // 월별 그룹화
-  const groupByMonth = (payments) => {
+  const groupByMonth = (payments)=> {
     const groups = {};
     payments.forEach(payment => {
       const date = new Date(payment.order_regdate || payment.order_paydate);
