@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../layout/Header';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import Main from '../components/Main';
@@ -36,6 +36,7 @@ import SubscriptionContainer from '../components/subscription/SubscriptionContai
 import SubscriptionMain from '../components/subscription/SubscriptionMain';
 import SubscriptionPaymentMethods from '../components/subscription/SubscriptionPaymentMethods';
 import SubscriptionPaymentHistory from '../components/subscription/SubscriptionPaymentHistory';
+import SideNav from '../layout/SideNav';
 
 const DisplayWrapper = styled.div`
   max-width: 750px;
@@ -60,6 +61,7 @@ const DisplayWrapper = styled.div`
 
 const Display = () => {
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
@@ -83,7 +85,9 @@ const Display = () => {
 
   return (
     <DisplayWrapper >
-      {isShow && <Header/>}
+      {isShow && <Header setIsOpen={setIsOpen}/>}
+      {isOpen ? <SideNav setIsOpen={setIsOpen}/> : <></>}
+      
       <DisplayInnner isShow={isShow}>
         <Routes>
           <Route path='/' element={<Main/>}/>

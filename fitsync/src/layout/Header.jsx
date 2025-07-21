@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
@@ -85,7 +85,7 @@ const LoginButton = styled.button`
   }
 `;
 
-const Header = () => {
+const Header = ({setIsOpen}) => {
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.user);
   const nav = useNavigate();
@@ -106,8 +106,8 @@ const Header = () => {
 
   return (
     <HeaderWrapper>
-      <MenuButton>
-        <MenuIcon />
+      <MenuButton onClick={()=>setIsOpen(true)}>
+        <MenuIcon handleActiveNav/>
       </MenuButton>
       <Logo onClick={() => navigator('/')}>로고</Logo>
       {
