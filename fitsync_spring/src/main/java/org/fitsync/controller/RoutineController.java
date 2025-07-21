@@ -164,4 +164,23 @@ public class RoutineController {
 		
 	}
 	
+	// 루틴 정렬
+	@PutMapping("/sort")
+	public ResponseEntity<?> sortUpdate(@RequestBody List<Integer> body, HttpSession session) {
+		Map<String, Object> result = new HashMap<>();
+		int member_idx = (int)(session.getAttribute("member_idx"));
+
+		boolean updateResult = service.sortUpdate(body, member_idx);
+		if(updateResult) {
+			result.put("success", true);
+			result.put("msg", "정상 등록되었습니다.");		
+		}else {
+			result.put("success", false);
+			result.put("msg", "업데이트 실패하였습니다.");		
+		} 
+		
+		return ResponseEntity.ok(result);
+	}
+
+	
 }

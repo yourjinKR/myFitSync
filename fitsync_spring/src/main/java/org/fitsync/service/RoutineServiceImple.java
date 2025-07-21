@@ -1,10 +1,13 @@
 package org.fitsync.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.fitsync.domain.RoutineArrVO;
 import org.fitsync.domain.RoutineListVO;
 import org.fitsync.domain.RoutineMemberDTO;
 import org.fitsync.domain.RoutineSetVO;
@@ -34,10 +37,25 @@ public class RoutineServiceImple implements RoutineService {
 	// 루틴 리스트
 	@Override
 	public List<RoutineListVO> getRoutineList(int member_idx) {
-		List<RoutineListVO> list = null; 
+		List<RoutineListVO> list = null;
+		List<RoutineListVO> sortList = new ArrayList<RoutineListVO>();
+		RoutineArrVO sort = rlmapper.sortGet(member_idx);
 		list = rlmapper.getRoutineList(member_idx);
-		return list;
+		if(sort != null) {
+			String[] arr =  sort.getRoutine_arr().split(",");
+			for (String str : arr) {
+				for (RoutineListVO vo : list) {
+					if(str.equals(Integer.toString(vo.getRoutine_list_idx()))) {
+						sortList.add(vo);
+					}
+				}
+			}
+		}else {
+			sortList = list;
+		}
+		return sortList;
 	}
+	
 	
 	@Override
 	public RoutineListVO getRoutine(RoutineMemberDTO rmdto) {
@@ -78,7 +96,6 @@ public class RoutineServiceImple implements RoutineService {
 	            if (sets.size() > 0) {
 	                RoutineSetVO rsvo = new RoutineSetVO();
 	                int setResult = 0;
-//	                int idx = 1;
 	                for (Map<String, Object> set : sets) {
 	                	rsvo.setRoutine_idx(routine_idx);
 	                	Object setVolumeObj = set.get("set_volume");
@@ -95,7 +112,20 @@ public class RoutineServiceImple implements RoutineService {
 	                }
 	            }
 	        }
+	        
+	        RoutineArrVO str = rlmapper.sortGet(member_idx);
+	        RoutineArrVO arrvo = new RoutineArrVO();
+	        if(str != null) {
+	        	arrvo.setMember_idx(member_idx);
+	        	arrvo.setRoutine_arr(str.getRoutine_arr() +","+ Integer.toString(routine_list_idx));
+	        	rlmapper.sortUpdate(arrvo);
+	        }else {
+	        	arrvo.setMember_idx(member_idx);
+	        	arrvo.setRoutine_arr(Integer.toString(routine_list_idx));
+	        	rlmapper.insertSort(arrvo);
+	        }
 
+	        
 	        // 루틴 등록 실패 시 롤백
 	        if (routineResult != routines.size()) {
 	            throw new RuntimeException("Routine insert failed for some routines");
@@ -103,12 +133,45 @@ public class RoutineServiceImple implements RoutineService {
 	    } catch (Exception e) {
 	        throw e; // 예외를 다시 던져 트랜잭션 롤백을 강제
 	    }
+
 	    return result == 3;
 	}
 	
 	@Override
 	public boolean deleteRoutine(RoutineMemberDTO rmdto) {
-		return rlmapper.deleteRoutine(rmdto) > 0;
+		boolean result = false;
+		RoutineArrVO str = rlmapper.sortGet(rmdto.getMember_idx());
+		if(str != null) {
+			String[] arr = str.getRoutine_arr().split(",");
+			List<String> tempList = new ArrayList<>();
+	        for (String item : arr) {
+	            if (!item.equals(Integer.toString(rmdto.getRoutine_list_idx()))) {
+	                tempList.add(item);
+	            }
+	        }
+	        String newData = tempList.stream()
+	        	    .collect(Collectors.joining(","));
+	        RoutineArrVO vo = new RoutineArrVO();
+	        vo.setMember_idx(rmdto.getMember_idx());
+	        vo.setRoutine_arr(newData);
+			rlmapper.sortUpdate(vo);
+		}
+		result = rlmapper.deleteRoutine(rmdto) > 0;
+		return result;
+	}
+
+	
+	// 정렬 업데이트
+	@Override
+	public boolean sortUpdate(List<Integer> body, int member_idx) {
+		boolean result = false;
+		String arr = body.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+		RoutineArrVO vo = new RoutineArrVO();
+		vo.setMember_idx(member_idx);
+		vo.setRoutine_arr(arr);
+		return rlmapper.sortUpdate(vo) > 0;
 	}
 	
 	@Override

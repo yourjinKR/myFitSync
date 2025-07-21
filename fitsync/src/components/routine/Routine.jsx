@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
@@ -70,8 +70,9 @@ const CategoryText = styled.div`
   font-weight: bold;
 `;
 
-const Routine = ({ data, onDelete, type, setTempData }) => {
+const Routine = ({ data, onDelete, type, setTempData, setHeightData }) => {
   const nav = useNavigate();
+  const routineRef = useRef(null);
 
   // 클릭 이벤트에서 제외할 태그들
   const excludedTags = ['path', 'svg', 'button', 'BUTTON'];
@@ -116,6 +117,12 @@ const Routine = ({ data, onDelete, type, setTempData }) => {
     }
   };
 
+  useEffect(() => {
+    if(setHeightData && routineRef.current) {
+      setHeightData(routineRef.current ? routineRef.current.offsetHeight : 0);
+    }
+  }, [data]);
+
   // 카테고리 텍스트 생성 (중복 제거)
   const getCategoryText = () => {
     const uniqueCategories = [...new Set(data.routines.map(routine => routine.pt.pt_category))];
@@ -123,12 +130,12 @@ const Routine = ({ data, onDelete, type, setTempData }) => {
   };
 
   return (
-    <RoutineWrapper onClick={handleGoRoutine}>
+    <RoutineWrapper ref={routineRef} onClick={handleGoRoutine}>
       <Inner>
         <h3>
           {
             type !== null && type === 'custom' ? 
-            <>{ data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name} )` : ''}</> :
+            <>{data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name} )` : ''}</> :
             <>{data.routine_name}</>
           }
         </h3>

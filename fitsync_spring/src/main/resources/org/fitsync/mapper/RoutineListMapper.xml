@@ -128,4 +128,27 @@
 		WHERE MEMBER_IDX = #{member_idx}
 		AND ROUTINE_LIST_IDX = #{routine_list_idx}
 	</delete>
+	
+	
+	<!-- 정렬 관련 -->
+	<select id="sortGet" parameterType="int" resultType="org.fitsync.domain.RoutineArrVO">
+		SELECT * 
+		FROM ROUTINEARR 
+		WHERE MEMBER_IDX = #{member_idx}
+	</select>
+	
+	<update id="sortUpdate" parameterType="org.fitsync.domain.RoutineArrVO">
+		UPDATE ROUTINEARR 
+		SET ROUTINE_ARR = #{routine_arr} 
+		WHERE MEMBER_IDX = #{member_idx}
+	</update>
+	
+	<insert id="insertSort" parameterType="org.fitsync.domain.RoutineArrVO">
+		INSERT INTO ROUTINEARR 
+		VALUES(
+            #{member_idx},
+            #{routine_arr}
+        )
+	</insert>
+	
 </mapper>
