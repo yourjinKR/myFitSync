@@ -7,6 +7,30 @@ const Container = styled.div`
   padding: 15px 20px;
 `;
 
+// 다중 파일 미리보기 컨테이너
+const MultiFilePreview = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 2px;
+  }
+`;
+
 // 선택된 이미지 파일의 정보와 미리보기를 표시
 const FilePreview = styled.div`
   display: flex;
@@ -14,7 +38,6 @@ const FilePreview = styled.div`
   padding: 10px;
   background-color: var(--bg-tertiary);
   border-radius: 8px;
-  margin-bottom: 10px;
   border: 1px solid var(--border-light);
 `;
 
@@ -163,40 +186,83 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
-// 메시지 입력 컴포넌트
+// 다중 파일 업로드 지원하는 메시지 입력 컴포넌트
 const MessageInput = ({ onSendMessage, disabled }) => {
-  // 상태 관리
+  // 상태 관리 - 다중 파일 지원으로 변경
   const [messageText, setMessageText] = useState(''); // 입력 중인 텍스트
-  const [selectedFile, setSelectedFile] = useState(null); // 선택된 파일
-  const [previewUrl, setPreviewUrl] = useState(null); // 파일 미리보기 URL
+  const [selectedFiles, setSelectedFiles] = useState([]); // 선택된 파일들 (배열로 변경)
+  const [previewUrls, setPreviewUrls] = useState({}); // 파일 미리보기 URL들 (객체로 변경)
+  const [isUploading, setIsUploading] = useState(false); // 업로드 진행 상태 추가
   
   // ref 관리
   const fileInputRef = useRef(null); // 파일 입력 요소 참조
   const textAreaRef = useRef(null); // 텍스트에어리어 참조
 
-  // 전송 처리 (파일과 텍스트 함께 전송)
-  const handleSend = () => {
+  // 전송 처리 (순차적 업로드로 완전히 수정)
+  const handleSend = async () => {
+    // 이미 업로드 중이면 리턴
+    if (isUploading) {
+      console.log('⏳ 이미 업로드 진행 중...');
+      return;
+    }
+    
     // 텍스트와 파일 모두 없으면 리턴
-    if (!messageText.trim() && !selectedFile) return;
+    if (!messageText.trim() && selectedFiles.length === 0) return;
 
-    if (selectedFile) {
-      // 파일이 선택된 경우
-      console.log('이미지 + 텍스트 메시지 전송:', {
-        file: selectedFile.name,
-        text: messageText.trim() || '[이미지]'
+    if (selectedFiles.length > 0) {
+      setIsUploading(true); // 업로드 시작
+      
+      // 파일이 선택된 경우 - 순차적으로 하나씩 전송
+      console.log('순차적 이미지 업로드 시작:', {
+        fileCount: selectedFiles.length,
+        text: messageText.trim()
       });
       
-      // 텍스트가 있으면 텍스트와 함께, 없으면 기본 '[이미지]' 메시지로 전송
-      const messageContent = messageText.trim() || '[이미지]';
-      onSendMessage(messageContent, 'image', selectedFile);
+      const hasText = messageText.trim();
       
-      // 파일 선택 상태 초기화
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      try {
+        // 파일들을 순차적으로 하나씩 전송
+        for (let index = 0; index < selectedFiles.length; index++) {
+          const file = selectedFiles[index];
+          const isLastFile = index === selectedFiles.length - 1;
+          
+          // 마지막 파일에만 텍스트 붙이기 (텍스트가 있는 경우)
+          const messageContent = (hasText && isLastFile) ? hasText : '[이미지]';
+          
+          console.log(`순차 업로드 ${index + 1}/${selectedFiles.length}:`, {
+            fileName: file.name,
+            messageContent: messageContent,
+            isLastFile: isLastFile
+          });
+          
+          // 파일과 메시지를 동시에 전송 (await로 완료 대기)
+          await onSendMessage(messageContent, 'image', file);
+          
+          // 각 파일 전송 후 잠깐 대기 (서버 처리 시간 확보)
+          if (index < selectedFiles.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms 대기
+          }
+        }
+        
+        console.log('✅ 모든 파일 업로드 완료');
+      } catch (error) {
+        console.error('❌ 파일 업로드 중 오류:', error);
+        alert('파일 업로드 중 오류가 발생했습니다.');
+      } finally {
+        setIsUploading(false); // 업로드 완료
+        
+        // 파일 선택 상태 초기화
+        setSelectedFiles([]);
+        setPreviewUrls({});
+      }
     } else {
       // 텍스트만 있는 경우
       console.log('텍스트 메시지 전송:', messageText.trim());
-      onSendMessage(messageText.trim());
+      try {
+        await onSendMessage(messageText.trim());
+      } catch (error) {
+        console.error('텍스트 메시지 전송 실패:', error);
+      }
     }
     
     // 입력창 초기화
@@ -226,53 +292,87 @@ const MessageInput = ({ onSendMessage, disabled }) => {
     textArea.style.height = textArea.scrollHeight + 'px';
   };
 
-  // 파일 선택 핸들러 (자동 포커스 추가)
+  // 다중 파일 선택 핸들러 (자동 포커스 추가)
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    console.log('파일 선택됨:', file.name, file.size, file.type);
+    console.log('파일들 선택됨:', files.length, '개');
 
-    // 파일 크기 체크 (10MB 제한)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('파일 크기는 10MB를 초과할 수 없습니다.');
+    // 파일 개수 제한 (예: 최대 10개)
+    if (files.length > 10) {
+      alert('최대 10개의 파일만 선택할 수 있습니다.');
       return;
     }
 
-    // 이미지 파일만 허용
-    if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 업로드 가능합니다.');
-      return;
-    }
+    const validFiles = [];
+    const newPreviewUrls = {};
 
-    setSelectedFile(file);
-    
-    // 파일 선택 후 텍스트 입력창에 자동 포커스
-    setTimeout(() => {
-      if (textAreaRef.current) {
-        textAreaRef.current.focus();
-        console.log('✅ 파일 선택 후 텍스트 입력창에 포커스');
+    files.forEach((file, index) => {
+      // 파일 크기 체크 (10MB 제한)
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`파일 "${file.name}"의 크기가 10MB를 초과합니다.`);
+        return;
       }
-    }, 100); // 짧은 지연 후 포커스 (상태 업데이트 완료 대기)
-    
-    // FileReader를 사용하여 미리보기 URL 생성
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target.result);
-      console.log('미리보기 생성 완료');
-    };
-    reader.readAsDataURL(file);
+
+      // 이미지 파일만 허용
+      if (!file.type.startsWith('image/')) {
+        alert(`파일 "${file.name}"은 이미지 파일이 아닙니다.`);
+        return;
+      }
+
+      validFiles.push(file);
+
+      // FileReader를 사용하여 미리보기 URL 생성
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrls(prev => ({
+          ...prev,
+          [index]: e.target.result
+        }));
+        console.log(`미리보기 생성 완료: ${index + 1}/${validFiles.length}`);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (validFiles.length > 0) {
+      setSelectedFiles(validFiles);
+      
+      // 파일 선택 후 텍스트 입력창에 자동 포커스
+      setTimeout(() => {
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
+          console.log('✅ 파일 선택 후 텍스트 입력창에 포커스');
+        }
+      }, 100);
+    }
   };
 
-  // 선택된 파일 제거(미리보기 초기화)
-  const removeSelectedFile = () => {
-    console.log('선택된 파일 제거');
-    setSelectedFile(null);
-    setPreviewUrl(null);
+  // 특정 파일 제거 (다중 파일용)
+  const removeSelectedFile = (indexToRemove) => {
+    console.log('특정 파일 제거:', indexToRemove);
     
-    // 파일 입력 요소 값 초기화
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    setSelectedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    setPreviewUrls(prev => {
+      const newUrls = { ...prev };
+      delete newUrls[indexToRemove];
+      // 인덱스 재정렬
+      const reorderedUrls = {};
+      Object.keys(newUrls).forEach((key, newIndex) => {
+        if (parseInt(key) > indexToRemove) {
+          reorderedUrls[newIndex] = newUrls[key];
+        } else {
+          reorderedUrls[key] = newUrls[key];
+        }
+      });
+      return reorderedUrls;
+    });
+    
+    // 모든 파일이 제거된 경우 파일 입력 요소 값 초기화
+    if (selectedFiles.length === 1) {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -289,24 +389,28 @@ const MessageInput = ({ onSendMessage, disabled }) => {
 
   return (
     <Container>
-      {/* 파일 미리보기 영역 (파일이 선택된 경우에만 표시) */}
-      {selectedFile && (
-        <FilePreview>
-          <PreviewImage src={previewUrl} alt="미리보기" />
-          <FileInfo>
-            <FileName>{selectedFile.name}</FileName>
-            <FileSize>{formatFileSize(selectedFile.size)}</FileSize>
-          </FileInfo>
-          <RemoveButton onClick={removeSelectedFile} title="선택된 파일 제거">
-            ×
-          </RemoveButton>
-        </FilePreview>
+      {/* 다중 파일 미리보기 영역 (파일이 선택된 경우에만 표시) */}
+      {selectedFiles.length > 0 && (
+        <MultiFilePreview>
+          {selectedFiles.map((file, index) => (
+            <FilePreview key={index}>
+              <PreviewImage src={previewUrls[index]} alt="미리보기" />
+              <FileInfo>
+                <FileName>{file.name}</FileName>
+                <FileSize>{formatFileSize(file.size)}</FileSize>
+              </FileInfo>
+              <RemoveButton onClick={() => removeSelectedFile(index)} title="선택된 파일 제거">
+                ×
+              </RemoveButton>
+            </FilePreview>
+          ))}
+        </MultiFilePreview>
       )}
 
       {/* 메시지 입력 영역 */}
       <InputContainer>
         {/* 파일 첨부 버튼 */}
-        <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled} title="이미지 첨부">
+        <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled || isUploading} title="이미지 첨부">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -322,11 +426,12 @@ const MessageInput = ({ onSendMessage, disabled }) => {
           </svg>
         </AttachButton>
 
-        {/* 숨겨진 파일 입력 요소 */}
+        {/* 숨겨진 파일 입력 요소 - multiple 속성 추가 */}
         <HiddenFileInput
           ref={fileInputRef}
           type="file"
           accept="image/*" // 이미지 파일만 허용
+          multiple // 다중 선택 허용
           onChange={handleFileSelect}
         />
 
@@ -337,13 +442,13 @@ const MessageInput = ({ onSendMessage, disabled }) => {
             value={messageText}
             onChange={handleTextChange}
             onKeyPress={handleKeyPress}
-            placeholder={selectedFile ? "이미지와 함께 보낼 메시지를 입력하세요..." : "메시지를 입력하세요..."}
+            placeholder={selectedFiles.length > 0 ? "이미지와 함께 보낼 메시지를 입력하세요..." : "메시지를 입력하세요..."}
             disabled={disabled}
             rows={1}
           />
           
           {/* 전송 버튼 */}
-          <SendButton onClick={handleSend} disabled={disabled || (!messageText.trim() && !selectedFile)} title="전송 (Enter)">
+          <SendButton onClick={handleSend} disabled={disabled || (!messageText.trim() && selectedFiles.length === 0)} title="전송 (Enter)">
             ➤
           </SendButton>
         </TextAreaContainer>
