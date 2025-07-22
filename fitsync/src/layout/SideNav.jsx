@@ -140,13 +140,17 @@ const StyledLink = styled(Link)`
         transform: translateX(4px) scale(1.1);
     }
 `;
+    const memberType = sessionStorage.getItem("member_type");
+    const memberIdx = sessionStorage.getItem("member_idx");
 
-const navItems = [
+    const navItems = [
     { to: "/", label: "홈", icon: <FaHome /> },
     { to: "/routine/view", label: "루틴", icon: <FaDumbbell /> },
     { to: "/trainer/search", label: "트레이너", icon: <FaUserTie /> },
     { to: "/chat", label: "채팅", icon: <FaComments /> },
-    { to: "/mypage", label: "마이페이지", icon: <FaUserCircle /> },
+        memberType === "trainer"
+            ? { to: `/trainer/view/${memberIdx}`, label: "마이페이지", icon: <FaUserCircle /> }
+            : { to: "/mypage", label: "마이페이지", icon: <FaUserCircle /> },
     { to: "/admin", label: "관리자", icon: <FaCrown /> },
 ];
 
