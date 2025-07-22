@@ -14,12 +14,12 @@ const pulse = keyframes`
   50% { opacity: 1; }
 `;
 
-// 메시지 컨테이너 - 내 메시지는 오른쪽, 상대방 메시지는 왼쪽 정렬 + 프로필 이미지 공간 확보
+// 메시지 컨테이너 - 프로필과 메시지 영역을 분리
 const MessageContainer = styled.div`
   display: flex;
   justify-content: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
   margin-bottom: 12px;
-  align-items: flex-end;
+  align-items: flex-start; /* flex-end → flex-start로 변경 */
   /* 검색 결과 하이라이트를 위한 transition 추가 */
   transition: background-color 0.3s ease;
   padding: 4px 8px;
@@ -27,14 +27,14 @@ const MessageContainer = styled.div`
   gap: 8px; /* 프로필 이미지와 메시지 사이 간격 */
 `;
 
-// 프로필 이미지 컴포넌트
+// 프로필 이미지 컴포넌트 - 상단 정렬로 변경
 const ProfileImage = styled.div`
   width: 36px;
   height: 36px;
   border-radius: 18px;
   overflow: hidden;
   flex-shrink: 0;
-  margin-bottom: 4px;
+  margin-top: 0; /* margin-bottom 제거하고 margin-top으로 변경 */
   
   img {
     width: 100%;
@@ -57,14 +57,6 @@ const ProfileImage = styled.div`
   }
 `;
 
-// 사용자 이름 표시 (상대방 메시지에만)
-const SenderName = styled.div`
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-  margin-left: 4px;
-`;
-
 // 메시지 그룹 (이름 + 말풍선)
 const MessageGroup = styled.div`
   display: flex;
@@ -72,6 +64,16 @@ const MessageGroup = styled.div`
   max-width: 70%;
   min-width: 0; /* flexbox에서 축소 허용 */
   word-wrap: break-word; /* 추가 안전장치 */
+  align-items: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'}; /* 메시지 정렬 추가 */
+`;
+
+// 사용자 이름 표시 (상대방 메시지에만)
+const SenderName = styled.div`
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  margin-left: 4px;
+  order: 1; /* 이름이 먼저 나오도록 order 설정 */
 `;
 
 // 메시지 말풍선 - 텍스트 오버플로우 방지 추가
@@ -87,6 +89,7 @@ const MessageBubble = styled.div`
   max-width: 100%; /* 부모 컨테이너 너비 제한 */
   min-width: 0; /* flexbox에서 축소 허용 */
   overflow: hidden; /* 내용이 넘치지 않도록 */
+  order: 2; /* 메시지가 이름 다음에 나오도록 order 설정 */
 `;
 
 // 텍스트 오버플로우 방지를 위한 스타일 대폭 강화
@@ -180,12 +183,13 @@ const ImageContainer = styled.div`
   /* 이미지가 있을 때 컨테이너 스타일 */
 `;
 
-// 시간과 읽음 상태를 메시지 옆에 표시하는 컨테이너
+// 시간/읽음 상태 위치
 const MessageWithInfo = styled.div`
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  ${props => props.$isCurrentUser ? 'flex-direction: row-reverse;' : 'flex-direction: row;'}
+  ${props => props.$isCurrentUser ? 'flex-direction: row;' : 'flex-direction: row-reverse;'}
+  order: 2;
 `;
 
 // 메시지 하단 정보 (시간, 읽음 상태)
@@ -199,6 +203,7 @@ const MessageInfo = styled.div`
   white-space: nowrap; /* 시간이 줄바꿈되지 않도록 */
   min-width: fit-content; /* 최소 너비 보장 */
   flex-shrink: 0; /* 축소되지 않도록 */
+  margin-top: 0; /* margin-top 제거하고 다시 margin-bottom으로 복원 */
 `;
 
 const MessageTime = styled.span`
@@ -369,7 +374,7 @@ const MessageItem = ({
       {/* 상대방 메시지인 경우 프로필 이미지 표시 */}
       {renderProfileImage()}
       
-      <MessageGroup>
+      <MessageGroup $isCurrentUser={isCurrentUser}>
         {/* 상대방 메시지인 경우에만 이름 표시 */}
         {!isCurrentUser && senderName && (
           <SenderName>{senderName}</SenderName>

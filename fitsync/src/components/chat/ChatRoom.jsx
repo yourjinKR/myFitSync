@@ -60,15 +60,18 @@ const ChatRoom = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [initialUnreadMessages, setInitialUnreadMessages] = useState([]);
   
-  // 스크롤 관련 상태 관리 개선
+  // 스크롤 관련 상태 관리 - 이미지 로딩 완료 추적
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(false);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
+  const [imageLoadingCount, setImageLoadingCount] = useState(0); // 로딩 중인 이미지 개수
+  const [totalImageCount, setTotalImageCount] = useState(0); // 전체 이미지 개수
 
   // ref 관리
   const initialReadDone = useRef(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const scrollAdjustmentTimerRef = useRef(null);
+  const lastScrollHeight = useRef(0); // 이전 스크롤 높이 추적
 
   // WebSocket 연결 및 기능들
   const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket();
@@ -92,9 +95,9 @@ const ChatRoom = () => {
     }
 
     try {
-      // 🔧 1단계: 기본 스크롤 (이미지 로딩 대기 없이)
+      // 기본 스크롤 (이미지 로딩 대기 없이)
       const performBasicScroll = () => {
-        // 고정 헤더 높이 직접 계산 (더 정확한 방법)
+        // 고정 헤더 높이 직접 계산
         const getActualHeaderHeight = () => {
           let totalHeight = 0;
           
@@ -102,22 +105,19 @@ const ChatRoom = () => {
           const mainHeader = document.querySelector('header');
           if (mainHeader) {
             totalHeight += mainHeader.offsetHeight;
-            console.log('🔧 Header.jsx 높이:', mainHeader.offsetHeight);
           }
           
-          // ChatRoomHeader.jsx 찾기 (현재 컨테이너의 형제 요소)
+          // ChatRoomHeader.jsx 찾기
           const chatHeader = container.parentElement?.querySelector('[class*="Header"]') || 
                             container.previousElementSibling;
           if (chatHeader && chatHeader !== mainHeader) {
             totalHeight += chatHeader.offsetHeight;
-            console.log('🔧 ChatRoomHeader.jsx 높이:', chatHeader.offsetHeight);
           }
           
           // 안전 여백 추가
           const safeMargin = 30;
           totalHeight += safeMargin;
           
-          console.log('🔧 총 헤더 높이 (여백 포함):', totalHeight);
           return totalHeight;
         };
 
@@ -125,29 +125,26 @@ const ChatRoom = () => {
         const containerRect = container.getBoundingClientRect();
         const separatorRect = unreadSeparator.getBoundingClientRect();
         
-        // 🎯 핵심: 정확한 스크롤 위치 계산
         const targetScrollTop = container.scrollTop + 
                               (separatorRect.top - containerRect.top) - 
                               headerHeight;
 
         const finalScrollTop = Math.max(0, targetScrollTop);
 
-        console.log('🎯 1단계 스크롤 계산:', {
-          currentScrollTop: container.scrollTop,
-          separatorTop: separatorRect.top,
-          containerTop: containerRect.top,
-          headerHeight,
+        console.log('🎯 읽지 않은 메시지 스크롤:', {
           targetScrollTop,
           finalScrollTop
         });
 
-        // 즉시 스크롤 (smooth 없이)
         container.scrollTop = finalScrollTop;
+        
+        // 스크롤 높이 기록
+        lastScrollHeight.current = container.scrollHeight;
         
         return finalScrollTop;
       };
 
-      // 🔧 2단계: 이미지 로딩 완료 후 정밀 조정
+      // 이미지 로딩 완료 후 정밀 조정
       const performPreciseAdjustment = async () => {
         // 이미지 로딩 대기
         await waitForImagesLoad(container);
@@ -155,62 +152,36 @@ const ChatRoom = () => {
         // DOM 변화 대기
         await new Promise(resolve => requestAnimationFrame(resolve));
         
-        // 다시 정확한 위치 계산
-        const headerHeight = container.parentElement?.querySelector('header')?.offsetHeight || 0;
-        const chatHeaderHeight = container.previousElementSibling?.offsetHeight || 0;
-        const totalHeaderHeight = headerHeight + chatHeaderHeight + 30; // 30px 안전 여백
+        // 스크롤 높이 변화 확인 후 조정
+        const currentScrollHeight = container.scrollHeight;
+        const heightDifference = currentScrollHeight - lastScrollHeight.current;
         
-        const containerRect = container.getBoundingClientRect();
-        const separatorRect = unreadSeparator.getBoundingClientRect();
-        
-        const precisTargetScrollTop = container.scrollTop + 
-                                    (separatorRect.top - containerRect.top) - 
-                                    totalHeaderHeight;
+        if (Math.abs(heightDifference) > 50) { // 50px 이상 변화가 있을 때만 조정
+          console.log('🔧 이미지 로딩으로 인한 높이 변화 감지:', heightDifference);
+          
+          // 다시 정확한 위치 계산
+          const headerHeight = container.parentElement?.querySelector('header')?.offsetHeight || 0;
+          const chatHeaderHeight = container.previousElementSibling?.offsetHeight || 0;
+          const totalHeaderHeight = headerHeight + chatHeaderHeight + 30;
+          
+          const containerRect = container.getBoundingClientRect();
+          const separatorRect = unreadSeparator.getBoundingClientRect();
+          
+          const precisTargetScrollTop = container.scrollTop + 
+                                      (separatorRect.top - containerRect.top) - 
+                                      totalHeaderHeight;
 
-        const preciseFinalScrollTop = Math.max(0, precisTargetScrollTop);
-
-        console.log('🎯 2단계 정밀 조정:', {
-          currentScrollTop: container.scrollTop,
-          preciseFinalScrollTop,
-          difference: Math.abs(container.scrollTop - preciseFinalScrollTop)
-        });
-
-        // 차이가 10px 이상일 때만 조정
-        if (Math.abs(container.scrollTop - preciseFinalScrollTop) > 10) {
+          const preciseFinalScrollTop = Math.max(0, precisTargetScrollTop);
           container.scrollTop = preciseFinalScrollTop;
-          console.log('🔧 정밀 조정 적용됨');
+          
+          // 새로운 스크롤 높이 기록
+          lastScrollHeight.current = currentScrollHeight;
+          
+          console.log('🔧 이미지 로딩 후 스크롤 위치 재조정 완료');
         }
       };
 
-      // 🔧 3단계: 최종 검증 및 조정
-      const performFinalValidation = () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            const containerRect = container.getBoundingClientRect();
-            const separatorRect = unreadSeparator.getBoundingClientRect();
-            
-            // 구분선이 화면 상단에서 30px~150px 범위에 있는지 확인
-            const separatorPositionFromTop = separatorRect.top - containerRect.top;
-            const isInGoodPosition = separatorPositionFromTop >= 30 && separatorPositionFromTop <= 150;
-            
-            console.log('🔧 최종 검증:', {
-              separatorPositionFromTop,
-              isInGoodPosition
-            });
-            
-            if (!isInGoodPosition) {
-              // 마지막 수정 시도
-              const correctionOffset = separatorPositionFromTop > 150 ? -50 : 50;
-              container.scrollTop += correctionOffset;
-              console.log('🔧 최종 보정 적용:', correctionOffset);
-            }
-            
-            resolve();
-          }, 150); // 150ms 후 최종 검증
-        });
-      };
-
-      // 🎨 시각적 효과
+      // 시각적 효과
       const addVisualEffect = () => {
         unreadSeparator.style.backgroundColor = 'rgba(74, 144, 226, 0.15)';
         unreadSeparator.style.transition = 'background-color 0.3s ease';
@@ -220,16 +191,11 @@ const ChatRoom = () => {
       };
 
       // 단계별 실행
-      console.log('🚀 1단계: 기본 스크롤 실행');
+      console.log('🚀 읽지 않은 메시지 스크롤 실행');
       performBasicScroll();
       
-      console.log('🚀 2단계: 정밀 조정 실행');
       setTimeout(async () => {
         await performPreciseAdjustment();
-        
-        console.log('🚀 3단계: 최종 검증 실행');
-        await performFinalValidation();
-        
         addVisualEffect();
         console.log('✅ 읽지 않은 메시지 구분선 위치 조정 완료');
       }, 100);
@@ -242,41 +208,6 @@ const ChatRoom = () => {
       return false;
     }
   }, []);
-
-  // 정확한 스크롤 위치 계산 함수 (미세 조정용)
-  const calculateAccurateScrollPosition = (element, container) => {
-    const elementRect = element.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    
-    // 실제 헤더 높이 계산
-    const headerHeight = document.querySelector('header')?.offsetHeight || 0;
-    const chatHeaderHeight = container.previousElementSibling?.offsetHeight || 0;
-    const totalHeaderHeight = headerHeight + chatHeaderHeight + 30;
-
-    const targetScrollTop = container.scrollTop + 
-                          (elementRect.top - containerRect.top) - 
-                          totalHeaderHeight;
-
-    return Math.max(0, targetScrollTop);
-  };
-
-  // 정 요소들의 높이 계산
-  const getFixedElementsHeight = () => {
-    const selectors = [
-      'header',
-      '.chat-header', 
-      '.chat-room-header',
-      '.fixed-toolbar',
-      '[data-sticky="true"]'
-    ];
-    
-    return selectors.reduce((total, selector) => {
-      const element = document.querySelector(selector);
-      const height = element ? element.offsetHeight : 0;
-      console.log(`🔧 고정 요소 "${selector}": ${height}px`);
-      return total + height;
-    }, 0);
-  };
 
   // 이미지 로딩 완료 대기 함수
   const waitForImagesLoad = (container) => {
@@ -295,7 +226,6 @@ const ChatRoom = () => {
         console.log(`📷 이미지 로딩 진행: ${loadedCount}/${images.length}`);
         if (loadedCount === images.length) {
           console.log('✅ 모든 이미지 로딩 완료');
-          // 추가 여유 시간
           setTimeout(resolve, 50);
         }
       };
@@ -350,6 +280,8 @@ const ChatRoom = () => {
       setHasPerformedInitialScroll(false);
       setShouldScrollToBottom(false);
       setInitialUnreadMessages([]);
+      setImageLoadingCount(0); // 이미지 로딩 상태 초기화
+      setTotalImageCount(0);
       
       console.log('🔄 채팅방 초기화');
 
@@ -373,7 +305,7 @@ const ChatRoom = () => {
     };
   }, [roomId, user, navigate, location.state]);
 
-  // 메시지 로드 함수 - 읽지 않은 메시지 분석 개선
+  // 메시지 로드 함수 - 읽지 않은 메시지 분석 및 이미지 개수 계산
   const loadMessages = async (memberIdx = null) => {
     try {
       setLoading(true);
@@ -381,7 +313,12 @@ const ChatRoom = () => {
       const messageList = await chatApi.readMessageList(parseInt(roomId));
       setMessages(messageList);
 
-      // 읽지 않은 메시지 분석 개선
+      // 이미지 메시지 개수 계산
+      const imageMessages = messageList.filter(msg => msg.message_type === 'image');
+      setTotalImageCount(imageMessages.length);
+      setImageLoadingCount(imageMessages.length); // 초기값은 전체 이미지 개수
+
+      // 읽지 않은 메시지 분석
       if (memberIdx) {
         const unreadMessages = messageList.filter(msg => 
           msg.sender_idx !== memberIdx && !msg.message_readdate
@@ -391,6 +328,7 @@ const ChatRoom = () => {
         console.log('📊 메시지 분석 결과:', {
           totalMessages: messageList.length,
           unreadMessages: unreadMessages.length,
+          imageMessages: imageMessages.length,
           currentUser: memberIdx
         });
 
@@ -398,26 +336,12 @@ const ChatRoom = () => {
           console.log('✅ 읽지 않은 메시지 없음 - 맨 아래 스크롤 예정');
           setShouldScrollToBottom(true);
         } else {
-          console.log('📍 읽지 않은 메시지', unreadMessages.length, '개 발견 - 첫 번째 읽지 않은 메시지로 스크롤 예정');
-          
-          // 첫 번째(가장 오래된) 읽지 않은 메시지를 찾아서 로깅
-          const oldestUnreadMessage = unreadMessages.reduce((oldest, current) => {
-            const oldestTime = new Date(oldest.message_senddate).getTime();
-            const currentTime = new Date(current.message_senddate).getTime();
-            return currentTime < oldestTime ? current : oldest;
-          });
-          
-          console.log('🎯 가장 오래된 읽지 않은 메시지:', {
-            messageIdx: oldestUnreadMessage.message_idx,
-            content: oldestUnreadMessage.message_content,
-            sendDate: oldestUnreadMessage.message_senddate
-          });
+          console.log('📍 읽지 않은 메시지', unreadMessages.length, '개 발견');
           setShouldScrollToBottom(false);
         }
       }
 
-      // 첨부파일은 백그라운드에서 비동기 로드 (스크롤 차단하지 않음)
-      const imageMessages = messageList.filter(msg => msg.message_type === 'image');
+      // 첨부파일은 백그라운드에서 비동기 로드
       if (imageMessages.length > 0) {
         console.log('📷 백그라운드에서 첨부파일 로드 시작...', imageMessages.length, '개');
         loadAttachmentsInBackground(imageMessages);
@@ -437,47 +361,54 @@ const ChatRoom = () => {
     }
   };
 
-  // 백그라운드에서 첨부파일 로드 (스크롤 차단하지 않음)
+  // 백그라운드에서 첨부파일 로드
   const loadAttachmentsInBackground = async (imageMessages) => {
-    // 비동기로 첨부파일 로드 (await 사용하지 않음)
     imageMessages.forEach(async (message, index) => {
       if (message.attach_idx && message.attach_idx > 0) {
         try {
           const attachment = await chatApi.readFile(message.message_idx);
           
-          // 실시간으로 첨부파일 추가
           setAttachments(prev => ({
             ...prev,
             [message.message_idx]: attachment
           }));
           
-          console.log(`📷 백그라운드 첨부파일 로드 완료: ${index + 1}/${imageMessages.length} (message_idx: ${message.message_idx})`);
-          
-          // 각 이미지 로드 완료 시 스크롤 위치 미세 조정
-          if (!isInitialLoad) {
-            adjustScrollPosition();
-          }
+          // 첨부파일 로드 완료 시 카운트 감소
+          setImageLoadingCount(prev => {
+            const newCount = Math.max(0, prev - 1);
+            console.log(`📷 첨부파일 로드 완료: ${index + 1}/${imageMessages.length} (남은 로딩: ${newCount})`);
+            return newCount;
+          });
           
         } catch (error) {
           console.error(`첨부파일 로드 실패 (message_idx: ${message.message_idx}):`, error);
+          // 에러가 발생해도 카운트 감소
+          setImageLoadingCount(prev => Math.max(0, prev - 1));
         }
+      } else {
+        // attach_idx가 없는 경우에도 카운트 감소
+        setImageLoadingCount(prev => Math.max(0, prev - 1));
       }
     });
   };
 
-  // 메시지 로드 완료 후 즉시 스크롤 실행 (이미지 대기하지 않음)
+  // 모든 이미지 로딩 완료 후 스크롤 실행
   useEffect(() => {
-    if (messages.length > 0 && isInitialLoad && currentMemberIdx && !hasPerformedInitialScroll) {
-      console.log('📍 즉시 스크롤 실행 - 이미지 로딩 대기하지 않음');
+    if (messages.length > 0 && 
+        isInitialLoad && 
+        currentMemberIdx && 
+        !hasPerformedInitialScroll && 
+        imageLoadingCount === 0) { // 모든 이미지 로딩 완료 조건 추가
       
-      // DOM 렌더링 완료 대기만 최소한으로
+      console.log('📍 모든 이미지 로딩 완료 - 초기 스크롤 실행');
+      
       setTimeout(() => {
         performInitialScroll();
-      }, 150); // 100ms → 150ms로 증가
+      }, 200); // 충분한 대기 시간
     }
-  }, [messages, currentMemberIdx, isInitialLoad, hasPerformedInitialScroll]);
+  }, [messages, currentMemberIdx, isInitialLoad, hasPerformedInitialScroll, imageLoadingCount]);
 
-  // 초기 스크롤 실행 - 읽지 않은 메시지를 화면 상단에 위치
+  // 초기 스크롤 실행
   const performInitialScroll = () => {
     console.log('🎯 초기 스크롤 실행:', {
       shouldScrollToBottom,
@@ -488,7 +419,6 @@ const ChatRoom = () => {
       console.log('📍 맨 아래로 스크롤 (읽지 않은 메시지 없음)');
       scrollToBottom(false);
     } else if (initialUnreadMessages.length > 0) {
-      // 가장 오래된 읽지 않은 메시지를 화면 상단에 위치시키기
       const oldestUnreadMessage = initialUnreadMessages.reduce((oldest, current) => {
         const oldestTime = new Date(oldest.message_senddate).getTime();
         const currentTime = new Date(current.message_senddate).getTime();
@@ -496,8 +426,6 @@ const ChatRoom = () => {
       });
       
       console.log('🎯 가장 오래된 읽지 않은 메시지를 화면 상단에 위치:', oldestUnreadMessage.message_idx);
-      
-      // 새로운 스크롤 함수 사용
       scrollToUnreadSeparatorTop(oldestUnreadMessage.message_idx);
     } else {
       console.log('📍 기본: 맨 아래로 스크롤');
@@ -506,11 +434,10 @@ const ChatRoom = () => {
 
     setHasPerformedInitialScroll(true);
     
-    // 스크롤 완료 후 읽음 처리
     setTimeout(() => {
       setIsInitialLoad(false);
       performInitialReadMark();
-    }, 500); // 300ms → 500ms로 증가
+    }, 500);
   };
 
   // 초기 읽음 처리
@@ -542,7 +469,7 @@ const ChatRoom = () => {
             return [...prev, newMessage];
           });
 
-          // 새 메시지 수신 시 맨 아래로 스크롤 (조건 없이)
+          // 새 메시지 수신 시 맨 아래로 스크롤
           console.log('📨 새 메시지 수신 - 맨 아래로 스크롤');
           setTimeout(() => {
             scrollToBottom(true);
@@ -558,7 +485,6 @@ const ChatRoom = () => {
                   [newMessage.message_idx]: attachment
                 }));
                 
-                // 🔧 첨부파일 로드 후 스크롤 재조정
                 setTimeout(() => {
                   adjustScrollPosition();
                 }, 100);
@@ -591,7 +517,7 @@ const ChatRoom = () => {
     }
   }, [connected, roomId, subscribeToRoom, markAsRead, currentMemberIdx]);
 
-  // 특정 메시지로 스크롤 함수 (중앙 위치) - 검색용
+  // 특정 메시지로 스크롤 함수 (검색용)
   const scrollToMessage = useCallback((messageIdx, retryCount = 0) => {
     const maxRetries = 5;
     const messageElement = document.getElementById(`message-${messageIdx}`);
@@ -600,7 +526,6 @@ const ChatRoom = () => {
       const containerRect = messagesContainerRef.current.getBoundingClientRect();
       const messageRect = messageElement.getBoundingClientRect();
       
-      // 검색 시에는 중앙 위치로 스크롤 (기존 로직 유지)
       const scrollTop = messagesContainerRef.current.scrollTop + 
                        messageRect.top - containerRect.top - 
                        containerRect.height / 2 + messageRect.height / 2;
@@ -610,7 +535,6 @@ const ChatRoom = () => {
         behavior: 'smooth'
       });
 
-      // 메시지 하이라이트 효과
       messageElement.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
       setTimeout(() => {
         messageElement.style.backgroundColor = '';
@@ -629,16 +553,57 @@ const ChatRoom = () => {
     }
   }, []);
 
-  // 맨 아래로 스크롤 함수 (재시도 로직 포함)
+  // 맨 아래로 스크롤 함수 - 더 정확한 스크롤링
   const scrollToBottom = useCallback((smooth = true, retryCount = 0) => {
     const maxRetries = 5;
     
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: smooth ? 'smooth' : 'auto',
-        block: 'end'
-      });
-      console.log('✅ 맨 아래로 스크롤 완료');
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      
+      // scrollIntoView 대신 직접 scrollTop 설정으로 더 정확한 제어
+      const scrollToBottomPosition = () => {
+        const { scrollHeight, clientHeight } = container;
+        const targetScrollTop = scrollHeight - clientHeight;
+        
+        if (smooth) {
+          container.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+        } else {
+          container.scrollTop = targetScrollTop;
+        }
+        
+        console.log('✅ 맨 아래로 스크롤:', {
+          scrollHeight,
+          clientHeight,
+          targetScrollTop,
+          finalScrollTop: container.scrollTop
+        });
+      };
+      
+      // 즉시 실행
+      scrollToBottomPosition();
+      
+      // 100ms 후 한 번 더 확인 및 조정 (이미지 로딩 등으로 인한 높이 변화 대응)
+      setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const expectedScrollTop = scrollHeight - clientHeight;
+        const difference = Math.abs(expectedScrollTop - scrollTop);
+        
+        if (difference > 10) { // 10px 이상 차이나면 재조정
+          console.log('🔧 스크롤 위치 재조정:', { 
+            expected: expectedScrollTop, 
+            actual: scrollTop, 
+            difference 
+          });
+          container.scrollTop = expectedScrollTop;
+        }
+        
+        // 최종 스크롤 높이 기록
+        lastScrollHeight.current = scrollHeight;
+      }, 100);
+      
       return true;
     } else if (retryCount < maxRetries) {
       console.log(`⏳ 스크롤 대상 DOM 대기 중... 재시도 ${retryCount + 1}/${maxRetries}`);
@@ -650,21 +615,25 @@ const ChatRoom = () => {
     }
   }, []);
 
-  // 스크롤 위치 미세 조정 (이미지 로드 완료 후)
+  // 스크롤 위치 미세 조정 - 맨 아래에 있을 때만 조정
   const adjustScrollPosition = useCallback(() => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 150; // 150px 여유
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px 여유
       
-      // 맨 아래 근처에 있으면 맨 아래로 조정
-      if (isNearBottom) {
-        console.log('🔧 스크롤 위치 미세 조정 - 맨 아래로');
+      // 맨 아래 근처에 있으면서 스크롤 높이가 변했을 때만 조정
+      const currentScrollHeight = scrollHeight;
+      const heightDifference = currentScrollHeight - lastScrollHeight.current;
+      
+      if (isNearBottom && Math.abs(heightDifference) > 50) {
+        console.log('🔧 이미지 로딩으로 스크롤 위치 미세 조정:', heightDifference);
         scrollToBottom(false);
+        lastScrollHeight.current = currentScrollHeight;
       }
     }
   }, [scrollToBottom]);
 
-  // 이미지 로딩 완료 핸들러 (스크롤 조정만)
+  // 이미지 로딩 완료 핸들러 - 스크롤 조정 개선
   const handleImageLoad = useCallback((messageIdx) => {
     console.log('📷 이미지 로딩 완료:', messageIdx);
     
@@ -680,10 +649,10 @@ const ChatRoom = () => {
     console.log('🔍 검색 결과 업데이트:', results.length, '개');
   }, []);
 
-  // 결과에서 특정 메시지로 이동 (중앙 위치 사용)
+  // 검색 결과에서 특정 메시지로 이동
   const handleScrollToSearchResult = useCallback((messageIdx) => {
     console.log('🔍 검색 결과로 스크롤 이동 (중앙 위치):', messageIdx);
-    scrollToMessage(messageIdx); // 검색 시에는 중앙 위치로 스크롤
+    scrollToMessage(messageIdx);
   }, [scrollToMessage]);
 
   // 메시지 전송 핸들러 - Promise 기반 순차 처리
@@ -699,7 +668,6 @@ const ChatRoom = () => {
           ? roomData?.user_idx
           : roomData?.trainer_idx;
 
-        // 고유한 메시지 식별자 생성 (시간 + 랜덤)
         const messageTimestamp = Date.now();
         const messageId = `${messageTimestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -708,7 +676,7 @@ const ChatRoom = () => {
           receiver_idx: otherMemberIdx,
           message_content: messageContent,
           message_type: messageType,
-          unique_id: messageId // 고유 식별자 추가
+          unique_id: messageId
         };
 
         console.log('📤 메시지 전송 시작:', messageData);
@@ -719,18 +687,15 @@ const ChatRoom = () => {
           scrollToBottom(true);
         }, 50);
 
-        // 파일 업로드 처리 (순차 처리)
+        // 파일 업로드 처리
         if (file && messageType === 'image') {
           console.log('📷 이미지 파일 업로드 시작:', file.name);
           
-          // 메시지 저장 완료까지 대기
-          await new Promise(resolve => setTimeout(resolve, 800)); // 충분한 대기 시간
+          await new Promise(resolve => setTimeout(resolve, 800));
           
           try {
-            // 현재 메시지에 해당하는 message_idx 찾기
             const messageList = await chatApi.readMessageList(parseInt(roomId));
             
-            // 방금 전송한 메시지 찾기 (시간 기준으로 가장 최근 + 내용 일치)
             const targetMessage = messageList
               .filter(msg => 
                 msg.sender_idx === currentMemberIdx && 
@@ -750,10 +715,8 @@ const ChatRoom = () => {
               sendDate: targetMessage.message_senddate
             });
             
-            // 파일 업로드 실행
             const uploadResult = await chatApi.uploadFile(file, targetMessage.message_idx);
             
-            // 첨부파일 정보 저장
             setAttachments(prev => ({
               ...prev,
               [targetMessage.message_idx]: {
@@ -767,19 +730,17 @@ const ChatRoom = () => {
             
             console.log('✅ 이미지 업로드 완료:', uploadResult.originalFilename);
             
-            // 파일 업로드 완료 후 스크롤 재조정
             setTimeout(() => {
               scrollToBottom(false);
             }, 200);
             
-            resolve(targetMessage); // 성공 시 메시지 정보 반환
+            resolve(targetMessage);
             
           } catch (uploadError) {
             console.error('❌ 파일 업로드 실패:', uploadError);
             reject(uploadError);
           }
         } else {
-          // 텍스트 메시지는 바로 완료
           setTimeout(() => {
             resolve({ content: messageContent, type: messageType });
           }, 100);
@@ -858,6 +819,7 @@ const ChatRoom = () => {
         onSearchResults={handleSearchResults} 
         onScrollToSearchResult={handleScrollToSearchResult}
         messages={messages}
+        attachments={attachments} // attachments도 전달하여 이미지 파일명 검색 가능하게 함
       />
 
       <MessagesContainer ref={messagesContainerRef}>

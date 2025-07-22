@@ -143,7 +143,7 @@ const MessageList = ({
     return shouldShow;
   };
 
-  // 카카오톡 스타일: 분 단위로 메시지 그룹핑 체크
+  // 원래 카카오톡 스타일 그룹핑으로 복원 (분 단위)
   const isConsecutiveMessage = (currentMessage, previousMessage) => {
     if (!previousMessage) return false;
     
@@ -179,7 +179,7 @@ const MessageList = ({
     return isDifferentSender || isDifferentMinute;
   };
 
-  // 상대방 프로필 이미지 및 정보 가져오기 (첫 메시지에만 표시)
+  // 프로필 표시 로직 - 연속 메시지가 아닐 때만 프로필 표시
   const getOtherPersonInfo = (message, isConsecutive) => {
     if (!roomData) return { name: '상대방', image: null };
     
@@ -190,6 +190,7 @@ const MessageList = ({
         return { name: null, image: null };
       }
       
+      // 그룹의 첫 번째 메시지인 경우에만 프로필 정보 반환
       if (roomData.trainer_idx === currentMemberIdx) {
         // 내가 트레이너면 상대방은 회원
         return {
@@ -246,8 +247,8 @@ const MessageList = ({
               message={message}
               isCurrentUser={message.sender_idx === currentMemberIdx}
               attachments={attachments[message.message_idx] || null} // 단일 객체 전달
-              senderName={isConsecutive ? null : otherPersonInfo.name} // 연속 메시지가 아닐 때만 이름 표시
-              senderImage={isConsecutive ? null : otherPersonInfo.image} // 연속 메시지가 아닐 때만 이미지 표시
+              senderName={otherPersonInfo.name} // 연속 메시지 체크를 getOtherPersonInfo에서 처리
+              senderImage={otherPersonInfo.image} // 연속 메시지 체크를 getOtherPersonInfo에서 처리
               showTime={isLastMessage} // 그룹의 마지막 메시지에만 시간 표시
               onImageLoad={handleImageLoad} // 이미지 로딩 완료 콜백 전달
             />

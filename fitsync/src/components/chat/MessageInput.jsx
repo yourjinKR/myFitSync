@@ -198,7 +198,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
   const fileInputRef = useRef(null); // 파일 입력 요소 참조
   const textAreaRef = useRef(null); // 텍스트에어리어 참조
 
-  // 전송 처리 (순차적 업로드로 완전히 수정)
+  // 전송 처리 - 즉시 초기화 적용
   const handleSend = async () => {
     // 이미 업로드 중이면 리턴
     if (isUploading) {
@@ -209,27 +209,48 @@ const MessageInput = ({ onSendMessage, disabled }) => {
     // 텍스트와 파일 모두 없으면 리턴
     if (!messageText.trim() && selectedFiles.length === 0) return;
 
-    if (selectedFiles.length > 0) {
+    // 전송 버튼 클릭 즉시 입력창과 파일 미리보기 초기화
+    const textToSend = messageText.trim();
+    const filesToSend = [...selectedFiles]; // 배열 복사
+    
+    // 즉시 UI 초기화
+    setMessageText('');
+    setSelectedFiles([]);
+    setPreviewUrls({});
+    
+    // 텍스트에어리어 높이 초기화
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = 'auto';
+    }
+    
+    // 파일 입력 요소 초기화
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+
+    console.log('✅ 입력창 즉시 초기화 완료 - 업로드 시작');
+
+    if (filesToSend.length > 0) {
       setIsUploading(true); // 업로드 시작
       
       // 파일이 선택된 경우 - 순차적으로 하나씩 전송
       console.log('순차적 이미지 업로드 시작:', {
-        fileCount: selectedFiles.length,
-        text: messageText.trim()
+        fileCount: filesToSend.length,
+        text: textToSend
       });
       
-      const hasText = messageText.trim();
+      const hasText = textToSend;
       
       try {
         // 파일들을 순차적으로 하나씩 전송
-        for (let index = 0; index < selectedFiles.length; index++) {
-          const file = selectedFiles[index];
-          const isLastFile = index === selectedFiles.length - 1;
+        for (let index = 0; index < filesToSend.length; index++) {
+          const file = filesToSend[index];
+          const isLastFile = index === filesToSend.length - 1;
           
           // 마지막 파일에만 텍스트 붙이기 (텍스트가 있는 경우)
           const messageContent = (hasText && isLastFile) ? hasText : '[이미지]';
           
-          console.log(`순차 업로드 ${index + 1}/${selectedFiles.length}:`, {
+          console.log(`순차 업로드 ${index + 1}/${filesToSend.length}:`, {
             fileName: file.name,
             messageContent: messageContent,
             isLastFile: isLastFile
@@ -239,7 +260,7 @@ const MessageInput = ({ onSendMessage, disabled }) => {
           await onSendMessage(messageContent, 'image', file);
           
           // 각 파일 전송 후 잠깐 대기 (서버 처리 시간 확보)
-          if (index < selectedFiles.length - 1) {
+          if (index < filesToSend.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 500)); // 500ms 대기
           }
         }
@@ -250,27 +271,15 @@ const MessageInput = ({ onSendMessage, disabled }) => {
         alert('파일 업로드 중 오류가 발생했습니다.');
       } finally {
         setIsUploading(false); // 업로드 완료
-        
-        // 파일 선택 상태 초기화
-        setSelectedFiles([]);
-        setPreviewUrls({});
       }
     } else {
       // 텍스트만 있는 경우
-      console.log('텍스트 메시지 전송:', messageText.trim());
+      console.log('텍스트 메시지 전송:', textToSend);
       try {
-        await onSendMessage(messageText.trim());
+        await onSendMessage(textToSend);
       } catch (error) {
         console.error('텍스트 메시지 전송 실패:', error);
       }
-    }
-    
-    // 입력창 초기화
-    setMessageText('');
-    
-    // 텍스트에어리어 높이 초기화
-    if (textAreaRef.current) {
-      textAreaRef.current.style.height = 'auto';
     }
   };
 

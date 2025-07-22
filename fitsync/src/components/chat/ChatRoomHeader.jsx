@@ -122,7 +122,7 @@ const NavButton = styled.button`
   }
 `;
 
-/* 수정된 SearchToggleButton - DOM prop 전달 방지 */
+/* SearchToggleButton - DOM prop 전달 방지 */
 const SearchToggleButton = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'isActive'
 })`
@@ -148,7 +148,7 @@ const SearchToggleButton = styled.button.withConfig({
   }
 `;
 
-const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResult, messages = [] }) => {
+const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResult, messages = [], attachments = {} }) => {
   // 검색 관련 상태
   const [isSearchMode, setIsSearchMode] = useState(false); // 검색 모드 활성화 여부
   const [searchQuery, setSearchQuery] = useState(''); // 검색어
@@ -185,7 +185,7 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
     });
   }, [onSearchResults]);
 
-  // 실제 검색 수행 함수
+  // 이미지 메시지도 original_filename으로 검색 가능하게 개선
   const performSearch = useCallback((query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -194,12 +194,26 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
       return;
     }
 
-    // 대소문자 구분 없이 메시지 내용에서 검색
+    // 텍스트 메시지와 이미지 파일명 모두 검색
     const results = messages
-      .filter(message => 
-        message.message_content &&
-        message.message_content.toLowerCase().includes(query.toLowerCase())
-      )
+      .filter(message => {
+        // 1. 텍스트 메시지: message_content가 있고 '[이미지]'가 아닌 경우
+        if (message.message_content && 
+            message.message_content !== '[이미지]' && 
+            message.message_content.toLowerCase().includes(query.toLowerCase())) {
+          return true;
+        }
+        
+        // 2. 이미지 메시지: original_filename으로 검색
+        if (message.message_type === 'image') {
+          const attachment = attachments[message.message_idx];
+          if (attachment && attachment.original_filename) {
+            return attachment.original_filename.toLowerCase().includes(query.toLowerCase());
+          }
+        }
+        
+        return false;
+      })
       .map((message, index) => ({
         ...message,
         resultIndex: index
@@ -209,8 +223,8 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
     setCurrentResultIndex(results.length > 0 ? 0 : -1);
     onSearchResults?.(results);
 
-    console.log(`🔍 검색 결과: "${query}" → ${results.length}개 발견`);
-  }, [messages, onSearchResults]);
+    console.log(`🔍 검색 결과: "${query}" → ${results.length}개 발견 (텍스트 + 이미지 파일명)`);
+  }, [messages, attachments, onSearchResults]);
 
   // 디바운스된 검색어 변경 시 검색 수행
   useEffect(() => {
@@ -236,7 +250,7 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
 
     setCurrentResultIndex(newIndex);
     
-    // 해당 메시지로 스크롤 - 수정된 부분: onScrollToSearchResult 사용
+    // 해당 메시지로 스크롤 - onScrollToSearchResult 사용
     const targetMessage = searchResults[newIndex];
     if (targetMessage && onScrollToSearchResult) {
       console.log('📍 검색 결과로 이동:', targetMessage.message_idx);
@@ -327,7 +341,7 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
           )}
         </HeaderMain>
 
-        {/* 검색 토글 버튼 - 수정된 부분: 스타일 개선 */}
+        {/* 검색 토글 버튼 */}
         <SearchToggleButton
           onClick={toggleSearchMode}
           isActive={isSearchMode}
