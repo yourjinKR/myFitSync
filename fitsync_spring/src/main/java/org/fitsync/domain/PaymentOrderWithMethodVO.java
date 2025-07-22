@@ -41,6 +41,7 @@ public class PaymentOrderWithMethodVO {
     private String apiCardIssuer;      // API에서 조회한 발급사
     private String apiCardBrand;       // API에서 조회한 카드 브랜드
     private String apiCardType;        // API에서 조회한 카드 타입 (DEBIT/CREDIT)
+    private String apiPgProvider;       // API에서 조회한 pg제공사
     
     /**
      * 카드 결제 방식인지 확인
@@ -67,7 +68,7 @@ public class PaymentOrderWithMethodVO {
         if (apiMethodType != null && !apiMethodType.trim().isEmpty()) {
             if (isEasyPayment()) {
                 // 간편결제의 경우 결제 채널명 표시
-                switch (apiMethodProvider != null ? apiMethodProvider : "UNKNOWN") {
+                switch (apiMethodProvider != null ? apiMethodProvider : apiPgProvider) {
                     case "KAKAOPAY": return "카카오페이";
                     case "TOSSPAYMENTS": return "토스페이먼츠";
                     default: return "간편결제";

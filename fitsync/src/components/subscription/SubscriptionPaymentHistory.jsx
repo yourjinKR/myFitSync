@@ -110,13 +110,7 @@ const PaymentTitle = styled.div`
 const PaymentAmount = styled.div`
   font-size: 14px !important;
   font-weight: 600;
-  color: ${props => 
-    props.$status === 'PAID' ? 'var(--primary-blue)' :
-    props.$status === 'FAILED' ? 'var(--warning)' :
-    props.$status === 'CANCELLED' ? 'var(--text-tertiary)' :
-    props.$status === 'READY' ? '#f57c00' :
-    'var(--text-primary)'
-  };
+  color: 'var(--text-primary)';
   
   @media (min-width: 375px) {
     font-size: 15px !important;

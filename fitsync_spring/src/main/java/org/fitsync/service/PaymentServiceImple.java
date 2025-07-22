@@ -101,12 +101,12 @@ public class PaymentServiceImple implements PaymentService {
 			String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
 			
 			HttpRequest request = HttpRequest.newBuilder()
-				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
-				    .header("Content-Type", "application/json")
-				    .header("Authorization", "PortOne " + apiSecretKey)
-				    .method("GET", HttpRequest.BodyPublishers.noBody())
-				    .build();
-				    
+					.uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
+					.header("Content-Type", "application/json")
+					.header("Authorization", "PortOne " + apiSecretKey)
+					.method("GET", HttpRequest.BodyPublishers.noBody())
+					.build();
+			
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 			
 			log.info("PortOne API Response Status: " + response.statusCode());
@@ -119,7 +119,7 @@ public class PaymentServiceImple implements PaymentService {
 				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
 				
 				// 카드 정보 추출
-				Map<String, Object> cardInfo = extractCardInfo(responseData);
+				Map<String, Object> cardInfo = extractMethodInfo(responseData);
 				
 				// 성공 응답 반환
 				Map<String, Object> result = new HashMap<>();
@@ -151,13 +151,13 @@ public class PaymentServiceImple implements PaymentService {
 	}
 	
 	/**
-	 * PortOne API 응답에서 카드 정보를 추출하는 메서드 (빌링키 조회 & 결제 단건 조회 모두 지원)
+	 * PortOne API 응답에서 결제 수단 정보를 추출하는 메서드 (빌링키 조회 & 결제 단건 조회 모두 지원)
 	 * @param responseData PortOne API 응답 데이터
-	 * @return 추출된 카드 정보 (name, number, publisher, issuer 등)
+	 * @return 추출된 카드 정보 (name, number, publisher, issuer, pgProvider 등)
 	 */
 	@SuppressWarnings("unchecked")
-	private Map<String, Object> extractCardInfo(Map<String, Object> responseData) {
-		Map<String, Object> cardInfo = new HashMap<>();
+	private Map<String, Object> extractMethodInfo(Map<String, Object> responseData) {
+		Map<String, Object> methodInfo = new HashMap<>();
 		
 		try {
 			Map<String, Object> card = null;
@@ -176,25 +176,37 @@ public class PaymentServiceImple implements PaymentService {
 			// 2. 빌링키 조회 응답 구조 체크 (methods 배열)
 			if (card == null) {
 				List<Map<String, Object>> methods = (List<Map<String, Object>>) responseData.get("methods");
+				List<Map<String, Object>> channels = (List<Map<String, Object>>) responseData.get("channels");
 				if (methods != null && !methods.isEmpty()) {
+					// 첫번째 요소 가져오기
 					Map<String, Object> firstMethod = methods.get(0);
+					Map<String, Object> firstChannel = channels.get(0);
+
 					methodType = (String) firstMethod.get("type");
+					// 카드 결제
 					if ("BillingKeyPaymentMethodCard".equals(methodType)) {
 						card = (Map<String, Object>) firstMethod.get("card");
-						log.info("빌링키 조회 응답에서 카드 정보 추출 시도");
+					}
+					// 간편결제
+					else if ("BillingKeyPaymentMethodEasyPay".equals(methodType)) {
+						methodInfo.put("pgProvider", firstChannel.get("pgProvider"));
+					} 
+					// 알 수 없는 결제 수단 타입
+					else {
+						log.warn("알 수 없는 결제 수단 타입: " + methodType);
 					}
 				}
 			}
 			
 			// 3. 카드 정보 추출
 			if (card != null) {
-				cardInfo.put("name", card.get("name"));           // 카드 이름 (예: "기업은행카드")
-				cardInfo.put("number", card.get("number"));       // 카드 번호 (마스킹됨)
-				cardInfo.put("publisher", card.get("publisher")); // 발행사
-				cardInfo.put("issuer", card.get("issuer"));       // 발급사
-				cardInfo.put("brand", card.get("brand"));         // 브랜드
-				cardInfo.put("type", card.get("type"));           // 카드 타입 (DEBIT/CREDIT)
-				cardInfo.put("bin", card.get("bin"));             // BIN 코드
+				methodInfo.put("name", card.get("name"));           // 카드 이름 (예: "기업은행카드")
+				methodInfo.put("number", card.get("number"));       // 카드 번호 (마스킹됨)
+				methodInfo.put("publisher", card.get("publisher")); // 발행사
+				methodInfo.put("issuer", card.get("issuer"));       // 발급사
+				methodInfo.put("brand", card.get("brand"));         // 브랜드
+				methodInfo.put("type", card.get("type"));           // 카드 타입 (DEBIT/CREDIT)
+				methodInfo.put("bin", card.get("bin"));             // BIN 코드
 				
 				log.info("카드 정보 추출 성공 - 방식: " + methodType + ", 카드명: " + card.get("name"));
 			}
@@ -202,48 +214,48 @@ public class PaymentServiceImple implements PaymentService {
 			// 간편결제("PaymentMethodEasyPay")일 경우 카드 정보를 담지 않음
 			if ("PaymentMethodEasyPay".equals(methodType)) {
 				log.info("간편결제 방식으로 카드 정보가 없습니다.");
-				cardInfo.put("name", null);
-				cardInfo.put("number", null);
-				cardInfo.put("publisher", null);
-				cardInfo.put("issuer", null);
+				methodInfo.put("name", null);
+				methodInfo.put("number", null);
+				methodInfo.put("publisher", null);
+				methodInfo.put("issuer", null);
 			}
 
 			// 결제 수단 타입 저장
 			switch (methodType) {
 				case "PaymentMethodCard":
-					cardInfo.put("methodType", "card");
+					methodInfo.put("methodType", "card");
 					break;
 				case "PaymentMethodEasyPay":
-					cardInfo.put("methodType", "easyPay");
+					methodInfo.put("methodType", "easyPay");
 					break;
 				case "BillingKeyPaymentMethodCard":
-					cardInfo.put("methodType", "card");
+					methodInfo.put("methodType", "card");
 					break;
 				case "BillingKeyPaymentMethodEasyPay":
-					cardInfo.put("methodType", "easyPay");
+					methodInfo.put("methodType", "easyPay");
 					break;
 				default:
 					break;
 			}
 			
 			// 4. 카드 정보가 없는 경우 기본값 설정
-			if (cardInfo.isEmpty()) {
-				cardInfo.put("name", "알 수 없는 카드");
-				cardInfo.put("number", "****-****-****-****");
-				cardInfo.put("publisher", "UNKNOWN");
-				cardInfo.put("issuer", "UNKNOWN");
+			if (methodInfo.isEmpty()) {
+				methodInfo.put("name", "알 수 없는 카드");
+				methodInfo.put("number", "****-****-****-****");
+				methodInfo.put("publisher", "UNKNOWN");
+				methodInfo.put("issuer", "UNKNOWN");
 				log.warn("카드 정보를 찾을 수 없어 기본값 설정");
 			}
 			
 		} catch (Exception e) {
 			log.error("카드 정보 추출 중 오류 발생: ", e);
-			cardInfo.put("name", "정보 추출 실패");
-			cardInfo.put("number", "****-****-****-****");
-			cardInfo.put("error", e.getMessage());
+			methodInfo.put("name", "정보 추출 실패");
+			methodInfo.put("number", "****-****-****-****");
+			methodInfo.put("error", e.getMessage());
 		}
 		
-		log.info("추출된 카드 정보: " + cardInfo);
-		return cardInfo;
+		log.info("추출된 카드 정보: " + methodInfo);
+		return methodInfo;
 	}
 
 	// 채널키 매칭
@@ -808,7 +820,7 @@ public class PaymentServiceImple implements PaymentService {
 	}
 
 	/**
-	 * 빌링키로 카드 정보만 조회 (결제수단 등록 시 사용)
+	 * 빌링키로 카드 정보만 조회
 	 * @param billingKey 빌링키
 	 * @return 카드 정보 (name, number)
 	 */
@@ -830,7 +842,7 @@ public class PaymentServiceImple implements PaymentService {
 				@SuppressWarnings("unchecked")
 				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
 				
-				return extractCardInfo(responseData);
+				return extractMethodInfo(responseData);
 			} else {
 				log.error("카드 정보 조회 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
 				Map<String, Object> errorInfo = new HashMap<>();
@@ -1073,6 +1085,7 @@ public class PaymentServiceImple implements PaymentService {
 									String methodType = (String) cardInfo.get("methodType");
 									order.setApiMethodType(methodType);
 									order.setApiMethodProvider((String) cardInfo.get("provider"));
+									order.setApiPgProvider((String) cardInfo.get("pgProvider"));
 									
 									// 카드 결제인 경우에만 카드 정보 설정
 									if ("card".equals(methodType)) {
@@ -1129,8 +1142,8 @@ public class PaymentServiceImple implements PaymentService {
 							
 							System.out.println("API 응답 파싱 완료");
 							
-							// 카드 정보 추출 (개선된 extractCardInfo 함수 사용)
-							Map<String, Object> cardInfo = extractCardInfo(responseData);
+							// 카드 정보 추출 (개선된 extractMethodInfo 함수 사용)
+							Map<String, Object> cardInfo = extractMethodInfo(responseData);
 							
 							// PaymentOrderWithMethodVO에 API 정보 설정
 							String methodType = (String) cardInfo.get("methodType");
@@ -1288,7 +1301,7 @@ public class PaymentServiceImple implements PaymentService {
 				@SuppressWarnings("unchecked")
 				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
 				
-				return extractCardInfo(responseData);
+				return extractMethodInfo(responseData);
 			} else {
 				log.error("예약 결제수단 조회 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
 				Map<String, Object> errorInfo = new HashMap<>();
