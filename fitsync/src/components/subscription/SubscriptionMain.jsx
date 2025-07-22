@@ -97,6 +97,250 @@ const InfoValue = styled.span`
 
 // 제거: TabContainer, TabButton (컨테이너로 이동됨)
 
+// 플랜 비교 컨테이너
+const PlansContainer = styled.div`
+  margin-bottom: 24px;
+`;
+
+const PlansTitle = styled.h2`
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  text-align: center;
+  
+  @media (min-width: 375px) {
+    font-size: 19px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 20px;
+  }
+`;
+
+const PlansGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+`;
+
+const PlanCard = styled.div`
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 20px;
+  border: 2px solid ${props => 
+    props.$isPremium ? 'var(--primary-blue)' : 'var(--border-light)'
+  };
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
+  
+  ${props => props.$clickable && `
+    &:active {
+      transform: scale(0.98);
+    }
+  `}
+  
+  ${props => props.$isPremium && `
+    box-shadow: 0 4px 20px rgba(74, 144, 226, 0.2);
+  `}
+`;
+
+const PlanBadge = styled.div`
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-blue);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  
+  @media (min-width: 375px) {
+    font-size: 11px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 12px;
+  }
+`;
+
+const PlanHeader = styled.div`
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+const PlanTitle = styled.h3`
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  
+  @media (min-width: 375px) {
+    font-size: 17px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 18px;
+  }
+`;
+
+const PlanPrice = styled.div`
+  font-size: 20px;
+  font-weight: bold;
+  color: ${props => props.$isPremium ? 'var(--primary-blue)' : 'var(--text-secondary)'};
+  margin-bottom: 8px;
+  
+  @media (min-width: 375px) {
+    font-size: 22px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 24px;
+  }
+  
+  span {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    
+    @media (min-width: 375px) {
+      font-size: 13px;
+    }
+    
+    @media (min-width: 414px) {
+      font-size: 14px;
+    }
+  }
+`;
+
+const PlanFeatures = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+  const PlanFeature = styled.li`
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-primary);
+    flex-direction: column;
+    
+    @media (min-width: 375px) {
+      font-size: 13px;
+    }
+    
+    @media (min-width: 414px) {
+      font-size: 14px;
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    &::before {
+      content: '${props => props.$available ? '' : ''}';
+      margin-right: 8px;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    
+    ${props => !props.$available && `
+      color: var(--text-tertiary);
+      text-decoration: line-through;
+    `}
+  `;
+
+const ComparisonCTA = styled.div`
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 100%);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shine 2s infinite;
+  }
+  
+  @keyframes shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+`;
+
+const CTATitle = styled.h3`
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 8px;
+  
+  @media (min-width: 375px) {
+    font-size: 19px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 20px;
+  }
+`;
+
+const CTASubtitle = styled.p`
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 16px;
+  line-height: 1.4;
+  
+  @media (min-width: 375px) {
+    font-size: 14px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 15px;
+  }
+`;
+
+const CTAButton = styled.button`
+  background: white;
+  color: var(--primary-blue);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  
+  @media (min-width: 375px) {
+    font-size: 15px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 16px;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+`;
+
 // 액션 버튼들
 const ActionGrid = styled.div`
   display: grid;
@@ -254,10 +498,8 @@ const SubscriptionMain = () => {
   };
 
   const handleSubscribe = () => {
-    if (!subscriptionData?.isSubscriber) {
-      // 비구독자인 경우 - 아직 구독 결제 페이지가 없으므로 안내 메시지
-      alert('구독 결제 페이지를 준비 중입니다. 곧 오픈 예정입니다!');
-    }
+    // 구독 결제 페이지로 이동하거나 결제수단 선택 모달 열기
+    navigate('/subscription/methods?showModal=true&directPay=true');
   };
 
   const handleManagePayments = () => {
@@ -308,73 +550,113 @@ const SubscriptionMain = () => {
 
   return (
     <Container>
-      {/* 구독 상태 카드 */}
-      <StatusCard $isSubscriber={isSubscriber}>
-        <StatusBadge $isSubscriber={isSubscriber}>
-          <StatusIcon>{isSubscriber ? '✅' : '❌'}</StatusIcon>
-          {isSubscriber ? '프리미엄 구독 중' : '무료 사용자'}
-        </StatusBadge>
+      {/* 구독자만 구독 상태 카드 표시 */}
+      {isSubscriber && (
+        <StatusCard $isSubscriber={isSubscriber}>
+          <StatusBadge $isSubscriber={isSubscriber}>
+            <StatusIcon>✅</StatusIcon>
+            프리미엄 구독 중
+          </StatusBadge>
 
-        {isSubscriber ? (
-          <>
-            {subscriptionData.lastPaymentDate && (
-              <InfoRow>
-                <InfoLabel>마지막 결제일</InfoLabel>
-                <InfoValue>{formatDate(subscriptionData.lastPaymentDate)}</InfoValue>
-              </InfoRow>
-            )}
-            
-            {subscriptionData.subscriptionExpiryDate && (
-              <InfoRow>
-                <InfoLabel>구독 만료일</InfoLabel>
-                <InfoValue>{formatDate(subscriptionData.subscriptionExpiryDate)}</InfoValue>
-              </InfoRow>
-            )}
-
-            {daysLeft !== null && (
-              <InfoRow>
-                <InfoLabel>남은 기간</InfoLabel>
-                <InfoValue 
-                  style={{
-                    color: daysLeft <= 3 ? 'var(--warning)' : 'var(--text-primary)'
-                  }}
-                >
-                  {daysLeft > 0 ? `${daysLeft}일` : '만료됨'}
-                </InfoValue>
-              </InfoRow>
-            )}
-
-            {subscriptionData.nextPaymentDate && (
-              <InfoRow>
-                <InfoLabel>다음 결제 예정일</InfoLabel>
-                <InfoValue>{formatDate(subscriptionData.nextPaymentDate)}</InfoValue>
-              </InfoRow>
-            )}
-
+          {subscriptionData.lastPaymentDate && (
             <InfoRow>
-              <InfoLabel>월 이용료</InfoLabel>
-              <InfoValue>
-                {subscriptionData.subscriptionAmount?.toLocaleString() || '50,000'}원
+              <InfoLabel>마지막 결제일</InfoLabel>
+              <InfoValue>{formatDate(subscriptionData.lastPaymentDate)}</InfoValue>
+            </InfoRow>
+          )}
+          
+          {subscriptionData.subscriptionExpiryDate && (
+            <InfoRow>
+              <InfoLabel>구독 만료일</InfoLabel>
+              <InfoValue>{formatDate(subscriptionData.subscriptionExpiryDate)}</InfoValue>
+            </InfoRow>
+          )}
+
+          {daysLeft !== null && (
+            <InfoRow>
+              <InfoLabel>남은 기간</InfoLabel>
+              <InfoValue 
+                style={{
+                  color: daysLeft <= 3 ? 'var(--warning)' : 'var(--text-primary)'
+                }}
+              >
+                {daysLeft > 0 ? `${daysLeft}일` : '만료됨'}
               </InfoValue>
             </InfoRow>
-          </>
-        ) : (
-          <>
+          )}
+
+          {subscriptionData.nextPaymentDate && (
             <InfoRow>
-              <InfoLabel>현재 상태</InfoLabel>
-              <InfoValue>기본 기능만 이용 가능</InfoValue>
+              <InfoLabel>다음 결제 예정일</InfoLabel>
+              <InfoValue>{formatDate(subscriptionData.nextPaymentDate)}</InfoValue>
             </InfoRow>
-            <InfoRow>
-              <InfoLabel>프리미엄 혜택</InfoLabel>
-              <InfoValue>사용자 맞춤 AI 서비스</InfoValue>
-            </InfoRow>
-            <InfoRow>
-              <InfoLabel>월 이용료</InfoLabel>
-              <InfoValue>3,000원</InfoValue>
-            </InfoRow>
-          </>
-        )}
-      </StatusCard>
+          )}
+        </StatusCard>
+      )}
+
+      {/* 비구독자만 보이는 플랜 비교 섹션 */}
+      {!isSubscriber && (
+        <>
+          <PlansContainer>
+            <PlansTitle>💪 지금 업그레이드하고 더 많은 혜택을!</PlansTitle>
+            
+            <PlansGrid>
+              {/* 무료 플랜 */}
+              <PlanCard $isPremium={false}>
+                <PlanHeader>
+                  <PlanTitle>기본 플랜</PlanTitle>
+                  <PlanPrice>무료</PlanPrice>
+                </PlanHeader>
+                
+                <PlanFeatures>
+                  <PlanFeature $available={true}>나만의 루틴 만들기</PlanFeature>
+                  <PlanFeature $available={true}>운동 기록 작성</PlanFeature>
+                  <PlanFeature $available={true}>트레이너 매칭</PlanFeature>
+                  <PlanFeature $available={false}>개인 맞춤 루틴 추천</PlanFeature>
+                  <PlanFeature $available={false}>운동 피드백 서비스</PlanFeature>
+                </PlanFeatures>
+              </PlanCard>
+
+              {/* 프리미엄 플랜 */}
+              <PlanCard $isPremium={true} $clickable={true} onClick={handleSubscribe}>
+                <PlanBadge>추천!</PlanBadge>
+                <PlanHeader>
+                  <PlanTitle>프리미엄 플랜</PlanTitle>
+                  <PlanPrice $isPremium={true}>
+                    3,000원
+                    <span>/월</span>
+                  </PlanPrice>
+                </PlanHeader>
+                
+                <PlanFeatures>
+                  <PlanFeature $available={true}>나만의 루틴 만들기</PlanFeature>
+                  <PlanFeature $available={true}>운동 기록 작성</PlanFeature>
+                  <PlanFeature $available={true}>트레이너 매칭</PlanFeature>
+                  <PlanFeature $available={true}>개인 맞춤 루틴 추천</PlanFeature>
+                  <PlanFeature $available={true}>운동 피드백 서비스</PlanFeature>
+                </PlanFeatures>
+              </PlanCard>
+            </PlansGrid>
+          </PlansContainer>
+
+          {/* CTA 섹션 */}
+          <ComparisonCTA onClick={handleSubscribe}>
+            <CTATitle>🚀 지금 바로 시작하세요!</CTATitle>
+            <CTASubtitle>
+              AI가 분석한 나만의 맞춤 운동으로<br />
+              더 효과적인 운동을 경험해보세요
+            </CTASubtitle>
+            <CTAButton>
+              프리미엄으로 업그레이드 ✨
+            </CTAButton>
+          </ComparisonCTA>
+        </>
+      )}
+
+      {/* 구독자용 관리 버튼들 */}
+      {isSubscriber && (
+        <></>
+      )}
     </Container>
   );
 };

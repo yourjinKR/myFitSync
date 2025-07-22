@@ -91,7 +91,7 @@ public class PaymentServiceImple implements PaymentService {
 	// 결제수단 불러오기 (빌링키 제외)
 	@Override
 	public List<PaymentMethodVO> getPaymentMethods(int memberIdx) {
-		return paymentMethodMapper.selectByMemberIdxExcludingKey(memberIdx);
+		return paymentMethodMapper.selectByMemberIdx(memberIdx);
 	}
 	
 	// 빌링키 정보 가져오기
@@ -304,6 +304,7 @@ public class PaymentServiceImple implements PaymentService {
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
 			
+			System.out.println("provider!!!!!!!!! : " + method.getMethod_provider());
 			order.setOrder_provider(method.getMethod_provider());
 			String card = method.getMethod_card();
 			System.out.println("card!!!!!!!!! : " + card);
@@ -699,7 +700,7 @@ public class PaymentServiceImple implements PaymentService {
 		}
 	}
 	
-	
+	// 결제수단명 변경
 	@Override
 	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName) {
 		try {

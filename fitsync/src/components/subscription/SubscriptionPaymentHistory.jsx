@@ -377,7 +377,18 @@ const SubscriptionPaymentHistory = () => {
 
   // 상태 텍스트 - API 응답의 statusDisplayName 사용
   const getStatusText = (payment) => {
-    return payment.statusDisplayName || payment.order_status || '알 수 없음';
+    switch (payment.order_status) {
+      case 'PAID':
+        return '결제완료';
+      case 'READY':
+        return '결제대기';
+      case 'CANCELLED' :
+        return '결제취소';
+      case 'FAILED':
+        return '결제실패';
+      default:
+        break;
+    }
   };
 
   if (loading) {
@@ -417,7 +428,7 @@ const SubscriptionPaymentHistory = () => {
 
         {paymentHistory.length === 0 ? (
           <EmptyState>
-            <div className="icon">💳</div>
+            <div className="icon">📭</div>
             <h3>결제 내역이 없습니다</h3>
             <p>
               구독 결제 내역이 없습니다.<br />
@@ -446,7 +457,7 @@ const SubscriptionPaymentHistory = () => {
                       {formatDate(payment)}
                     </PaymentDate>
                     <PaymentMethod>
-                      {payment.order_card || 'N/A'} {payment.order_card_num || 'N/A'}
+                      {payment.order_card || payment.order_provider} {payment.order_card_num || ''}
                     </PaymentMethod>
                   </PaymentRow>
                 </CardContent>

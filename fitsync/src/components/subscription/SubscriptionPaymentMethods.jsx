@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { PaymentUtil } from '../../utils/PaymentUtil';
 import AddPaymentMethodModal from './AddPaymentMethodModal';
+import PaymentConfirmModal from './PaymentConfirmModal';
+import { useLocation } from 'react-router-dom';
 
 // 스타일 컴포넌트들
 const Container = styled.div`
@@ -192,20 +194,17 @@ const CardBrand = styled.div`
   color: var(--text-secondary);
 `;
 
-const CardNumber = styled.div`
-  font-size: 11px !important;
+const CardNumber = styled.span`
+  align-items: center;
   color: var(--text-secondary);
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
-  text-align: right;
-  flex-shrink: 0;
-  font-weight: 500;
-  
-  @media (min-width: 375px) {
-    font-size: 12px !important;
+  font-weight: 400;
+  font-size: 8px !important;
+    @media (min-width: 375px) {
+    font-size: 10px !important;
   }
   
   @media (min-width: 414px) {
-    font-size: 13px !important;
+    font-size: 11px !important;
   }
 `;
 
@@ -225,6 +224,38 @@ const PaymentProvider = styled.div`
   
   @media (min-width: 414px) {
     font-size: 12px !important;
+  }
+`;
+
+// 결제하기 버튼
+const PaymentButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  margin-top: 16px;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  @media (min-width: 375px) {
+    font-size: 15px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 16px;
+  }
+  
+  &:hover {
+    background: var(--primary-blue-hover);
+  }
+  
+  &:active {
+    transform: translateY(1px);
+    background: var(--primary-blue-dark);
   }
 `;
 
@@ -494,6 +525,36 @@ const SubscriptionPaymentMethods = () => {
   const [openMenuId, setOpenMenuId] = useState(null); // 메뉴 상태 관리
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [isSub, setIsSub] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!isSub) return;
+
+    const searchParams = new URLSearchParams(location.search);
+    const showModal = searchParams.get('showModal');
+    const directPay = searchParams.get('directPay');
+
+    if (showModal === 'true' && paymentMethods.length === 0 && !isSub) {
+      setShowAddModal(true);
+    } 
+
+    if (directPay === 'true' && paymentMethods.length !== 0 && !isSub) {
+      // 첫 번째 결제수단을 선택하여 결제 확인 모달 열기
+      setSelectedPaymentMethod(paymentMethods[0]);
+    }
+    
+  },[paymentMethods, location.search, loading, isSub])
+
+  useEffect(() => {
+    if (selectedPaymentMethod !== null) {
+      setShowPaymentConfirm(true);
+    }
+  },[selectedPaymentMethod])
   
   // 터치 관련 refs (풀 투 리프레시용만)
   const touchStartY = useRef(0);
@@ -508,15 +569,18 @@ const SubscriptionPaymentMethods = () => {
     loadPaymentMethods();
   }, []);
 
-  const loadPaymentMethods = async () => {
+  const loadPaymentMethods = async (isDirectPay=false) => {
     try {
       setLoading(true);
       setError(null);
       
       const response = await PaymentUtil.getBillingKeys();
+
+      const isSubResponse = await PaymentUtil.checkSubscriptionStatus();
       
-      if (response.success) {
+      if (response.success && isSubResponse.success) {
         setPaymentMethods(response.data || []);
+        setIsSub(isSubResponse.data.isSubscriber || false);
       } else {
         setError(response.message || '결제수단을 불러올 수 없습니다.');
       }
@@ -568,9 +632,15 @@ const SubscriptionPaymentMethods = () => {
     setShowAddModal(true);
   };
 
+  // 모달 완료
   const handleModalSuccess = () => {
     // 결제수단 목록 새로고침
-    loadPaymentMethods();
+    const searchParams = new URLSearchParams(location.search);
+    const directPay = searchParams.get('directPay');
+
+    const isDirectPay = directPay === 'true' ? true : false;
+
+    loadPaymentMethods(isDirectPay);
     setShowAddModal(false);
   };
 
@@ -674,49 +744,31 @@ const SubscriptionPaymentMethods = () => {
     return !method.method_card || !method.method_card_num;
   };
 
-  // 결제수단 아이콘 (브랜드별)
-  const getPaymentIcon = (method) => {
-    if (method.method_provider === 'KAKAOPAY') {
-      return '💛';
-    } else if (method.method_provider === 'TOSSPAYMENTS') {
-      if (method.method_card) {
-        return getCardIcon(method.method_card);
-      }
-      return '💳';
-    }
-    
-    // 카드 정보가 있으면 카드 아이콘, 없으면 기본 아이콘
-    return method.method_card ? getCardIcon(method.method_card) : '💳';
+  // 결제하기 버튼 클릭 핸들러
+  const handlePaymentStart = (method) => {
+    setSelectedPaymentMethod(method);
+    setShowPaymentConfirm(true);
   };
 
-  // 카드 브랜드 아이콘
-  const getCardIcon = (cardType) => {
-    const icons = {
-      // 영문명 매핑
-      'VISA': '💳',
-      'MASTER': '💳', 
-      'AMEX': '💳',
-      'BC': '💳',
-      'KB': '💳',
-      'SHINHAN': '💳',
-      'HYUNDAI': '💳',
-      'LOTTE': '💳',
-      'NH': '💳',
-      'HANA': '💳',
-      // 한글명 매핑 (API 응답 기준)
-      '농협카드': '🟢',
-      '신한카드': '🔵', 
-      '삼성카드': '🔷',
-      '현대카드': '⚫',
-      '롯데카드': '🔴',
-      '하나카드': '🟡',
-      'KB국민카드': '🟤',
-      'BC카드': '🟠',
-      '우리카드': '🔵',
-      '카카오뱅크': '💛',
-      '토스뱅크': '💙'
-    };
-    return icons[cardType] || '💳';
+  // 결제 성공 핸들러
+  const handlePaymentSuccess = (result) => {
+    setShowPaymentConfirm(false);
+    setSelectedPaymentMethod(null);
+    alert(`결제가 완료되었습니다!`);
+    loadPaymentMethods();
+  };
+
+  // 결제 실패 핸들러
+  const handlePaymentError = (errorMessage) => {
+    setShowPaymentConfirm(false);
+    setSelectedPaymentMethod(null);
+    alert(`결제 실패: ${errorMessage}`);
+  };
+
+  // 결제 모달 닫기
+  const handlePaymentConfirmClose = () => {
+    setShowPaymentConfirm(false);
+    setSelectedPaymentMethod(null);
   };
 
   if (loading) {
@@ -760,7 +812,7 @@ const SubscriptionPaymentMethods = () => {
               결제수단을 등록해주세요
             </p>
             <EmptyActionButton onClick={handleAddPaymentMethod}>
-              첫 결제수단 등록하기
+              결제수단 등록하기
             </EmptyActionButton>
           </EmptyState>
         ) : (
@@ -829,22 +881,16 @@ const SubscriptionPaymentMethods = () => {
                       </MenuButton>
                     </CardTopHeader>
 
-                    {/* 카드 정보 영역 - 간편결제와 카드결제 모두 동일한 구조 */}
+                    {/* 카드 정보 영역 - 간편결제와 카드결제 구분 */}
                     <CardInfoSection>
                       <CardBrandSection>
                         <CardBrand>
                             {isEasyPay 
                               ? (method.method_provider === 'KAKAOPAY' ? '카카오페이' : method.method_provider)
-                              : method.method_card
+                              : `${method.method_card}` 
                             }
+                            <CardNumber>{method.method_card_num || ''}</CardNumber>
                         </CardBrand>
-                        
-                        {/* 카드 번호는 카드결제일 때만 우측에 표시 */}
-                        {!isEasyPay && method.method_card_num && (
-                          <CardNumber>
-                            {method.method_card_num}
-                          </CardNumber>
-                        )}
                       </CardBrandSection>
                       
                       {/* 결제대행사 정보는 하단에 항상 표시 */}
@@ -852,6 +898,13 @@ const SubscriptionPaymentMethods = () => {
                         {method.method_provider || 'Unknown'}
                       </PaymentProvider>
                     </CardInfoSection>
+
+                    {/* 결제하기 버튼 */}
+                    {isSub === false ? (
+                      <PaymentButton onClick={() => handlePaymentStart(method)}>
+                        이 결제수단으로 구독하기
+                      </PaymentButton>
+                    ) : (<></>)}
                   </CardContent>
                 </Card>
               );
@@ -887,6 +940,15 @@ const SubscriptionPaymentMethods = () => {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={handleModalSuccess}
+      />
+
+      {/* 결제 확인 모달 */}
+      <PaymentConfirmModal
+        isOpen={showPaymentConfirm}
+        onClose={handlePaymentConfirmClose}
+        selectedPaymentMethod={selectedPaymentMethod}
+        onPaymentSuccess={handlePaymentSuccess}
+        onPaymentError={handlePaymentError}
       />
     </Container>
   );
