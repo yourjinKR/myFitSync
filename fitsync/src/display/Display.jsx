@@ -37,9 +37,11 @@ import SubscriptionMain from '../components/subscription/SubscriptionMain';
 import SubscriptionPaymentMethods from '../components/subscription/SubscriptionPaymentMethods';
 import SubscriptionPaymentHistory from '../components/subscription/SubscriptionPaymentHistory';
 import SideNav from '../layout/SideNav';
+import Report from '../components/admin/Report';
+
 
 const DisplayWrapper = styled.div`
-  max-width: 750px;
+  ${props => props.$isAdmin ? '' : 'max-width: 750px;'}
   width: 100%;
   margin: 0 auto;
   position: relative;
@@ -50,11 +52,11 @@ const DisplayWrapper = styled.div`
 `;
   
   const DisplayInnner = styled.div.withConfig({
-    shouldForwardProp: (prop) => prop !== 'isShow'
+    shouldForwardProp: (prop) => prop !== 'isShow' && prop !== 'isAdmin'
   })`
   position: relative;
   overflow: auto;
-  height: calc( 100vh - 150px );
+  height: ${(props) => (!props.isAdmin ? '100%' : 'calc( 100vh - 150px )')};
   background: var(--bg-primary);
   margin-top : ${(props) => (props.isShow ? '0' : '65px')};
 `;
@@ -82,13 +84,15 @@ const Display = () => {
     location.pathname !== '/routine/add' && 
     location.pathname !== '/routine/set' &&
     location.pathname !== '/test123';
+  
+  const isAdmin = location.pathname.startsWith('/admin');
 
   return (
-    <DisplayWrapper >
+    <DisplayWrapper $isAdmin={isAdmin}>
       {isShow && <Header setIsOpen={setIsOpen}/>}
       {isOpen ? <SideNav setIsOpen={setIsOpen}/> : <></>}
       
-      <DisplayInnner isShow={isShow}>
+      <DisplayInnner isShow={isShow} $isAdmin={isAdmin}>
         <Routes>
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>
@@ -128,13 +132,14 @@ const Display = () => {
           </Route>
 
           <Route path='/admin' element={<AdminMain/>}>
+            <Route path='report' element={<Report/>}/>
             <Route path='ai' element={<AItest/>}/>
             <Route path='api' element={<AdminApiContainer/>}/>
           </Route>
 
         </Routes>
       </DisplayInnner>
-      {isShow && <Nav/>}
+      {isShow && !isAdmin && <Nav/>}
     </DisplayWrapper>
   );
 };
