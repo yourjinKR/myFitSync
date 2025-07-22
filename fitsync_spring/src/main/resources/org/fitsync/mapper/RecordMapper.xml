@@ -23,4 +23,21 @@
 	    GROUP BY TO_CHAR(record_date, 'YYYY-MM-DD')
 	    ORDER BY record_day
 	</select>
+	
+	<select id="selectRecordDates" resultType="string">
+		  SELECT TO_CHAR(RECORD_DATE, 'YYYY-MM-DD') AS record_date
+		  FROM RECORD
+		  WHERE MEMBER_IDX = #{memberIdx}
+		  GROUP BY TO_CHAR(RECORD_DATE, 'YYYY-MM-DD')
+		  ORDER BY record_date DESC
+	</select>
+
+	<select id="selectRecordsByDate" resultType="org.fitsync.domain.RecordVO">
+		  SELECT r.*, p.PT_NAME, p.PT_CATEGORY, p.PT_IMAGE
+		  FROM RECORD r
+		  JOIN PT p ON r.PT_IDX = p.PT_IDX
+		  WHERE r.MEMBER_IDX = #{memberIdx}
+		    AND TO_CHAR(r.RECORD_DATE, 'YYYY-MM-DD') = #{date}
+		  ORDER BY r.RECORD_DATE DESC
+	</select>
 </mapper>

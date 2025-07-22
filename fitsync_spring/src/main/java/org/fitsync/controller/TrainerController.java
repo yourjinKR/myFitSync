@@ -54,8 +54,6 @@ public class TrainerController {
     @Autowired
     private AwardsService awardsService;
 
-   
-    
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
     public ResponseEntity<?> getTrainerProfileById(@PathVariable int trainerIdx) {

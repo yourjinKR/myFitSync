@@ -14,4 +14,8 @@ public interface ScheduleService {
     public int deleteSchedule(int scheduleIdx);
     // 스케줄 수정
     public void updateSchedule(ScheduleVO vo);
+    // PT 예약 날짜 리스트
+    public List<String> getScheduleDates(int memberIdx);
+    // 특정 날짜 PT 예약 조회
+    public List<ScheduleVO> getSchedulesByDate(int memberIdx, String date);
 }

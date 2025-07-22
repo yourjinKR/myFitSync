@@ -35,4 +35,14 @@ public class ScheduleServiceImple implements ScheduleService {
     public void updateSchedule(ScheduleVO vo) {
     	mapper.updateSchedule(vo);
     }
+    
+    @Override
+    public List<String> getScheduleDates(int memberIdx) {
+    	return mapper.selectScheduleDates(memberIdx);
+    }
+    
+    @Override
+    public List<ScheduleVO> getSchedulesByDate(int memberIdx, String date) {
+    	return mapper.selectSchedulesByDate(memberIdx, date);
+    }
 }

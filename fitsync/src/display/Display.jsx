@@ -16,7 +16,7 @@ import TrainerMain from '../components/trainer/TrainerMain';
 import TrainerDetailView from '../components/trainer/TrainerDetailView';
 import Register from '../components/member/Register';
 import AItest from '../components/admin/AItest';
-import MyPage from '../components/MyPage';
+import MyPage from '../components/user/MyPage';
 import ChatMain from '../components/chat/ChatMain';
 import ChatRoom from '../components/chat/ChatRoom';
 import AdminApiContainer from '../components/admin/AdminApiContainer';
