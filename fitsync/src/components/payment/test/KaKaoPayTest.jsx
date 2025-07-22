@@ -410,8 +410,7 @@ const KaKaoPayTest = () => {
 
     return (
         <div>
-            <ButtonSubmit onClick={billingKey} name={KAKAOPAY}>빌링키 발급 및 저장 테스트(kakao)</ButtonSubmit>
-            <ButtonSubmit onClick={billingKey} name={TOSSPAYMENTS}>빌링키 발급 및 저장 테스트(toss-payments)</ButtonSubmit>
+            <ButtonSubmit onClick={()=> PaymentUtil.getRecentOrder()}>가장 최근 결제 불러오기</ButtonSubmit>
             <ButtonSubmit onClick={handleGetBillingKeyInfo}>내 빌링키 정보 조회 (method_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handlePayBillingKey}>빌링키 결제 (method_idx 입력)</ButtonSubmit>
             <ButtonSubmit onClick={handleGetPaymentMethods}>내 결제수단 목록 조회</ButtonSubmit>

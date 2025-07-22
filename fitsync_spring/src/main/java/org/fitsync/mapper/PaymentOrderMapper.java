@@ -40,9 +40,12 @@ public interface PaymentOrderMapper {
     // 구독자 판별
     PaymentOrderVO selectActiveSubscription(int member_idx);
     
+    // 구독자 상태 상세 조회 (최근 결제 내역 + 예약 내역 포함)
+    PaymentOrderVO selectLatestSubscriptionPayment(int member_idx);
+
     // 특정 결제수단의 예약 결제 조회
     List<PaymentOrderVO> selectScheduledPaymentsByMethodIdx(int method_idx);
     
-    // 구독자 상태 상세 조회 (최근 결제 내역 + 예약 내역 포함)
-    PaymentOrderVO selectLatestSubscriptionPayment(int member_idx);
+    // 특정 유저의 최근 결제건
+    PaymentOrderVO selectRecentOrederBymemberIdx(int member_idx);
 }

@@ -383,8 +383,26 @@ export const PaymentUtil = {
             console.error('모니터링 테스트 중 오류:', error);
             throw error;
         }
-    }
+    },
 
+    /** 가장 최근 내역 1개*/
+    getRecentHistory : async () => {
+        try {
+            const response = await axios.get('/payment/history/recent', {}, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('가장 최근 결제건 불러오기 성공:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('가장 최근 결제건 불러오기 오류:', error);
+            throw error;
+        }
+    },
 
 
 }

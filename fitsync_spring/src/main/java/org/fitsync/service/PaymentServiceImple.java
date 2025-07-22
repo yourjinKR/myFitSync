@@ -718,7 +718,7 @@ public class PaymentServiceImple implements PaymentService {
 		}
 	}
 	
-	// 결제수단별 모든 예약 취소 (내부 메서드)
+	// 결제수단별 모든 예약 취소 (내부 메서드, 리스트 불러올 필요 없음 추후 수정)
 	private void cancelAllSchedulesByMethodIdx(int methodIdx) throws Exception {
 		try {
 			// 해당 결제수단의 모든 예약 조회
@@ -1521,6 +1521,11 @@ public class PaymentServiceImple implements PaymentService {
 		}
 	}
 	
+	// 최근 결제완료건 or 최근 결제예약건 (구독 메인 페이지)
+	public PaymentOrderVO getRecentOrder(int memberIdx) {
+		return paymentOrderMapper.selectRecentOrederBymemberIdx(memberIdx);
+	}
+
 	/**
 	 * 만료일까지 남은 일수 계산
 	 * @param expiryDate 만료일

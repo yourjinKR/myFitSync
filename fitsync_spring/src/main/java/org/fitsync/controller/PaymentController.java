@@ -595,6 +595,36 @@ public class PaymentController {
         }
     }
 
+    // 최근 결제 내역 1개 불러오기 (paid or ready)
+    @GetMapping("/history/recent")
+    public ResponseEntity<Map<String, Object>> getRecentOrder(HttpSession session) {
+        log.info("=== 구독자 상태 확인 API 시작 ===");
+        
+        try {
+            // 1. 세션에서 사용자 정보 조회
+            Integer memberIdx = (Integer) session.getAttribute("member_idx");
+            
+            if (memberIdx == null) {
+                log.warn("❌ 세션에 memberIdx 정보가 없음");
+                return createErrorResponse(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", "LOGIN_REQUIRED");
+            }
+            
+            log.info("구독자 상태 확인 요청 - memberIdx: " + memberIdx);
+            
+            // 2. 구독 상태 확인 서비스 호출
+            PaymentOrderVO recentOrder = payService.getRecentOrder(memberIdx);
+            return createSuccessResponse("정상적으로 불러옴", recentOrder);
+            
+            
+        } catch (Exception e) {
+            log.error("구독자 상태 확인 API 예외 발생", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "구독 상태 확인 중 시스템 오류가 발생했습니다: " + e.getMessage(), 
+                "SYSTEM_ERROR");
+        }
+    }
+
+
     @PostMapping("/monitor/manual")
     public ResponseEntity<String> triggerManualPaymentMonitor(@RequestParam(defaultValue = "false") boolean force) {
         if (force) {

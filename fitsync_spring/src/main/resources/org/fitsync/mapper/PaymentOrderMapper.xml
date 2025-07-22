@@ -194,4 +194,14 @@
         ORDER BY schedule_date ASC
     </select>
 
+    <!-- 특정 유저의 결제건 (paid or ready) -->
+    <select id="selectRecentOrederBymemberIdx" parameterType="int" resultType="org.fitsync.domain.PaymentOrderVO">
+        select * from 
+            (select * from payment_order where 
+                member_idx = #{member_idx} and 
+                order_status IN ('READY','PAID') 
+                order by order_idx desc) 
+            where rownum = 1
+    </select>
+
 </mapper>

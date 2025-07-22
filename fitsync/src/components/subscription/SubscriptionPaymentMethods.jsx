@@ -533,7 +533,6 @@ const SubscriptionPaymentMethods = () => {
 
   useEffect(() => {
     if (loading) return;
-    if (!isSub) return;
 
     const searchParams = new URLSearchParams(location.search);
     const showModal = searchParams.get('showModal');
