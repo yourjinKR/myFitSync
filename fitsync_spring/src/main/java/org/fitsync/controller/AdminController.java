@@ -1,10 +1,15 @@
 package org.fitsync.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpSession;
+
 import org.fitsync.domain.ApiLogVO;
+import org.fitsync.domain.ReportVO;
 import org.fitsync.service.ApiLogServiceImple;
+import org.fitsync.service.ReportServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin")
 @CrossOrigin(origins = "*")
 public class AdminController {
+	
+	@Autowired
+	ReportServiceImple rservice;
+	
 	@Autowired
 	ApiLogServiceImple apiLogService;
 	
@@ -53,5 +62,19 @@ public class AdminController {
 	    }
 	}
 
+	
+	@GetMapping("/report")
+	public ResponseEntity<?> getReport(HttpSession session){
+		Map<String, Object> result = new HashMap<String, Object>();
+		List<ReportVO> vo =  rservice.getReport();
+		if(vo != null) {
+			result.put("success", true);
+			result.put("vo", vo);
+		}else {			
+			result.put("success", false);
+			result.put("msg", "데이터가 없습니다.");
+		}
+		return ResponseEntity.ok(result);
+	}
 
 }

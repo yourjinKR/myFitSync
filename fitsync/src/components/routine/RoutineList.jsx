@@ -35,10 +35,7 @@ const RoutineAddCTA = styled.button.withConfig({
   display: flex;
   align-items: center;
   justify-content: center;
-  width: ${(props) => {
-    if (props.lengthData === 0) return '100%';
-    return props.lengthData % 2 === 0 ? '100%' : 'calc(50% - 5px)';
-  }};
+  width: calc(50% - 5px);
   height: ${(props) => (props.heightData > 0 ? props.heightData + 'px' : '120px')};
   border: 1px solid var(--border-light);
   background: var(--bg-secondary);
@@ -55,6 +52,8 @@ const RoutineAddCTA = styled.button.withConfig({
 
   @media (max-width: 650px) {
     width: 100%;
+    top: 100%;
+    margin-top: 10px;
   }
   
   svg {

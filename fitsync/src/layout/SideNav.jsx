@@ -74,7 +74,7 @@ const SideNavLinks = styled.div`
     width: 80%;
     flex-direction: column;
     align-items: center;
-    padding: 24px 16px;
+    padding: 24px 16px 35px;
     gap: 8px;
     background: var(--bg-secondary);
     border-radius: 16px;
@@ -88,7 +88,6 @@ const SideNavLinks = styled.div`
         font-size: 3rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 16px;
         text-align: center;
         letter-spacing: 1px;
         animation: ${({ $isClosing }) => $isClosing ? fadeOut : fadeIn} 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
@@ -145,7 +144,7 @@ const StyledLink = styled(Link)`
 const navItems = [
     { to: "/", label: "홈", icon: <FaHome /> },
     { to: "/routine/view", label: "루틴", icon: <FaDumbbell /> },
-    { to: "/trainer", label: "트레이너", icon: <FaUserTie /> },
+    { to: "/trainer/search", label: "트레이너", icon: <FaUserTie /> },
     { to: "/chat", label: "채팅", icon: <FaComments /> },
     { to: "/mypage", label: "마이페이지", icon: <FaUserCircle /> },
     { to: "/admin", label: "관리자", icon: <FaCrown /> },

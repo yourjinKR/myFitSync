@@ -194,9 +194,6 @@ const ChkBox = styled.div`
   align-items: center;
   margin: 16px 0;
 `;
-const ChkUpdate = styled.input`
-
-`;
 
 const RoutineMain = () => {
   const nav = useNavigate();

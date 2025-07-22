@@ -22,4 +22,6 @@ public class MessageVO {
         this.message_content = message_content;
         this.attach_idx = null; // 기본값을 null로 설정
     }
+	
+	public ChatAttachVO attach;
 }

@@ -18,4 +18,33 @@
 		    #{member_idx}
 		)
 	</insert>
+	<resultMap id="reportMap" type="org.fitsync.domain.ReportVO">
+	    <id property="report_idx" column="REPORT_IDX"/>
+	    <result property="report_category" column="REPORT_CATEGORY"/>
+	    <result property="report_content" column="REPORT_CONTENT"/>
+	    <result property="idx_num" column="IDX_NUM"/>
+	    <result property="report_hidden" column="REPORT_HIDDEN"/>
+	
+	    <association property="reporter" javaType="org.fitsync.domain.MemberVO">
+	        <id property="member_idx" column="member_idx"/>
+	        <result property="member_email" column="member_email"/>
+	        <result property="member_name" column="member_name"/>
+	        <result property="member_type" column="member_type"/>
+	    </association>
+	</resultMap>
+	<select id="getReport" resultMap="reportMap">
+	   SELECT 
+	        RE.REPORT_IDX,
+	        RE.REPORT_CATEGORY,
+	        RE.REPORT_CONTENT,
+	        RE.IDX_NUM,
+	        RE.REPORT_HIDDEN,
+	        M.MEMBER_IDX,
+	        M.MEMBER_EMAIL,
+	        M.MEMBER_NAME,
+	        M.MEMBER_TYPE
+	    FROM REPORT RE
+	    LEFT JOIN MEMBER M ON RE.MEMBER_IDX = M.MEMBER_IDX
+	    WHERE RE.REPORT_HIDDEN = 0
+	</select>
 </mapper>

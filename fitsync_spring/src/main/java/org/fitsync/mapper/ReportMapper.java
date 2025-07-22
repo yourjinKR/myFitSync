@@ -1,5 +1,9 @@
 package org.fitsync.mapper;
 
-public interface ReportMapper {
+import java.util.List;
 
+import org.fitsync.domain.ReportVO;
+
+public interface ReportMapper {
+    List<ReportVO> getReport();
 }

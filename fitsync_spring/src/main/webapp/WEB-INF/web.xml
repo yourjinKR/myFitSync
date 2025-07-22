@@ -77,5 +77,6 @@
         <url-pattern>/routine/*</url-pattern>  <!-- 필터를 적용할 URL 패턴 -->
         <url-pattern>/trainer/update/*</url-pattern>  <!-- 필터를 적용할 URL 패턴 -->
         <url-pattern>/api/chat/*</url-pattern>  <!-- 필터를 적용할 URL 패턴 -->
+        <url-pattern>/admin/report</url-pattern>  <!-- 필터를 적용할 URL 패턴 -->
     </filter-mapping>
 </web-app>

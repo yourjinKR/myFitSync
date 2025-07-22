@@ -107,7 +107,7 @@ const Header = ({setIsOpen}) => {
   return (
     <HeaderWrapper>
       <MenuButton onClick={()=>setIsOpen(true)}>
-        <MenuIcon handleActiveNav/>
+        <MenuIcon/>
       </MenuButton>
       <Logo onClick={() => navigator('/')}>로고</Logo>
       {

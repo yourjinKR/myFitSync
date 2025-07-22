@@ -1,5 +1,7 @@
 package org.fitsync.mapper;
 
-public interface ReviewMapper {
+import org.fitsync.domain.ReviewVO;
 
+public interface ReviewMapper {
+	public ReviewVO getReviewOne(int review_idx);
 }

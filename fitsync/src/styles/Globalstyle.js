@@ -121,6 +121,28 @@ const GlobalStyle = createGlobalStyle`
   ::-webkit-scrollbar-thumb:hover {
     background: var(--border-dark);
   }
+
+  .ta-c{
+    text-align: center !important;
+  }
+  .ta-l{
+    text-align: left !important;
+  }
+
+  .txt-ov{
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important; /* 2줄까지 표시 */
+    -webkit-box-orient: vertical !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+  }
+  
+  .pos-r{
+    position: relative !important;
+  }
 `;
 
 export default GlobalStyle;
