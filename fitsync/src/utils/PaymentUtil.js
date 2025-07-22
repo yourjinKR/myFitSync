@@ -236,7 +236,7 @@ export const PaymentUtil = {
     /** 사용자별 결제 내역 조회 */
     getPaymentHistory: async () => {
         try {
-            const response = await axios.get('/payment/history', {
+            const response = await axios.get('/payment/history/v2', {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'application/json'

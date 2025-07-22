@@ -304,6 +304,18 @@ public class PaymentServiceImple implements PaymentService {
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
 			
+			order.setOrder_provider(method.getMethod_provider());
+			String card = method.getMethod_card();
+			System.out.println("card!!!!!!!!! : " + card);
+			if (card != null) {
+				order.setOrder_card(card);
+			}
+			String cardNum = method.getMethod_card_num();
+			System.out.println("cardNum !!!!!!!!! : " + cardNum);
+			if (cardNum != null) {
+				order.setOrder_card_num(cardNum);
+			}
+
 			try {
 			    paymentOrderMapper.insertPaymentOrder(order);
 			    log.info("결제 주문 정보 저장 완료 - PaymentId: " + paymentId);
@@ -473,7 +485,8 @@ public class PaymentServiceImple implements PaymentService {
 	// 빌링키 결제 예약
 	@Override
 	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime) {
-		String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
+		PaymentMethodVO method = paymentMethodMapper.selectByMethodIdx(methodIdx);
+		String billingKey = method.getMethod_key();
 		String channelKey = getChannelKey(paymentMethodMapper.selectByMethodIdx(methodIdx).getMethod_provider());
 
 		// 한국 시간대 설정
@@ -563,6 +576,16 @@ public class PaymentServiceImple implements PaymentService {
 			order.setOrder_price(3000);
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
+
+			order.setOrder_provider(method.getMethod_provider());
+			String card = method.getMethod_card();
+			if (card != null) {
+				order.setOrder_card(card);
+			}
+			String cardNum = method.getMethod_card_num();
+			if (cardNum != null) {
+				order.setOrder_card_num(cardNum);
+			}
 			
 			// 추출된 schedule_id 설정
 			if (scheduleId != null) {
@@ -1209,7 +1232,7 @@ public class PaymentServiceImple implements PaymentService {
 			throw new RuntimeException("결제 기록 조회 중 오류가 발생했습니다.", e);
 		}
 	}
-	
+
 	/**
 	 * API 정보 조회 실패 시 기본값 설정
 	 * @param order 결제 주문 VO

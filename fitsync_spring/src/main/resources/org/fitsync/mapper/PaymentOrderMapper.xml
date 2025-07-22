@@ -20,7 +20,14 @@
             <if test="schedule_date != null">
                 schedule_date,
             </if>
-            order_regdate
+            order_regdate,
+            <if test="order_card != null">
+                order_card,
+            </if>
+            <if test="order_card != null">
+                order_card_num,
+            </if>
+            order_provider
         )
         VALUES (
             #{order_idx}, #{member_idx}, #{method_idx},
@@ -32,7 +39,14 @@
             <if test="schedule_date != null">
                 #{schedule_date},
             </if>
-            #{order_regdate}
+            #{order_regdate},
+            <if test="order_card != null">
+                #{order_card},
+            </if>
+            <if test="order_card != null">
+                #{order_card_num},
+            </if>
+            #{order_provider}
         )
     </insert>
 
@@ -87,7 +101,7 @@
         ORDER BY order_idx DESC
     </select>
 
-    <!-- 특정 회원의 결제 목록 조회 (결제 수단 정보 포함, 결재가 완료된 것만) -->
+    <!-- 특정 회원의 결제 목록 조회 (결제 수단 정보 포함, 페이징 처리 포함) -->
     <select id="selectPaymentOrdersByMemberWithMethod" parameterType="int" resultType="org.fitsync.domain.PaymentOrderWithMethodVO">
         SELECT *
         FROM payment_order

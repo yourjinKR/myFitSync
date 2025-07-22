@@ -23,4 +23,7 @@ public class PaymentOrderVO {
     private Date order_paydate; // 결제 완료 시간 (성공 시만 값 존재)
     private String schedule_id; // 정기 결제 예약 ID (정기 결제 시만 값 존재)
     private Date schedule_date; // 정기 결제 예약 시간 (정기 결제 시만 값 존재)
+    private String order_provider; // 제공하는 pg사
+    private String order_card; // 결제에 사용된 카드사
+    private String order_card_num; // 결제에 사용된 카드 번호
 }

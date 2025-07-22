@@ -11,7 +11,18 @@ const Container = styled.div`
 // 풀 투 리프레시 컨테이너
 const PullToRefreshContainer = styled.div`
   position: relative;
-  min-height: calc(100vh - 200px);
+  min-hei  if (loading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <LoadingSpinner />
+          <h3 style={{ fontSize: '18px', marginTop: '16px' }}>결제 내역을 불러오는 중...</h3>
+        </LoadingContainer>
+      </Container>
+    );
+  }
+
+  return ( 200px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 `;
@@ -50,23 +61,7 @@ const HistoryList = styled.div`
   padding-bottom: 100px;
 `;
 
-// 월별 그룹 헤더
-const MonthHeader = styled.div`
-  padding: 20px 0 12px 0;
-  font-size: 14px !important;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-light);
-  margin-bottom: 16px;
-  
-  @media (min-width: 375px) {
-    font-size: 15px !important;
-  }
-  
-  @media (min-width: 414px) {
-    font-size: 16px !important;
-  }
-`;
+
 
 // 결제 내역 카드
 const HistoryCard = styled.div`
@@ -371,18 +366,13 @@ const SubscriptionPaymentHistory = () => {
     return parseDate;
   };
 
-  // 월별 그룹화
-  const groupByMonth = (payments)=> {
-    const groups = {};
-    payments.forEach(payment => {
-      const date = new Date(payment.order_regdate || payment.order_paydate);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      if (!groups[monthKey]) {
-        groups[monthKey] = [];
-      }
-      groups[monthKey].push(payment);
+  // 결제 내역을 최신순으로 정렬
+  const sortPaymentsByDate = (payments) => {
+    return payments.sort((a, b) => {
+      const dateA = new Date(a.order_regdate || a.order_paydate);
+      const dateB = new Date(b.order_regdate || b.order_paydate);
+      return dateB - dateA; // 최신순으로 정렬
     });
-    return groups;
   };
 
   // 상태 텍스트 - API 응답의 statusDisplayName 사용
@@ -401,8 +391,8 @@ const SubscriptionPaymentHistory = () => {
     );
   }
 
-  const groupedPayments = groupByMonth(paymentHistory);
-  const monthKeys = Object.keys(groupedPayments).sort().reverse(); // 최신순
+  // 결제 내역을 최신순으로 정렬
+  const sortedPayments = sortPaymentsByDate([...paymentHistory]);
 
   return (
     <Container>
@@ -436,56 +426,31 @@ const SubscriptionPaymentHistory = () => {
           </EmptyState>
         ) : (
           <HistoryList>
-            {monthKeys.map((monthKey, monthIndex) => (
-              <div key={monthKey} style={{ marginBottom: monthIndex === monthKeys.length - 1 ? '0' : '24px' }}>
-                <MonthHeader>
-                  {new Date(monthKey + '-01').toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long'
-                  })}
-                </MonthHeader>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {groupedPayments[monthKey].map((payment) => (
-                    <HistoryCard key={payment.order_idx}>
-                      <CardContent>
-                        <PaymentRow>
-                          <PaymentTitle>
-                            {payment.order_name || '구독 서비스 결제'}
-                            <StatusBadge $status={payment.order_status}>
-                              {getStatusText(payment)}
-                            </StatusBadge>
-                          </PaymentTitle>
-                          <PaymentAmount $status={payment.order_status}>
-                            {payment.formattedPrice || `${payment.order_price?.toLocaleString() || '0'}원`}
-                          </PaymentAmount>
-                        </PaymentRow>
-                        
-                        <PaymentRow>
-                          <PaymentDate>
-                            {formatDate(payment)}
-                          </PaymentDate>
-                          <PaymentMethod>
-                            {payment.cardDisplayInfo || payment.displayMethodName || 'N/A'}
-                          </PaymentMethod>
-                        </PaymentRow>
-                        
-                        {payment.order_status === 'FAILED' && payment.failureReason && (
-                          <PaymentRow $last>
-                            <div style={{ 
-                              fontSize: '12px', 
-                              color: 'var(--warning)',
-                              marginTop: '8px' 
-                            }}>
-                              실패 사유: {payment.failureReason}
-                            </div>
-                          </PaymentRow>
-                        )}
-                      </CardContent>
-                    </HistoryCard>
-                  ))}
-                </div>
-              </div>
+            {sortedPayments.map((payment) => (
+              <HistoryCard key={payment.order_idx}>
+                <CardContent>
+                  <PaymentRow>
+                    <PaymentTitle>
+                      {payment.order_name || '구독 서비스 결제'}
+                      <StatusBadge $status={payment.order_status}>
+                        {getStatusText(payment)}
+                      </StatusBadge>
+                    </PaymentTitle>
+                    <PaymentAmount $status={payment.order_status}>
+                      {`${payment.order_price?.toLocaleString() || '0'}원` || 'N/A'}
+                    </PaymentAmount>
+                  </PaymentRow>
+                  
+                  <PaymentRow>
+                    <PaymentDate>
+                      {formatDate(payment)}
+                    </PaymentDate>
+                    <PaymentMethod>
+                      {payment.order_card || 'N/A'} {payment.order_card_num || 'N/A'}
+                    </PaymentMethod>
+                  </PaymentRow>
+                </CardContent>
+              </HistoryCard>
             ))}
           </HistoryList>
         )}

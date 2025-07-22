@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.PaymentMethodVO;
+import org.fitsync.domain.PaymentOrderVO;
 import org.fitsync.domain.PaymentOrderWithMethodVO;
 import org.fitsync.service.PaymentServiceImple;
 import org.fitsync.service.ScheduledPaymentMonitor;
@@ -479,6 +480,32 @@ public class PaymentController {
         
         try {
             List<PaymentOrderWithMethodVO> paymentHistory = payService.getPaymentHistoryWithMethod(memberIdx);
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("history", paymentHistory);
+            responseData.put("totalCount", paymentHistory.size());
+            
+            return createSuccessResponse("결제 기록 조회 성공", responseData);
+            
+        } catch (Exception e) {
+            log.error("결제 기록 조회 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "결제 기록 조회 중 오류가 발생했습니다.", "PAYMENT_HISTORY_FETCH_FAILED");
+        }
+    }
+
+    /**
+     * 사용자별 결제 기록 조회 API2
+     * @return ResponseEntity<Map<String, Object>> - {success: boolean, message: string, data: {history: PaymentOrderWithMethodVO[], totalCount: number}, timestamp: number}
+     */
+    @GetMapping("/history/v2")
+    public ResponseEntity<Map<String, Object>> getPaymentHistory2(HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+        
+        try {
+            List<PaymentOrderVO> paymentHistory = payService.getPaymentHistory(memberIdx);
             
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("history", paymentHistory);

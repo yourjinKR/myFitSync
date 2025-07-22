@@ -118,7 +118,7 @@ const DropdownMenu = styled.div`
 `;
 
 // 메뉴 옵션
-const MenuOption = styled.button`
+const MenuOption = styled.div`
   width: 100%;
   padding: 10px 12px;
   background: none;
