@@ -624,6 +624,23 @@ public class PaymentController {
         }
     }
 
+    // 자동결제건 결제수단 재등록 
+    @PatchMapping("/bill/schedule")
+    public ResponseEntity<Map<String, Object>> updateScedule(@RequestBody Map<String, Object> body, HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+
+        try {
+
+
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+
+        return null;
+    }
 
     @PostMapping("/monitor/manual")
     public ResponseEntity<String> triggerManualPaymentMonitor(@RequestParam(defaultValue = "false") boolean force) {
@@ -633,6 +650,24 @@ public class PaymentController {
         } else {
             scheduledPaymentMonitor.processDailyPaymentBatch(); // monitorEnabled 값 따름
             return ResponseEntity.ok("✅ 결제 모니터링 실행 완료 (forceRun=false)");
+        }
+    }
+    
+    /**
+     * DB 연결 테스트 (디버깅용)
+     */
+    @GetMapping("/test/db")
+    public ResponseEntity<Map<String, Object>> testDatabaseConnection() {
+        try {
+            log.info("=== DB 연결 테스트 API 호출 ===");
+            Map<String, Object> result = payService.testDatabaseConnection();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("DB 연결 테스트 API 오류: ", e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
         }
     }
 }

@@ -1,6 +1,8 @@
 package org.fitsync.mapper;
 
 import org.fitsync.domain.PaymentMethodVO;
+import org.fitsync.domain.PaymentOrderVO;
+
 import java.util.List;
 
 public interface PaymentMethodMapper {
@@ -25,6 +27,9 @@ public interface PaymentMethodMapper {
 
     // 결제수단 이름 수정
     int updatePaymentMethodName(PaymentMethodVO vo);
+
+    // 예약건 결제수단 변경
+    int updateScheduledPaymentMethod(PaymentOrderVO vo);
     
     // 결제수단 이름 수정 (보안된 버전 - member 소유권 확인)
     int updatePaymentMethodNameSecure(PaymentMethodVO vo);

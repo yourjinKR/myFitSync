@@ -1101,20 +1101,20 @@ const FAQAnswer = styled.div`
 
 const FAQAnswerContent = styled.div`
   padding: 16px 20px;
-  font-size: 15px;
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.6;
   
   @media (min-width: 375px) {
-    font-size: 16px;
+    font-size: 14px !important;
   }
   
   @media (min-width: 414px) {
-    font-size: 17px;
+    font-size: 15px !important;
   }
   
   p {
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     
     &:last-child {
       margin-bottom: 0;

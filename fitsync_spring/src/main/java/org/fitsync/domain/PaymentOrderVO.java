@@ -26,4 +26,23 @@ public class PaymentOrderVO {
     private String order_provider; // 제공하는 pg사
     private String order_card; // 결제에 사용된 카드사
     private String order_card_num; // 결제에 사용된 카드 번호
+
+    @Override
+    public PaymentOrderVO clone() {
+        try {
+            PaymentOrderVO cloned = (PaymentOrderVO) super.clone();
+
+            // Date는 mutable하므로 복사 필요 (deep copy)
+            if (this.order_regdate != null)
+                cloned.order_regdate = (Date) this.order_regdate.clone();
+            if (this.order_paydate != null)
+                cloned.order_paydate = (Date) this.order_paydate.clone();
+            if (this.schedule_date != null)
+                cloned.schedule_date = (Date) this.schedule_date.clone();
+
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Cloning failed: " + e.getMessage());
+        }
+    }
 }

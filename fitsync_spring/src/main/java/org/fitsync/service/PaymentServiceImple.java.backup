@@ -30,47 +30,12 @@ public class PaymentServiceImple implements PaymentService {
 	
 	@Autowired
 	private PortOneApiClient portOneApiClient;
+
+	@Autowired
+	private PaymentMethodMapper paymentMethodMapper;
 	
-	/**
-	 * DB 연결 및 매퍼 상태 테스트
-	 */
-	public Map<String, Object> testDatabaseConnection() {
-		Map<String, Object> result = new HashMap<>();
-		
-		try {
-			log.info("=== DB 연결 테스트 시작 ===");
-			
-			// 매퍼 null 체크
-			result.put("paymentMethodMapper", paymentMethodMapper != null ? "OK" : "NULL");
-			result.put("paymentOrderMapper", paymentOrderMapper != null ? "OK" : "NULL");
-			result.put("portOneApiClient", portOneApiClient != null ? "OK" : "NULL");
-			
-			// 간단한 조회 테스트 (존재하지 않는 memberIdx로 테스트)
-			try {
-				List<PaymentMethodVO> testMethods = paymentMethodMapper.selectByMemberIdx(99999);
-				result.put("paymentMethodQuery", "SUCCESS - Count: " + (testMethods != null ? testMethods.size() : "NULL"));
-			} catch (Exception e) {
-				result.put("paymentMethodQuery", "FAILED - " + e.getMessage());
-			}
-			
-			try {
-				List<PaymentOrderVO> testOrders = paymentOrderMapper.selectPaymentOrdersByMember(99999);
-				result.put("paymentOrderQuery", "SUCCESS - Count: " + (testOrders != null ? testOrders.size() : "NULL"));
-			} catch (Exception e) {
-				result.put("paymentOrderQuery", "FAILED - " + e.getMessage());
-			}
-			
-			result.put("overallStatus", "COMPLETED");
-			log.info("DB 연결 테스트 결과: " + result);
-			
-		} catch (Exception e) {
-			log.error("DB 연결 테스트 중 오류: ", e);
-			result.put("overallStatus", "ERROR");
-			result.put("error", e.getMessage());
-		}
-		
-		return result;
-	}
+	@Autowired
+	private PaymentOrderMapper paymentOrderMapper;
 	
 	// 결제수단 등록 (카드 정보 포함)
 	@Override
@@ -113,38 +78,7 @@ public class PaymentServiceImple implements PaymentService {
 	// 결제수단 불러오기 (빌링키 제외)
 	@Override
 	public List<PaymentMethodVO> getPaymentMethods(int memberIdx) {
-		try {
-			log.info("=== 결제수단 조회 시작 ===");
-			log.info("Member ID: " + memberIdx);
-			
-			if (paymentMethodMapper == null) {
-				log.error("PaymentMethodMapper가 null입니다!");
-				throw new RuntimeException("PaymentMethodMapper가 초기화되지 않았습니다.");
-			}
-			
-			List<PaymentMethodVO> methods = paymentMethodMapper.selectByMemberIdx(memberIdx);
-			
-			if (methods == null) {
-				log.warn("결제수단이 null로 반환되었습니다.");
-				return new ArrayList<>();
-			}
-			
-			log.info("결제수단 조회 완료 - memberIdx: " + memberIdx + ", 건수: " + methods.size());
-			
-			for (int i = 0; i < methods.size(); i++) {
-				PaymentMethodVO method = methods.get(i);
-				log.info("결제수단[" + i + "] - MethodIdx: " + method.getMethod_idx() + 
-						", Provider: " + method.getMethod_provider() + 
-						", Card: " + method.getMethod_card());
-			}
-			
-			return methods;
-			
-		} catch (Exception e) {
-			log.error("결제수단 조회 중 오류 발생 - memberIdx: " + memberIdx, e);
-			e.printStackTrace();
-			throw new RuntimeException("결제수단 조회 실패: " + e.getMessage(), e);
-		}
+		return paymentMethodMapper.selectByMemberIdx(memberIdx);
 	}
 	
 	// 빌링키 정보 가져오기
@@ -153,9 +87,19 @@ public class PaymentServiceImple implements PaymentService {
 		try {
 			String billingKey = paymentMethodMapper.selectBillingKeyByMethodIdx(methodIdx).getMethod_key();
 			
-			HttpResponse<String> response = portOneApiClient.getBillingKeyInfo(billingKey);
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
+					.header("Content-Type", "application/json")
+					.header("Authorization", "PortOne " + apiSecretKey)
+					.method("GET", HttpRequest.BodyPublishers.noBody())
+					.build();
 			
-			if (portOneApiClient.isSuccessResponse(response)) {
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			
+			log.info("PortOne API Response Status: " + response.statusCode());
+			log.info("PortOne API Response Body: " + response.body());
+			
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				// JSON 응답을 Map으로 파싱
 				ObjectMapper objectMapper = new ObjectMapper();
 				@SuppressWarnings("unchecked")
@@ -303,7 +247,14 @@ public class PaymentServiceImple implements PaymentService {
 
 	// 채널키 매칭
 	public String getChannelKey(String channelType) {
-		return portOneApiClient.getChannelKey(channelType);
+		switch (channelType.toLowerCase()) {
+			case "kakaopay":
+				return kakaoPayKey;
+			case "tosspayments":
+				return tosspaymentsKey;
+			default:
+				return channelKey; // 기본 채널키
+		}
 	}
 	
 	// 빌링키로 결제 (api key, payment id, billing key == method key, channel key, ordername, amount, currency 
@@ -371,12 +322,21 @@ public class PaymentServiceImple implements PaymentService {
 			}
 
 			// 3. PortOne API 호출
-			HttpResponse<String> response = portOneApiClient.payWithBillingKey(
-				paymentId, billingKey, channelKey, "fitsync 구독", 3000
-			);
+	    	HttpRequest request = HttpRequest.newBuilder()
+	    		    .uri(URI.create("https://api.portone.io/payments/"+ paymentId +"/billing-key"))
+	    		    .header("Content-Type", "application/json")
+	    		    .header("Authorization", "PortOne " + apiSecretKey)
+	    		    .method("POST", HttpRequest.BodyPublishers.ofString("{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"fitsync 구독\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"}"))
+	    		    .build();
+	    		
+	    	HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+	    		
+	    	// 응답 로깅
+	    	log.info("PortOne API Status Code: " + response.statusCode());
+	    	log.info("PortOne API Response Body: " + response.body());
 	    		
 	    	// 4. 응답 처리 및 주문 상태 업데이트
-	    	boolean isSuccess = portOneApiClient.isSuccessResponse(response);
+	    	boolean isSuccess = response.statusCode() >= 200 && response.statusCode() < 300;
 	    	String orderStatus = isSuccess ? "PAID" : "FAILED";
 	    	
 	    	log.info("=== 결제 상태 업데이트 시작 ===");
@@ -512,248 +472,158 @@ public class PaymentServiceImple implements PaymentService {
 
 	// 빌링키 결제 예약
 	@Override
-	@Transactional
 	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime) {
-		log.info("=== 결제 예약 시작 ===");
-		log.info("PaymentId: " + paymentId + ", MethodIdx: " + methodIdx + ", MemberIdx: " + memberIdx + ", ScheduleDateTime: " + scheduleDateTime);
+		PaymentMethodVO method = paymentMethodMapper.selectByMethodIdx(methodIdx);
+		String billingKey = method.getMethod_key();
+		String channelKey = getChannelKey(paymentMethodMapper.selectByMethodIdx(methodIdx).getMethod_provider());
+
+		// 한국 시간대 설정
+		java.time.ZoneId koreaZone = java.time.ZoneId.of("Asia/Seoul");
+		java.time.LocalDateTime scheduleTime;
+		java.time.ZonedDateTime koreaZonedTime;
+		String timeToPay;
 		
 		try {
-			// 1. 결제수단 정보 조회
-			PaymentMethodVO method = paymentMethodMapper.selectByMethodIdx(methodIdx);
-			if (method == null) {
-				log.error("결제수단을 찾을 수 없습니다. methodIdx: " + methodIdx);
-				return createErrorResponse("결제수단을 찾을 수 없습니다.", paymentId);
-			}
-			
-			String billingKey = method.getMethod_key();
-			String channelKey = getChannelKey(method.getMethod_provider());
-			
-			log.info("결제수단 정보 - BillingKey: " + billingKey + ", Provider: " + method.getMethod_provider() + ", ChannelKey: " + channelKey);
-			
-			// 2. 날짜/시간 처리 및 유효성 검증
-			String apiTimeToPay = processScheduleDateTime(scheduleDateTime);
-			if (apiTimeToPay == null) {
-				return createErrorResponse("잘못된 날짜 형식이거나 시간이 유효하지 않습니다.", paymentId);
-			}
-			
-			// 3. PortOne API 호출 먼저 실행
-			log.info("=== PortOne API 호출 시작 ===");
-			HttpResponse<String> response = portOneApiClient.createPaymentSchedule(
-				paymentId, billingKey, channelKey, "1개월 구독권", 3000, apiTimeToPay
-			);
-			
-			// 4. API 응답 처리
-			if (portOneApiClient.isSuccessResponse(response)) {
-				String scheduleId = extractScheduleId(response.body());
-				
-				if (scheduleId != null) {
-					log.info("PortOne API 성공 - ScheduleId: " + scheduleId);
-					
-					// 5. DB에 모든 정보를 한 번에 저장 (schedule_id 포함)
-					PaymentOrderVO order = createScheduleOrder(paymentId, methodIdx, memberIdx, method, scheduleDateTime, scheduleId);
-					
-					log.info("=== DB 저장 시작 ===");
-					log.info("저장할 주문 정보: " + order.toString());
-					
-					try {
-						paymentOrderMapper.insertPaymentOrder(order);
-						log.info("DB Insert 완료 - Auto-generated OrderIdx: " + order.getOrder_idx());
-					} catch (Exception dbEx) {
-						log.error("DB Insert 실패: ", dbEx);
-						dbEx.printStackTrace();
-						
-						// DB 저장 실패 시 PortOne 예약도 취소 시도
-						try {
-							portOneApiClient.cancelPaymentSchedule(scheduleId);
-							log.info("DB 저장 실패로 인한 PortOne 예약 취소 완료");
-						} catch (Exception cancelEx) {
-							log.error("PortOne 예약 취소 실패: ", cancelEx);
-						}
-						
-						return createErrorResponse("DB 저장 실패: " + dbEx.getMessage(), paymentId);
-					}
-					
-					if (order.getOrder_idx() == 0) {
-						log.error("주문 정보 저장 실패 - OrderIdx가 0입니다");
-						
-						// OrderIdx 생성 실패 시 PortOne 예약도 취소 시도
-						try {
-							portOneApiClient.cancelPaymentSchedule(scheduleId);
-							log.info("OrderIdx 생성 실패로 인한 PortOne 예약 취소 완료");
-						} catch (Exception cancelEx) {
-							log.error("PortOne 예약 취소 실패: ", cancelEx);
-						}
-						
-						return createErrorResponse("주문 정보 저장에 실패했습니다.", paymentId);
-					}
-					
-					log.info("주문 정보 저장 완료 - OrderIdx: " + order.getOrder_idx());
-					
-					// 저장 후 실제 DB에서 조회해서 확인
-					try {
-						PaymentOrderVO savedOrder = paymentOrderMapper.selectByOrderIdx(order.getOrder_idx());
-						if (savedOrder != null) {
-							log.info("DB 저장 검증 성공 - 저장된 데이터: PaymentId=" + savedOrder.getPayment_id() + 
-									", Status=" + savedOrder.getOrder_status() + ", Type=" + savedOrder.getOrder_type() +
-									", ScheduleId=" + savedOrder.getSchedule_id() + ", ScheduleDate=" + savedOrder.getSchedule_date());
-						} else {
-							log.warn("DB 저장 검증 실패 - 저장된 데이터를 찾을 수 없습니다");
-						}
-					} catch (Exception verifyEx) {
-						log.warn("DB 저장 검증 중 오류: " + verifyEx.getMessage());
-					}
-					
-					log.info("결제 예약 성공 - ScheduleId: " + scheduleId);
-					return createSuccessResponse(paymentId, scheduleId, scheduleDateTime, order.getOrder_idx());
-					
-				} else {
-					log.error("schedule_id 추출 실패 - API Response: " + response.body());
-					return createErrorResponse("예약 등록에 실패했습니다. (schedule_id 추출 실패)", paymentId);
-				}
-			} else {
-				log.error("PortOne API 호출 실패 - Status: " + response.statusCode() + ", Body: " + response.body());
-				return createErrorResponse("결제 예약 API 호출에 실패했습니다.", paymentId);
-			}
-			
-		} catch (Exception e) {
-			log.error("결제 예약 중 예외 발생: ", e);
-			return createErrorResponse("결제 예약 처리 중 오류가 발생했습니다: " + e.getMessage(), paymentId);
-		}
-	}
-	
-	/**
-	 * 스케줄 날짜/시간 처리 및 유효성 검증
-	 */
-	private String processScheduleDateTime(String scheduleDateTime) {
-		try {
-			// 한국 시간대 설정
-			java.time.ZoneId koreaZone = java.time.ZoneId.of("Asia/Seoul");
-			java.time.LocalDateTime scheduleTime;
-			
-			// 입력 형식 처리: "yyyy-MM-dd HH:mm:ss" 또는 "yyyy-MM-ddTHH:mm:ss"
+			// 입력 형식: "yyyy-MM-dd HH:mm:ss" 또는 "yyyy-MM-ddTHH:mm:ss"
 			if (scheduleDateTime.contains("T")) {
+				// ISO 형식인 경우
 				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime);
 			} else {
+				// 일반 형식인 경우 (공백으로 구분)
 				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime.replace(" ", "T"));
 			}
 			
-			// 한국 시간대로 변환
-			java.time.ZonedDateTime koreaZonedTime = scheduleTime.atZone(koreaZone);
+			// 입력받은 시간을 한국 시간대의 LocalDateTime으로 해석
+			koreaZonedTime = scheduleTime.atZone(koreaZone);
 			
-			// 현재 시간과 비교하여 유효성 검사
+			// PortOne API 형식으로 변환 (ISO 8601 형식)
+			timeToPay = koreaZonedTime.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			
+			log.info("결제 예약 시간 설정 - 입력: " + scheduleDateTime + 
+					", LocalDateTime: " + scheduleTime + 
+					", Korea ZonedDateTime: " + koreaZonedTime + 
+					", API 전송 형식: " + timeToPay);
+			
+			// 현재 한국 시간과 비교하여 유효성 검사
 			java.time.ZonedDateTime nowKorea = java.time.ZonedDateTime.now(koreaZone);
 			if (koreaZonedTime.isBefore(nowKorea) || koreaZonedTime.isEqual(nowKorea)) {
 				log.error("예약 시간이 현재 시간보다 이전입니다 - 현재: " + nowKorea + ", 예약: " + koreaZonedTime);
-				return null;
+				throw new IllegalArgumentException("예약 시간은 현재 시간보다 미래여야 합니다.");
 			}
 			
-			// PortOne API 형식으로 변환 (ISO 8601 형식)
-			String apiTimeToPay = koreaZonedTime.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-			
-			log.info("시간 처리 완료 - 입력: " + scheduleDateTime + ", API 형식: " + apiTimeToPay);
-			return apiTimeToPay;
-			
-		} catch (Exception e) {
-			log.error("날짜 형식 오류 - 입력값: " + scheduleDateTime, e);
-			return null;
+		} catch (Exception dateEx) {
+			log.error("날짜 형식 오류 - 입력값: " + scheduleDateTime, dateEx);
+			throw new IllegalArgumentException("잘못된 날짜 형식이거나 시간이 유효하지 않습니다. 올바른 형식: 'yyyy-MM-dd HH:mm:ss' 또는 'yyyy-MM-ddTHH:mm:ss'");
 		}
-	}
-	
-	/**
-	 * 스케줄 주문 정보 생성 (schedule_id 포함)
-	 */
-	private PaymentOrderVO createScheduleOrder(String paymentId, int methodIdx, int memberIdx, PaymentMethodVO method, String scheduleDateTime, String scheduleId) {
-		PaymentOrderVO order = new PaymentOrderVO();
-		order.setMember_idx(memberIdx);
-		order.setMethod_idx(methodIdx);
-		order.setPayment_id(paymentId);
-		order.setOrder_type("SCHEDULE");
-		order.setOrder_status("READY"); // 초기 상태
-		order.setOrder_name("1개월 구독권");
-		order.setOrder_price(3000);
-		order.setOrder_currency("KRW");
-		order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
-		order.setOrder_provider(method.getMethod_provider());
-		
-		// PortOne API에서 받은 schedule_id 설정
-		order.setSchedule_id(scheduleId);
-		
-		// 카드 정보 설정
-		if (method.getMethod_card() != null) {
-			order.setOrder_card(method.getMethod_card());
-		}
-		if (method.getMethod_card_num() != null) {
-			order.setOrder_card_num(method.getMethod_card_num());
-		}
-		
-		// 스케줄 날짜 설정
+
 		try {
-			java.time.LocalDateTime scheduleTime;
-			if (scheduleDateTime.contains("T")) {
-				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime);
+			// 포트원 API 호출
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payments/"+ paymentId +"/schedule"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("POST", HttpRequest.BodyPublishers.ofString("{\"payment\":{\"storeId\":\"" + storeId + "\",\"billingKey\":\"" + billingKey + "\",\"channelKey\":\"" + channelKey + "\",\"orderName\":\"1개월 구독권\",\"amount\":{\"total\":3000},\"currency\":\"KRW\"},\"timeToPay\":\"" + timeToPay + "\"}"))
+				.build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			
+			log.info("결제 예약 API 응답 - Status: " + response.statusCode());
+			log.info("결제 예약 API 응답 - Body: " + response.body());
+
+			// schedule_id 추출
+			String scheduleId = null;
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
+				try {
+					ObjectMapper objectMapper = new ObjectMapper();
+					@SuppressWarnings("unchecked")
+					Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
+					
+					// schedule 객체에서 id 추출
+					@SuppressWarnings("unchecked")
+					Map<String, Object> schedule = (Map<String, Object>) responseData.get("schedule");
+					if (schedule != null) {
+						scheduleId = (String) schedule.get("id");
+						log.info("추출된 schedule_id: " + scheduleId);
+					} else {
+						log.warn("응답에서 schedule 객체를 찾을 수 없습니다.");
+					}
+				} catch (Exception parseEx) {
+					log.error("응답 파싱 중 오류 발생: ", parseEx);
+				}
 			} else {
-				scheduleTime = java.time.LocalDateTime.parse(scheduleDateTime.replace(" ", "T"));
+				log.error("결제 예약 API 호출 실패 - Status: " + response.statusCode());
 			}
-			order.setSchedule_date(java.sql.Timestamp.valueOf(scheduleTime));
-			log.info("스케줄 날짜 설정 완료: " + order.getSchedule_date());
-		} catch (Exception e) {
-			log.error("스케줄 날짜 설정 실패: " + e.getMessage(), e);
-		}
-		
-		log.info("스케줄 주문 정보 생성 완료 - PaymentId: " + paymentId + ", ScheduleId: " + scheduleId + ", ScheduleDate: " + order.getSchedule_date());
-		return order;
-	}
-	
-	/**
-	 * API 응답에서 schedule_id 추출
-	 */
-	private String extractScheduleId(String responseBody) {
-		try {
-			ObjectMapper objectMapper = new ObjectMapper();
-			@SuppressWarnings("unchecked")
-			Map<String, Object> responseData = objectMapper.readValue(responseBody, Map.class);
-			
-			// PortOne API v2 응답 구조에 따라 schedule_id 추출
-			// 응답 구조: {"schedule": {"id": "schedule_id"}} 또는 {"id": "schedule_id"}
-			Object scheduleObj = responseData.get("schedule");
-			if (scheduleObj instanceof Map) {
-				@SuppressWarnings("unchecked")
-				Map<String, Object> schedule = (Map<String, Object>) scheduleObj;
-				return (String) schedule.get("id");
+
+			// 결제 내역에 저장
+			PaymentOrderVO order = new PaymentOrderVO();
+			order.setMember_idx(memberIdx);
+			order.setMethod_idx(methodIdx);
+			order.setPayment_id(paymentId);
+			order.setOrder_type("SCHEDULE");
+			order.setOrder_status("READY");
+			order.setOrder_name("1개월 구독권");
+			order.setOrder_price(3000);
+			order.setOrder_currency("KRW");
+			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
+
+			order.setOrder_provider(method.getMethod_provider());
+			String card = method.getMethod_card();
+			if (card != null) {
+				order.setOrder_card(card);
+			}
+			String cardNum = method.getMethod_card_num();
+			if (cardNum != null) {
+				order.setOrder_card_num(cardNum);
 			}
 			
-			// 직접 id 필드가 있는 경우
-			return (String) responseData.get("id");
+			// 추출된 schedule_id 설정
+			if (scheduleId != null) {
+				order.setSchedule_id(scheduleId);
+				log.info("schedule_id 설정 완료: " + scheduleId);
+			} else {
+				order.setOrder_status("FAILED");
+				log.warn("schedule_id가 null입니다. 기본값으로 설정하지 않음.");
+			}
 			
+			// 한국 시간대의 LocalDateTime을 java.sql.Timestamp로 변환
+			// scheduleTime은 이미 한국 시간대로 해석된 LocalDateTime
+			java.sql.Timestamp scheduleTimestamp = java.sql.Timestamp.valueOf(scheduleTime);
+			order.setSchedule_date(scheduleTimestamp);
+			
+			log.info("결제 예약 정보 저장 - PaymentId: " + paymentId + 
+					", Korea LocalDateTime: " + scheduleTime + 
+					", DB Timestamp: " + scheduleTimestamp + 
+					", ScheduleId: " + scheduleId);
+
+			paymentOrderMapper.insertPaymentOrder(order);
+			
+			log.info("결제 예약 저장 완료 - PaymentId: " + paymentId);
+			
+			// 성공 응답 반환
+			Map<String, Object> result = new HashMap<>();
+			result.put("success", true);
+			result.put("message", "결제 예약이 성공적으로 등록되었습니다.");
+			result.put("paymentId", paymentId);
+			result.put("scheduleId", scheduleId);
+			result.put("scheduleDateTime", scheduleTime.toString());
+			result.put("koreaZonedDateTime", koreaZonedTime.toString());
+			result.put("apiTimeToPay", timeToPay);
+			result.put("orderIdx", order.getOrder_idx());
+			
+			return result;
+
 		} catch (Exception e) {
-			log.error("schedule_id 추출 중 오류 발생: ", e);
-			return null;
+			log.error("결제 예약 중 오류 발생: ", e);
+			e.printStackTrace();
+			
+			// 오류 응답 반환
+			Map<String, Object> errorResult = new HashMap<>();
+			errorResult.put("success", false);
+			errorResult.put("message", "결제 예약 처리 중 오류가 발생했습니다: " + e.getMessage());
+			errorResult.put("error", e.getClass().getSimpleName());
+			errorResult.put("paymentId", paymentId);
+			
+			return errorResult;
 		}
-	}
-	
-	/**
-	 * 성공 응답 생성
-	 */
-	private Map<String, Object> createSuccessResponse(String paymentId, String scheduleId, String scheduleDateTime, int orderIdx) {
-		Map<String, Object> result = new HashMap<>();
-		result.put("success", true);
-		result.put("message", "결제 예약이 성공적으로 등록되었습니다.");
-		result.put("paymentId", paymentId);
-		result.put("scheduleId", scheduleId);
-		result.put("scheduleDateTime", scheduleDateTime);
-		result.put("orderIdx", orderIdx);
-		return result;
-	}
-	
-	/**
-	 * 오류 응답 생성
-	 */
-	private Map<String, Object> createErrorResponse(String message, String paymentId) {
-		Map<String, Object> result = new HashMap<>();
-		result.put("success", false);
-		result.put("message", message);
-		result.put("paymentId", paymentId);
-		return result;
 	}
 
 	// 빌링키 결제 예약 취소 (단건)
@@ -775,12 +645,19 @@ public class PaymentServiceImple implements PaymentService {
 			
 			log.info("단건 예약 취소 시작 - orderIdx: " + orderIdx + ", scheduleId: " + scheduleId);
 
-			// PortOne API로 예약 취소
-			HttpResponse<String> response = portOneApiClient.cancelPaymentSchedule(scheduleId);
+			// PortOne API로 예약 취소 (바꿔야 함)
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("DELETE", HttpRequest.BodyPublishers.ofString("{\"scheduleIds\":[\"" + scheduleId + "\"]}"))
+				.build();
+			
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 			log.info("예약 취소 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
 
 			// API 호출 성공 시 DB 상태 업데이트
-			if (portOneApiClient.isSuccessResponse(response)) {
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				// API 응답 파싱하여 실제 취소된 스케줄 ID 확인
 				ObjectMapper objectMapper = new ObjectMapper();
 				@SuppressWarnings("unchecked")
@@ -849,10 +726,17 @@ public class PaymentServiceImple implements PaymentService {
 			log.info("빌링키로 모든 예약 취소 시작 - billingKey: " + billingKey + ", 예약 건수: " + scheduledPayments.size());
 			
 			// PortOne API로 빌링키의 모든 예약 취소
-			HttpResponse<String> response = portOneApiClient.cancelScheduleByBillingKey(billingKey);
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("DELETE", HttpRequest.BodyPublishers.ofString("{\"billingKey\":\"" + billingKey + "\"}"))
+				.build();
+			
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 			log.info("예약 취소 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
 			
-			if (!portOneApiClient.isSuccessResponse(response)) {
+			if (response.statusCode() < 200 || response.statusCode() >= 300) {
 				throw new RuntimeException("예약 취소 API 호출 실패. Status: " + response.statusCode() + ", Body: " + response.body());
 			}
 			
@@ -906,11 +790,18 @@ public class PaymentServiceImple implements PaymentService {
 			
 			// 3. PortOne API로 빌링키 삭제
 			if (billingKey != null && !billingKey.isEmpty()) {
-				HttpResponse<String> response = portOneApiClient.deleteBillingKey(billingKey);
+				HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create("https://api.portone.io/billing-keys/" + billingKey + "?storeId=" + storeId))
+					.header("Content-Type", "application/json")
+					.header("Authorization", "PortOne " + apiSecretKey)
+					.method("DELETE", HttpRequest.BodyPublishers.ofString("{}"))
+					.build();
+				
+				HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 				log.info("빌링키 삭제 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
 				
 				// 빌링키 삭제 실패시 예외 발생으로 트랜잭션 롤백
-				if (!portOneApiClient.isSuccessResponse(response)) {
+				if (response.statusCode() < 200 || response.statusCode() >= 300) {
 					throw new RuntimeException("빌링키 삭제에 실패했습니다. 상태 코드: " + response.statusCode() + ", 응답: " + response.body());
 				}
 				
@@ -946,9 +837,18 @@ public class PaymentServiceImple implements PaymentService {
 	 */
 	public Map<String, Object> getCardInfoByBillingKey(String billingKey) {
 		try {
-			HttpResponse<String> response = portOneApiClient.getBillingKeyInfo(billingKey);
+			HttpRequest request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.portone.io/billing-keys/" + billingKey))
+				    .header("Content-Type", "application/json")
+				    .header("Authorization", "PortOne " + apiSecretKey)
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
+				    .build();
+				    
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 			
-			if (portOneApiClient.isSuccessResponse(response)) {
+			log.info("카드 정보 조회 - Status: " + response.statusCode());
+			
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				ObjectMapper objectMapper = new ObjectMapper();
 				@SuppressWarnings("unchecked")
 				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
@@ -1118,38 +1018,15 @@ public class PaymentServiceImple implements PaymentService {
 	@Override
 	public List<PaymentOrderVO> getPaymentHistory(int memberIdx) {
 		try {
-			log.info("=== 결제 기록 조회 시작 ===");
-			log.info("Member ID: " + memberIdx);
+			log.info("결제 기록 조회 시작 - memberIdx: " + memberIdx);
 			
-			// DB 연결 및 매퍼 상태 확인
-			if (paymentOrderMapper == null) {
-				log.error("PaymentOrderMapper가 null입니다!");
-				throw new RuntimeException("PaymentOrderMapper가 초기화되지 않았습니다.");
-			}
-			
-			log.info("PaymentOrderMapper 정상 - DB 조회 시작");
 			List<PaymentOrderVO> paymentHistory = paymentOrderMapper.selectPaymentOrdersByMember(memberIdx);
 			
-			if (paymentHistory == null) {
-				log.warn("결제 기록이 null로 반환되었습니다.");
-				return new ArrayList<>();
-			}
-			
 			log.info("결제 기록 조회 완료 - memberIdx: " + memberIdx + ", 건수: " + paymentHistory.size());
-			
-			// 각 결제 기록 상세 정보 로깅
-			for (int i = 0; i < paymentHistory.size(); i++) {
-				PaymentOrderVO order = paymentHistory.get(i);
-				log.info("결제기록[" + i + "] - PaymentId: " + order.getPayment_id() + 
-						", Type: " + order.getOrder_type() + ", Status: " + order.getOrder_status() + 
-						", Amount: " + order.getOrder_price());
-			}
-			
 			return paymentHistory;
 			
 		} catch (Exception e) {
 			log.error("결제 기록 조회 중 오류 발생 - memberIdx: " + memberIdx, e);
-			e.printStackTrace(); // 스택 트레이스 출력
 			throw new RuntimeException("결제 기록 조회 실패: " + e.getMessage(), e);
 		}
 	}
@@ -1190,7 +1067,15 @@ public class PaymentServiceImple implements PaymentService {
 							System.out.println("예약 결제 처리 중 - ScheduleId: " + scheduleId);
 							
 							// PortOne API에서 예약 정보 조회
-							HttpResponse<String> scheduleResponse = portOneApiClient.getPaymentSchedule(scheduleId);
+							HttpRequest scheduleRequest = HttpRequest.newBuilder()
+								.uri(URI.create("https://api.portone.io/payment-schedules/" + scheduleId + "?storeId=" + storeId))
+								.header("Content-Type", "application/json")
+								.header("Authorization", "PortOne " + apiSecretKey)
+								.method("GET", HttpRequest.BodyPublishers.noBody())
+								.build();
+							
+							HttpResponse<String> scheduleResponse = HttpClient.newHttpClient()
+								.send(scheduleRequest, HttpResponse.BodyHandlers.ofString());
 							
 							System.out.println("예약 정보 API 응답 상태: " + scheduleResponse.statusCode());
 							
@@ -1250,10 +1135,17 @@ public class PaymentServiceImple implements PaymentService {
 						// 일반 결제의 경우: payment_id로 결제 정보 조회
 						System.out.println("일반 결제 처리 중 - PaymentId: " + order.getPayment_id());
 						
-						HttpResponse<String> response = portOneApiClient.getPaymentInfo(order.getPayment_id());
+						HttpRequest request = HttpRequest.newBuilder()
+							.uri(URI.create("https://api.portone.io/payments/" + order.getPayment_id()))
+							.header("Content-Type", "application/json")
+							.header("Authorization", "PortOne " + apiSecretKey)
+							.method("GET", HttpRequest.BodyPublishers.noBody())
+							.build();
+						
+						HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 						System.out.println("일반 결제 API 응답 상태: " + response.statusCode());
 						
-						if (portOneApiClient.isSuccessResponse(response)) {
+						if (response.statusCode() >= 200 && response.statusCode() < 300) {
 							// JSON 응답 파싱
 							ObjectMapper objectMapper = new ObjectMapper();
 							@SuppressWarnings("unchecked")
@@ -1354,10 +1246,16 @@ public class PaymentServiceImple implements PaymentService {
 				return null;
 			}
 			// schedule_id로 PortOne API에서 결제 예약 정보 조회
-			HttpResponse<String> response = portOneApiClient.getPaymentSchedule(scheduleOrder.getSchedule_id());
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules/" + scheduleOrder.getSchedule_id() + "?storeId=" + storeId))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("GET", HttpRequest.BodyPublishers.ofString("{}"))
+				.build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 			System.out.println(response.body());
 
-			if (portOneApiClient.isSuccessResponse(response)) {
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				ObjectMapper objectMapper = new ObjectMapper();
 				@SuppressWarnings("unchecked")
 				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
@@ -1398,11 +1296,18 @@ public class PaymentServiceImple implements PaymentService {
 	// 예약 id로 결제수단 정보 조회
 	public Object getPaymentMethodByScheduleId(String scheduleId) {
 		try {
-			HttpResponse<String> response = portOneApiClient.getPaymentSchedule(scheduleId);
+			HttpRequest request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.portone.io/payment-schedules/" + scheduleId + "?storeId=" + storeId))
+				    .header("Content-Type", "application/json")
+				    .header("Authorization", "PortOne " + apiSecretKey)
+				    .method("GET", HttpRequest.BodyPublishers.ofString("{}"))
+				    .build();
+				    
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 			
 			log.info("예약 결제수단 조회 - Status: " + response.statusCode());
 			
-			if (portOneApiClient.isSuccessResponse(response)) {
+			if (response.statusCode() >= 200 && response.statusCode() < 300) {
 				ObjectMapper objectMapper = new ObjectMapper();
 				@SuppressWarnings("unchecked")
 				Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
@@ -1614,6 +1519,8 @@ public class PaymentServiceImple implements PaymentService {
 	public Map<String, Object> changeSchedulePaymentMethod(int orderIdx, int methodIdx) {
 		// 기존 결제 예약
 		PaymentOrderVO oldOrder = paymentOrderMapper.selectByOrderIdx(orderIdx);
+		// 새로운 오더
+		PaymentOrderVO newOrder = oldOrder.clone();
 		// 포트원 호출
 		HttpResponse<String> response = portOneCancelSchedules(oldOrder.getSchedule_id());
 		
@@ -1638,12 +1545,21 @@ public class PaymentServiceImple implements PaymentService {
 
 	// 포트원 예약 취소 api
 	private HttpResponse<String> portOneCancelSchedules(String scheduleId) {
+		HttpResponse<String> response = null;
 		try {
-			return portOneApiClient.cancelPaymentSchedule(scheduleId);
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.portone.io/payment-schedules"))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "PortOne " + apiSecretKey)
+				.method("DELETE", HttpRequest.BodyPublishers.ofString("{\"scheduleIds\":[\"" + scheduleId + "\"]}"))
+				.build();
+			
+			response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			log.info("예약 취소 API 응답: Status=" + response.statusCode() + ", Body=" + response.body());
 		} catch (Exception e) {
-			log.error("예약 취소 API 호출 중 오류 발생: ", e);
-			return null;
+			e.getStackTrace();
 		}
+		return response;
 	}
 }
 

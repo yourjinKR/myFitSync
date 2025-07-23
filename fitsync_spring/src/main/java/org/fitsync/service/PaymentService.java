@@ -16,13 +16,13 @@ public interface PaymentService {
 	
 	public Object getBillingKeyInfo(int methodIdx);
 	
-	public Object payBillingKey(String paymentId, int methodIdx, int memberIdx) throws IOException;
+	public Object payBillingKey(String paymentId, int methodIdx, int memberIdx);
 	
 	// 결제 예약 추가
-	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime) throws IOException;
+	public Object scheduleBillingKey(String paymentId, int methodIdx, int memberIdx, String scheduleDateTime);
 
 	// 결제 예약 취소
-	public Object cancelScheduledPayment(int orderIdx, int memberIdx) throws IOException;
+	public Object cancelScheduledPayment(int orderIdx, int memberIdx);
 	
 	public boolean renameBillingKey(int memberIdx, int methodIdx, String methodName);
 	
@@ -50,4 +50,13 @@ public interface PaymentService {
 	
 	// 구독자 여부 확인
 	public Map<String, Object> checkSubscriptionStatus(int memberIdx);
+
+	// 최근 결제건 불러오기
+	public PaymentOrderVO getRecentOrder(int memberIdx);
+
+	// 예약건 결제수단 변경
+	public Map<String, Object> changeSchedulePaymentMethod(int orderIdx, int methodIdx);
+	
+	// DB 연결 테스트 (디버깅용)
+	public Map<String, Object> testDatabaseConnection();
 }

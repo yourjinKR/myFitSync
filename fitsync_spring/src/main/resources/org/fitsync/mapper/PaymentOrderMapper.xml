@@ -24,7 +24,7 @@
             <if test="order_card != null">
                 order_card,
             </if>
-            <if test="order_card != null">
+            <if test="order_card_num != null">
                 order_card_num,
             </if>
             order_provider
@@ -43,7 +43,7 @@
             <if test="order_card != null">
                 #{order_card},
             </if>
-            <if test="order_card != null">
+            <if test="order_card_num != null">
                 #{order_card_num},
             </if>
             #{order_provider}
@@ -77,6 +77,19 @@
             </if>
         WHERE order_idx = #{order_idx}
           AND order_status = 'READY'  <!-- 현재 상태가 READY일 때만 업데이트 -->
+    </update>
+
+    <!-- 예약건 결제수단 변경 -->
+    <update id="updateScheduledPaymentMethod" parameterType="org.fitsync.domain.PaymentOrderVO">
+        UPDATE payment_order
+        SET
+            payment_id = #{payment_id}
+            schedule_id = #{schedule_id }
+            order_provider = #{order_provider}
+            order_card = #{order_card}
+            order_card_num = #{order_card_num}
+        WHERE
+            order_idx = #{order_idx}
     </update>
 
     <!-- 단건 결제 정보 조회 -->
