@@ -8,6 +8,7 @@ import org.fitsync.domain.MessageVO;
 import org.fitsync.domain.ReportVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.mapper.ChatAttachMapper;
+import org.fitsync.mapper.MatchingMapper;
 import org.fitsync.mapper.MemberMapper;
 import org.fitsync.mapper.MessageMapper;
 import org.fitsync.mapper.ReportMapper;
@@ -33,6 +34,8 @@ public class ReportServiceImple implements ReportService {
 	private MessageMapper messageMapper;
 	@Autowired
 	private ChatAttachMapper attachMapper;
+	@Autowired
+	private MatchingMapper matchMapper;
 	
 	@Override
 	public List<ReportVO> getReport() {
@@ -51,14 +54,17 @@ public class ReportServiceImple implements ReportService {
 					}
 					vo.setMessage(mvo);
 				}
-			}else {
+			}else if(vo.getReport_category().equals("member")) {
 				MemberVO memvo = memberMapper.selectTrainerByIdx(vo.getIdx_num());
 				if(memvo != null) {
 					vo.setReported(memvo);					
 				}
+			}else {				
 				ReviewVO rvo = reviewMapper.getReviewOne(vo.getIdx_num());
+				MemberVO memvo = memberMapper.selectTrainerByIdx(rvo.getMember_idx());
 				if(rvo != null) {
 					vo.setReview(rvo);
+					vo.setReported(memvo);
 				}
 			}
 		}
@@ -102,7 +108,10 @@ public class ReportServiceImple implements ReportService {
 
 	// 신고 제재 업데이트
 	@Override
-	public boolean updateReport(int member_idx) {
-		return mapper.updateReport(member_idx) > 0;
+	public boolean updateReport(int report_idx, int member_idx) {
+		ReportVO vo = new ReportVO();
+		vo.setReport_sanction(member_idx);
+		vo.setReport_idx(report_idx);
+		return mapper.updateReport(vo) > 0;
 	}
 }

@@ -9,6 +9,7 @@
 	    <result property="report_content" column="REPORT_CONTENT"/>
 	    <result property="idx_num" column="IDX_NUM"/>
 	    <result property="report_hidden" column="REPORT_HIDDEN"/>
+	    <result property="report_sanction" column="REPORT_SANCTION"/>
 	
 	    <association property="reporter" javaType="org.fitsync.domain.MemberVO">
 	        <id property="member_idx" column="member_idx"/>
@@ -50,6 +51,7 @@
 	        RE.REPORT_CONTENT,
 	        RE.IDX_NUM,
 	        RE.REPORT_HIDDEN,
+	        RE.REPORT_SANCTION,
 	        M.MEMBER_IDX,
 	        M.MEMBER_EMAIL,
 	        M.MEMBER_NAME,
@@ -58,7 +60,14 @@
 	    LEFT JOIN MEMBER M ON RE.MEMBER_IDX = M.MEMBER_IDX
 	</select>
 
-	<update id="updateReport" parameterType="int">
-		UPDATE REPORT SET REPORT_HIDDEN = 1
+	<update id="updateReport" parameterType="org.fitsync.domain.ReportVO">
+		UPDATE REPORT 
+		SET 
+			<if test="member_idx > 0">
+			    REPORT_SANCTION = #{report_sanction},
+			    REPORT_TIME = SYSDATE + ((SELECT COUNT(*) FROM REPORT WHERE REPORT_SANCTION = #{report_sanction}) * 7),
+			</if>
+		    REPORT_HIDDEN = 1 
+		WHERE REPORT_IDX = #{report_idx}
 	</update>
 </mapper>

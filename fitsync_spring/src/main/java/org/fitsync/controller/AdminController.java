@@ -81,14 +81,27 @@ public class AdminController {
 	}
 	
 	// 신고 제재 업데이트
-	@PutMapping("/report/{member_idx}")
-	public ResponseEntity<?> updateReport(@PathVariable int member_idx,HttpSession session){
-		System.out.println(member_idx);
+	@PutMapping("/report/{report_idx}/{member_idx}")
+	public ResponseEntity<?> updateReportBlock(@PathVariable int report_idx, @PathVariable int member_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
-		boolean update = rservice.updateReport(member_idx);
+		boolean update = rservice.updateReport(report_idx, member_idx);
 		if(update) {
 			result.put("success", true);
 			result.put("msg", "제재되었습니다");
+		}else {			
+			result.put("success", false);
+			result.put("msg", "요청에 실패하였습니다..");
+		}
+		return ResponseEntity.ok(result);
+	}
+	
+	@PutMapping("/report/{report_idx}")
+	public ResponseEntity<?> updateReport(@PathVariable int report_idx, HttpSession session){
+		Map<String, Object> result = new HashMap<String, Object>();
+		System.out.println("처리전");
+		boolean update = rservice.updateReport(report_idx, -1);
+		if(update) {
+			result.put("success", true);
 		}else {			
 			result.put("success", false);
 			result.put("msg", "요청에 실패하였습니다..");

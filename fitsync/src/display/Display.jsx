@@ -51,14 +51,12 @@ const DisplayWrapper = styled.div`
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 `;
   
-  const DisplayInnner = styled.div.withConfig({
-    shouldForwardProp: (prop) => prop !== 'isShow' && prop !== 'isAdmin'
-  })`
+  const DisplayInnner = styled.div`
   position: relative;
   overflow: auto;
-  height: calc( 100vh - 150px );
+  height: ${props => props.$isAdmin ? '100%' : 'calc( 100vh - 150px )'};
   background: var(--bg-primary);
-  margin-top : ${(props) => (props.isShow ? '0' : '65px')};
+  margin-top : ${(props) => (props.$isShow ? '0' : '65px')};
 `;
 
 const Display = () => {
@@ -92,7 +90,7 @@ const Display = () => {
       {isShow && <Header setIsOpen={setIsOpen}/>}
       {isOpen ? <SideNav setIsOpen={setIsOpen}/> : <></>}
       
-      <DisplayInnner isShow={isShow} $isAdmin={isAdmin}>
+      <DisplayInnner $isShow={isShow} $isAdmin={isAdmin}>
         <Routes>
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>

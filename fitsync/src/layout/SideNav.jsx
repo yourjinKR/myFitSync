@@ -53,7 +53,6 @@ const SideNavWrapper = styled.div`
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    max-width: 800px;
     height: 100vh;
     display: flex;
     align-items: center;
@@ -72,6 +71,7 @@ const SideNavWrapper = styled.div`
 const SideNavLinks = styled.div`
     display: flex;
     width: 80%;
+    max-width: 600px;
     flex-direction: column;
     align-items: center;
     padding: 24px 16px 35px;

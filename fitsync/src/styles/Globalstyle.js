@@ -133,7 +133,7 @@ const GlobalStyle = createGlobalStyle`
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important; /* 2줄까지 표시 */
+    -webkit-line-clamp: 1 !important; /* 2줄까지 표시 */
     -webkit-box-orient: vertical !important;
     max-width: 100% !important;
     margin: 0 !important;

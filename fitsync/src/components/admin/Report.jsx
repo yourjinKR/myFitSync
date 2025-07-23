@@ -58,7 +58,7 @@ const TabContent = styled.div`
     overflow-x: auto;
     table {
       width: 100%;
-      min-width: 750px;
+      min-width: 1000px;
       border-collapse: collapse;
       th, td, td > button {
         text-align: left;
@@ -150,7 +150,12 @@ const UserInfo = styled.div`
         margin-right: 6px;
         font-size: 1.4rem;
       }
+   
     }
+    dt:first-child::before {
+      content: '⛔';
+    }
+   
     
     dd {
       color: var(--text-black) !important;
@@ -176,17 +181,17 @@ const UserInfo = styled.div`
       }
       
       /* 아이콘 추가 */
-      &:nth-child(2)::before {
+      &:nth-child(3)::before {
         content: '👤';
         margin-right: 6px;
       }
       
-      &:nth-child(3)::before {
+      &:nth-child(4)::before {
         content: '💬';
         margin-right: 6px;
       }
       
-      &:nth-child(4)::before {
+      &:nth-child(5)::before {
         content: '⭐';
         margin-right: 6px;
       }
@@ -212,9 +217,11 @@ const UserInfoTrigger = styled.td`
 
 const ButtonBox = styled.div`
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   gap: 8px;
   button {
+    flex: 1;
+    max-width: 120px;
     padding: 6px 12px;
     font-size: 1.4rem;
     background: var(--bg-primary);
@@ -232,6 +239,11 @@ const ButtonBox = styled.div`
   button:last-child {
     background: var(--warning);
     color: var(--text-white);
+  }
+  button:disabled {
+    background: var(--border-light);
+    color: var(--text-secondary);
+    cursor: not-allowed;
   }
 `;
 
@@ -257,7 +269,7 @@ const ModalBox = styled.div`
       border: 1px solid var(--border-medium);
       padding: 5px 20px;
       font-size: 1.8rem;
-      width: 150px;
+      width: 120px;
     }
     button:hover
     {
@@ -275,6 +287,7 @@ const Report = () => {
     contentType: ''
   };
   const targetInfo = {
+    report_idx: '',
     reporter: '',
     reported: ''
   }
@@ -285,11 +298,13 @@ const Report = () => {
   const [modalData, setModalData] = useState(init);
   const [blockTarget, setBlockTarget] = useState(targetInfo);
 
+  const [totalData, setTotalData] = useState(null);
   const [reportData, setReportData] = useState({
     member: null,
     message: null,
     review: null
   });
+  console.log("🚀  :  Report  :  reportData:", reportData)
 
   // 탭 목록
   const tabs = [
@@ -299,15 +314,17 @@ const Report = () => {
   ];
 
   // 리포트 데이터 가져오기
-  const handleReport = async (type = 'member') => {
+  const handleReport = async () => {
     try {
-      const resp = await axios.get(`/admin/report?type=${type}`, { withCredentials: true });
+      const resp = await axios.get(`/admin/report`, { withCredentials: true });
       const data = resp.data;
 
       if (data.success) {
+        setTotalData(data.vo);
         setReportData(prev => ({
-          ...prev,
-          [type]: data.vo
+          member: data.vo.filter((item) => item.report_category === 'member') || null,
+          message: data.vo.filter((item) => item.report_category === 'message') || null,
+          review: data.vo.filter((item) => item.report_category === 'review') || null
         }));
         setEmpty("");
       } else {
@@ -323,10 +340,6 @@ const Report = () => {
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     setEmpty("");
-
-    if (!reportData[tabId]) {
-      handleReport(tabId);
-    }
   };
 
   // 현재 탭의 데이터 렌더링
@@ -347,161 +360,265 @@ const Report = () => {
 
     // 누적 신고 수 계산 함수를 밖으로 빼기
     const getReportCount = (targetMemberIdx, type) => {
-      return currentData.filter(report => {
-        if (type === 'member') {
-          return report.reported.member_idx === targetMemberIdx && report.report_category === 'member';
-        } else if (type === 'message') {
-          return report.reported.member_idx === targetMemberIdx && report.report_category === 'message';
-        } else if (type === 'review') {
-          return report.reported.member_idx === targetMemberIdx && report.report_category === 'review';
-        } else {
-          return report.reported.member_idx === targetMemberIdx;
-        }
+      if (type === 'total') {
+        return totalData.filter(item => item.reported?.member_idx === targetMemberIdx).length;
+      } else if (type === 'message') {
+        return reportData.message.filter(report => report.reported.member_idx === targetMemberIdx).length;
+      } else if (type === 'review') {
+        return reportData.review.filter(report => report.reported.member_idx === targetMemberIdx).length;
+      } else if (type === 'member') {
+        return reportData.member.filter(report => report.reported.member_idx === targetMemberIdx).length;
+      } else {
+        return totalData.filter(item => item.report_sanction === targetMemberIdx).length;
       }
-
-      ).length;
     };
 
     switch (activeTab) {
       case 'member':
         return (
           <div>
-            <h3>유저 리포트</h3>
-            <div className='report-table'>
-              <table>
-                <colgroup>
-                  <col width="75px" />
-                  <col width="100px" />
-                  <col width="100px" />
-                  <col width="calc(100% - 475px)" />
-                  <col width="100px" />
-                  <col width="100px" />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>번호</th>
-                    <th>피신고자</th>
-                    <th>타입</th>
-                    <th className='ta-l'>내용</th>
-                    <th>신고자</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentData
-                    .filter((user) => user.report_category === 'member')
-                    .map((user, index) => (
-                      <tr key={user.report_idx || index}>
-                        <td className='ta-c'>{index + 1}</td>
-                        <UserInfoTrigger className='ta-c'>
-                          {user.reported?.member_name || 'N/A'}
-                          <UserInfo>
-                            <p>📧 {user.reported?.member_email || 'N/A'}</p>
-                            <dl>
-                              <dt>누적 신고 :&ensp;{getReportCount(user.reported?.member_idx)}</dt>
-                              <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
-                              <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
-                              <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
-                            </dl>
-                          </UserInfo>
-                        </UserInfoTrigger>
-                        <td className='ta-c'>
-                          {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
-                        </td>
-                        <td><p className='txt-ov'>{user.report_content}</p></td>
-                        <td className='ta-c'>{user.reporter?.member_name || 'N/A'}</td>
-                        <td className='ta-c'>
-                          <ButtonBox>
-                            <button>처리전</button>
-                            <button onClick={() => handleReportCTA(user.reporter?.member_idx, user.reported?.member_idx)}>제재</button>
-                          </ButtonBox>
-                        </td>
+            {
+              reportData.member.length > 0 ? (
+                <div className='report-table'>
+                  <table>
+                    <colgroup>
+                      <col width="75px" />
+                      <col width="100px" />
+                      <col width="100px" />
+                      <col width="calc(100% - 575px)" />
+                      <col width="100px" />
+                      <col width="200px" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>번호</th>
+                        <th>피신고자</th>
+                        <th>타입</th>
+                        <th className='ta-l'>내용</th>
+                        <th>신고자</th>
+                        <th></th>
                       </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody>
+                      {reportData.member.map((user, index) => (
+                          <tr key={user.report_idx || index}>
+                            <td className='ta-c'>{index + 1}</td>
+                            <UserInfoTrigger className='ta-c'>
+                              {user.reported?.member_name || 'N/A'}
+                              <UserInfo>
+                                <p>📧 {user.reported?.member_email || 'N/A'}</p>
+                                <dl>
+                                  <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
+                                  <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
+                                  <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
+                                  <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
+                                  <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
+                                </dl>
+                              </UserInfo>
+                            </UserInfoTrigger>
+                            <td className='ta-c'>
+                              {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
+                            </td>
+                            <td><p className='txt-ov'>{user.report_content}</p></td>
+                            <UserInfoTrigger className='ta-c'>
+                              {user.reporter?.member_name || 'N/A'}
+                              <UserInfo>
+                                <p>📧 {user.reporter?.member_email || 'N/A'}</p>
+                                <dl>
+                                  <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx)}</dt>
+                                  <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'member')}</strong></dd>
+                                  <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'message')}</strong></dd>
+                                  <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'review')}</strong></dd>
+                                </dl>
+                              </UserInfo>
+                            </UserInfoTrigger>
+                            <td className='ta-c'>
+                              <ButtonBox>
+                                {user.report_hidden === 0 ?
+                                <>
+                                  <button onClick={() => handleUpdateReportChk(user.report_idx)}>처리전</button>
+                                  <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button>
+                                </> :
+                                <>
+                                  <button disabled={true}>처리완료</button>
+                                </>
+                                }
+                              </ButtonBox>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className='empty'>데이터가 없습니다.</div>
+              )
+            }
           </div>
         );
       case 'message':
         return (
           <div>
-            <h3>메시지 리포트</h3>
-            {currentData.length > 0 ? (
-              <div className='report-table'>
-                <table>
-                  <colgroup>
-                    <col width="75px" />
-                    <col width="100px" />
-                    <col width="100px" />
-                    <col width="200px" />
-                    <col width="calc(100% - 650px)" />
-                    <col width="100px" />
-                    <col width="75px" />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>번호</th>
-                      <th>피신고자</th>
-                      <th>타입</th>
-                      <th>채팅</th>
-                      <th className='ta-l'>내용</th>
-                      <th>신고자</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentData.filter((user) => (user.report_category === 'message' || user.report_type === 'all')).map((user, index) => (
-                      <tr key={index}>
-                        <td className='ta-c'>{index + 1}</td>
-                        <td className='ta-c pos-r'>
-                          {user.reported.member_name}
-                          <UserInfo>
-                            <p>📧 {user.reported?.member_email || 'N/A'}</p>
-                            <dl>
-                              <dt>누적 신고 :&ensp;{getReportCount(user.reported?.member_idx)}</dt>
-                              <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
-                              <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
-                              <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
-                            </dl>
-                          </UserInfo>
-                        </td>
-                        <td className='ta-c'>{user.member_type === 'trainer' ? '트레이너' : '회원'}</td>
-                        <td className='ta-c'>
-                          <button onClick={() => handleDetailModal(user.message.attach.cloudinary_url, "message", "img")}>
-
-                            {user.message.message_content}
-                          </button>
-                        </td>
-                        <td><p className='txt-ov'>{user.report_content}</p></td>
-                        <td className='ta-c'>{user.reporter.member_name}</td>
-                        <td className='ta-c'>
-                          <button>제재</button>
-                          <button>삭제</button>
-                        </td>
+            {
+              reportData.message.length > 0 ? (
+                <div className='report-table'>
+                  <table>
+                    <colgroup>
+                      <col width="75px" />
+                      <col width="100px" />
+                      <col width="100px" />
+                      <col width="200px" />
+                      <col width="calc(100% - 775px)" />
+                      <col width="100px" />
+                      <col width="200px" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>번호</th>
+                        <th>피신고자</th>
+                        <th>타입</th>
+                        <th>채팅</th>
+                        <th className='ta-l'>신고사유</th>
+                        <th>신고자</th>
+                        <th></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className='empty'>메시지 데이터가 없습니다.</div>
-            )}
+                    </thead>
+                    <tbody>
+                      {reportData.message.map((user, index) => (
+                          <tr key={user.report_idx || index}>
+                            <td className='ta-c'>{index + 1}</td>
+                            <UserInfoTrigger className='ta-c'>
+                              {user.reported?.member_name || 'N/A'}
+                              <UserInfo>
+                                <p>📧 {user.reported?.member_email || 'N/A'}</p>
+                                <dl>
+                                  <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
+                                  <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
+                                  <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
+                                  <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
+                                  <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
+                                </dl>
+                              </UserInfo>
+                            </UserInfoTrigger>
+                            <td className='ta-c'>
+                              {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
+                            </td>
+                            <td className='ta-c'>
+                              <button onClick={() => handleDetailModal(user.message.attach.cloudinary_url, "message", "img")}>
+                                {user.message.message_content}
+                              </button>
+                            </td>
+                            <td><p className='txt-ov'>{user.report_content}</p></td>
+                            <UserInfoTrigger className='ta-c'>
+                              {user.reporter?.member_name || 'N/A'}
+                              <UserInfo>
+                                <p>📧 {user.reporter?.member_email || 'N/A'}</p>
+                                <dl>
+                                  <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx)}</dt>
+                                  <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'member')}</strong></dd>
+                                  <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'message')}</strong></dd>
+                                  <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'review')}</strong></dd>
+                                </dl>
+                              </UserInfo>
+                            </UserInfoTrigger>
+                            <td className='ta-c'>
+                              <ButtonBox>
+                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료' }</button>
+                                {user.report_hidden === 0 ? <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button> : <></>}
+                              </ButtonBox>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className='empty'>데이터가 없습니다.</div>
+              )
+            }
           </div>
         );
       case 'review':
         return (
           <div>
-            <h3>리뷰 리포트</h3>
-            {currentData.length > 0 ? (
-              <ul>
-                {currentData.map((review, index) => (
-                  <li key={index}>{review.title} - 평점: {review.rating}</li>
-                ))}
-              </ul>
-            ) : (
-              <div className='empty'>리뷰 데이터가 없습니다.</div>
-            )}
+            {
+              reportData.review.length > 0 ? (
+                <div className='report-table'>
+                  <table>
+                    <colgroup>
+                      <col width="75px" />
+                      <col width="100px" />
+                      <col width="100px" />
+                      <col width="200px" />
+                      <col width="calc(100% - 775px)" />
+                      <col width="100px" />
+                      <col width="200px" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>번호</th>
+                        <th>피신고자</th>
+                        <th>타입</th>
+                        <th>리뷰</th>
+                        <th className='ta-l'>신고사유</th>
+                        <th>신고자</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.review.map((user, index) => (
+                          <tr key={user.report_idx || index}>
+                            <td className='ta-c'>{index + 1}</td>
+                            <UserInfoTrigger className='ta-c'>
+                              {user.reported?.member_name || 'N/A'}
+                              <UserInfo>
+                                <p>📧 {user.reported?.member_email || 'N/A'}</p>
+                                <dl>
+                                  <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
+                                  <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
+                                  <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
+                                  <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
+                                  <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
+                                </dl>
+                              </UserInfo>
+                            </UserInfoTrigger>
+                            <td className='ta-c'>
+                              {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
+                            </td>
+                            <td className='ta-c'>
+
+                            </td>
+                            <td><p className='txt-ov'>{user.report_content}</p></td>
+                            <UserInfoTrigger className='ta-c'>
+                              {user.reporter?.member_name || 'N/A'}
+                              <UserInfo>
+                                <p>📧 {user.reporter?.member_email || 'N/A'}</p>
+                                <dl>
+                                  <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx)}</dt>
+                                  <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'member')}</strong></dd>
+                                  <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'message')}</strong></dd>
+                                  <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'review')}</strong></dd>
+                                </dl>
+                              </UserInfo>
+                            </UserInfoTrigger>
+                            <td className='ta-c'>
+                              <ButtonBox>
+                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료' }</button>
+                                {user.report_hidden === 0 ? <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button> : <></>}
+                              </ButtonBox>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className='empty'>데이터가 없습니다.</div>
+              )
+            }
           </div>
         );
       default:
@@ -518,8 +635,9 @@ const Report = () => {
   };
 
   // 제재 컨트롤
-  const handleReportCTA = (reporter, reported) => {
+  const handleReportCTA = (report_idx, reporter, reported) => {
     setBlockTarget({
+      report_idx: report_idx,
       reporter: reporter,
       reported: reported
     });
@@ -527,7 +645,7 @@ const Report = () => {
   }
   const handleUpdateReport = async (target) => {
     try {
-      const response = await axios.put(`/admin/report/${target}`, {
+      const response = await axios.put(`/admin/report/${blockTarget.report_idx}/${target}`, {
       }, { withCredentials: true });
       if (response.data.success) {
         alert("제재가 완료되었습니다.");
@@ -537,9 +655,24 @@ const Report = () => {
         alert("제재 처리에 실패했습니다. 다시 시도해주세요.");
       }
     } catch (error) {
-      console.error('제재 처리 실패:', error);  
+      console.error('제재 처리 실패:', error);
     }
   };
+
+  const handleUpdateReportChk = async (target) => {
+    try {
+      const response = await axios.put(`/admin/report/${target}`, {
+      }, { withCredentials: true });
+      if (response.data.success) {
+        handleReport(activeTab); // 리포트 데이터 새로고침
+      } else {
+        alert("제재 처리에 실패했습니다. 다시 시도해주세요.");
+      }
+    } catch (error) {
+      console.error('제재 처리 실패:', error);
+    }
+  }
+
   // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
     handleReport(activeTab);
@@ -557,7 +690,6 @@ const Report = () => {
       setModalData(init);
       setBlockTarget(targetInfo);
     }
-    console.log("🚀  :  Report  :  modalData:", modalData)
   }, [modalData]);
 
   useEffect(() => {
@@ -592,15 +724,16 @@ const Report = () => {
                   <button onClick={() => handleUpdateReport(blockTarget.reported)}>피신고자</button>
                   <button onClick={() => handleUpdateReport(blockTarget.reporter)}>신고자</button>
                 </div>
-              </ModalBox>) : <></>
+              </ModalBox>) : <>
+                <div onClick={(e) => e.stopPropagation()}>
+                  {modalData.contentType === 'img' ? (
+                    <img src={modalData.url} alt="Report Detail" />
+                  ) : (
+                    <p>지원하지 않는 파일 형식입니다.</p>
+                  )}
+                </div>
+              </>
           }
-          {/* <div onClick={(e) => e.stopPropagation()}>
-            {modalData.contentType === 'img' ? (
-              <img src={modalData.url} alt="Report Detail" />
-            ) : (
-              <p>지원하지 않는 파일 형식입니다.</p>
-            )}
-          </div> */}
         </DetailModal>
       )}
     </ReportWrapper>
