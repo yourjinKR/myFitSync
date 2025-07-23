@@ -13,7 +13,7 @@ public interface PaymentMethodMapper {
     // 결제수단 중복 확인 (카드 번호 기준)
     PaymentMethodVO checkDuplicateCard(PaymentMethodVO vo);
 
-    // method_idx로 단건 조회
+    // method_idx로 단건 조회 (다 가져옴)
     PaymentMethodVO selectByMethodIdx(int method_idx);
 
     // member_idx로 조회 (1:N)

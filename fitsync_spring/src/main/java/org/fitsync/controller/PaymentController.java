@@ -626,20 +626,57 @@ public class PaymentController {
 
     // 자동결제건 결제수단 재등록 
     @PatchMapping("/bill/schedule")
-    public ResponseEntity<Map<String, Object>> updateScedule(@RequestBody Map<String, Object> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> updateSchedule(@RequestBody Map<String, Object> body, HttpSession session) {
         Integer memberIdx = getMemberIdxFromSession(session);
         if (memberIdx == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.", "AUTHENTICATION_REQUIRED");
         }
 
         try {
-
-
+            log.info("예약 결제수단 변경 요청: " + body);
+            
+            // 요청 데이터 검증
+            Object orderIdxObj = body.get("order_idx");
+            Object methodIdxObj = body.get("method_idx");
+            
+            if (orderIdxObj == null || methodIdxObj == null) {
+                return createErrorResponse(HttpStatus.BAD_REQUEST, 
+                    "필수 파라미터가 누락되었습니다. (order_idx, method_idx)", 
+                    "MISSING_PARAMETERS");
+            }
+            
+            // 데이터 타입 변환
+            int orderIdx = Integer.parseInt(orderIdxObj.toString());
+            int methodIdx = Integer.parseInt(methodIdxObj.toString());
+            
+            log.info("예약 결제수단 변경 - OrderIdx: " + orderIdx + ", NewMethodIdx: " + methodIdx + ", MemberIdx: " + memberIdx);
+            
+            // 서비스 호출
+            Map<String, Object> result = payService.changeSchedulePaymentMethod(orderIdx, methodIdx);
+            
+            // 결과 처리
+            Boolean success = (Boolean) result.get("success");
+            if (success != null && success) {
+                log.info("예약 결제수단 변경 성공: " + result);
+                return createSuccessResponse((String) result.get("message"), result);
+            } else {
+                log.error("예약 결제수단 변경 실패: " + result);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, 
+                    (String) result.get("message"), 
+                    "SCHEDULE_PAYMENT_METHOD_CHANGE_FAILED");
+            }
+            
+        } catch (NumberFormatException e) {
+            log.error("잘못된 숫자 형식: ", e);
+            return createErrorResponse(HttpStatus.BAD_REQUEST, 
+                "잘못된 데이터 형식입니다. (order_idx, method_idx는 숫자여야 합니다)", 
+                "INVALID_NUMBER_FORMAT");
         } catch (Exception e) {
-            // TODO: handle exception
+            log.error("예약 결제수단 변경 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "예약 결제수단 변경 중 오류가 발생했습니다: " + e.getMessage(), 
+                "SCHEDULE_UPDATE_FAILED");
         }
-
-        return null;
     }
 
     @PostMapping("/monitor/manual")

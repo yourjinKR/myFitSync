@@ -335,7 +335,7 @@ public class PaymentServiceImple implements PaymentService {
 			order.setPayment_id(paymentId);
 			order.setOrder_type("DIRECT");
 			order.setOrder_status("READY");
-			order.setOrder_name("1개월 구독권");
+			order.setOrder_name("FitSync Premium");
 			order.setOrder_price(3000);
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
@@ -539,7 +539,7 @@ public class PaymentServiceImple implements PaymentService {
 			// 3. PortOne API 호출 먼저 실행
 			log.info("=== PortOne API 호출 시작 ===");
 			HttpResponse<String> response = portOneApiClient.createPaymentSchedule(
-				paymentId, billingKey, channelKey, "1개월 구독권", 3000, apiTimeToPay
+				paymentId, billingKey, channelKey, "FitSync Premium", 3000, apiTimeToPay
 			);
 			
 			// 4. API 응답 처리
@@ -669,7 +669,7 @@ public class PaymentServiceImple implements PaymentService {
 		order.setPayment_id(paymentId);
 		order.setOrder_type("SCHEDULE");
 		order.setOrder_status("READY"); // 초기 상태
-		order.setOrder_name("1개월 구독권");
+		order.setOrder_name("FitSync Premium");
 		order.setOrder_price(3000);
 		order.setOrder_currency("KRW");
 		order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
@@ -1427,6 +1427,168 @@ public class PaymentServiceImple implements PaymentService {
 		}
 	}
 
+	// 예약건 결제수단 변경 (기존 오더 번호, 새로운 결제수단 번호)
+	@Override
+	@Transactional
+	public Map<String, Object> changeSchedulePaymentMethod(int orderIdx, int methodIdx) {
+		try {
+			log.info("예약 결제수단 변경 시작 - orderIdx: " + orderIdx + ", methodIdx: " + methodIdx);
+			
+			// 1. 기존 결제 예약 정보 조회
+			PaymentOrderVO oldOrder = paymentOrderMapper.selectByOrderIdx(orderIdx);
+			if (oldOrder == null) {
+				log.error("기존 주문을 찾을 수 없습니다 - orderIdx: " + orderIdx);
+				return createErrorResponse("주문을 찾을 수 없습니다.", null);
+			}
+			
+			// 2. 새로운 결제수단 정보 조회
+			PaymentMethodVO newMethod = paymentMethodMapper.selectByMethodIdx(methodIdx);
+			if (newMethod == null) {
+				log.error("새 결제수단을 찾을 수 없습니다 - methodIdx: " + methodIdx);
+				return createErrorResponse("결제수단을 찾을 수 없습니다.", null);
+			}
+			
+			String oldScheduleId = oldOrder.getSchedule_id();
+			if (oldScheduleId == null) {
+				log.error("기존 예약의 schedule_id가 없습니다 - orderIdx: " + orderIdx);
+				return createErrorResponse("예약 정보가 올바르지 않습니다.", null);
+			}
+			
+			log.info("기존 예약 정보 - ScheduleId: " + oldScheduleId + ", ScheduleDate: " + oldOrder.getSchedule_date());
+			
+			// 3. 🎯 Date → PortOne API 형식 문자열 변환
+			String scheduleDateTime = convertDateToPortOneFormat(oldOrder.getSchedule_date());
+			if (scheduleDateTime == null) {
+				log.error("날짜 변환 실패 - ScheduleDate: " + oldOrder.getSchedule_date());
+				return createErrorResponse("예약 날짜 처리 중 오류가 발생했습니다.", null);
+			}
+			
+			log.info("변환된 예약 시간 - Original: " + oldOrder.getSchedule_date() + ", Converted: " + scheduleDateTime);
+			
+			// 4. 기존 예약 취소
+			log.info("기존 예약 취소 시작 - ScheduleId: " + oldScheduleId);
+			HttpResponse<String> cancelResponse = portOneApiClient.cancelPaymentSchedule(oldScheduleId);
+			
+			if (!portOneApiClient.isSuccessResponse(cancelResponse)) {
+				log.error("기존 예약 취소 실패 - Status: " + cancelResponse.statusCode() + ", Body: " + cancelResponse.body());
+				return createErrorResponse("기존 예약 취소에 실패했습니다.", null);
+			}
+			
+			log.info("기존 예약 취소 성공");
+			
+			// 5. 새로운 결제수단으로 예약 생성
+			String newPaymentId = generatePaymentId();
+			String billingKey = newMethod.getMethod_key();
+			String channelKey = getChannelKey(newMethod.getMethod_provider());
+			
+			log.info("새 예약 생성 시작 - PaymentId: " + newPaymentId + ", BillingKey: " + billingKey + 
+					", ChannelKey: " + channelKey + ", ScheduleTime: " + scheduleDateTime);
+			
+			HttpResponse<String> createResponse = portOneApiClient.createPaymentSchedule(
+				newPaymentId, billingKey, channelKey, "FitSync Premium", 3000, scheduleDateTime
+			);
+			
+			if (!portOneApiClient.isSuccessResponse(createResponse)) {
+				log.error("새 예약 생성 실패 - Status: " + createResponse.statusCode() + ", Body: " + createResponse.body());
+				return createErrorResponse("새 예약 생성에 실패했습니다.", newPaymentId);
+			}
+			
+			// 6. 새 schedule_id 추출
+			String newScheduleId = extractScheduleId(createResponse.body());
+			if (newScheduleId == null) {
+				log.error("새 schedule_id 추출 실패 - Response: " + createResponse.body());
+				return createErrorResponse("새 예약 등록에 실패했습니다.", newPaymentId);
+			}
+			
+			log.info("새 예약 생성 성공 - NewScheduleId: " + newScheduleId);
+			
+			// 7. DB 업데이트 - 기존 주문 정보를 새로운 정보로 업데이트
+			oldOrder.setPayment_id(newPaymentId);
+			oldOrder.setMethod_idx(methodIdx);
+			oldOrder.setSchedule_id(newScheduleId);
+			oldOrder.setOrder_provider(newMethod.getMethod_provider());
+			
+			// 카드 정보 업데이트
+			if (newMethod.getMethod_card() != null) {
+				oldOrder.setOrder_card(newMethod.getMethod_card());
+			}
+			if (newMethod.getMethod_card_num() != null) {
+				oldOrder.setOrder_card_num(newMethod.getMethod_card_num());
+			}
+			
+			// DB 업데이트
+			paymentOrderMapper.updatePaymentStatus(oldOrder);
+			
+			log.info("DB 업데이트 완료 - OrderIdx: " + orderIdx + ", NewMethodIdx: " + methodIdx + 
+					", NewScheduleId: " + newScheduleId);
+			
+			// 8. 성공 응답 반환
+			Map<String, Object> result = new HashMap<>();
+			result.put("success", true);
+			result.put("message", "결제수단이 성공적으로 변경되었습니다.");
+			result.put("orderIdx", orderIdx);
+			result.put("newPaymentId", newPaymentId);
+			result.put("newMethodIdx", methodIdx);
+			result.put("newScheduleId", newScheduleId);
+			result.put("scheduleDateTime", scheduleDateTime);
+			result.put("oldScheduleId", oldScheduleId);
+			
+			return result;
+			
+		} catch (Exception e) {
+			log.error("예약 결제수단 변경 중 오류 발생 - orderIdx: " + orderIdx + ", methodIdx: " + methodIdx, e);
+			
+			Map<String, Object> errorResult = new HashMap<>();
+			errorResult.put("success", false);
+			errorResult.put("message", "결제수단 변경 중 오류가 발생했습니다: " + e.getMessage());
+			errorResult.put("error", e.getClass().getSimpleName());
+			errorResult.put("orderIdx", orderIdx);
+			
+			return errorResult;
+		}
+	}
+
+	/**
+	 * Date/Timestamp를 PortOne API 형식으로 변환
+	 * @param scheduleDate DB의 schedule_date (java.util.Date 또는 java.sql.Timestamp)
+	 * @return PortOne API 형식 문자열 (ISO 8601 with timezone)
+	 */
+	private String convertDateToPortOneFormat(java.util.Date scheduleDate) {
+		try {
+			if (scheduleDate == null) {
+				log.error("scheduleDate가 null입니다.");
+				return null;
+			}
+			
+			// 1. Date를 LocalDateTime으로 변환
+			java.time.LocalDateTime localDateTime;
+			
+			if (scheduleDate instanceof java.sql.Timestamp) {
+				// Timestamp인 경우
+				localDateTime = ((java.sql.Timestamp) scheduleDate).toLocalDateTime();
+			} else {
+				// 일반 Date인 경우
+				localDateTime = scheduleDate.toInstant()
+					.atZone(java.time.ZoneId.systemDefault())
+					.toLocalDateTime();
+			}
+			
+			// 2. 한국 시간대 적용
+			java.time.ZoneId koreaZone = java.time.ZoneId.of("Asia/Seoul");
+			java.time.ZonedDateTime koreaZonedTime = localDateTime.atZone(koreaZone);
+			
+			// 3. PortOne API 형식으로 변환 (ISO 8601 with offset)
+			String portOneFormat = koreaZonedTime.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			
+			log.info("날짜 변환 성공 - Input: " + scheduleDate + " → Output: " + portOneFormat);
+			return portOneFormat;
+			
+		} catch (Exception e) {
+			log.error("날짜 변환 실패 - Input: " + scheduleDate, e);
+			return null;
+		}
+	}
+
 	/**
 	 * 다음 달 자동 결제 예약 (정기 결제용)
 	 * 결제 성공 시 31일 후 동일한 결제수단으로 자동 예약
@@ -1607,21 +1769,6 @@ public class PaymentServiceImple implements PaymentService {
 	@Override
 	public PaymentOrderVO getRecentOrder(int memberIdx) {
 		return paymentOrderMapper.selectRecentOrederBymemberIdx(memberIdx);
-	}
-
-	// 예약건 결제수단 변경 (기존 오더 번호, 새로운 결제수단 번호)
-	@Override
-	public Map<String, Object> changeSchedulePaymentMethod(int orderIdx, int methodIdx) {
-		// 기존 결제 예약
-		PaymentOrderVO oldOrder = paymentOrderMapper.selectByOrderIdx(orderIdx);
-		// 포트원 호출
-		HttpResponse<String> response = portOneCancelSchedules(oldOrder.getSchedule_id());
-		
-		if (response.statusCode() >= 200 && response.statusCode() < 300) {
-
-		}
-
-		return null;
 	}
 
 	/**

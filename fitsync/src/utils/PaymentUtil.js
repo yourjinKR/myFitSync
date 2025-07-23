@@ -404,6 +404,24 @@ export const PaymentUtil = {
         }
     },
 
+    /** 바꾸기 */
+    changeSchedulePaymentMethod : async ({order_idx, method_idx}) => {
+        try {
+            const response = await axios.patch('/payment/bill/schedule', {order_idx, method_idx}, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('가장 최근 결제건 불러오기 성공:', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('가장 최근 결제건 불러오기 오류:', error);
+            throw error;
+        }
+    },
 
 }
 

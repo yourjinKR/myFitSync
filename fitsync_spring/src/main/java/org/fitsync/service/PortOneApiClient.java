@@ -155,7 +155,7 @@ public class PortOneApiClient {
      * @throws InterruptedException
      */
     public HttpResponse<String> createPaymentSchedule(String paymentId, String billingKey, String channelKey, 
-                                                     String orderName, int amount, String scheduleDateTime) throws IOException, InterruptedException {
+            String orderName, int amount, String scheduleDateTime) throws IOException, InterruptedException {
         String requestBody = String.format(
             "{\"payment\":{\"storeId\":\"%s\",\"billingKey\":\"%s\",\"channelKey\":\"%s\",\"orderName\":\"%s\",\"amount\":{\"total\":%d},\"currency\":\"KRW\"},\"timeToPay\":\"%s\"}",
             portOneConfig.getStoreId(), billingKey, channelKey, orderName, amount, scheduleDateTime
