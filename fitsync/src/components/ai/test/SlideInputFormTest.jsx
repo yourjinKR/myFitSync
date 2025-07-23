@@ -161,7 +161,6 @@ const ProgressFill = styled.div`
     background: linear-gradient(90deg, var(--check-green), var(--success));
     width: ${props => ((props.currentSlide + 1) / props.totalSlides) * 100}%;
     transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
     position: relative;
     
     &::after {
@@ -316,7 +315,6 @@ const InputField = styled.input`
     
     &:focus {
         border-color: var(--primary-blue);
-        box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15);
         outline: none;
         transform: translateY(-2px);
         background: var(--bg-tertiary);
@@ -347,7 +345,6 @@ const SelectField = styled.select`
     
     &:focus {
         border-color: var(--primary-blue);
-        box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15);
         outline: none;
         transform: translateY(-2px);
         background: var(--bg-tertiary);
@@ -395,7 +392,6 @@ const CheckboxCard = styled.label`
         background: var(--bg-tertiary);
         border-color: var(--primary-blue-light);
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
     }
     
     &:has(input:checked) {
@@ -403,7 +399,6 @@ const CheckboxCard = styled.label`
         border-color: var(--primary-blue);
         color: var(--text-primary);
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(74, 144, 226, 0.3);
     }
     
     @media (max-width: 480px) {

@@ -36,7 +36,7 @@ const SuccessContainer = styled.div`
     border: 1px solid var(--border-light);
     text-align: center;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 0 auto; 
     animation: ${fadeInUp} 0.6s ease-out;
     
     @media (max-width: 768px) {
