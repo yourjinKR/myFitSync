@@ -14,11 +14,13 @@ import org.fitsync.mapper.ReportMapper;
 import org.fitsync.mapper.ReviewMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.log4j.Log4j;
 
 @Log4j
 @Service
+@Transactional
 public class ReportServiceImple implements ReportService {
 	
 	@Autowired
@@ -62,5 +64,40 @@ public class ReportServiceImple implements ReportService {
 		}
 		return list; // result 대신 list를 반환
 	}
+	
+	@Override
+    public boolean reportMessage(int messageIdx, String reportContent, int memberIdx) {
+        log.info("메시지 신고 등록: messageIdx=" + messageIdx + ", memberIdx=" + memberIdx);
+        
+        try {
+            // 중복 신고 체크
+            int duplicateCount = mapper.checkDuplicateReport(messageIdx, memberIdx, "MESSAGE");
+            if (duplicateCount > 0) {
+                log.warn("이미 신고한 메시지입니다: messageIdx=" + messageIdx + ", memberIdx=" + memberIdx);
+                return false; // 중복 신고
+            }
+            
+            // 신고 등록
+            ReportVO reportVO = new ReportVO();
+            reportVO.setIdx_num(messageIdx);
+            reportVO.setReport_category("MESSAGE");
+            reportVO.setReport_content(reportContent);
+            reportVO.setMember_idx(memberIdx);
+            
+            int result = mapper.insertReport(reportVO);
+            
+            if (result > 0) {
+                log.info("메시지 신고 등록 완료: " + reportVO);
+                return true;
+            } else {
+                log.error("메시지 신고 등록 실패");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            log.error("메시지 신고 등록 중 오류 발생: " + e.getMessage(), e);
+            throw new RuntimeException("신고 등록에 실패했습니다.", e);
+        }
+    }
 	
 }

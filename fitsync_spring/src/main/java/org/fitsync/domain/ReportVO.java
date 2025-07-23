@@ -1,5 +1,7 @@
 package org.fitsync.domain;
 
+import java.sql.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReportVO {
-    private int report_idx, idx_num, report_hidden;
+    private int report_idx, idx_num, report_hidden, member_idx, report_sanction;
     private String report_category, report_content;
+    private Date report_time;
 
     // 신고자 (reporter)
     private MemberVO reporter;

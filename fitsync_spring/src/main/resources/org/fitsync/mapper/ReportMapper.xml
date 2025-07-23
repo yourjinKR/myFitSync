@@ -3,6 +3,21 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.fitsync.mapper.ReportMapper">
+	<resultMap id="reportMap" type="org.fitsync.domain.ReportVO">
+	    <id property="report_idx" column="REPORT_IDX"/>
+	    <result property="report_category" column="REPORT_CATEGORY"/>
+	    <result property="report_content" column="REPORT_CONTENT"/>
+	    <result property="idx_num" column="IDX_NUM"/>
+	    <result property="report_hidden" column="REPORT_HIDDEN"/>
+	
+	    <association property="reporter" javaType="org.fitsync.domain.MemberVO">
+	        <id property="member_idx" column="member_idx"/>
+	        <result property="member_email" column="member_email"/>
+	        <result property="member_name" column="member_name"/>
+	        <result property="member_type" column="member_type"/>
+	    </association>
+	</resultMap>
+	
 	<insert id="insertReport" parameterType="org.fitsync.domain.ReportVO">
 		INSERT INTO REPORT (
 			report_idx,
@@ -18,20 +33,7 @@
 		    #{member_idx}
 		)
 	</insert>
-	<resultMap id="reportMap" type="org.fitsync.domain.ReportVO">
-	    <id property="report_idx" column="REPORT_IDX"/>
-	    <result property="report_category" column="REPORT_CATEGORY"/>
-	    <result property="report_content" column="REPORT_CONTENT"/>
-	    <result property="idx_num" column="IDX_NUM"/>
-	    <result property="report_hidden" column="REPORT_HIDDEN"/>
 	
-	    <association property="reporter" javaType="org.fitsync.domain.MemberVO">
-	        <id property="member_idx" column="member_idx"/>
-	        <result property="member_email" column="member_email"/>
-	        <result property="member_name" column="member_name"/>
-	        <result property="member_type" column="member_type"/>
-	    </association>
-	</resultMap>
 	<select id="getReport" resultMap="reportMap">
 	   SELECT 
 	        RE.REPORT_IDX,
@@ -47,4 +49,5 @@
 	    LEFT JOIN MEMBER M ON RE.MEMBER_IDX = M.MEMBER_IDX
 	    WHERE RE.REPORT_HIDDEN = 0
 	</select>
+	
 </mapper>
