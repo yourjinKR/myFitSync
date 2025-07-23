@@ -105,7 +105,7 @@ const DailyDetailModal = ({ date, onClose }) => {
         setSchedules(res2.data);
         console.log('요청날짜:', ymd);
         console.log('스케줄 응답:', res2.data);
-        
+
       } catch (error) {
         console.error('상세 내역 불러오기 실패:', error);
       }
