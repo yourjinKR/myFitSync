@@ -56,7 +56,7 @@ const DisplayWrapper = styled.div`
   })`
   position: relative;
   overflow: auto;
-  height: ${(props) => (!props.isAdmin ? '100%' : 'calc( 100vh - 150px )')};
+  height: calc( 100vh - 150px );
   background: var(--bg-primary);
   margin-top : ${(props) => (props.isShow ? '0' : '65px')};
 `;
