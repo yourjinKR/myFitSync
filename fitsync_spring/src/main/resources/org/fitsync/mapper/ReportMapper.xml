@@ -34,6 +34,15 @@
 		)
 	</insert>
 	
+	<select id="checkDuplicateReport" resultType="int">
+		SELECT COUNT(*)
+		FROM REPORT
+		WHERE idx_num = #{idx_num}
+		  AND member_idx = #{member_idx}
+		  AND report_category = #{report_category}
+		  AND report_hidden = 0
+	</select>
+	
 	<select id="getReport" resultMap="reportMap">
 	   SELECT 
 	        RE.REPORT_IDX,
