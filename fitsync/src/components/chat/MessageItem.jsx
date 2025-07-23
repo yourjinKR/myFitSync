@@ -1,40 +1,38 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import ImageModal from './ImageModal';
+import MessageContextMenu from './MessageContextMenu';
 
-// 스피너 애니메이션
+// 기존 스타일 컴포넌트들은 그대로 유지
 const spin = keyframes`
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 `;
 
-// 펄스 애니메이션
 const pulse = keyframes`
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 `;
 
-// 메시지 컨테이너 - 프로필과 메시지 영역을 분리
 const MessageContainer = styled.div`
   display: flex;
   justify-content: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
   margin-bottom: 12px;
-  align-items: flex-start; /* flex-end → flex-start로 변경 */
-  /* 검색 결과 하이라이트를 위한 transition 추가 */
+  align-items: flex-start;
   transition: background-color 0.3s ease;
   padding: 4px 8px;
   border-radius: 8px;
-  gap: 8px; /* 프로필 이미지와 메시지 사이 간격 */
+  gap: 8px;
+  position: relative;
 `;
 
-// 프로필 이미지 컴포넌트 - 상단 정렬로 변경
 const ProfileImage = styled.div`
   width: 36px;
   height: 36px;
   border-radius: 18px;
   overflow: hidden;
   flex-shrink: 0;
-  margin-top: 0; /* margin-bottom 제거하고 margin-top으로 변경 */
+  margin-top: 0;
   
   img {
     width: 100%;
@@ -53,30 +51,28 @@ const ProfileImage = styled.div`
   }
   
   &.invisible {
-    opacity: 0; /* 연속 메시지에서는 보이지 않지만 공간은 유지 */
+    opacity: 0;
   }
 `;
 
-// 메시지 그룹 (이름 + 말풍선)
 const MessageGroup = styled.div`
   display: flex;
   flex-direction: column;
   max-width: 70%;
-  min-width: 0; /* flexbox에서 축소 허용 */
-  word-wrap: break-word; /* 추가 안전장치 */
-  align-items: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'}; /* 메시지 정렬 추가 */
+  min-width: 0;
+  word-wrap: break-word;
+  align-items: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
 `;
 
-// 사용자 이름 표시 (상대방 메시지에만)
 const SenderName = styled.div`
   font-size: 1.2rem;
   color: var(--text-secondary);
   margin-bottom: 4px;
   margin-left: 4px;
-  order: 1; /* 이름이 먼저 나오도록 order 설정 */
+  order: 1;
 `;
 
-// 메시지 말풍선 - 텍스트 오버플로우 방지 추가
+// 🔥 핵심 수정: Pointer Events API + 우클릭 지원
 const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
@@ -86,26 +82,50 @@ const MessageBubble = styled.div`
   position: relative;
   word-wrap: break-word;
   border: ${props => props.$isCurrentUser ? 'none' : '1px solid var(--border-light)'};
-  max-width: 100%; /* 부모 컨테이너 너비 제한 */
-  min-width: 0; /* flexbox에서 축소 허용 */
-  overflow: hidden; /* 내용이 넘치지 않도록 */
-  order: 2; /* 메시지가 이름 다음에 나오도록 order 설정 */
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  order: 2;
+  cursor: pointer;
+  user-select: none;
+  
+  /* 🔥 Pointer Events 최적화 */
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  
+  /* 시각적 피드백 강화 */
+  &.long-pressing {
+    transform: scale(0.98);
+    opacity: 0.8;
+    transition: all 0.1s ease;
+    background-color: ${props => props.$isCurrentUser ? 'var(--primary-blue-hover)' : 'var(--bg-tertiary)'};
+  }
+  
+  /* PC 환경 호버 효과 */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: scale(1.01);
+      transition: transform 0.1s ease;
+    }
+  }
 `;
 
-// 텍스트 오버플로우 방지를 위한 스타일 대폭 강화
 const MessageText = styled.div`
   line-height: 1.4;
-  white-space: pre-wrap; /* 줄바꿈 보존 */
+  white-space: pre-wrap;
   font-size: 1.4rem;
-  color: inherit; /* 부모 색상 상속 */
-  word-wrap: break-word; /* 긴 단어 강제 줄바꿈 */
-  word-break: break-word; /* 모든 문자에서 줄바꿈 허용 */
-  overflow-wrap: break-word; /* 추가 안전장치 */
-  max-width: 100%; /* 부모 컨테이너 초과 방지 */
-  hyphens: auto; /* 하이픈 자동 삽입 */
+  color: inherit;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  hyphens: auto;
 `;
 
-// shouldForwardProp으로 progress prop 전달 방지
 const ImageLoadingContainer = styled.div`
   max-width: 200px;
   max-height: 200px;
@@ -123,7 +143,6 @@ const ImageLoadingContainer = styled.div`
   overflow: hidden;
 `;
 
-// 로딩 스피너
 const LoadingSpinner = styled.div`
   width: 24px;
   height: 24px;
@@ -134,7 +153,6 @@ const LoadingSpinner = styled.div`
   margin-bottom: 8px;
 `;
 
-// 로딩 텍스트
 const LoadingText = styled.div`
   font-size: 1.2rem;
   color: var(--text-secondary);
@@ -142,7 +160,6 @@ const LoadingText = styled.div`
   font-weight: 500;
 `;
 
-// shouldForwardProp으로 progress prop 전달 방지
 const LoadingProgress = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== '$progress'
 })`
@@ -156,7 +173,6 @@ const LoadingProgress = styled.div.withConfig({
   width: ${props => props.$progress || 0}%;
 `;
 
-// 이미지 로딩 완료 시 스크롤 트리거를 위한 콜백 추가
 const MessageImage = styled.img`
   max-width: 200px;
   max-height: 200px;
@@ -167,23 +183,21 @@ const MessageImage = styled.img`
   margin-bottom: 8px;
   transition: all 0.2s ease;
   
+  touch-action: manipulation;
+  
   &:hover {
     opacity: 0.9;
-    transform: scale(1.02); /* 호버 시 살짝 확대 */
+    transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
   &:active {
-    transform: scale(0.98); /* 클릭 시 살짝 축소 */
+    transform: scale(0.98);
   }
 `;
 
-// 이미지 컨테이너 (이미지와 텍스트를 그룹핑)
-const ImageContainer = styled.div`
-  /* 이미지가 있을 때 컨테이너 스타일 */
-`;
+const ImageContainer = styled.div``;
 
-// 시간/읽음 상태 위치
 const MessageWithInfo = styled.div`
   display: flex;
   align-items: flex-end;
@@ -192,7 +206,6 @@ const MessageWithInfo = styled.div`
   order: 2;
 `;
 
-// 메시지 하단 정보 (시간, 읽음 상태)
 const MessageInfo = styled.div`
   display: flex;
   flex-direction: column;
@@ -200,10 +213,10 @@ const MessageInfo = styled.div`
   font-size: 1.1rem;
   opacity: 0.7;
   gap: 2px;
-  white-space: nowrap; /* 시간이 줄바꿈되지 않도록 */
-  min-width: fit-content; /* 최소 너비 보장 */
-  flex-shrink: 0; /* 축소되지 않도록 */
-  margin-top: 0; /* margin-top 제거하고 다시 margin-bottom으로 복원 */
+  white-space: nowrap;
+  min-width: fit-content;
+  flex-shrink: 0;
+  margin-top: 0;
 `;
 
 const MessageTime = styled.span`
@@ -211,7 +224,6 @@ const MessageTime = styled.span`
   font-size: 1rem;
 `;
 
-// 읽음 상태를 시간 아래에 표시
 const ReadStatus = styled.div`
   color: var(--text-secondary);
   font-size: 0.9rem;
@@ -225,53 +237,292 @@ const ReadTime = styled.span`
   color: var(--text-tertiary);
 `;
 
-// 프로필 이미지, 시간 표시 여부 props 추가
+const ReplyContainer = styled.div`
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--primary-blue);
+  border-radius: 6px;
+  opacity: 0.8;
+`;
+
+const ReplyText = styled.div`
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+`;
+
+// 🔥 완전히 새로운 장누르기 훅 (Pointer Events API 기반)
+const useUniversalLongPress = (onLongPress, delay = 700) => {
+  const timeoutRef = useRef(null);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const longPressExecuted = useRef(false);
+
+  // 🔥 입력 타입 자동 감지
+  const [inputMethod, setInputMethod] = useState('unknown');
+  
+  useEffect(() => {
+    const detectInputMethod = () => {
+      // 터치스크린 감지
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      // 마우스 감지 (대부분의 PC)
+      const hasMouse = window.matchMedia('(pointer: fine)').matches;
+      
+      if (hasTouch && !hasMouse) {
+        setInputMethod('touch');
+      } else if (hasMouse) {
+        setInputMethod('mouse');
+      } else {
+        setInputMethod('hybrid');
+      }
+    };
+    
+    detectInputMethod();
+    console.log('🎯 입력 방식 감지:', inputMethod);
+  }, []);
+
+  // 🔥 통합 시작 핸들러 (Pointer Events 우선)
+  const handlePressStart = useCallback((event) => {
+    console.log('🔥 장누르기 시작:', event.type, event.pointerType || 'unknown');
+    
+    // 이미지 요소는 제외
+    if (event.target.tagName && event.target.tagName.toLowerCase() === 'img') {
+      return;
+    }
+    
+    setIsLongPressing(true);
+    longPressExecuted.current = false;
+    
+    // 기존 타이머 정리
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      if (!longPressExecuted.current) {
+        console.log('✅ 장누르기 실행!');
+        longPressExecuted.current = true;
+        setIsLongPressing(false);
+        
+        // 🔥 정확한 위치 정보 추출 (뷰포트 기준)
+        let clientX, clientY;
+        
+        if (event.touches && event.touches.length > 0) {
+          // 터치 이벤트 - 뷰포트 기준 좌표
+          clientX = event.touches[0].clientX;
+          clientY = event.touches[0].clientY;
+        } else if (event.changedTouches && event.changedTouches.length > 0) {
+          // 터치 종료 이벤트
+          clientX = event.changedTouches[0].clientX;
+          clientY = event.changedTouches[0].clientY;
+        } else {
+          // 마우스 이벤트 - 뷰포트 기준 좌표 (clientX/Y 사용)
+          clientX = event.clientX;
+          clientY = event.clientY;
+        }
+        
+        // 🔥 유효한 좌표인지 확인
+        if (typeof clientX !== 'number' || typeof clientY !== 'number' || 
+            clientX < 0 || clientY < 0) {
+          console.warn('⚠️ 잘못된 좌표 감지, 기본값 사용:', { clientX, clientY });
+          clientX = window.innerWidth / 2;
+          clientY = window.innerHeight / 2;
+        }
+        
+        const position = { x: clientX, y: clientY };
+        
+        console.log('📍 최종 추출된 위치 (뷰포트 기준):', position);
+        
+        onLongPress(event, position);
+      }
+    }, delay);
+  }, [onLongPress, delay]);
+
+  // 🔥 통합 종료 핸들러
+  const handlePressEnd = useCallback((event) => {
+    console.log('🔥 장누르기 종료:', event.type);
+    
+    setIsLongPressing(false);
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  // 🔥 우클릭 핸들러 (PC 환경 전용)
+  const handleContextMenu = useCallback((event) => {
+    console.log('🖱️ 우클릭 감지 - 장누르기 대체 실행');
+    event.preventDefault(); // 기본 우클릭 메뉴 차단
+    
+    const position = {
+      x: event.clientX,
+      y: event.clientY
+    };
+    
+    onLongPress(event, position);
+  }, [onLongPress]);
+
+  // 메모리 정리
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // 🔥 Pointer Events API 지원 여부에 따른 핸들러 반환
+  const supportsPointerEvents = typeof window !== 'undefined' && window.PointerEvent;
+  
+  console.log('🎯 Pointer Events 지원:', supportsPointerEvents);
+  
+  if (supportsPointerEvents) {
+    // 최신 브라우저: Pointer Events 사용
+    return {
+      eventHandlers: {
+        onPointerDown: handlePressStart,
+        onPointerUp: handlePressEnd,
+        onPointerLeave: handlePressEnd,
+        onPointerCancel: handlePressEnd,
+        onContextMenu: handleContextMenu // 우클릭 대체
+      },
+      isLongPressing
+    };
+  } else {
+    // 구형 브라우저: 전통적인 이벤트 사용
+    return {
+      eventHandlers: {
+        onMouseDown: handlePressStart,
+        onMouseUp: handlePressEnd,
+        onMouseLeave: handlePressEnd,
+        onTouchStart: handlePressStart,
+        onTouchEnd: handlePressEnd,
+        onTouchCancel: handlePressEnd,
+        onContextMenu: handleContextMenu
+      },
+      isLongPressing
+    };
+  }
+};
+
 const MessageItem = ({ 
   message, 
   isCurrentUser, 
   attachments = null, 
   senderName = null,
-  senderImage = null, // 프로필 이미지 추가
-  showTime = true, // 시간 표시 여부 추가
-  onImageLoad = null // 이미지 로딩 완료 콜백 추가
+  senderImage = null,
+  showTime = true,
+  onImageLoad = null,
+  onReply = null,
+  onDelete = null,
+  onReport = null,
+  parentMessage = null
 }) => {
 
-  // 이미지 모달 상태
+  // 상태 관리
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 이미지 로딩 상태
   const [imageLoading, setImageLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  
-  // 이미지 클릭 핸들러 - 새창 대신 모달 열기
-  const handleImageClick = useCallback((e) => {
-    e.preventDefault(); // 기본 동작 방지
-    e.stopPropagation(); // 이벤트 버블링 방지
-    
-    console.log('🖼️ 이미지 클릭 - 모달 열기:', attachments?.original_filename);
-    setIsModalOpen(true);
-  }, [attachments]);
+  const [contextMenu, setContextMenu] = useState({
+    isVisible: false,
+    position: { x: 0, y: 0 }
+  });
 
-  // 모달 닫기 핸들러
+  // 🔥 새로운 장누르기 훅 사용
+  const { eventHandlers, isLongPressing } = useUniversalLongPress(
+    (event, position) => {
+      console.log('🎯 장누르기 콜백 실행:', position);
+      
+      // 🔥 정확한 위치 계산 (스크롤 고려)
+      const rawX = position.x;
+      const rawY = position.y;
+      
+      console.log('📍 원본 터치/클릭 위치:', { rawX, rawY });
+      console.log('📍 현재 스크롤 위치:', { 
+        scrollX: window.scrollX, 
+        scrollY: window.scrollY 
+      });
+      
+      // 🔥 뷰포트 기준 절대 위치로 변환 (스크롤 무관)
+      let finalX = rawX;
+      let finalY = rawY;
+      
+      // 터치 이벤트의 경우 이미 뷰포트 기준이므로 그대로 사용
+      // 마우스 이벤트의 경우에도 clientX/Y를 사용하므로 뷰포트 기준
+      
+      console.log('📍 최종 메뉴 위치 (뷰포트 기준):', { x: finalX, y: finalY });
+      
+      setContextMenu({
+        isVisible: true,
+        position: { x: finalX, y: finalY }
+      });
+    },
+    700
+  );
+
+  // 이미지 클릭 핸들러
+  const handleImageClick = useCallback((e) => {
+    console.log('🖼️ 이미지 클릭!');
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLongPressing) {
+      console.log('⏸️ 장누르기 중이므로 이미지 클릭 무시');
+      return;
+    }
+    
+    console.log('🖼️ 이미지 모달 열기:', attachments?.original_filename);
+    setIsModalOpen(true);
+  }, [attachments, isLongPressing]);
+
+  // 모달 닫기
   const handleModalClose = useCallback(() => {
     console.log('❌ 이미지 모달 닫기');
     setIsModalOpen(false);
   }, []);
 
-  // 이미지 로드 완료 핸들러
+  // 컨텍스트 메뉴 닫기
+  const handleContextMenuClose = useCallback(() => {
+    console.log('❌ 컨텍스트 메뉴 닫기');
+    setContextMenu({ isVisible: false, position: { x: 0, y: 0 } });
+  }, []);
+
+  // 기타 핸들러들 (기존과 동일)
+  const handleCopy = useCallback((message) => {
+    console.log('📋 메시지 복사됨:', message.message_content);
+  }, []);
+
+  const handleReply = useCallback((message) => {
+    console.log('💬 답장 요청:', message);
+    onReply && onReply(message);
+  }, [onReply]);
+
+  const handleDelete = useCallback((message) => {
+    console.log('🗑️ 메시지 삭제 요청:', message);
+    onDelete && onDelete(message);
+  }, [onDelete]);
+
+  const handleReport = useCallback((message, reportContent) => {
+    console.log('🚨 메시지 신고 요청:', { message, reportContent });
+    onReport && onReport(message, reportContent);
+  }, [onReport]);
+
   const handleImageLoad = useCallback(() => {
     console.log('✅ 이미지 로드 완료');
     setImageLoading(false);
     setLoadingProgress(100);
     
-    // 부모 컴포넌트에 이미지 로딩 완료 알림 (스크롤 재조정용)
     if (onImageLoad) {
       setTimeout(() => {
         onImageLoad(message.message_idx);
-      }, 100); // DOM 업데이트 후 콜백 실행
+      }, 100);
     }
   }, [onImageLoad, message.message_idx]);
 
-  // 이미지 로드 에러 핸들러
   const handleImageError = useCallback(() => {
     console.log('❌ 이미지 로드 실패');
     setImageLoading(false);
@@ -295,7 +546,6 @@ const MessageItem = ({
     }
   }, [message.message_type, attachments, imageLoading]);
 
-  // 첨부파일이 로드되면 로딩 상태 해제
   useEffect(() => {
     if (attachments && message.message_type === 'image') {
       setImageLoading(false);
@@ -303,7 +553,7 @@ const MessageItem = ({
     }
   }, [attachments, message.message_type]);
   
-  // 시간을 HH:MM 형식으로 포맷
+  // 시간 포맷팅
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
@@ -311,9 +561,8 @@ const MessageItem = ({
     });
   };
 
-  // 프로필 이미지 렌더링 (연속 메시지 처리 개선)
+  // 프로필 이미지 렌더링
   const renderProfileImage = () => {
-    // 내 메시지는 프로필 이미지 표시하지 않음
     if (isCurrentUser) return null;
     
     const hasValidImage = senderImage && 
@@ -321,7 +570,6 @@ const MessageItem = ({
                          senderImage.trim() !== '' &&
                          senderImage.startsWith('http');
     
-    // senderName이 없으면 (연속 메시지) 투명한 공간만 확보
     if (!senderName) {
       return <ProfileImage className="invisible" />;
     }
@@ -347,22 +595,14 @@ const MessageItem = ({
     );
   };
 
-  // 읽음 상태 정보 생성
+  // 읽음 상태 정보
   const getReadStatusInfo = () => {
-    // 상대방 메시지인 경우 읽음 상태 표시하지 않음
     if (!isCurrentUser) return null;
     
-    // 읽음 시간이 있으면 읽은시간 + "읽음", 없으면 "읽지 않음" 표시
     if (message.message_readdate) {
-      return {
-        text: '읽음',
-        time: null
-      };
+      return { text: '읽음', time: null };
     } else {
-      return {
-        text: '읽지 않음',
-        time: null
-      };
+      return { text: '읽지 않음', time: null };
     }
   };
 
@@ -371,22 +611,34 @@ const MessageItem = ({
   return (
     <>
     <MessageContainer id={`message-${message.message_idx}`} $isCurrentUser={isCurrentUser}>
-      {/* 상대방 메시지인 경우 프로필 이미지 표시 */}
       {renderProfileImage()}
       
       <MessageGroup $isCurrentUser={isCurrentUser}>
-        {/* 상대방 메시지인 경우에만 이름 표시 */}
         {!isCurrentUser && senderName && (
           <SenderName>{senderName}</SenderName>
         )}
         
-        {/* 메시지와 시간/읽음상태를 나란히 배치 */}
+        {parentMessage && (
+          <ReplyContainer>
+            <ReplyText>
+              {parentMessage.message_type === 'image' 
+                ? (parentMessage.message_content && parentMessage.message_content !== '[이미지]' 
+                   ? parentMessage.message_content 
+                   : '📷 이미지')
+                : parentMessage.message_content}
+            </ReplyText>
+          </ReplyContainer>
+        )}
+        
         <MessageWithInfo $isCurrentUser={isCurrentUser}>
-          <MessageBubble $isCurrentUser={isCurrentUser}>
-            {/* 이미지 메시지 처리 */}
+          {/* 🔥 핵심 수정: 새로운 이벤트 핸들러 적용 */}
+          <MessageBubble 
+            $isCurrentUser={isCurrentUser}
+            {...eventHandlers} // 🔥 Pointer Events 기반 핸들러 적용
+            className={isLongPressing ? 'long-pressing' : ''}
+          >
             {message.message_type === 'image' ? (
               <ImageContainer>
-                {/* 이미지 로딩 중이거나 첨부파일이 없는 경우 로딩 표시 */}
                 {(!attachments || imageLoading) ? (
                   <ImageLoadingContainer>
                     <LoadingSpinner />
@@ -394,7 +646,6 @@ const MessageItem = ({
                     <LoadingProgress $progress={loadingProgress} />
                   </ImageLoadingContainer>
                 ) : (
-                  /* 첨부파일이 로드된 경우 이미지 표시 */
                   <MessageImage
                     src={attachments.cloudinary_url}
                     alt={attachments.original_filename}
@@ -406,24 +657,20 @@ const MessageItem = ({
                   />
                 )}
                 
-                {/* 이미지와 함께 텍스트 표시 (기본 '[이미지]' 메시지가 아닌 경우) */}
                 {message.message_content && message.message_content !== '[이미지]' && (
                   <MessageText>{message.message_content}</MessageText>
                 )}
               </ImageContainer>
             ) : (
-              /* 일반 텍스트 메시지 */
               <MessageText>{message.message_content}</MessageText>
             )}
           </MessageBubble>
           
-          {/* 시간 표시 (showTime이 true일 때만) */}
           {showTime && (
             <MessageInfo $isCurrentUser={isCurrentUser}>
               <MessageTime>
                 {formatTime(message.message_senddate)}
               </MessageTime>
-              {/* 읽음 상태 (내가 보낸 메시지인 경우에만 표시) */}
               {readStatusInfo && (
                 <ReadStatus>
                   <ReadTime>{readStatusInfo.text}</ReadTime>
@@ -434,7 +681,21 @@ const MessageItem = ({
         </MessageWithInfo>
       </MessageGroup>
     </MessageContainer>
-    {/* 이미지 모달 - attachments가 있을 때만 렌더링 */}
+
+    {/* 컨텍스트 메뉴 */}
+    <MessageContextMenu
+      isVisible={contextMenu.isVisible}
+      position={contextMenu.position}
+      message={message}
+      isCurrentUser={isCurrentUser}
+      onClose={handleContextMenuClose}
+      onCopy={handleCopy}
+      onReply={handleReply}
+      onDelete={handleDelete}
+      onReport={handleReport}
+    />
+
+    {/* 이미지 모달 */}
     {attachments && (
       <ImageModal
         isOpen={isModalOpen}

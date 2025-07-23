@@ -1,5 +1,6 @@
 package org.fitsync.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -155,6 +156,77 @@ public class ChatServiceImple implements ChatService {
     public int linkAttachmentToMessage(int message_idx, int attach_idx) {
         log.info("linkAttachmentToMessage..." + message_idx + ", " + attach_idx);
         return messageMapper.updateMessageAttachment(message_idx, attach_idx);
+    }
+    
+    // 메시지 삭제 (논리적 삭제)
+    @Override
+    public boolean deleteMessage(int message_idx, int sender_idx) {
+        log.info("deleteMessage... message_idx: " + message_idx + ", sender_idx: " + sender_idx);
+        
+        try {
+            // 1. 삭제 가능 여부 체크
+            MessageVO message = messageMapper.getMessageForDeleteCheck(message_idx, sender_idx);
+            
+            if (message == null) {
+                log.warn("메시지를 찾을 수 없거나 삭제 권한이 없습니다.");
+                return false;
+            }
+            
+            // 2. 삭제 가능한지 시간 체크
+            if (!canDeleteMessage(message)) {
+                log.warn("메시지 삭제 시간이 경과했습니다.");
+                return false;
+            }
+            
+            // 3. 논리적 삭제 실행
+            int result = messageMapper.deleteMessage(message_idx, sender_idx);
+            
+            if (result > 0) {
+                log.info("메시지 삭제 완료: " + message_idx);
+                return true;
+            } else {
+                log.error("메시지 삭제 실패: " + message_idx);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            log.error("메시지 삭제 중 오류 발생: " + e.getMessage(), e);
+            throw new RuntimeException("메시지 삭제에 실패했습니다.", e);
+        }
+    }
+    
+    // 메시지 삭제 가능 여부 체크
+    private boolean canDeleteMessage(MessageVO message) {
+        // 읽지 않은 상태면 항상 삭제 가능
+        if (message.getMessage_readdate() == null) {
+            log.info("읽지 않은 메시지 - 삭제 가능");
+            return true;
+        }
+        
+        // 읽은 상태면 1분 내에만 삭제 가능
+        Date readTime = message.getMessage_readdate();
+        Date now = new Date();
+        long diffInMillis = now.getTime() - readTime.getTime();
+        long diffInMinutes = diffInMillis / (1000 * 60);
+        
+        boolean canDelete = diffInMinutes <= 1;
+        log.info("읽은 메시지 삭제 가능 여부: " + canDelete + " (경과 시간: " + diffInMinutes + "분)");
+        
+        return canDelete;
+    }
+    
+    // 답장용 원본 메시지 조회
+    @Override
+    public MessageVO getParentMessage(int parent_idx) {
+        log.info("getParentMessage... parent_idx: " + parent_idx);
+        return messageMapper.getParentMessage(parent_idx);
+    }
+    
+    // 답장 메시지들 조회
+    @Override
+    public List<MessageVO> getReplyMessages(int parent_idx) {
+        log.info("getReplyMessages... parent_idx: " + parent_idx);
+        return messageMapper.getReplyMessages(parent_idx);
     }
 
 }

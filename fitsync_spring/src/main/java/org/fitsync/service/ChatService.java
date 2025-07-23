@@ -31,5 +31,11 @@ public interface ChatService {
     public ChatAttachVO readFile(int message_idx);
     // 메시지와 첨부파일 연결
     public int linkAttachmentToMessage(int message_idx, int attach_idx);
+    // 메시지 삭제 (논리적 삭제)
+    public boolean deleteMessage(int message_idx, int sender_idx);
+    // 답장용 원본 메시지 조회
+    public MessageVO getParentMessage(int parent_idx);
+    // 답장 메시지들 조회
+    public List<MessageVO> getReplyMessages(int parent_idx);
 	
 }

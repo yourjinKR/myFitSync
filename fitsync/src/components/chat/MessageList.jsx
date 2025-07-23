@@ -8,13 +8,11 @@ const Container = styled.div`
   gap: 8px;
 `;
 
-// 하루 단위 날짜 구분선 컴포넌트
 const DateSeparator = styled.div`
   text-align: center;
   margin: 20px 0 10px 0;
   position: relative;
   
-  /* 구분선 스타일 */
   &::before {
     content: '';
     position: absolute;
@@ -37,13 +35,11 @@ const DateText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
-// 읽지 않은 메시지 구분선 컴포넌트
 const UnreadSeparator = styled.div`
   text-align: center;
   margin: 16px 0;
   position: relative;
   
-  /* 파란색 구분선 스타일 */
   &::before {
     content: '';
     position: absolute;
@@ -66,19 +62,21 @@ const UnreadText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
-// 카카오톡 스타일 메시지 그룹핑과 프로필 이미지 추가
+// 핸들러 전달이 추가된 MessageList 컴포넌트
 const MessageList = ({ 
   messages, 
   currentMemberIdx, 
   attachments, 
   roomData,
-  onImageLoad = null // 이미지 로딩 완료 콜백 추가
+  onImageLoad = null,
+  onReply = null, // 답장 핸들러 추가
+  onDelete = null, // 삭제 핸들러 추가
+  onReport = null // 신고 핸들러 추가
 }) => {
   
-  // 가장 오래된 읽지 않은 메시지 ID를 고정하여 저장
   const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
 
-  // 초기 읽지 않은 메시지 중 가장 오래된 메시지 ID 계산 (한 번만)
+  // 초기 읽지 않은 메시지 중 가장 오래된 메시지 ID 계산
   const initialOldestUnreadMessageIdx = useMemo(() => {
     const unreadMessages = messages.filter(msg => 
       msg.sender_idx !== currentMemberIdx && !msg.message_readdate
@@ -94,7 +92,7 @@ const MessageList = ({
     
     console.log('🔒 초기 가장 오래된 읽지 않은 메시지 ID 고정:', oldestUnreadMessage.message_idx);
     return oldestUnreadMessage.message_idx;
-  }, [messages.length]); // messages.length가 변경될 때만 재계산 (새 메시지 추가 시)
+  }, [messages.length, currentMemberIdx]);
 
   // 고정된 가장 오래된 읽지 않은 메시지 ID 설정
   useEffect(() => {
@@ -104,7 +102,12 @@ const MessageList = ({
     }
   }, [initialOldestUnreadMessageIdx, fixedOldestUnreadMessageIdx]);
 
-  // 날짜를 한국어 형식으로 포맷
+  // 답장 대상 메시지 찾기 함수
+  const getParentMessage = (parentIdx) => {
+    if (!parentIdx) return null;
+    return messages.find(msg => msg.message_idx === parentIdx);
+  };
+
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -113,25 +116,18 @@ const MessageList = ({
     });
   };
 
-  // 날짜 구분선 표시 여부 결정
   const shouldShowDateSeparator = (currentMessage, previousMessage) => {
-    // 첫 번째 메시지인 경우 항상 구분선 표시
     if (!previousMessage) return true;
     
-    // 현재 메시지와 이전 메시지의 날짜 비교
     const currentDate = new Date(currentMessage.message_senddate).toDateString();
     const previousDate = new Date(previousMessage.message_senddate).toDateString();
     
-    // 날짜가 다르면 구분선 표시
     return currentDate !== previousDate;
   };
 
-  // 읽지 않은 메시지 구분선 표시 여부 결정 (고정된 ID 사용)
   const shouldShowUnreadSeparator = (currentMessage) => {
-    // 고정된 가장 오래된 읽지 않은 메시지 ID가 없으면 구분선 표시하지 않음
     if (!fixedOldestUnreadMessageIdx) return false;
     
-    // 현재 메시지가 고정된 가장 오래된 읽지 않은 메시지인지 확인
     const shouldShow = currentMessage.message_idx === fixedOldestUnreadMessageIdx;
     
     console.log('📍 읽지 않은 메시지 구분선 체크 (고정):', {
@@ -143,11 +139,9 @@ const MessageList = ({
     return shouldShow;
   };
 
-  // 원래 카카오톡 스타일 그룹핑으로 복원 (분 단위)
   const isConsecutiveMessage = (currentMessage, previousMessage) => {
     if (!previousMessage) return false;
     
-    // 같은 발신자이고, 같은 분(minute) 내의 메시지인지 확인
     const currentTime = new Date(currentMessage.message_senddate);
     const previousTime = new Date(previousMessage.message_senddate);
     
@@ -161,11 +155,9 @@ const MessageList = ({
     return isSameSender && isSameMinute;
   };
 
-  // 그룹의 마지막 메시지인지 확인 (시간 표시 여부 결정용)
   const isLastInGroup = (currentMessage, nextMessage) => {
-    if (!nextMessage) return true; // 마지막 메시지
+    if (!nextMessage) return true;
     
-    // 다음 메시지가 다른 발신자이거나 다른 분(minute)이면 그룹의 마지막
     const currentTime = new Date(currentMessage.message_senddate);
     const nextTime = new Date(nextMessage.message_senddate);
     
@@ -179,26 +171,20 @@ const MessageList = ({
     return isDifferentSender || isDifferentMinute;
   };
 
-  // 프로필 표시 로직 - 연속 메시지가 아닐 때만 프로필 표시
   const getOtherPersonInfo = (message, isConsecutive) => {
     if (!roomData) return { name: '상대방', image: null };
     
-    // 메시지 발신자가 현재 사용자가 아닌 경우 (상대방 메시지)
     if (message.sender_idx !== currentMemberIdx) {
-      // 연속 메시지인 경우 프로필 정보 반환하지 않음
       if (isConsecutive) {
         return { name: null, image: null };
       }
       
-      // 그룹의 첫 번째 메시지인 경우에만 프로필 정보 반환
       if (roomData.trainer_idx === currentMemberIdx) {
-        // 내가 트레이너면 상대방은 회원
         return {
           name: roomData.user_name || '회원',
           image: roomData.user_image
         };
       } else {
-        // 내가 일반 사용자면 상대방은 트레이너
         return {
           name: roomData.trainer_name || '트레이너',
           image: roomData.trainer_image
@@ -206,10 +192,9 @@ const MessageList = ({
       }
     }
     
-    return { name: null, image: null }; // 내 메시지는 프로필 불필요
+    return { name: null, image: null };
   };
 
-  // 이미지 로딩 완료 핸들러 - 부모 컴포넌트로 전달
   const handleImageLoad = (messageIdx) => {
     console.log('📷 MessageList: 이미지 로딩 완료 콜백 수신:', messageIdx);
     if (onImageLoad) {
@@ -226,31 +211,38 @@ const MessageList = ({
         const isLastMessage = isLastInGroup(message, nextMessage);
         const otherPersonInfo = getOtherPersonInfo(message, isConsecutive);
         
+        // 답장 대상 메시지 찾기
+        const parentMessage = getParentMessage(message.parent_idx);
+        
         return (
           <React.Fragment key={message.message_idx}>
-            {/* 날짜 구분선 (필요한 경우에만 표시) */}
+            {/* 날짜 구분선 */}
             {shouldShowDateSeparator(message, previousMessage) && (
               <DateSeparator>
                 <DateText>{formatDate(message.message_senddate)}</DateText>
               </DateSeparator>
             )}
             
-            {/* 읽지 않은 메시지 구분선 (고정된 위치에만 표시) */}
+            {/* 읽지 않은 메시지 구분선 */}
             {shouldShowUnreadSeparator(message) && (
               <UnreadSeparator>
                 <UnreadText>여기서부터 안읽음</UnreadText>
               </UnreadSeparator>
             )}
             
-            {/* 개별 메시지 컴포넌트 */}
+            {/* 개별 메시지 컴포넌트 - 핸들러들 전달 */}
             <MessageItem
               message={message}
               isCurrentUser={message.sender_idx === currentMemberIdx}
-              attachments={attachments[message.message_idx] || null} // 단일 객체 전달
-              senderName={otherPersonInfo.name} // 연속 메시지 체크를 getOtherPersonInfo에서 처리
-              senderImage={otherPersonInfo.image} // 연속 메시지 체크를 getOtherPersonInfo에서 처리
-              showTime={isLastMessage} // 그룹의 마지막 메시지에만 시간 표시
-              onImageLoad={handleImageLoad} // 이미지 로딩 완료 콜백 전달
+              attachments={attachments[message.message_idx] || null}
+              senderName={otherPersonInfo.name}
+              senderImage={otherPersonInfo.image}
+              showTime={isLastMessage}
+              onImageLoad={handleImageLoad}
+              onReply={onReply} // 답장 핸들러 전달
+              onDelete={onDelete} // 삭제 핸들러 전달
+              onReport={onReport} // 신고 핸들러 전달
+              parentMessage={parentMessage} // 답장 대상 메시지 전달
             />
           </React.Fragment>
         );

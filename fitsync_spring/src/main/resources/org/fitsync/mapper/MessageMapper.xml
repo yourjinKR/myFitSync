@@ -18,7 +18,8 @@
             message_type,
             message_senddate,
             message_delete,
-            message_order
+            message_order,
+            parent_idx
             <if test="attach_idx != null and attach_idx > 0">
                 ,attach_idx
             </if>
@@ -31,7 +32,8 @@
             #{message_type},
             SYSTIMESTAMP,
             'N',
-            #{message_order}
+            #{message_order},
+            #{parent_idx}
             <if test="attach_idx != null and attach_idx > 0">
                 ,#{attach_idx}
             </if>
@@ -93,5 +95,39 @@
     <update id="updateMessageAttachment" parameterType="int">
         UPDATE message SET attach_idx = #{attach_idx} WHERE message_idx = #{message_idx}
     </update>
+    
+    <!-- 메시지 삭제 (논리적 삭제) -->
+    <update id="deleteMessage" parameterType="int">
+        UPDATE message SET 
+            message_delete = 'Y',
+            message_editdate = SYSTIMESTAMP
+        WHERE message_idx = #{message_idx} AND sender_idx = #{sender_idx}
+    </update>
+
+    <!-- 삭제 가능 여부 체크용 메시지 조회 -->
+    <select id="getMessageForDeleteCheck" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+        SELECT
+        	message_idx,
+        	sender_idx,
+        	receiver_idx,
+        	message_readdate,
+        	message_senddate,
+        	message_delete
+        FROM message 
+        WHERE message_idx = #{message_idx} AND sender_idx = #{sender_idx} AND message_delete = 'N'
+    </select>
+
+    <!-- 답장용 원본 메시지 조회 -->
+    <select id="getParentMessage" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+        SELECT * FROM message 
+        WHERE message_idx = #{parent_idx} AND message_delete = 'N'
+    </select>
+
+    <!-- 답장 메시지들 조회 -->
+    <select id="getReplyMessages" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+        SELECT * FROM message 
+        WHERE parent_idx = #{parent_idx} AND message_delete = 'N'
+        ORDER BY message_senddate ASC
+    </select>
 
 </mapper>

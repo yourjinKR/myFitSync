@@ -26,5 +26,13 @@ public interface MessageMapper {
     public ChatAttachVO getMessageAttachment(@Param("message_idx") int message_idx);
     // 메시지 첨부파일 업데이트
     public int updateMessageAttachment(@Param("message_idx") int message_idx, @Param("attach_idx") int attach_idx);
+    // 메시지 삭제 (논리적 삭제)
+    public int deleteMessage(@Param("message_idx") int message_idx, @Param("sender_idx") int sender_idx);
+    // 삭제 가능 여부 체크 (읽음 상태 및 시간 체크)
+    public MessageVO getMessageForDeleteCheck(@Param("message_idx") int message_idx, @Param("sender_idx") int sender_idx);
+    // 답장용 원본 메시지 조회
+    public MessageVO getParentMessage(@Param("parent_idx") int parent_idx);
+    // 답장 메시지들 조회 (parent_idx가 있는 메시지들)
+    public List<MessageVO> getReplyMessages(@Param("parent_idx") int parent_idx);
     
 }

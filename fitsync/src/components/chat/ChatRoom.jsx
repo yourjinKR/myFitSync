@@ -11,18 +11,50 @@ import ChatLoading from '../../components/ChatLoading';
 import ChatRoomHeader from './ChatRoomHeader';
 import BarbellLoading from '../BarbellLoading';
 
+// 전체 컨테이너 레이아웃 - Header와 Nav를 고려한 위치 조정
 const Container = styled.div`
+  position: fixed;
+  top: 65px; /* Header.jsx 높이만큼 상단 여백 */
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 65px - 85px); /* Header(65px) + Nav(85px) 제외한 높이 */
+  max-width: 750px;
+  margin: 0 auto;
+  background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  z-index: 10; /* Header(999)와 Nav(999)보다 낮게 설정 */
+  
+  @media (min-width: 751px) {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+`;
+
+// 헤더 고정 영역 - ChatRoomHeader 영역
+const HeaderContainer = styled.div`
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20; /* Container 내부에서는 높은 z-index */
+`;
+
+// 메시지 영역 - 정확한 높이 계산
+const MessagesWrapper = styled.div`
+  flex: 1;
+  position: relative;
+  overflow: hidden;
   background-color: var(--bg-primary);
+  min-height: 0; /* flex 아이템이 줄어들 수 있도록 */
 `;
 
 const MessagesContainer = styled.div`
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow-y: auto;
   padding: 20px;
-  background-color: var(--bg-primary);
   
   /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
@@ -38,6 +70,17 @@ const MessagesContainer = styled.div`
     background: var(--border-medium);
     border-radius: 3px;
   }
+`;
+
+// 입력창 영역 - Nav.jsx 바로 위에 위치하도록 조정
+const InputWrapper = styled.div`
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20; /* Container 내부에서 높은 z-index */
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-medium);
+  width: 100%;
+  /* Nav.jsx가 하단을 차지하므로 별도 bottom 설정 불필요 */
 `;
 
 // 개별 채팅방 화면 컴포넌트
@@ -60,21 +103,32 @@ const ChatRoom = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [initialUnreadMessages, setInitialUnreadMessages] = useState([]);
   
+  // 새로 추가된 상태 - 답장 기능
+  const [replyToMessage, setReplyToMessage] = useState(null);
+  
   // 스크롤 관련 상태 관리 - 이미지 로딩 완료 추적
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(false);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
-  const [imageLoadingCount, setImageLoadingCount] = useState(0); // 로딩 중인 이미지 개수
-  const [totalImageCount, setTotalImageCount] = useState(0); // 전체 이미지 개수
+  const [imageLoadingCount, setImageLoadingCount] = useState(0);
+  const [totalImageCount, setTotalImageCount] = useState(0);
 
   // ref 관리
   const initialReadDone = useRef(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const scrollAdjustmentTimerRef = useRef(null);
-  const lastScrollHeight = useRef(0); // 이전 스크롤 높이 추적
+  const lastScrollHeight = useRef(0);
 
   // WebSocket 연결 및 기능들
   const { connected, subscribeToRoom, sendMessage, markAsRead } = useWebSocket();
+
+  // 컴포넌트 마운트 확인 로깅
+  useEffect(() => {
+    console.log('🏗️ ChatRoom 컴포넌트 마운트됨');
+    return () => {
+      console.log('🏗️ ChatRoom 컴포넌트 언마운트됨');
+    };
+  }, []);
 
   // 읽지 않은 메시지 구분선을 화면 상단에 정확히 위치시키는 함수
   const scrollToUnreadSeparatorTop = useCallback(async (targetMessageIdx, retryCount = 0) => {
@@ -95,26 +149,21 @@ const ChatRoom = () => {
     }
 
     try {
-      // 기본 스크롤 (이미지 로딩 대기 없이)
       const performBasicScroll = () => {
-        // 고정 헤더 높이 직접 계산
         const getActualHeaderHeight = () => {
           let totalHeight = 0;
           
-          // Header.jsx 찾기
           const mainHeader = document.querySelector('header');
           if (mainHeader) {
             totalHeight += mainHeader.offsetHeight;
           }
           
-          // ChatRoomHeader.jsx 찾기
           const chatHeader = container.parentElement?.querySelector('[class*="Header"]') || 
                             container.previousElementSibling;
           if (chatHeader && chatHeader !== mainHeader) {
             totalHeight += chatHeader.offsetHeight;
           }
           
-          // 안전 여백 추가
           const safeMargin = 30;
           totalHeight += safeMargin;
           
@@ -137,29 +186,21 @@ const ChatRoom = () => {
         });
 
         container.scrollTop = finalScrollTop;
-        
-        // 스크롤 높이 기록
         lastScrollHeight.current = container.scrollHeight;
         
         return finalScrollTop;
       };
 
-      // 이미지 로딩 완료 후 정밀 조정
       const performPreciseAdjustment = async () => {
-        // 이미지 로딩 대기
         await waitForImagesLoad(container);
-        
-        // DOM 변화 대기
         await new Promise(resolve => requestAnimationFrame(resolve));
         
-        // 스크롤 높이 변화 확인 후 조정
         const currentScrollHeight = container.scrollHeight;
         const heightDifference = currentScrollHeight - lastScrollHeight.current;
         
-        if (Math.abs(heightDifference) > 50) { // 50px 이상 변화가 있을 때만 조정
+        if (Math.abs(heightDifference) > 50) {
           console.log('🔧 이미지 로딩으로 인한 높이 변화 감지:', heightDifference);
           
-          // 다시 정확한 위치 계산
           const headerHeight = container.parentElement?.querySelector('header')?.offsetHeight || 0;
           const chatHeaderHeight = container.previousElementSibling?.offsetHeight || 0;
           const totalHeaderHeight = headerHeight + chatHeaderHeight + 30;
@@ -174,14 +215,12 @@ const ChatRoom = () => {
           const preciseFinalScrollTop = Math.max(0, precisTargetScrollTop);
           container.scrollTop = preciseFinalScrollTop;
           
-          // 새로운 스크롤 높이 기록
           lastScrollHeight.current = currentScrollHeight;
           
           console.log('🔧 이미지 로딩 후 스크롤 위치 재조정 완료');
         }
       };
 
-      // 시각적 효과
       const addVisualEffect = () => {
         unreadSeparator.style.backgroundColor = 'rgba(74, 144, 226, 0.15)';
         unreadSeparator.style.transition = 'background-color 0.3s ease';
@@ -190,7 +229,6 @@ const ChatRoom = () => {
         }, 2000);
       };
 
-      // 단계별 실행
       console.log('🚀 읽지 않은 메시지 스크롤 실행');
       performBasicScroll();
       
@@ -280,7 +318,7 @@ const ChatRoom = () => {
       setHasPerformedInitialScroll(false);
       setShouldScrollToBottom(false);
       setInitialUnreadMessages([]);
-      setImageLoadingCount(0); // 이미지 로딩 상태 초기화
+      setImageLoadingCount(0);
       setTotalImageCount(0);
       
       console.log('🔄 채팅방 초기화');
@@ -316,7 +354,7 @@ const ChatRoom = () => {
       // 이미지 메시지 개수 계산
       const imageMessages = messageList.filter(msg => msg.message_type === 'image');
       setTotalImageCount(imageMessages.length);
-      setImageLoadingCount(imageMessages.length); // 초기값은 전체 이미지 개수
+      setImageLoadingCount(imageMessages.length);
 
       // 읽지 않은 메시지 분석
       if (memberIdx) {
@@ -373,7 +411,6 @@ const ChatRoom = () => {
             [message.message_idx]: attachment
           }));
           
-          // 첨부파일 로드 완료 시 카운트 감소
           setImageLoadingCount(prev => {
             const newCount = Math.max(0, prev - 1);
             console.log(`📷 첨부파일 로드 완료: ${index + 1}/${imageMessages.length} (남은 로딩: ${newCount})`);
@@ -382,11 +419,9 @@ const ChatRoom = () => {
           
         } catch (error) {
           console.error(`첨부파일 로드 실패 (message_idx: ${message.message_idx}):`, error);
-          // 에러가 발생해도 카운트 감소
           setImageLoadingCount(prev => Math.max(0, prev - 1));
         }
       } else {
-        // attach_idx가 없는 경우에도 카운트 감소
         setImageLoadingCount(prev => Math.max(0, prev - 1));
       }
     });
@@ -398,13 +433,13 @@ const ChatRoom = () => {
         isInitialLoad && 
         currentMemberIdx && 
         !hasPerformedInitialScroll && 
-        imageLoadingCount === 0) { // 모든 이미지 로딩 완료 조건 추가
+        imageLoadingCount === 0) {
       
       console.log('📍 모든 이미지 로딩 완료 - 초기 스크롤 실행');
       
       setTimeout(() => {
         performInitialScroll();
-      }, 200); // 충분한 대기 시간
+      }, 200);
     }
   }, [messages, currentMemberIdx, isInitialLoad, hasPerformedInitialScroll, imageLoadingCount]);
 
@@ -560,7 +595,6 @@ const ChatRoom = () => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       
-      // scrollIntoView 대신 직접 scrollTop 설정으로 더 정확한 제어
       const scrollToBottomPosition = () => {
         const { scrollHeight, clientHeight } = container;
         const targetScrollTop = scrollHeight - clientHeight;
@@ -582,16 +616,14 @@ const ChatRoom = () => {
         });
       };
       
-      // 즉시 실행
       scrollToBottomPosition();
       
-      // 100ms 후 한 번 더 확인 및 조정 (이미지 로딩 등으로 인한 높이 변화 대응)
       setTimeout(() => {
         const { scrollTop, scrollHeight, clientHeight } = container;
         const expectedScrollTop = scrollHeight - clientHeight;
         const difference = Math.abs(expectedScrollTop - scrollTop);
         
-        if (difference > 10) { // 10px 이상 차이나면 재조정
+        if (difference > 10) {
           console.log('🔧 스크롤 위치 재조정:', { 
             expected: expectedScrollTop, 
             actual: scrollTop, 
@@ -600,7 +632,6 @@ const ChatRoom = () => {
           container.scrollTop = expectedScrollTop;
         }
         
-        // 최종 스크롤 높이 기록
         lastScrollHeight.current = scrollHeight;
       }, 100);
       
@@ -619,9 +650,8 @@ const ChatRoom = () => {
   const adjustScrollPosition = useCallback(() => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px 여유
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
       
-      // 맨 아래 근처에 있으면서 스크롤 높이가 변했을 때만 조정
       const currentScrollHeight = scrollHeight;
       const heightDifference = currentScrollHeight - lastScrollHeight.current;
       
@@ -637,7 +667,6 @@ const ChatRoom = () => {
   const handleImageLoad = useCallback((messageIdx) => {
     console.log('📷 이미지 로딩 완료:', messageIdx);
     
-    // 로딩 완료 후 스크롤 위치 조정
     setTimeout(() => {
       adjustScrollPosition();
     }, 50);
@@ -655,8 +684,84 @@ const ChatRoom = () => {
     scrollToMessage(messageIdx);
   }, [scrollToMessage]);
 
-  // 메시지 전송 핸들러 - Promise 기반 순차 처리
-  const handleSendMessage = async (messageContent, messageType = 'text', file = null) => {
+  // 답장 핸들러
+  const handleReply = useCallback((message) => {
+    console.log('💬 답장 모드 활성화:', message);
+    setReplyToMessage(message);
+  }, []);
+
+  // 답장 취소 핸들러
+  const handleCancelReply = useCallback(() => {
+    console.log('❌ 답장 모드 취소');
+    setReplyToMessage(null);
+  }, []);
+
+  // 메시지 삭제 핸들러
+  const handleDeleteMessage = useCallback(async (message) => {
+    console.log('🗑️ 메시지 삭제 요청:', message);
+    
+    try {
+      const response = await axios.delete(`/api/chat/message/${message.message_idx}`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        console.log('✅ 메시지 삭제 완료');
+        
+        // 메시지 목록에서 해당 메시지 제거 (즉시 UI 업데이트)
+        setMessages(prev => prev.filter(msg => msg.message_idx !== message.message_idx));
+      } else {
+        console.error('❌ 메시지 삭제 실패:', response.data.message);
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error('❌ 메시지 삭제 API 호출 실패:', error);
+      
+      if (error.response?.status === 401) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        alert(error.response.data.message || '메시지를 삭제할 수 없습니다.');
+      } else {
+        alert('메시지 삭제 중 오류가 발생했습니다.');
+      }
+    }
+  }, [navigate]);
+
+  // 메시지 신고 핸들러
+  const handleReportMessage = useCallback(async (message, reportContent) => {
+    console.log('🚨 메시지 신고 요청:', { message, reportContent });
+    
+    try {
+      const response = await axios.post(`/api/chat/message/${message.message_idx}/report`, {
+        reportContent: reportContent
+      }, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        console.log('✅ 메시지 신고 완료');
+        alert('신고가 접수되었습니다.');
+      } else {
+        console.error('❌ 메시지 신고 실패:', response.data.message);
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error('❌ 메시지 신고 API 호출 실패:', error);
+      
+      if (error.response?.status === 401) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        alert(error.response.data.message || '신고 처리 중 오류가 발생했습니다.');
+      } else {
+        alert('신고 처리 중 오류가 발생했습니다.');
+      }
+    }
+  }, [navigate]);
+
+  // 메시지 전송 핸들러 수정 - parent_idx 지원
+  const handleSendMessage = async (messageContent, messageType = 'text', file = null, parentIdx = null) => {
     if (!connected || !roomId || !currentMemberIdx) {
       console.warn('WebSocket 연결이 되어있지 않거나 채팅방 ID가 없습니다.');
       return Promise.reject('WebSocket 연결 오류');
@@ -676,18 +781,17 @@ const ChatRoom = () => {
           receiver_idx: otherMemberIdx,
           message_content: messageContent,
           message_type: messageType,
-          unique_id: messageId
+          unique_id: messageId,
+          parent_idx: parentIdx // 답장 정보 추가
         };
 
-        console.log('📤 메시지 전송 시작:', messageData);
+        console.log('📤 메시지 전송 시작 (답장 지원):', messageData);
         sendMessage(messageData);
 
-        // 메시지 전송 즉시 맨 아래로 스크롤
         setTimeout(() => {
           scrollToBottom(true);
         }, 50);
 
-        // 파일 업로드 처리
         if (file && messageType === 'image') {
           console.log('📷 이미지 파일 업로드 시작:', file.name);
           
@@ -701,7 +805,8 @@ const ChatRoom = () => {
                 msg.sender_idx === currentMemberIdx && 
                 msg.message_content === messageContent &&
                 msg.message_type === 'image' &&
-                (!msg.attach_idx || msg.attach_idx === 0)
+                (!msg.attach_idx || msg.attach_idx === 0) &&
+                (parentIdx ? msg.parent_idx === parentIdx : !msg.parent_idx) // 답장 조건 추가
               )
               .sort((a, b) => new Date(b.message_senddate) - new Date(a.message_senddate))[0];
 
@@ -712,6 +817,7 @@ const ChatRoom = () => {
             console.log('📷 업로드 대상 메시지 찾음:', {
               message_idx: targetMessage.message_idx,
               content: targetMessage.message_content,
+              parent_idx: targetMessage.parent_idx,
               sendDate: targetMessage.message_senddate
             });
             
@@ -742,7 +848,7 @@ const ChatRoom = () => {
           }
         } else {
           setTimeout(() => {
-            resolve({ content: messageContent, type: messageType });
+            resolve({ content: messageContent, type: messageType, parent_idx: parentIdx });
           }, 100);
         }
       } catch (error) {
@@ -814,29 +920,40 @@ const ChatRoom = () => {
 
   return (
     <Container>
-      <ChatRoomHeader 
-        roomDisplayName={getRoomDisplayName()} 
-        onSearchResults={handleSearchResults} 
-        onScrollToSearchResult={handleScrollToSearchResult}
-        messages={messages}
-        attachments={attachments} // attachments도 전달하여 이미지 파일명 검색 가능하게 함
-      />
-
-      <MessagesContainer ref={messagesContainerRef}>
-        <MessageList
+      <HeaderContainer>
+        <ChatRoomHeader 
+          roomDisplayName={getRoomDisplayName()} 
+          onSearchResults={handleSearchResults} 
+          onScrollToSearchResult={handleScrollToSearchResult}
           messages={messages}
-          currentMemberIdx={currentMemberIdx}
           attachments={attachments}
-          roomData={roomData}
-          onImageLoad={handleImageLoad}
         />
-        <div ref={messagesEndRef} />
-      </MessagesContainer>
+      </HeaderContainer>
 
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        disabled={!connected}
-      />
+      <MessagesWrapper>
+        <MessagesContainer ref={messagesContainerRef}>
+          <MessageList
+            messages={messages}
+            currentMemberIdx={currentMemberIdx}
+            attachments={attachments}
+            roomData={roomData}
+            onImageLoad={handleImageLoad}
+            onReply={handleReply} // 답장 핸들러 추가
+            onDelete={handleDeleteMessage} // 삭제 핸들러 추가
+            onReport={handleReportMessage} // 신고 핸들러 추가
+          />
+          <div ref={messagesEndRef} />
+        </MessagesContainer>
+      </MessagesWrapper>
+
+      <InputWrapper>
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          disabled={!connected}
+          replyToMessage={replyToMessage} // 답장할 메시지 전달
+          onCancelReply={handleCancelReply} // 답장 취소 핸들러 전달
+        />
+      </InputWrapper>
     </Container>
   );
 };

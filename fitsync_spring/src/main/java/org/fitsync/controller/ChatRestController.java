@@ -10,6 +10,7 @@ import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MessageVO;
 import org.fitsync.domain.RoomVO;
 import org.fitsync.service.ChatService;
+import org.fitsync.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -30,6 +31,9 @@ public class ChatRestController {
 
 	@Autowired
     private ChatService chatService;
+	
+	@Autowired
+    private ReportService reportService;
 	
 	// 채팅용 member_idx 조회 API (세션스토리지 전용)
 	@GetMapping("/member-info")
@@ -176,6 +180,130 @@ public class ChatRestController {
             return ResponseEntity.ok(attachment);
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+    
+    // 메시지 삭제 API
+    @DeleteMapping("/message/{message_idx}")
+    public ResponseEntity<Map<String, Object>> deleteMessage(
+            @PathVariable int message_idx, 
+            HttpSession session) {
+        
+        Integer member_idx = (Integer) session.getAttribute("member_idx");
+        Map<String, Object> result = new HashMap<>();
+        
+        if (member_idx == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(401).body(result);
+        }
+        
+        System.out.println("메시지 삭제 요청 - message_idx: " + message_idx + ", member_idx: " + member_idx);
+        
+        try {
+            boolean deleteResult = chatService.deleteMessage(message_idx, member_idx);
+            
+            if (deleteResult) {
+                result.put("success", true);
+                result.put("message", "메시지가 삭제되었습니다.");
+                return ResponseEntity.ok(result);
+            } else {
+                result.put("success", false);
+                result.put("message", "메시지를 삭제할 수 없습니다. (시간 경과 또는 권한 없음)");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("메시지 삭제 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "메시지 삭제 중 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+    
+    // 메시지 신고 API
+    @PostMapping("/message/{message_idx}/report")
+    public ResponseEntity<Map<String, Object>> reportMessage(
+            @PathVariable int message_idx,
+            @RequestBody Map<String, String> requestBody,
+            HttpSession session) {
+        
+        Integer member_idx = (Integer) session.getAttribute("member_idx");
+        Map<String, Object> result = new HashMap<>();
+        
+        if (member_idx == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(401).body(result);
+        }
+        
+        String reportContent = requestBody.get("reportContent");
+        if (reportContent == null || reportContent.trim().isEmpty()) {
+            result.put("success", false);
+            result.put("message", "신고 사유를 입력해주세요.");
+            return ResponseEntity.badRequest().body(result);
+        }
+        
+        System.out.println("메시지 신고 요청 - message_idx: " + message_idx + 
+                          ", member_idx: " + member_idx + 
+                          ", reportContent: " + reportContent);
+        
+        try {
+            boolean reportResult = reportService.reportMessage(message_idx, reportContent.trim(), member_idx);
+            
+            if (reportResult) {
+                result.put("success", true);
+                result.put("message", "신고가 접수되었습니다.");
+                return ResponseEntity.ok(result);
+            } else {
+                result.put("success", false);
+                result.put("message", "이미 신고한 메시지입니다.");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("메시지 신고 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "신고 처리 중 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+    
+    // 답장용 원본 메시지 조회 API
+    @GetMapping("/message/{message_idx}/parent")
+    public ResponseEntity<Map<String, Object>> getParentMessage(
+            @PathVariable int message_idx,
+            HttpSession session) {
+        
+        Integer member_idx = (Integer) session.getAttribute("member_idx");
+        Map<String, Object> result = new HashMap<>();
+        
+        if (member_idx == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(401).body(result);
+        }
+        
+        try {
+            MessageVO parentMessage = chatService.getParentMessage(message_idx);
+            
+            if (parentMessage != null) {
+                result.put("success", true);
+                result.put("parentMessage", parentMessage);
+                return ResponseEntity.ok(result);
+            } else {
+                result.put("success", false);
+                result.put("message", "원본 메시지를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("원본 메시지 조회 중 오류 발생: " + e.getMessage());
+            result.put("success", false);
+            result.put("message", "원본 메시지 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(result);
         }
     }
 	

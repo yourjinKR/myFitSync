@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { useDebounce } from 'use-debounce'; // npm install use-debounce
+import { useDebounce } from 'use-debounce';
 
+// Header.jsx에 가리지 않도록 위치 조정
 const HeaderContainer = styled.div`
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 50; /* Header.jsx(999)보다 낮지만 Container 내부에서는 높게 */
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-light);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 100%;
 `;
 
 const HeaderContent = styled.div`
