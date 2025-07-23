@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 const ReportWrapper = styled.div`
   width: calc(100% - 40px);
+  height: calc(100vh - 100px);
   margin: 0 auto;
   padding: 20px;
   background: var(--bg-secondary);
@@ -40,6 +41,7 @@ const ReportWrapper = styled.div`
 
 const TabContent = styled.div`
   margin-top: 20px;
+  height: calc(100% - 60px);
   
   .empty {
     display: flex;
@@ -54,29 +56,94 @@ const TabContent = styled.div`
 
   .report-table {
     width: 100%;
-    height: calc(100vh - 220px);
-    overflow-x: auto;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+    height:100%;
+    
     table {
       width: 100%;
-      min-width: 1000px;
+      min-width: 750px;
       border-collapse: collapse;
-      th, td, td > button {
+      
+      th, td {
         text-align: left;
         border-bottom: 1px solid var(--border-light);
         font-size: 1.6rem;
+        padding: 12px 8px;
       }
+      
       th {
-        padding: 12px 0;
         background: var(--bg-secondary);
         color: var(--text-primary);
-        text-align:center;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
       }
+      
       td {
-        padding: 12px 0;
         p {
           font-size: 1.4rem;
         }
       }
+    }
+  }
+  
+  /* tbody 스크롤 wrapper */
+  .tbody-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height:100%;
+    max-height : calc(100% - 50px); /* 헤더 높이 제외 */
+    position: relative; /* 추가 */
+    
+    table {
+      width: 100%;
+      min-width: 750px;
+      position: relative; /* 추가 */
+      
+      /* colgroup 너비를 CSS로 직접 지정 */
+      &.member-table {
+        td:nth-child(1) { width: 75px; min-width: 75px; max-width: 75px; }
+        td:nth-child(2) { width: 100px; min-width: 100px; max-width: 100px; }
+        td:nth-child(3) { width: 100px; min-width: 100px; max-width: 100px; }
+        td:nth-child(4) { width: calc(100% - 575px); min-width: 200px; }
+        td:nth-child(5) { width: 100px; min-width: 100px; max-width: 100px; }
+        td:nth-child(6) { width: 200px; min-width: 200px; max-width: 200px; }
+      }
+      
+      &.message-table, &.review-table {
+        td:nth-child(1) { width: 75px; min-width: 75px; max-width: 75px; }
+        td:nth-child(2) { width: 100px; min-width: 100px; max-width: 100px; }
+        td:nth-child(3) { width: 100px; min-width: 100px; max-width: 100px; }
+        td:nth-child(4) { width: 200px; min-width: 200px; max-width: 200px; }
+        td:nth-child(5) { width: calc(100% - 775px); min-width: 200px; }
+        td:nth-child(6) { width: 100px; min-width: 100px; max-width: 100px; }
+        td:nth-child(7) { width: 200px; min-width: 200px; max-width: 200px; }
+      }
+    }
+    
+    /* 헤더도 동일한 너비 적용 */
+    thead {
+      th:nth-child(1) { width: 75px; min-width: 75px; max-width: 75px; }
+      th:nth-child(2) { width: 100px; min-width: 100px; max-width: 100px; }
+      th:nth-child(3) { width: 100px; min-width: 100px; max-width: 100px; }
+    }
+    
+    /* member 테이블 헤더 */
+    table.member-table ~ thead {
+      th:nth-child(4) { width: calc(100% - 575px); min-width: 200px; }
+      th:nth-child(5) { width: 100px; min-width: 100px; max-width: 100px; }
+      th:nth-child(6) { width: 200px; min-width: 200px; max-width: 200px; }
+    }
+    
+    /* message/review 테이블 헤더 */
+    table.message-table ~ thead, table.review-table ~ thead {
+      th:nth-child(4) { width: 200px; min-width: 200px; max-width: 200px; }
+      th:nth-child(5) { width: calc(100% - 775px); min-width: 200px; }
+      th:nth-child(6) { width: 100px; min-width: 100px; max-width: 100px; }
+      th:nth-child(7) { width: 200px; min-width: 200px; max-width: 200px; }
     }
   }
 `;
@@ -95,11 +162,8 @@ const DetailModal = styled.div`
 `;
 
 const UserInfo = styled.div`
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+  position: fixed;
+  z-index: 1001;
   min-width: 250px;
   padding: 16px;
   background: var(--bg-white);
@@ -108,10 +172,10 @@ const UserInfo = styled.div`
   border: 1px solid var(--border-medium);
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease; /* 위치 transition 제거 */
   pointer-events: none;
 
-  /* 화살표 */
+  /* 화살표 추가 */
   &::before {
     content: '';
     position: absolute;
@@ -123,6 +187,21 @@ const UserInfo = styled.div`
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
     border-bottom: 8px solid var(--bg-white);
+  }
+
+  /* 화살표 테두리 */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid var(--border-medium);
+    z-index: -1;
   }
 
   p {
@@ -297,21 +376,19 @@ const Report = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(init);
   const [blockTarget, setBlockTarget] = useState(targetInfo);
-
   const [totalData, setTotalData] = useState(null);
   const [reportData, setReportData] = useState({
     member: null,
     message: null,
     review: null
   });
-  console.log("🚀  :  Report  :  reportData:", reportData)
-
   // 탭 목록
   const tabs = [
     { id: 'member', label: '유저' },
     { id: 'message', label: '메시지' },
     { id: 'review', label: '리뷰' }
   ];
+  const hoverRef = useState(null);
 
   // 리포트 데이터 가져오기
   const handleReport = async () => {
@@ -376,7 +453,7 @@ const Report = () => {
     switch (activeTab) {
       case 'member':
         return (
-          <div>
+          <>
             {
               reportData.member.length > 0 ? (
                 <div className='report-table'>
@@ -399,13 +476,19 @@ const Report = () => {
                         <th></th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {reportData.member.map((user, index) => (
+                  </table>
+                  <div className="tbody-scroll">
+                    <table className="member-table">
+                      <tbody>
+                        {reportData.member.map((user, index) => (
                           <tr key={user.report_idx || index}>
                             <td className='ta-c'>{index + 1}</td>
-                            <UserInfoTrigger className='ta-c'>
+                            <UserInfoTrigger 
+                              className='ta-c'
+                              onMouseEnter={handleMouseEnter}
+                            >
                               {user.reported?.member_name || 'N/A'}
-                              <UserInfo>
+                              <UserInfo data-tooltip>
                                 <p>📧 {user.reported?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
@@ -420,9 +503,12 @@ const Report = () => {
                               {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
-                            <UserInfoTrigger className='ta-c'>
+                            <UserInfoTrigger 
+                              className='ta-c'
+                              onMouseEnter={handleMouseEnter}
+                            >
                               {user.reporter?.member_name || 'N/A'}
-                              <UserInfo>
+                              <UserInfo data-tooltip>
                                 <p>📧 {user.reporter?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
@@ -436,30 +522,31 @@ const Report = () => {
                             <td className='ta-c'>
                               <ButtonBox>
                                 {user.report_hidden === 0 ?
-                                <>
-                                  <button onClick={() => handleUpdateReportChk(user.report_idx)}>처리전</button>
-                                  <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button>
-                                </> :
-                                <>
-                                  <button disabled={true}>처리완료</button>
-                                </>
+                                  <>
+                                    <button onClick={() => handleUpdateReportChk(user.report_idx)}>처리전</button>
+                                    <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button>
+                                  </> :
+                                  <>
+                                    <button disabled={true}>처리완료</button>
+                                  </>
                                 }
                               </ButtonBox>
                             </td>
                           </tr>
                         ))}
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <div className='empty'>데이터가 없습니다.</div>
               )
             }
-          </div>
+          </>
         );
       case 'message':
         return (
-          <div>
+          <>
             {
               reportData.message.length > 0 ? (
                 <div className='report-table'>
@@ -484,13 +571,19 @@ const Report = () => {
                         <th></th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {reportData.message.map((user, index) => (
+                  </table>
+                  <div className="tbody-scroll">
+                    <table className="message-table">
+                      <tbody>
+                        {reportData.message.map((user, index) => (
                           <tr key={user.report_idx || index}>
                             <td className='ta-c'>{index + 1}</td>
-                            <UserInfoTrigger className='ta-c'>
+                            <UserInfoTrigger 
+                              className='ta-c'
+                              onMouseEnter={handleMouseEnter}
+                            >
                               {user.reported?.member_name || 'N/A'}
-                              <UserInfo>
+                              <UserInfo data-tooltip>
                                 <p>📧 {user.reported?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
@@ -510,9 +603,12 @@ const Report = () => {
                               </button>
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
-                            <UserInfoTrigger className='ta-c'>
+                            <UserInfoTrigger 
+                              className='ta-c'
+                              onMouseEnter={handleMouseEnter}
+                            >
                               {user.reporter?.member_name || 'N/A'}
-                              <UserInfo>
+                              <UserInfo data-tooltip>
                                 <p>📧 {user.reporter?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
@@ -525,24 +621,25 @@ const Report = () => {
                             </UserInfoTrigger>
                             <td className='ta-c'>
                               <ButtonBox>
-                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료' }</button>
+                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료'}</button>
                                 {user.report_hidden === 0 ? <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button> : <></>}
                               </ButtonBox>
                             </td>
                           </tr>
                         ))}
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <div className='empty'>데이터가 없습니다.</div>
               )
             }
-          </div>
+          </>
         );
       case 'review':
         return (
-          <div>
+          <>
             {
               reportData.review.length > 0 ? (
                 <div className='report-table'>
@@ -567,13 +664,19 @@ const Report = () => {
                         <th></th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {reportData.review.map((user, index) => (
+                  </table>
+                  <div className="tbody-scroll">
+                    <table className="review-table">
+                      <tbody>
+                        {reportData.review.map((user, index) => (
                           <tr key={user.report_idx || index}>
                             <td className='ta-c'>{index + 1}</td>
-                            <UserInfoTrigger className='ta-c'>
+                            <UserInfoTrigger 
+                              className='ta-c'
+                              onMouseEnter={handleMouseEnter}
+                            >
                               {user.reported?.member_name || 'N/A'}
-                              <UserInfo>
+                              <UserInfo data-tooltip>
                                 <p>📧 {user.reported?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
@@ -591,9 +694,12 @@ const Report = () => {
 
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
-                            <UserInfoTrigger className='ta-c'>
+                            <UserInfoTrigger 
+                              className='ta-c'
+                              onMouseEnter={handleMouseEnter}
+                            >
                               {user.reporter?.member_name || 'N/A'}
-                              <UserInfo>
+                              <UserInfo data-tooltip>
                                 <p>📧 {user.reporter?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
@@ -606,20 +712,21 @@ const Report = () => {
                             </UserInfoTrigger>
                             <td className='ta-c'>
                               <ButtonBox>
-                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료' }</button>
+                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료'}</button>
                                 {user.report_hidden === 0 ? <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button> : <></>}
                               </ButtonBox>
                             </td>
                           </tr>
                         ))}
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <div className='empty'>데이터가 없습니다.</div>
               )
             }
-          </div>
+          </>
         );
       default:
         return <div className='empty'>알 수 없는 탭입니다.</div>;
@@ -695,7 +802,36 @@ const Report = () => {
   useEffect(() => {
   }, [blockTarget]);
 
-
+  // 툴팁 위치 계산 함수
+  const handleMouseEnter = (e) => {
+    const tooltip = e.currentTarget.querySelector('[data-tooltip]');
+    if (tooltip) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      
+      let left = rect.left + rect.width / 2;
+      let top = rect.bottom + 10;
+      
+      // 화면 오른쪽 경계 체크
+      if (left + 125 > window.innerWidth) {
+        left = window.innerWidth - 125 - 10;
+      }
+      
+      // 화면 왼쪽 경계 체크
+      if (left - 125 < 0) {
+        left = 125 + 10;
+      }
+      
+      // 화면 아래쪽 경계 체크
+      if (top + 200 > window.innerHeight) {
+        top = rect.top - 200 - 10;
+      }
+      
+      // 즉시 위치 설정 (애니메이션 없이)
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      tooltip.style.transform = 'translateX(-50%)';
+    }
+  };
 
   return (
     <ReportWrapper>
@@ -725,14 +861,14 @@ const Report = () => {
                   <button onClick={() => handleUpdateReport(blockTarget.reporter)}>신고자</button>
                 </div>
               </ModalBox>) : <>
-                <div onClick={(e) => e.stopPropagation()}>
-                  {modalData.contentType === 'img' ? (
-                    <img src={modalData.url} alt="Report Detail" />
-                  ) : (
-                    <p>지원하지 않는 파일 형식입니다.</p>
-                  )}
-                </div>
-              </>
+              <div onClick={(e) => e.stopPropagation()}>
+                {modalData.contentType === 'img' ? (
+                  <img src={modalData.url} alt="Report Detail" />
+                ) : (
+                  <p>지원하지 않는 파일 형식입니다.</p>
+                )}
+              </div>
+            </>
           }
         </DetailModal>
       )}
