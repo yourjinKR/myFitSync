@@ -9,4 +9,6 @@ public interface PtMapper {
 	public List<PtVO> getWorkOut();
 	// 이름 불러오기
 	List<String> getWorkOutName();
+	
+	public PtVO selectPtById(int ptIdx);
 }

@@ -16,4 +16,6 @@ public interface RecordMapper {
 
     // 특정 날짜의 운동 기록 목록 반환
     public List<RecordVO> selectRecordsByDate(@Param("memberIdx") int memberIdx, @Param("date") String date);
+    
+    public RecordVO selectRecordById(int recordId);
 }

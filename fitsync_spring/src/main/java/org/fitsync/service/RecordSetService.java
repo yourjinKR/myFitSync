@@ -1,5 +1,10 @@
 package org.fitsync.service;
 
-public interface RecordSetService {
+import java.util.List;
 
+import org.fitsync.domain.RecordSetVO;
+
+public interface RecordSetService {
+	
+	public List<RecordSetVO> getRecordSetsByRecordId(int recordId);
 }

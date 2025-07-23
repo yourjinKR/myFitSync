@@ -15,4 +15,8 @@
 	    SELECT PT_NAME
 	    FROM PT
 	</select>
+	
+	<select id="selectPtById" resultType="org.fitsync.domain.PtVO">
+	  	SELECT * FROM PT WHERE PT_IDX = #{ptId}
+	</select>
 </mapper>

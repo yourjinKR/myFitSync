@@ -9,4 +9,6 @@ public interface PtService {
 	public List<PtVO> getWorkOut();
 	
     public List<String> getAllPtNames();
+    
+    public PtVO getPtById(int ptIdx);
 }

@@ -17,6 +17,6 @@ public interface ScheduleMapper {
 	
 	public List<String> selectScheduleDates(int memberIdx);
     
-    public List<ScheduleVO> selectSchedulesByDate(@Param("trainerIdx") int trainerIdx,
+    public List<ScheduleVO> selectSchedulesByDate(@Param("userIdx") int userIdx,
             @Param("date") String date);
 }

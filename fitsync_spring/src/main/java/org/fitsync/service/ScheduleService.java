@@ -19,3 +19,4 @@ public interface ScheduleService {
     // 특정 날짜 PT 예약 조회
     public List<ScheduleVO> getSchedulesByDate(int memberIdx, String date);
 }
+	

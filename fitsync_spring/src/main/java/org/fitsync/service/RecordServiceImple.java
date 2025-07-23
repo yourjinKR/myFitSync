@@ -149,4 +149,11 @@ public class RecordServiceImple implements RecordService {
     public List<RecordVO> getRecordsByDate(int memberIdx, String date) {
         return mapper.selectRecordsByDate(memberIdx, date);
     }
+    
+    @Override
+    public RecordVO getRecordById(int recordId) {
+    	return mapper.selectRecordById(recordId);
+    }
+    
+    
 }

@@ -17,4 +17,8 @@
             ${vo.set_count}
         )
     </insert>
+    
+    <select id="selectRecordSetsByRecordId" resultType="org.fitsync.domain.RecordSetVO">
+	  SELECT * FROM RECORDSET WHERE RECORD_IDX = #{recordId} ORDER BY SET_NUM
+	</select>
 </mapper>

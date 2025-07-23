@@ -52,26 +52,17 @@
   	</update>
   	
 	<select id="selectScheduleDates" resultType="String">
-	    SELECT DISTINCT TO_CHAR(schedule_date, 'YYYY-MM-DD')
-	    FROM schedule
+	  SELECT DISTINCT TO_CHAR(schedule_date, 'YYYY-MM-DD')
+	  FROM schedule
+	  WHERE user_idx = #{userIdx}
 	</select>
 	
 	<!-- 2. 특정 날짜의 예약 상세 -->
 	<select id="selectSchedulesByDate" resultType="org.fitsync.domain.ScheduleVO">
-	  <![CDATA[
-	    SELECT 
-	      s.schedule_idx,
-	      TO_CHAR(s.schedule_date, 'YYYY-MM-DD') AS schedule_date,
-	      TO_CHAR(s.schedule_stime, 'HH24:MI') AS schedule_stime,
-	      TO_CHAR(s.schedule_etime, 'HH24:MI') AS schedule_etime,
-	      s.schedule_content,
-	      s.trainer_idx,
-	      m.member_name AS trainer_name
-	    FROM schedule s
-	    JOIN member m ON s.trainer_idx = m.member_idx
-	    WHERE s.trainer_idx = #{trainerIdx}
-	      AND s.schedule_date = TO_DATE(#{date}, 'YYYY-MM-DD')
-	    ORDER BY s.schedule_stime
-	  ]]>
+	  SELECT s.*, t.member_name AS trainer_name
+	  FROM schedule s
+	  JOIN member t ON s.trainer_idx = t.member_idx
+	  WHERE s.user_idx = #{userIdx}
+	    AND TO_CHAR(s.schedule_date, 'YYYY-MM-DD') = #{date}
 	</select>
 </mapper>

@@ -14,5 +14,8 @@ public interface RecordService {
     public List<String> getRecordDates(int memberIdx);
     // 특정 날짜의 기록 목록
     public List<RecordVO> getRecordsByDate(int memberIdx, String date);
+    // 특정 기록 번호로 운동 기록 1개 가져오기
+    public RecordVO getRecordById(int recordId);
+    
 	
 }

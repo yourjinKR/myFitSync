@@ -24,5 +24,8 @@ public class PtServiceImple implements PtService {
     public List<String> getAllPtNames() {
         return mapper.getWorkOutName();
     }
-	
+	@Override
+	public PtVO getPtById(int ptIdx) {
+		return mapper.selectPtById(ptIdx);
+	}
 }

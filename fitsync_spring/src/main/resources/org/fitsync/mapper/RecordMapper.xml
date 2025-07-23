@@ -40,4 +40,8 @@
 		    AND TO_CHAR(r.RECORD_DATE, 'YYYY-MM-DD') = #{date}
 		  ORDER BY r.RECORD_DATE DESC
 	</select>
+	
+	<select id="selectRecordById" resultType="org.fitsync.domain.RecordVO">
+	  SELECT * FROM RECORD WHERE RECORD_IDX = #{recordId}
+	</select>
 </mapper>
