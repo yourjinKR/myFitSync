@@ -16,7 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -63,6 +65,7 @@ public class AdminController {
 	}
 
 	
+	// 신고 목록 조회
 	@GetMapping("/report")
 	public ResponseEntity<?> getReport(HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
@@ -73,6 +76,22 @@ public class AdminController {
 		}else {			
 			result.put("success", false);
 			result.put("msg", "데이터가 없습니다.");
+		}
+		return ResponseEntity.ok(result);
+	}
+	
+	// 신고 제재 업데이트
+	@PutMapping("/report/{member_idx}")
+	public ResponseEntity<?> updateReport(@PathVariable int member_idx,HttpSession session){
+		System.out.println(member_idx);
+		Map<String, Object> result = new HashMap<String, Object>();
+		boolean update = rservice.updateReport(member_idx);
+		if(update) {
+			result.put("success", true);
+			result.put("msg", "제재되었습니다");
+		}else {			
+			result.put("success", false);
+			result.put("msg", "요청에 실패하였습니다..");
 		}
 		return ResponseEntity.ok(result);
 	}

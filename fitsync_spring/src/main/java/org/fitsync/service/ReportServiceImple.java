@@ -64,7 +64,7 @@ public class ReportServiceImple implements ReportService {
 		}
 		return list; // result 대신 list를 반환
 	}
-	
+
 	@Override
     public boolean reportMessage(int messageIdx, String reportContent, int memberIdx) {
         log.info("메시지 신고 등록: messageIdx=" + messageIdx + ", memberIdx=" + memberIdx);
@@ -99,5 +99,10 @@ public class ReportServiceImple implements ReportService {
             throw new RuntimeException("신고 등록에 실패했습니다.", e);
         }
     }
-	
+
+	// 신고 제재 업데이트
+	@Override
+	public boolean updateReport(int member_idx) {
+		return mapper.updateReport(member_idx) > 0;
+	}
 }

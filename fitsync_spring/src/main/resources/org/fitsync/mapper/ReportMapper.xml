@@ -47,7 +47,9 @@
 	        M.MEMBER_TYPE
 	    FROM REPORT RE
 	    LEFT JOIN MEMBER M ON RE.MEMBER_IDX = M.MEMBER_IDX
-	    WHERE RE.REPORT_HIDDEN = 0
 	</select>
-	
+
+	<update id="updateReport" parameterType="int">
+		UPDATE REPORT SET REPORT_HIDDEN = 1
+	</update>
 </mapper>

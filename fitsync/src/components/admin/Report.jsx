@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { set } from 'date-fns';
 import React, { use, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
@@ -59,7 +60,7 @@ const TabContent = styled.div`
       width: 100%;
       min-width: 750px;
       border-collapse: collapse;
-      th, td, button {
+      th, td, td > button {
         text-align: left;
         border-bottom: 1px solid var(--border-light);
         font-size: 1.6rem;
@@ -123,13 +124,6 @@ const UserInfo = styled.div`
     border-right: 8px solid transparent;
     border-bottom: 8px solid var(--bg-white);
   }
-
-  /* 호버 시 표시 */
-  ${props => props.theme && `
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-  `}
 
   p {
     color: var(--text-black) !important;
@@ -216,16 +210,80 @@ const UserInfoTrigger = styled.td`
   }
 `;
 
+const ButtonBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  button {
+    padding: 6px 12px;
+    font-size: 1.4rem;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.2s;
+  }
+  button:first-child {
+    background: var(--check-green);
+    color: var(--text-white);
+  }
+  button:last-child {
+    background: var(--warning);
+    color: var(--text-white);
+  }
+`;
+
+const ModalBox = styled.div`
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: 8px;
+  h3, button {
+    color : var(--text-black);
+    text-align:center;
+  }
+  h3{
+    font-size: 2.4rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  & > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    button {
+      border-radius: 5px;
+      border: 1px solid var(--border-medium);
+      padding: 5px 20px;
+      font-size: 1.8rem;
+      width: 150px;
+    }
+    button:hover
+    {
+      border-color: var(--warning);
+      background: var(--warning);
+      color: var(--text-white);
+    }
+  }
+`;
+
 const Report = () => {
   const init = {
     url: '',
     type: '',
     contentType: ''
+  };
+  const targetInfo = {
+    reporter: '',
+    reported: ''
   }
+
   const [activeTab, setActiveTab] = useState('member');
   const [empty, setEmpty] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(init);
+  const [blockTarget, setBlockTarget] = useState(targetInfo);
 
   const [reportData, setReportData] = useState({
     member: null,
@@ -271,21 +329,10 @@ const Report = () => {
     }
   };
 
-  // 컴포넌트 마운트 시 초기 데이터 로드
-  useEffect(() => {
-    handleReport(activeTab);
-    setModalData({
-      url: '',
-      type: '',
-      contentType: ''
-    });
-    setModalOpen(false);
-  }, []); // 의존성 배열을 빈 배열로 변경
-
   // 현재 탭의 데이터 렌더링
   const renderTabContent = () => {
     const currentData = reportData[activeTab];
-    
+
     if (currentData === null) {
       return <div className='empty'>로딩 중...</div>;
     }
@@ -307,11 +354,11 @@ const Report = () => {
           return report.reported.member_idx === targetMemberIdx && report.report_category === 'message';
         } else if (type === 'review') {
           return report.reported.member_idx === targetMemberIdx && report.report_category === 'review';
-        } else{
+        } else {
           return report.reported.member_idx === targetMemberIdx;
         }
       }
-        
+
       ).length;
     };
 
@@ -326,9 +373,9 @@ const Report = () => {
                   <col width="75px" />
                   <col width="100px" />
                   <col width="100px" />
-                  <col width="calc(100% - 450px)" />
+                  <col width="calc(100% - 475px)" />
                   <col width="100px" />
-                  <col width="75px" />
+                  <col width="100px" />
                 </colgroup>
                 <thead>
                   <tr>
@@ -363,7 +410,12 @@ const Report = () => {
                         </td>
                         <td><p className='txt-ov'>{user.report_content}</p></td>
                         <td className='ta-c'>{user.reporter?.member_name || 'N/A'}</td>
-                        <td className='ta-c'><button>삭제</button></td>
+                        <td className='ta-c'>
+                          <ButtonBox>
+                            <button>처리전</button>
+                            <button onClick={() => handleReportCTA(user.reporter?.member_idx, user.reported?.member_idx)}>제재</button>
+                          </ButtonBox>
+                        </td>
                       </tr>
                     ))}
                 </tbody>
@@ -417,13 +469,16 @@ const Report = () => {
                         <td className='ta-c'>{user.member_type === 'trainer' ? '트레이너' : '회원'}</td>
                         <td className='ta-c'>
                           <button onClick={() => handleDetailModal(user.message.attach.cloudinary_url, "message", "img")}>
-                         
+
                             {user.message.message_content}
                           </button>
                         </td>
                         <td><p className='txt-ov'>{user.report_content}</p></td>
                         <td className='ta-c'>{user.reporter.member_name}</td>
-                        <td className='ta-c'><button>삭제</button></td>
+                        <td className='ta-c'>
+                          <button>제재</button>
+                          <button>삭제</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -462,13 +517,52 @@ const Report = () => {
     });
   };
 
+  // 제재 컨트롤
+  const handleReportCTA = (reporter, reported) => {
+    setBlockTarget({
+      reporter: reporter,
+      reported: reported
+    });
+    handleDetailModal('', "isBlocked", "")
+  }
+  const handleUpdateReport = async (target) => {
+    try {
+      const response = await axios.put(`/admin/report/${target}`, {
+      }, { withCredentials: true });
+      if (response.data.success) {
+        alert("제재가 완료되었습니다.");
+        setModalOpen(false);
+        handleReport(activeTab); // 리포트 데이터 새로고침
+      } else {
+        alert("제재 처리에 실패했습니다. 다시 시도해주세요.");
+      }
+    } catch (error) {
+      console.error('제재 처리 실패:', error);  
+    }
+  };
+  // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    if (modalData?.url) {
+    handleReport(activeTab);
+    setModalData(init);
+    setModalOpen(false);
+  }, []); // 의존성 배열을 빈 배열로 변경
+
+  useEffect(() => {
+    if (modalData.type === '') return;
+
+    if (modalData?.type) {
       setModalOpen(true);
     } else {
       setModalOpen(false);
+      setModalData(init);
+      setBlockTarget(targetInfo);
     }
+    console.log("🚀  :  Report  :  modalData:", modalData)
   }, [modalData]);
+
+  useEffect(() => {
+  }, [blockTarget]);
+
 
 
   return (
@@ -490,13 +584,23 @@ const Report = () => {
       </TabContent>
       {modalOpen && (
         <DetailModal onClick={() => setModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
+          {
+            modalData.type === 'isBlocked' ? (
+              <ModalBox>
+                <h3>제재 대상 선택</h3>
+                <div>
+                  <button onClick={() => handleUpdateReport(blockTarget.reported)}>피신고자</button>
+                  <button onClick={() => handleUpdateReport(blockTarget.reporter)}>신고자</button>
+                </div>
+              </ModalBox>) : <></>
+          }
+          {/* <div onClick={(e) => e.stopPropagation()}>
             {modalData.contentType === 'img' ? (
               <img src={modalData.url} alt="Report Detail" />
             ) : (
               <p>지원하지 않는 파일 형식입니다.</p>
             )}
-          </div>
+          </div> */}
         </DetailModal>
       )}
     </ReportWrapper>
