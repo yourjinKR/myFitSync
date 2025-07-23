@@ -8,38 +8,6 @@ const Container = styled.div`
   min-height: 100vh;
 `;
 
-const Header = styled.div`
-  margin-bottom: 24px;
-`;
-
-const Title = styled.h1`
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-  
-  @media (min-width: 375px) {
-    font-size: 22px;
-  }
-  
-  @media (min-width: 414px) {
-    font-size: 24px;
-  }
-`;
-
-const Subtitle = styled.p`
-  font-size: 13px;
-  color: var(--text-secondary);
-  
-  @media (min-width: 375px) {
-    font-size: 14px;
-  }
-  
-  @media (min-width: 414px) {
-    font-size: 15px;
-  }
-`;
-
 // 탭 네비게이션
 const TabContainer = styled.div`
   display: flex;
@@ -119,11 +87,6 @@ const SubscriptionContainer = () => {
 
   return (
     <Container>
-      <Header>
-        <Title>FitSync Premium</Title>
-        <Subtitle>프리미엄 구독으로 모든 기능을 이용하세요</Subtitle>
-      </Header>
-
       {/* 탭 네비게이션 */}
       <TabContainer>
         <TabButton 

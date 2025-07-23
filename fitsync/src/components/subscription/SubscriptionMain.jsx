@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { PaymentUtil } from '../../utils/PaymentUtil';
+import { faqData, initFaqData, PaymentUtil } from '../../utils/PaymentUtil';
 
 const Container = styled.div`
   /* 컨테이너에서 이미 패딩과 배경이 설정되므로 여기서는 제거 */
@@ -9,15 +9,200 @@ const Container = styled.div`
 
 // 제거: Header, Title, Subtitle (컨테이너로 이동됨)
 
-// 구독 상태 카드
-const StatusCard = styled.div`
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 24px;
+// 프리미엄 서비스 상품 카드
+const PremiumServiceCard = styled.div`
+  border-radius: 20px;
+  padding: 32px 10px;
   margin-bottom: 24px;
-  border: 2px solid ${props => 
-    props.$isSubscriber ? 'var(--primary-blue)' : 'var(--border-light)'
-  };
+  position: relative;
+  text-align: center;
+
+  @keyframes float {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) rotate(180deg); }
+  }
+`;
+
+const PremiumIcon = styled.div`
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 16px;
+  position: relative;
+  z-index: 2;
+  
+  @media (min-width: 375px) {
+    width: 90px;
+    height: 90px;
+    font-size: 36px;
+  }
+`;
+
+const PremiumTitle = styled.h2`
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
+  
+  @media (min-width: 375px) {
+    font-size: 22px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 24px;
+  }
+`;
+
+const PremiumSubtitle = styled.p`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
+  
+  @media (min-width: 375px) {
+    font-size: 14px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 15px;
+  }
+`;
+
+// 프로그레스 바 컴포넌트
+const ProgressSection = styled.div`
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+`;
+
+const ProgressHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const ProgressLabel = styled.span`
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  
+  @media (min-width: 375px) {
+    font-size: 14px;
+  }
+`;
+
+const ProgressDays = styled.span`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  
+  @media (min-width: 375px) {
+    font-size: 13px;
+  }
+`;
+
+const ProgressBarContainer = styled.div`
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+`;
+
+const ProgressBarFill = styled.div`
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: ${props => Math.max(5, Math.min(100, props.$percentage || 0))}%;
+`;
+
+// 결제 정보 섹션
+const PaymentInfoSection = styled.div`
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+`;
+
+const PaymentInfoTitle = styled.div`
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  
+  @media (min-width: 375px) {
+    font-size: 15px;
+  }
+`;
+
+const PaymentInfoDetails = styled.div`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  line-height: 1.4;
+  
+  @media (min-width: 375px) {
+    font-size: 14px;
+  }
+`;
+
+// 액션 버튼 컨테이너
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+`;
+
+const PremiumActionButton = styled.button`
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  @media (min-width: 375px) {
+    font-size: 14px;
+    padding: 14px 18px;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  ${props => props.$variant === 'danger' && `
+    border-color: rgba(244, 67, 54, 0.5);
+    background: rgba(244, 67, 54, 0.2);
+    
+    &:hover {
+      background: rgba(244, 67, 54, 0.3);
+      border-color: rgba(244, 67, 54, 0.7);
+    }
+  `}
 `;
 
 const StatusBadge = styled.div`
@@ -27,7 +212,6 @@ const StatusBadge = styled.div`
   border-radius: 20px;
   font-size: 13px;
   font-weight: bold;
-  margin-bottom: 16px;
   background: ${props => 
     props.$isSubscriber ? 'var(--primary-blue)' : 'var(--bg-tertiary)'
   };
@@ -55,6 +239,78 @@ const StatusIcon = styled.span`
   @media (min-width: 414px) {
     font-size: 17px;
   }
+`;
+
+// 디데이 카운터 배지
+const DaysLeftBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  
+  @media (min-width: 375px) {
+    font-size: 13px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 14px;
+  }
+  
+  /* 남은 일수에 따른 배경색과 글자색 변화 */
+  ${props => {
+    const days = props.$daysLeft;
+    
+    if (days === 0) {
+      return `
+        color: var(--warning);
+        background: rgba(244, 67, 54, 0.1);
+        border: 1px solid var(--warning);
+        animation: pulse 1.5s ease-in-out infinite alternate;
+      `;
+    } else if (days <= 3) {
+      return `
+        color: var(--warning);
+        background: rgba(244, 67, 54, 0.1);
+      `;
+    } else if (days <= 7) {
+      return `
+        color: #ff9800;
+        background: rgba(255, 152, 0, 0.1);
+      `;
+    } else if (days <= 14) {
+      return `
+        color: #ffc107;
+        background: rgba(255, 193, 7, 0.1);
+      `;
+    } else {
+      return `
+        color: var(--primary-blue);
+        background: rgba(74, 144, 226, 0.1);
+      `;
+    }
+  }}
+  
+  /* 만료된 경우 */
+  ${props => props.$daysLeft < 0 && `
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+  `}
+  
+  @keyframes pulse {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.6;
+    }
+  }
+  
+  /* 만료된 경우 */
+  ${props => props.$daysLeft < 0 && `
+    color: var(--text-tertiary);
+  `}
 `;
 
 const InfoRow = styled.div`
@@ -433,6 +689,89 @@ const ActionButton = styled.button`
   touch-action: manipulation;
 `;
 
+// 메뉴 버튼 컴포넌트들
+const MenuButtonContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const MenuButton = styled.button`
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  
+  &:hover {
+    background: var(--border-light);
+    color: var(--text-primary);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &::before {
+    content: '⋯';
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+`;
+
+const DropdownMenu = styled.div`
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  min-width: 110px;
+  overflow: hidden;
+  display: ${props => props.$visible ? 'block' : 'none'};
+`;
+
+const MenuOption = styled.div`
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px !important;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  
+  @media (min-width: 375px) {
+    font-size: 14px !important;
+  }
+  
+  &:hover {
+    background: var(--bg-tertiary);
+  }
+  
+  &:active {
+    background: var(--border-light);
+  }
+  
+  &.cancel {
+    color: var(--warning);
+  }
+`;
+
 // 로딩 스피너
 const LoadingContainer = styled.div`
   display: flex;
@@ -499,6 +838,37 @@ const RecentPaymentTitle = styled.h3`
     font-size: 18px;
   }
 `;
+
+// 간략한 최근 결제 정보 한 줄 표시
+const RecentPaymentSummary = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  margin: 12px 0;
+  font-size: 13px;
+  
+  @media (min-width: 375px) {
+    font-size: 14px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 15px;
+  }
+`;
+
+const PaymentSummaryText = styled.span`
+  color: var(--text-secondary);
+  flex: 1;
+  margin-right: 12px;
+`;
+
+// 제거된 불필요한 스타일 컴포넌트들
+// SmallActionButtons 및 SmallActionButton 제거됨
+
+// 제거된 결제 상태 배지
 
 const PaymentStatusBadge = styled.div`
   display: inline-flex;
@@ -641,12 +1011,127 @@ const PaymentActionButton = styled.button`
   `}
 `;
 
+// FAQ 섹션 스타일 컴포넌트들
+const FAQSection = styled.div`
+  margin-top: 40px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border-light);
+`;
+
+const FAQTitle = styled.h2`
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+  
+  @media (min-width: 375px) {
+    font-size: 19px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 20px;
+  }
+`;
+
+const FAQList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const FAQItem = styled.div`
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+  transition: all 0.2s ease;
+`;
+
+const FAQQuestion = styled.button`
+  width: 100%;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+
+`;
+
+const FAQQuestionText = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  
+  @media (min-width: 375px) {
+    font-size: 15px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 16px;
+  }
+`;
+
+const FAQToggleIcon = styled.span`
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  transform: ${props => props.$isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
+  
+  @media (min-width: 375px) {
+    font-size: 17px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 18px;
+  }
+`;
+
+const FAQAnswer = styled.div`
+  max-height: ${props => props.$isOpen ? '1000px' : '0'};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background: var(--bg-tertiary);
+`;
+
+const FAQAnswerContent = styled.div`
+  padding: 16px 20px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  
+  @media (min-width: 375px) {
+    font-size: 16px;
+  }
+  
+  @media (min-width: 414px) {
+    font-size: 17px;
+  }
+  
+  p {
+    margin-bottom: 8px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+`;
+
 const SubscriptionMain = () => {
   const navigate = useNavigate();
   const [subscriptionData, setSubscriptionData] = useState(null);
   const [recentOrder, setRecentOrder] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openFAQs, setOpenFAQs] = useState({}); // FAQ 토글 상태를 객체로 변경
+
+  // FAQ 데이터
+  const faqData = initFaqData;
 
   useEffect(() => {
     loadSubscriptionData();
@@ -691,11 +1176,6 @@ const SubscriptionMain = () => {
     navigate('/subscription/methods?showModal=true&directPay=true');
   };
 
-  const handleManagePayments = () => {
-    // 예약 관리 페이지 준비 중 안내
-    alert('예약 결제 관리 페이지를 준비 중입니다.');
-  };
-
   const handleManageMethods = () => {
     // 결제수단 관리 페이지로 이동
     navigate('/subscription/methods');
@@ -704,6 +1184,14 @@ const SubscriptionMain = () => {
   const handleViewHistory = () => {
     // 결제 내역 페이지로 이동
     navigate('/subscription/history');
+  };
+
+  // FAQ 토글 함수
+  const toggleFAQ = (id) => {
+    setOpenFAQs(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
 
   // 예약 결제 취소
@@ -740,16 +1228,6 @@ const SubscriptionMain = () => {
     alert('결제수단 변경 기능을 준비 중입니다.');
   };
 
-  // 결제 상태 텍스트 변환
-  const getPaymentStatusText = (status) => {
-    switch(status) {
-      case 'PAID': return '결제 완료';
-      case 'READY': return '결제 예약';
-      case 'FAILED': return '결제 실패';
-      default: return status || '알 수 없음';
-    }
-  };
-
   if (loading) {
     return (
       <Container>
@@ -783,128 +1261,131 @@ const SubscriptionMain = () => {
 
   return (
     <Container>
-      {/* 구독자만 구독 상태 카드 표시 */}
+      {/* 구독자 프리미엄 서비스 카드 */}
       {isSubscriber && (
-        <StatusCard $isSubscriber={isSubscriber}>
-          <StatusBadge $isSubscriber={isSubscriber}>
-            <StatusIcon>✅</StatusIcon>
-            프리미엄 구독 중&nbsp;&nbsp;
-            {recentOrder.order_status === 'PAID' ? daysLeft > 0 ? `D-${daysLeft}` : daysLeft === 0 ? 'D-Day' : '만료됨' : ''}
-          </StatusBadge>
-
-
-          {subscriptionData.nextPaymentDate && (
-            <InfoRow>
-              <InfoLabel>다음 결제일</InfoLabel>
-              <InfoValue>{formatDate(subscriptionData.nextPaymentDate)}</InfoValue>
-            </InfoRow>
+        <PremiumServiceCard>
+          {/* 프리미엄 아이콘 */}
+          <PremiumIcon>💎</PremiumIcon>
+          
+          {/* 프리미엄 타이틀 */}
+          <PremiumTitle>FitSync Premium</PremiumTitle>
+          <PremiumSubtitle>FitSync와 운동을 스마트하고 즐겁게✨</PremiumSubtitle>
+          
+          {/* 구독 진행률 */}
+          <ProgressSection>
+            <ProgressHeader>
+              <ProgressLabel>구독 기간</ProgressLabel>
+              <ProgressDays>
+                {daysLeft > 0 ? `${daysLeft}일 남음` : daysLeft === 0 ? 'D-Day' : '만료됨'}
+              </ProgressDays>
+            </ProgressHeader>
+            <ProgressBarContainer>
+              <ProgressBarFill 
+                $percentage={daysLeft > 0 ? Math.max(5, (daysLeft / 30) * 100) : 0} 
+              />
+            </ProgressBarContainer>
+          </ProgressSection>
+          
+          {/* 결제 정보 */}
+          <PaymentInfoSection>
+            <PaymentInfoTitle>
+              
+            </PaymentInfoTitle>
+            <PaymentInfoDetails>
+              {formatDate(recentOrder.order_status === 'READY' ? 
+                recentOrder.schedule_date : 
+                subscriptionData.lastPaymentDate
+              )} {' '}
+              {recentOrder.order_price?.toLocaleString() || '0'}원 {' '}
+              {recentOrder.order_status === 'READY' ? ' 결제 예정 🗓️ ' : ' 결제 완료! ✅ '}
+            </PaymentInfoDetails>
+          </PaymentInfoSection>
+          
+          {/* 액션 버튼들 - 예약 상태일 때만 표시 */}
+          {recentOrder.order_status === 'READY' && (
+            <ActionButtonsContainer>
+              <PremiumActionButton onClick={handleChangePaymentMethod}>
+                결제수단 변경
+              </PremiumActionButton>
+              <PremiumActionButton 
+                $variant="danger" 
+                onClick={handleCancelScheduledPayment}
+              >
+                구독 해지
+              </PremiumActionButton>
+            </ActionButtonsContainer>
           )}
-
-          {/* 최근 결제 정보 (구독자) */}
-          {recentOrder && Object.keys(recentOrder).length > 0 && (
-            <>
-              <div style={{ margin: '16px 0', borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <InfoLabel style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                    최근 결제
-                  </InfoLabel>
-                  <PaymentStatusBadge $status={recentOrder.order_status}>
-                    {getPaymentStatusText(recentOrder.order_status)}
-                  </PaymentStatusBadge>
-                </div>
-                
-                <InfoRow>
-                  <InfoLabel>
-                    {recentOrder.order_status === 'READY' ? '예약일' : '결제일'}
-                  </InfoLabel>
-                  <InfoValue>
-                    {recentOrder.order_status === 'READY' ? 
-                      formatDate(recentOrder.schedule_date) : 
-                      formatDate(recentOrder.order_paydate || recentOrder.order_regdate)
-                    }
-                  </InfoValue>
-                </InfoRow>
-                
-                <InfoRow>
-                  <InfoLabel>금액 / 수단</InfoLabel>
-                  <InfoValue>
-                    {recentOrder.order_price?.toLocaleString() || '0'}원 / {' '}
-                    {recentOrder.order_provider === 'KAKAOPAY' ? '카카오페이' :
-                     recentOrder.order_provider === 'TOSSPAYMENTS' ? '토스페이먼츠' :
-                     recentOrder.order_provider || '알 수 없음'}
-                  </InfoValue>
-                </InfoRow>
-
-                {/* 예약 상태인 경우에만 액션 버튼 표시 */}
-                {recentOrder.order_status === 'READY' && (
-                  <PaymentActionButtons style={{ marginTop: '16px' }}>
-                    <PaymentActionButton onClick={handleChangePaymentMethod}>
-                      결제수단 변경
-                    </PaymentActionButton>
-                    <PaymentActionButton 
-                      $variant="cancel" 
-                      onClick={handleCancelScheduledPayment}
-                    >
-                      예약 취소
-                    </PaymentActionButton>
-                  </PaymentActionButtons>
-                )}
-              </div>
-            </>
-          )}
-        </StatusCard>
+        </PremiumServiceCard>
       )}
 
       {/* 비구독자만 보이는 플랜 비교 섹션 */}
       {!isSubscriber && (
         <>
-          {/* 비구독자용 최근 결제 정보 (실패한 결제나 취소된 예약이 있는 경우) */}
+          {/* 비구독자용 최근 결제 정보 - 간소화된 표시 */}
           {recentOrder && Object.keys(recentOrder).length > 0 && (
             <RecentPaymentCard>
-              <RecentPaymentTitle>최근 결제</RecentPaymentTitle>
-              
-              <PaymentStatusBadge $status={recentOrder.order_status}>
-                {getPaymentStatusText(recentOrder.order_status)}
-              </PaymentStatusBadge>
-              
-              <PaymentInfoGrid>
-                <PaymentInfoItem>
-                  <PaymentInfoLabel>금액 · 수단</PaymentInfoLabel>
-                  <PaymentInfoValue>
+              <RecentPaymentSummary>
+                <div style={{ flex: 1 }}>
+                  <PaymentSummaryText style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    {recentOrder.order_status === 'READY' ? '예약된 결제' : '이전 결제'}
+                  </PaymentSummaryText>
+                  <PaymentSummaryText>
                     {recentOrder.order_price?.toLocaleString() || '0'}원 · {' '}
                     {recentOrder.order_provider === 'KAKAOPAY' ? '카카오페이' :
                      recentOrder.order_provider === 'TOSSPAYMENTS' ? '토스페이먼츠' :
-                     recentOrder.order_provider || '알 수 없음'}
-                  </PaymentInfoValue>
-                </PaymentInfoItem>
-                
-                <PaymentInfoItem>
-                  <PaymentInfoLabel>
-                    {recentOrder.order_status === 'READY' ? '예약일' : '시도일'}
-                  </PaymentInfoLabel>
-                  <PaymentInfoValue>
-                    {recentOrder.order_status === 'READY' ? 
-                      formatDate(recentOrder.schedule_date) : 
-                      formatDate(recentOrder.order_paydate || recentOrder.order_regdate)
-                    }
-                  </PaymentInfoValue>
-                </PaymentInfoItem>
-              </PaymentInfoGrid>
+                     recentOrder.order_provider || '알 수 없음'} · {' '}
+                    {formatDate(recentOrder.order_status === 'READY' ? 
+                      recentOrder.schedule_date : 
+                      (recentOrder.order_paydate || recentOrder.order_regdate)
+                    )}
+                    {recentOrder.order_status === 'READY' && (
+                      <span style={{ color: 'var(--primary-blue)', fontWeight: 'bold', marginLeft: '8px' }}>
+                        (결제 대기 중)
+                      </span>
+                    )}
+                  </PaymentSummaryText>
+                </div>
 
-              {/* 예약 상태인 경우에만 액션 버튼 표시 */}
-              {recentOrder.order_status === 'READY' && (
-                <PaymentActionButtons>
-                  <PaymentActionButton onClick={handleChangePaymentMethod}>
-                    결제수단 변경
-                  </PaymentActionButton>
-                  <PaymentActionButton 
-                    $variant="cancel" 
-                    onClick={handleCancelScheduledPayment}
-                  >
-                    예약 취소
-                  </PaymentActionButton>
-                </PaymentActionButtons>
-              )}
+                {/* 예약 상태인 경우에만 액션 버튼들 표시 */}
+                {recentOrder.order_status === 'READY' && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button 
+                      onClick={handleChangePaymentMethod}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        background: 'var(--primary-blue)',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      결제수단 변경
+                    </button>
+                    <button 
+                      onClick={handleCancelScheduledPayment}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        background: 'rgba(244, 67, 54, 0.1)',
+                        color: 'var(--warning)',
+                        border: '1px solid var(--warning)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      취소
+                    </button>
+                  </div>
+                )}
+              </RecentPaymentSummary>
             </RecentPaymentCard>
           )}
 
@@ -963,6 +1444,30 @@ const SubscriptionMain = () => {
           </ComparisonCTA>
         </>
       )}
+
+      {/* FAQ 섹션 - 구독 여부와 상관없이 표시 */}
+      <FAQSection>
+        <FAQTitle>FAQ</FAQTitle>
+        <FAQList>
+          {faqData.map((faq) => (
+            <FAQItem key={faq.id}>
+              <FAQQuestion onClick={() => toggleFAQ(faq.id)}>
+                <FAQQuestionText>
+                  {faq.question}
+                </FAQQuestionText>
+                <FAQToggleIcon $isOpen={openFAQs[faq.id] || false}>
+                  ▼
+                </FAQToggleIcon>
+              </FAQQuestion>
+              <FAQAnswer $isOpen={openFAQs[faq.id] || false}>
+                <FAQAnswerContent>
+                  {faq.answer}
+                </FAQAnswerContent>
+              </FAQAnswer>
+            </FAQItem>
+          ))}
+        </FAQList>
+      </FAQSection>
     </Container>
   );
 };
