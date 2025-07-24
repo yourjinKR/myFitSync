@@ -80,7 +80,7 @@ public class ReportServiceImple implements ReportService {
         
         try {
             // 중복 신고 체크
-            int duplicateCount = mapper.checkDuplicateReport(messageIdx, memberIdx, "MESSAGE");
+            int duplicateCount = mapper.checkDuplicateReport(messageIdx, memberIdx, "message");
             if (duplicateCount > 0) {
                 log.warn("이미 신고한 메시지입니다: messageIdx=" + messageIdx + ", memberIdx=" + memberIdx);
                 return false; // 중복 신고
@@ -89,7 +89,7 @@ public class ReportServiceImple implements ReportService {
             // 신고 등록
             ReportVO reportVO = new ReportVO();
             reportVO.setIdx_num(messageIdx);
-            reportVO.setReport_category("MESSAGE");
+            reportVO.setReport_category("message");
             reportVO.setReport_content(reportContent);
             reportVO.setMember_idx(memberIdx);
             
