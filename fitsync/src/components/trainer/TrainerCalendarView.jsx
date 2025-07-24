@@ -27,7 +27,6 @@ const Wrapper = styled.div`
   font-size: 1.4rem;
   background: var(--bg-primary);
   color: var(--text-primary);
-  min-height: 80vh;
 `;
 
 const TopBar = styled.div`
