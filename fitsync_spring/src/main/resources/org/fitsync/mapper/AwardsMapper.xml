@@ -30,4 +30,34 @@
 	  ORDER BY AWARDS_IDX DESC
 	</select>
 	
+	
+	<resultMap id="AwardsMap" type="org.fitsync.domain.AwardsVO">
+		<id property="awards_idx" column="AWARDS_IDX" />
+		<result property="trainer_idx" column="TRAINER_IDX" />
+		<result property="awards_category" column="AWARDS_CATEGORY" />
+		<result property="awards_name" column="AWARDS_NAME" />
+		<result property="awards_certificate" column="AWARDS_CERTIFICATE" />
+		<result property="awards_approval" column="AWARDS_APPROVAL" />
+		
+		<association property="member" javaType="org.fitsync.domain.MemberVO">
+			<id property="member_idx" column="MEMBER_IDX"/>
+			<result property="member_name" column="MEMBER_NAME"/>
+		</association>
+	</resultMap>
+	
+	<select id="getAwards" resultMap="AwardsMap">
+		SELECT 
+		    A.AWARDS_IDX,
+		    A.TRAINER_IDX,
+		    A.AWARDS_CATEGORY,
+		    A.AWARDS_NAME,
+		    A.AWARDS_CERTIFICATE,
+		    A.AWARDS_APPROVAL,
+		    M.MEMBER_IDX,
+		    M.MEMBER_NAME
+		FROM AWARDS A
+		LEFT JOIN MEMBER M 
+		ON M.MEMBER_IDX = A.TRAINER_IDX
+	</select>
+	
 </mapper>

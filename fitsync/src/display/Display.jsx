@@ -39,6 +39,7 @@ import SubscriptionPaymentHistory from '../components/subscription/SubscriptionP
 import SideNav from '../layout/SideNav';
 import Report from '../components/admin/Report';
 import BodyInputForm from '../components/user/BodyInputForm';
+import Awards from '../components/admin/Awards';
 
 
 const DisplayWrapper = styled.div`
@@ -133,6 +134,7 @@ const Display = () => {
 
           <Route path='/admin' element={<AdminMain/>}>
             <Route path='report' element={<Report/>}/>
+            <Route path='awards' element={<Awards/>}/>
             <Route path='ai' element={<AItest/>}/>
             <Route path='api' element={<AdminApiContainer/>}/>
           </Route>

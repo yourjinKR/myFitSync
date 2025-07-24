@@ -41,7 +41,9 @@ public class ReportServiceImple implements ReportService {
 	public List<ReportVO> getReport() {
 		List<ReportVO> list = mapper.getReport();
 		for (ReportVO vo : list) {
-			if(vo.getReport_category().equals("message")) {
+			System.out.println(vo.getReport_category().toLowerCase().equals("message"));
+			if(vo.getReport_category().toLowerCase().equals("message")) {
+				System.out.println("vo : " + vo);
 				MessageVO mvo = messageMapper.getMessage(vo.getIdx_num());
 				MemberVO memvo = memberMapper.selectTrainerByIdx(mvo.getReceiver_idx());
 				if(memvo != null) {
@@ -57,7 +59,7 @@ public class ReportServiceImple implements ReportService {
 					}
 					vo.setMessage(mvo);
 				}
-			}else if(vo.getReport_category().equals("member")) {
+			}else if(vo.getReport_category().toLowerCase().equals("member")) {
 				MemberVO memvo = memberMapper.selectTrainerByIdx(vo.getIdx_num());
 				if(memvo != null) {
 					vo.setReported(memvo);					

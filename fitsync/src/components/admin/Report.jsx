@@ -592,7 +592,6 @@ const Report = () => {
     { id: 'message', label: '메시지' },
     { id: 'review', label: '리뷰' }
   ];
-  const hoverRef = useState(null);
 
   // 리포트 데이터 가져오기
   const handleReport = async () => {
@@ -603,9 +602,9 @@ const Report = () => {
       if (data.success) {
         setTotalData(data.vo);
         setReportData(prev => ({
-          member: data.vo.filter((item) => item.report_category === 'member') || null,
-          message: data.vo.filter((item) => item.report_category === 'message') || null,
-          review: data.vo.filter((item) => item.report_category === 'review') || null
+          member: data.vo.filter((item) => item.report_category.toLowerCase() === 'member') || null,
+          message: data.vo.filter((item) => item.report_category.toLowerCase() === 'message') || null,
+          review: data.vo.filter((item) => item.report_category.toLowerCase() === 'review') || null
         }));
         setEmpty("");
       } else {

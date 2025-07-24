@@ -7,8 +7,11 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.ApiLogVO;
+import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.ReportVO;
+import org.fitsync.mapper.AwardsMapper;
 import org.fitsync.service.ApiLogServiceImple;
+import org.fitsync.service.AwardsServiceImple;
 import org.fitsync.service.ReportServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -33,6 +36,9 @@ public class AdminController {
 	
 	@Autowired
 	ApiLogServiceImple apiLogService;
+	
+	@Autowired
+	AwardsServiceImple awardService;
 	
     @GetMapping(value = "/test", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<String> test() {
@@ -108,5 +114,19 @@ public class AdminController {
 		}
 		return ResponseEntity.ok(result);
 	}
+	
+	@GetMapping("/awards")
+	public ResponseEntity<?> getAwards(HttpSession session){
+		Map<String, Object> result = new HashMap<String, Object>();
+		List<AwardsVO> vo = awardService.getAwards();
+		if(vo != null) {
+			result.put("success", true);
+			result.put("vo", vo);
+		}else {			
+			result.put("success", false);
+			result.put("msg", "데이터가 없습니다.");
+		}
+		return ResponseEntity.ok(result);
+	} 
 
 }

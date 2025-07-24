@@ -25,5 +25,10 @@ public class AwardsServiceImple implements AwardsService {
 	public List<AwardsVO> getApprovedAwards(int trainerIdx) {
 		return mapper.selectApprovedAwards(trainerIdx);
 	}
+	// 경력 요청 리스트
+	@Override
+	public List<AwardsVO> getAwards() {
+		return mapper.getAwards();
+	}
 
 }
