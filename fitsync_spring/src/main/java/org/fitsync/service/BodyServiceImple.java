@@ -16,6 +16,11 @@ public class BodyServiceImple implements BodyService {
 	@Autowired
 	private BodyMapper mapper;
 	
+	@Override
+	public void insertBody(BodyVO vo) {
+		mapper.insertBody(vo);
+	}
+	
     @Override
     public List<BodyVO> getBodyListByMemberIdx(int member_idx) {
         return mapper.selectByMemberIdx(member_idx);

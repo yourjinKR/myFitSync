@@ -18,5 +18,7 @@ public interface ScheduleService {
     public List<String> getScheduleDates(int memberIdx);
     // 특정 날짜 PT 예약 조회
     public List<ScheduleVO> getSchedulesByDate(int memberIdx, String date);
+    // PT 확인처리
+    public void confirmSchedule(int scheduleIdx);
 }
 	

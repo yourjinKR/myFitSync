@@ -20,5 +20,14 @@ public class MatchingServiceImple implements MatchingService {
     public List<MatchingVO> getMatchedMembers(int trainerIdx) {
         return mapper.getMatchedMembers(trainerIdx);
     }
+    @Override
+    public MatchingVO getMatchingByTrainerAndUser(int userIdx) {
+        return mapper.selectMatchingByTrainerAndUser(userIdx);
+    }
+
+    @Override
+    public void decreaseMatchingRemain(int matchingIdx) {
+        mapper.updateMatchingRemainMinusOne(matchingIdx);
+    }
 	
 }
