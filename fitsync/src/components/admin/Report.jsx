@@ -2,11 +2,13 @@ import axios from 'axios';
 import { set } from 'date-fns';
 import React, { use, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import ReviewScore from '../review/ReviewScore';
 
 const ReportWrapper = styled.div`
   width: calc(100% - 40px);
-  height: calc(100vh - 100px);
-  margin: 0 auto;
+  min-width: 1025px;
+  height: calc(100vh - 120px);
+  margin: 0 15px;
   padding: 20px;
   background: var(--bg-secondary);
   border-radius: 8px;
@@ -25,10 +27,7 @@ const ReportWrapper = styled.div`
         color: var(--text-secondary);
         cursor: pointer;
         transition: all 0.2s;
-        
-        &:hover {
-          background: var(--bg-tertiary);
-        }
+    
       }
       button.active {
         background: var(--primary-blue);
@@ -41,8 +40,8 @@ const ReportWrapper = styled.div`
 
 const TabContent = styled.div`
   margin-top: 20px;
-  height: calc(100% - 60px);
-  
+  height: calc(100% - 70px);
+
   .empty {
     display: flex;
     justify-content: center;
@@ -102,7 +101,9 @@ const TabContent = styled.div`
       width: 100%;
       min-width: 750px;
       position: relative; /* 추가 */
-      
+      td > button {
+        font-size: 1.6rem;
+      }
       /* colgroup 너비를 CSS로 직접 지정 */
       &.member-table {
         td:nth-child(1) { width: 75px; min-width: 75px; max-width: 75px; }
@@ -172,8 +173,14 @@ const UserInfo = styled.div`
   border: 1px solid var(--border-medium);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease; /* 위치 transition 제거 */
+  transition: opacity 0.2s ease, visibility 0.2s ease;
   pointer-events: none;
+  
+  &.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
 
   /* 화살표 추가 */
   &::before {
@@ -282,14 +289,12 @@ const UserInfoTrigger = styled.td`
   position: relative;
   cursor: pointer;
   
-  &:hover ${UserInfo} {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+  /* hover 스타일 제거하고 클릭 스타일만 유지 */
+  &:hover {
+    background: var(--bg-tertiary);
   }
   
-  /* 호버 효과 */
-  &:hover {
+  &.clicked {
     background: var(--bg-tertiary);
   }
 `;
@@ -330,6 +335,9 @@ const ModalBox = styled.div`
   background: var(--bg-white);
   padding: 20px;
   border-radius: 8px;
+  ${props => props.$width ? `width: ${props.$width}px;` : 'width: auto;'}
+  
+
   h3, button {
     color : var(--text-black);
     text-align:center;
@@ -342,7 +350,7 @@ const ModalBox = styled.div`
   & > div {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 5px;
     button {
       border-radius: 5px;
       border: 1px solid var(--border-medium);
@@ -355,6 +363,201 @@ const ModalBox = styled.div`
       border-color: var(--warning);
       background: var(--warning);
       color: var(--text-white);
+    }
+  }
+  p {
+    color: var(--text-black);
+    font-size: 1.6rem;
+    font-weight: bold;
+  }
+
+`;
+
+const ChatHistory = styled.div`
+  background: var(--bg-white);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--text-black);
+  min-width: 500px;
+  max-width: 600px;
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+  h3 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-light);
+  }
+
+  /* 채팅 메시지 컨테이너 */
+  .chat-message {
+    display: flex;
+    flex-direction: column;
+    animation: fadeInUp 0.3s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 발신자 정보 */
+  .sender-info {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 메시지 버블 */
+  .message-bubble {
+    position: relative;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 1.6rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    span {
+      font-size: 1.6rem;
+      line-height: 1.4;
+      padding: 0 10px;
+    }
+    
+    /* 말풍선 꼬리 */
+    &::before {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+    }
+    
+    &.highlight span {
+      background: gold;
+      color: var(--text-black);
+      font-weight: bold;
+    }
+  }
+
+  /* 피신고자 메시지 (왼쪽 정렬) */
+  .reported-message {
+    align-items: flex-start;
+
+    .sender-info {
+      color: var(--primary-blue);
+    }
+
+    .message-bubble {
+      background: var(--bg-tertiary);
+      color: var(--text-white);
+      
+      &::before {
+        border-width: 0 12px 12px 0;
+        border-color: var(--border-light) var(--border-light) #f8f9fa var(--border-light);
+        left: -11px;
+        bottom: 8px;
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        border-width: 0 13px 13px 0;
+        border-color: transparent var(--border-light) transparent transparent;
+        border-style: solid;
+        left: -12px;
+        bottom: 7px;
+        z-index: -1;
+      }
+    }
+  }
+
+  /* 신고자 메시지 (오른쪽 정렬) */
+  .reporter-message {
+    align-items: flex-end;
+
+    .sender-info {
+      justify-content: flex-end;
+      color: var(--primary-blue);
+    }
+
+    .message-bubble {
+      background: linear-gradient(135deg, var(--primary-blue), #1e88e5);
+      color: var(--text-white);
+      
+      &::before {
+        border-width: 12px 12px 0 0;
+        border-color: var(--primary-blue) transparent transparent transparent;
+        right: -11px;
+        bottom: 8px;
+      }
+    }
+  }
+
+  /* 타임스탬프 스타일 */
+  .timestamp {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 3px;
+    
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
+
+  /* 채팅 영역 구분선 */
+  .chat-divider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-light);
+    }
+    
+    span {
+      padding: 0 15px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: var(--text-black);
+      background: var(--bg-white);
     }
   }
 `;
@@ -375,13 +578,14 @@ const Report = () => {
   const [empty, setEmpty] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(init);
-  const [blockTarget, setBlockTarget] = useState(targetInfo);
+  const [userTarget, setUserTarget] = useState(targetInfo);
   const [totalData, setTotalData] = useState(null);
   const [reportData, setReportData] = useState({
     member: null,
     message: null,
     review: null
   });
+  const [activeTooltip, setActiveTooltip] = useState(null); // 활성화된 툴팁 상태
   // 탭 목록
   const tabs = [
     { id: 'member', label: '유저' },
@@ -483,12 +687,15 @@ const Report = () => {
                         {reportData.member.map((user, index) => (
                           <tr key={user.report_idx || index}>
                             <td className='ta-c'>{index + 1}</td>
-                            <UserInfoTrigger 
-                              className='ta-c'
-                              onMouseEnter={handleMouseEnter}
+                            <UserInfoTrigger
+                              className={`ta-c ${activeTooltip === `member-reported-${index}` ? 'clicked' : ''}`}
+                              onClick={(e) => handleTooltipClick(e, `member-reported-${index}`)}
                             >
                               {user.reported?.member_name || 'N/A'}
-                              <UserInfo data-tooltip>
+                              <UserInfo
+                                data-tooltip
+                                className={activeTooltip === `member-reported-${index}` ? 'show' : ''}
+                              >
                                 <p>📧 {user.reported?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
@@ -503,16 +710,19 @@ const Report = () => {
                               {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
-                            <UserInfoTrigger 
-                              className='ta-c'
-                              onMouseEnter={handleMouseEnter}
+                            <UserInfoTrigger
+                              className={`ta-c ${activeTooltip === `member-reporter-${index}` ? 'clicked' : ''}`}
+                              onClick={(e) => handleTooltipClick(e, `member-reporter-${index}`)}
                             >
                               {user.reporter?.member_name || 'N/A'}
-                              <UserInfo data-tooltip>
+                              <UserInfo
+                                data-tooltip
+                                className={activeTooltip === `member-reporter-${index}` ? 'show' : ''}
+                              >
                                 <p>📧 {user.reporter?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
-                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx)}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx, 'total')}</dt>
                                   <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'member')}</strong></dd>
                                   <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'message')}</strong></dd>
                                   <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'review')}</strong></dd>
@@ -578,12 +788,15 @@ const Report = () => {
                         {reportData.message.map((user, index) => (
                           <tr key={user.report_idx || index}>
                             <td className='ta-c'>{index + 1}</td>
-                            <UserInfoTrigger 
-                              className='ta-c'
-                              onMouseEnter={handleMouseEnter}
+                            <UserInfoTrigger
+                              className={`ta-c ${activeTooltip === `message-reported-${index}` ? 'clicked' : ''}`}
+                              onClick={(e) => handleTooltipClick(e, `message-reported-${index}`)}
                             >
                               {user.reported?.member_name || 'N/A'}
-                              <UserInfo data-tooltip>
+                              <UserInfo
+                                data-tooltip
+                                className={activeTooltip === `message-reported-${index}` ? 'show' : ''}
+                              >
                                 <p>📧 {user.reported?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
@@ -598,21 +811,31 @@ const Report = () => {
                               {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
                             </td>
                             <td className='ta-c'>
-                              <button onClick={() => handleDetailModal(user.message.attach.cloudinary_url, "message", "img")}>
-                                {user.message.message_content}
-                              </button>
+                              {
+                                user.message?.attach ? (
+                                  <button onClick={() => handleDetailModal(user.message.attach.cloudinary_url, "message", "img")}>
+                                    {user.message.message_content}
+                                  </button>
+                                ) :
+                                  <button onClick={() => handleDetailModal(user, "message", "chat")}>
+                                    {user.message.message_content}
+                                  </button>
+                              }
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
-                            <UserInfoTrigger 
-                              className='ta-c'
-                              onMouseEnter={handleMouseEnter}
+                            <UserInfoTrigger
+                              className={`ta-c ${activeTooltip === `message-reporter-${index}` ? 'clicked' : ''}`}
+                              onClick={(e) => handleTooltipClick(e, `message-reporter-${index}`)}
                             >
                               {user.reporter?.member_name || 'N/A'}
-                              <UserInfo data-tooltip>
+                              <UserInfo
+                                data-tooltip
+                                className={activeTooltip === `message-reporter-${index}` ? 'show' : ''}
+                              >
                                 <p>📧 {user.reporter?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
-                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx)}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx, 'total')}</dt>
                                   <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'member')}</strong></dd>
                                   <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'message')}</strong></dd>
                                   <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'review')}</strong></dd>
@@ -621,8 +844,17 @@ const Report = () => {
                             </UserInfoTrigger>
                             <td className='ta-c'>
                               <ButtonBox>
-                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료'}</button>
-                                {user.report_hidden === 0 ? <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button> : <></>}
+                                <button
+                                  disabled={user.report_hidden === 1}
+                                  onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : undefined}
+                                >
+                                  {user.report_hidden === 0 ? '처리전' : '처리완료'}
+                                </button>
+                                {user.report_hidden === 0 ? (
+                                  <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>
+                                    제재
+                                  </button>
+                                ) : null}
                               </ButtonBox>
                             </td>
                           </tr>
@@ -671,12 +903,15 @@ const Report = () => {
                         {reportData.review.map((user, index) => (
                           <tr key={user.report_idx || index}>
                             <td className='ta-c'>{index + 1}</td>
-                            <UserInfoTrigger 
-                              className='ta-c'
-                              onMouseEnter={handleMouseEnter}
+                            <UserInfoTrigger
+                              className={`ta-c ${activeTooltip === `review-reported-${index}` ? 'clicked' : ''}`}
+                              onClick={(e) => handleTooltipClick(e, `review-reported-${index}`)}
                             >
                               {user.reported?.member_name || 'N/A'}
-                              <UserInfo data-tooltip>
+                              <UserInfo
+                                data-tooltip
+                                className={activeTooltip === `review-reported-${index}` ? 'show' : ''}
+                              >
                                 <p>📧 {user.reported?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
@@ -691,19 +926,24 @@ const Report = () => {
                               {user.reported?.member_type === 'trainer' ? '트레이너' : '회원'}
                             </td>
                             <td className='ta-c'>
-
+                              <button onClick={() => handleDetailModal(user, "isReview", "")}>
+                                {user.review.review_title}
+                              </button>
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
-                            <UserInfoTrigger 
-                              className='ta-c'
-                              onMouseEnter={handleMouseEnter}
+                            <UserInfoTrigger
+                              className={`ta-c ${activeTooltip === `review-reporter-${index}` ? 'clicked' : ''}`}
+                              onClick={(e) => handleTooltipClick(e, `review-reporter-${index}`)}
                             >
                               {user.reporter?.member_name || 'N/A'}
-                              <UserInfo data-tooltip>
+                              <UserInfo
+                                data-tooltip
+                                className={activeTooltip === `review-reporter-${index}` ? 'show' : ''}
+                              >
                                 <p>📧 {user.reporter?.member_email || 'N/A'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
-                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx)}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx, 'total')}</dt>
                                   <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'member')}</strong></dd>
                                   <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'message')}</strong></dd>
                                   <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reporter?.member_idx, 'review')}</strong></dd>
@@ -712,8 +952,17 @@ const Report = () => {
                             </UserInfoTrigger>
                             <td className='ta-c'>
                               <ButtonBox>
-                                <button disabled={user.report_hidden === 1} onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : ''}>{user.report_hidden === 0 ? '처리전' : '처리완료'}</button>
-                                {user.report_hidden === 0 ? <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button> : <></>}
+                                <button
+                                  disabled={user.report_hidden === 1}
+                                  onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : undefined}
+                                >
+                                  {user.report_hidden === 0 ? '처리전' : '처리완료'}
+                                </button>
+                                {user.report_hidden === 0 ? (
+                                  <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>
+                                    제재
+                                  </button>
+                                ) : null}
                               </ButtonBox>
                             </td>
                           </tr>
@@ -733,17 +982,24 @@ const Report = () => {
     }
   };
 
-  const handleDetailModal = (getUrl, getType, getContentType) => {
+  const handleDetailModal = (getContent, getType, getContentType) => {
     setModalData({
-      url: getUrl,
+      content: getContent,
       type: getType,
       contentType: getContentType
     });
+    if (getType === 'message' && getContentType === 'chat') {
+      setUserTarget({
+        report_idx: getContent.report_idx,
+        reporter: getContent.reporter || '',
+        reported: getContent.reported || ''
+      });
+    }
   };
 
   // 제재 컨트롤
   const handleReportCTA = (report_idx, reporter, reported) => {
-    setBlockTarget({
+    setUserTarget({
       report_idx: report_idx,
       reporter: reporter,
       reported: reported
@@ -752,7 +1008,7 @@ const Report = () => {
   }
   const handleUpdateReport = async (target) => {
     try {
-      const response = await axios.put(`/admin/report/${blockTarget.report_idx}/${target}`, {
+      const response = await axios.put(`/admin/report/${userTarget.report_idx}/${target}`, {
       }, { withCredentials: true });
       if (response.data.success) {
         alert("제재가 완료되었습니다.");
@@ -768,7 +1024,7 @@ const Report = () => {
 
   const handleUpdateReportChk = async (target) => {
     try {
-      const response = await axios.put(`/admin/report/${target}`, {
+      const response = await axios.put(`/admin/report/hidden/${target}`, {
       }, { withCredentials: true });
       if (response.data.success) {
         handleReport(activeTab); // 리포트 데이터 새로고침
@@ -795,43 +1051,64 @@ const Report = () => {
     } else {
       setModalOpen(false);
       setModalData(init);
-      setBlockTarget(targetInfo);
+      setUserTarget(targetInfo);
     }
   }, [modalData]);
 
   useEffect(() => {
-  }, [blockTarget]);
+  }, [userTarget]);
 
-  // 툴팁 위치 계산 함수
-  const handleMouseEnter = (e) => {
+  // 툴팁 클릭 핸들러
+  const handleTooltipClick = (e, tooltipId) => {
+    e.stopPropagation(); // 이벤트 버블링 방지
+
     const tooltip = e.currentTarget.querySelector('[data-tooltip]');
     if (tooltip) {
       const rect = e.currentTarget.getBoundingClientRect();
-      
+
       let left = rect.left + rect.width / 2;
       let top = rect.bottom + 10;
-      
+
       // 화면 오른쪽 경계 체크
       if (left + 125 > window.innerWidth) {
         left = window.innerWidth - 125 - 10;
       }
-      
+
       // 화면 왼쪽 경계 체크
       if (left - 125 < 0) {
         left = 125 + 10;
       }
-      
+
       // 화면 아래쪽 경계 체크
       if (top + 200 > window.innerHeight) {
         top = rect.top - 200 - 10;
       }
-      
-      // 즉시 위치 설정 (애니메이션 없이)
+
+      // 위치 설정
       tooltip.style.left = `${left}px`;
       tooltip.style.top = `${top}px`;
       tooltip.style.transform = 'translateX(-50%)';
+
+      // 툴팁 표시/숨김 토글
+      if (activeTooltip === tooltipId) {
+        setActiveTooltip(null);
+      } else {
+        setActiveTooltip(tooltipId);
+      }
     }
   };
+
+  // 문서 클릭시 툴팁 닫기
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setActiveTooltip(null);
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, []);
 
   return (
     <ReportWrapper>
@@ -852,24 +1129,56 @@ const Report = () => {
       </TabContent>
       {modalOpen && (
         <DetailModal onClick={() => setModalOpen(false)}>
-          {
-            modalData.type === 'isBlocked' ? (
-              <ModalBox>
-                <h3>제재 대상 선택</h3>
-                <div>
-                  <button onClick={() => handleUpdateReport(blockTarget.reported)}>피신고자</button>
-                  <button onClick={() => handleUpdateReport(blockTarget.reporter)}>신고자</button>
-                </div>
-              </ModalBox>) : <>
-              <div onClick={(e) => e.stopPropagation()}>
-                {modalData.contentType === 'img' ? (
-                  <img src={modalData.url} alt="Report Detail" />
-                ) : (
-                  <p>지원하지 않는 파일 형식입니다.</p>
-                )}
+          {modalData.type === 'isBlocked' ? (
+            <ModalBox>
+              <h3>제재 대상 선택</h3>
+              <div>
+                <button onClick={() => handleUpdateReport(userTarget.reported)}>피신고자</button>
+                <button onClick={() => handleUpdateReport(userTarget.reporter)}>신고자</button>
               </div>
-            </>
-          }
+            </ModalBox>) :
+            modalData.type === 'isReview' ? (
+              <ModalBox $width={450} onClick={(e) => e.stopPropagation()}>
+                <h3>리뷰 상세</h3>
+                <div style={{ display: 'flex', marginBottom: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <ReviewScore score={modalData.content.review.review_star} />
+                  <p>{modalData.content.reported.member_name}</p>
+                </div>
+                <p style={{ fontSize: '1.8rem', marginBottom: '10px' }}>{modalData.content.review.review_title}</p>
+                <p style={{ fontSize: '1.4rem', fontWeight: 'normal' }}>{modalData.content.review.review_content}</p>
+              </ModalBox>
+            ) : (
+              <ChatHistory onClick={(e) => e.stopPropagation()}>
+                {modalData.contentType === 'img' ? (
+                  <img src={modalData.content} alt="Report Detail" />
+                ) : (
+                  <>
+                    <div className="chat-divider">
+                      <span>대화 내용</span>
+                    </div>
+                    {modalData.content.history_message.map((item, index) => (
+                      <div 
+                        key={item.message_idx || index} 
+                        className={`chat-message ${
+                          item.sender_idx === userTarget.reported.member_idx 
+                            ? 'reported-message' 
+                            : 'reporter-message'
+                        }`}
+                      >
+                        <div className="sender-info">
+                          {item.sender_idx === userTarget.reported.member_idx 
+                            ? userTarget.reported.member_name 
+                            : userTarget.reporter.member_name}
+                        </div>
+                        <div className={`message-bubble` + (item.message_idx === modalData.content.idx_num ? ' highlight' : '')}>
+                          <span>{item.message_content}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </ChatHistory>
+            )}
         </DetailModal>
       )}
     </ReportWrapper>

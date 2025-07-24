@@ -130,4 +130,17 @@
         ORDER BY message_senddate ASC
     </select>
 
+	<select id="getHistory" parameterType="int" resultType="org.fitsync.domain.MessageVO">
+		SELECT * 
+		FROM MESSAGE 
+		WHERE MESSAGE_SENDDATE 
+		BETWEEN 
+		    (SELECT MESSAGE_SENDDATE - 1 FROM MESSAGE WHERE MESSAGE_IDX = #{message_idx})
+		AND 
+		    (SELECT MESSAGE_SENDDATE + 1 FROM MESSAGE WHERE MESSAGE_IDX = #{message_idx})
+		AND ROOM_IDX = 
+			(SELECT ROOM_IDX FROM MESSAGE WHERE MESSAGE_IDX = #{message_idx})
+		ORDER BY MESSAGE_SENDDATE
+	</select>
+
 </mapper>

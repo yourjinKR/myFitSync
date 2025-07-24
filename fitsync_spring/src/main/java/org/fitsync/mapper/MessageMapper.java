@@ -34,5 +34,6 @@ public interface MessageMapper {
     public MessageVO getParentMessage(@Param("parent_idx") int parent_idx);
     // 답장 메시지들 조회 (parent_idx가 있는 메시지들)
     public List<MessageVO> getReplyMessages(@Param("parent_idx") int parent_idx);
-    
+    // 전-후 메시지 가져오기
+    public List<MessageVO> getHistory(int message_idx);
 }

@@ -63,9 +63,14 @@
 	<update id="updateReport" parameterType="org.fitsync.domain.ReportVO">
 		UPDATE REPORT 
 		SET 
-			<if test="member_idx > 0">
-			    REPORT_SANCTION = #{report_sanction},
-			    REPORT_TIME = SYSDATE + ((SELECT COUNT(*) FROM REPORT WHERE REPORT_SANCTION = #{report_sanction}) * 7),
+			<if test="report_sanction > 0">
+			  	REPORT_SANCTION = #{report_sanction},
+			    REPORT_TIME = SYSDATE + (
+			        GREATEST(
+			            (SELECT COUNT(*) FROM REPORT WHERE REPORT_SANCTION = #{report_sanction}),
+			            1
+			        ) * 7
+			    ),
 			</if>
 		    REPORT_HIDDEN = 1 
 		WHERE REPORT_IDX = #{report_idx}

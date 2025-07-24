@@ -5,7 +5,13 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import styled from 'styled-components';
 
 const StarScore = styled.div`
-  color: gold;
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+  path {
+    color: gold;
+  }
 `;
 
 const ReviewScore = ({score}) => {

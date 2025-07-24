@@ -1,6 +1,7 @@
 package org.fitsync.domain;
 
 import java.sql.Date;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,4 +23,5 @@ public class ReportVO {
 
     private ReviewVO review;
     private MessageVO message;
+    private List<MessageVO> history_message;
 }

@@ -51,6 +51,9 @@ public class ReportServiceImple implements ReportService {
 					if(mvo.getAttach_idx() != null) {
 						ChatAttachVO attach = attachMapper.getAttach(mvo.getAttach_idx());
 						mvo.setAttach(attach);
+					}else {
+						List<MessageVO> history = messageMapper.getHistory(mvo.getMessage_idx());
+						vo.setHistory_message(history);
 					}
 					vo.setMessage(mvo);
 				}

@@ -95,7 +95,7 @@ public class AdminController {
 		return ResponseEntity.ok(result);
 	}
 	
-	@PutMapping("/report/{report_idx}")
+	@PutMapping("/report/hidden/{report_idx}")
 	public ResponseEntity<?> updateReport(@PathVariable int report_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
 		System.out.println("처리전");
