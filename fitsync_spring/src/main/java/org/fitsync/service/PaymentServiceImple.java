@@ -1456,7 +1456,7 @@ public class PaymentServiceImple implements PaymentService {
 			
 			log.info("기존 예약 정보 - ScheduleId: " + oldScheduleId + ", ScheduleDate: " + oldOrder.getSchedule_date());
 			
-			// 3. 🎯 Date → PortOne API 형식 문자열 변환
+			// 3. Date → PortOne API 형식 문자열 변환
 			String scheduleDateTime = convertDateToPortOneFormat(oldOrder.getSchedule_date());
 			if (scheduleDateTime == null) {
 				log.error("날짜 변환 실패 - ScheduleDate: " + oldOrder.getSchedule_date());
@@ -1511,13 +1511,17 @@ public class PaymentServiceImple implements PaymentService {
 			// 카드 정보 업데이트
 			if (newMethod.getMethod_card() != null) {
 				oldOrder.setOrder_card(newMethod.getMethod_card());
+			} else {
+				oldOrder.setOrder_card(null);
 			}
 			if (newMethod.getMethod_card_num() != null) {
 				oldOrder.setOrder_card_num(newMethod.getMethod_card_num());
+			} else {
+				oldOrder.setOrder_card_num(null);
 			}
 			
 			// DB 업데이트
-			paymentOrderMapper.updatePaymentStatus(oldOrder);
+			paymentOrderMapper.updateScheduledPaymentMethod(oldOrder);
 			
 			log.info("DB 업데이트 완료 - OrderIdx: " + orderIdx + ", NewMethodIdx: " + methodIdx + 
 					", NewScheduleId: " + newScheduleId);

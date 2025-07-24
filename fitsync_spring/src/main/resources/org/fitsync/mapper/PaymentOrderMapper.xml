@@ -82,14 +82,32 @@
     <!-- 예약건 결제수단 변경 -->
     <update id="updateScheduledPaymentMethod" parameterType="org.fitsync.domain.PaymentOrderVO">
         UPDATE payment_order
-        SET
-            payment_id = #{payment_id}
-            schedule_id = #{schedule_id }
+        <trim prefix="SET" suffixOverrides=",">
+            method_idx = #{method_idx},
+            payment_id = #{payment_id},
+            schedule_id = #{schedule_id},
+            
+            <choose>
+                <when test="order_card != null">
+                    order_card = #{order_card},
+                </when>
+                <otherwise>
+                    order_card = null,
+                </otherwise>
+            </choose>
+
+            <choose>
+                <when test="order_card_num != null">
+                    order_card_num = #{order_card_num},
+                </when>
+                <otherwise>
+                    order_card_num = null,
+                </otherwise>
+            </choose>
+
             order_provider = #{order_provider}
-            order_card = #{order_card}
-            order_card_num = #{order_card_num}
-        WHERE
-            order_idx = #{order_idx}
+        </trim>
+        WHERE order_idx = #{order_idx}
     </update>
 
     <!-- 단건 결제 정보 조회 -->

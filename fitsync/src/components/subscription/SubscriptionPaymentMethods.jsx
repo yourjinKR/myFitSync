@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { PaymentUtil } from '../../utils/PaymentUtil';
 import AddPaymentMethodModal from './AddPaymentMethodModal';
 import PaymentConfirmModal from './PaymentConfirmModal';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // 스타일 컴포넌트들
 const Container = styled.div`
@@ -530,6 +530,8 @@ const SubscriptionPaymentMethods = () => {
   const [isSub, setIsSub] = useState(false);
 
   const location = useLocation();
+  let {changeMode, recentOrder} = location.state || false;
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
@@ -744,7 +746,23 @@ const SubscriptionPaymentMethods = () => {
   };
 
   // 결제하기 버튼 클릭 핸들러
-  const handlePaymentStart = (method) => {
+  const handlePaymentStart = async (method) => {
+    // 기존 예약건 변경
+    if (changeMode) {
+      console.log(recentOrder.method_idx);
+      console.log(method.method_idx);
+      const response = recentOrder.method_idx !== method.method_idx ? 
+        await PaymentUtil.changeSchedulePaymentMethod({order_idx : recentOrder.order_idx, method_idx : method.method_idx})
+        : null;
+
+      if (response !== null) {
+        alert('결제수단이 변경됐습니다 !');
+        navigate('/subscription/history');
+      }
+
+      return;
+    }
+
     setSelectedPaymentMethod(method);
     setShowPaymentConfirm(true);
   };
@@ -899,7 +917,7 @@ const SubscriptionPaymentMethods = () => {
                     </CardInfoSection>
 
                     {/* 결제하기 버튼 */}
-                    {isSub === false ? (
+                    {isSub === false || (changeMode === true && method.method_idx !== recentOrder.method_idx) ? (
                       <PaymentButton onClick={() => handlePaymentStart(method)}>
                         이 결제수단으로 구독하기
                       </PaymentButton>

@@ -1224,8 +1224,10 @@ const SubscriptionMain = () => {
   };
 
   // 결제수단 변경 (구현 예정)
-  const handleChangePaymentMethod = () => {
-    alert('결제수단 변경 기능을 준비 중입니다.');
+  const handleChangePaymentMethod = async () => {
+    navigate("/subscription/methods", {state : {changeMode : true, recentOrder}});
+
+
   };
 
   if (loading) {

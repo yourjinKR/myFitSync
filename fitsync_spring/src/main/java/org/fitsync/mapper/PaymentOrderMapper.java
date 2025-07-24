@@ -16,6 +16,9 @@ public interface PaymentOrderMapper {
     // 조건부 결제 상태 업데이트 (동시성 제어용)
     int updatePaymentStatusConditional(PaymentOrderVO order);
 
+    // 결제수단 변경
+    int updateScheduledPaymentMethod(PaymentOrderVO order);
+
     // 단건 조회
     PaymentOrderVO selectPaymentOrderById(int order_idx);
     

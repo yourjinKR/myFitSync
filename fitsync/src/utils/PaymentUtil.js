@@ -404,7 +404,7 @@ export const PaymentUtil = {
         }
     },
 
-    /** 바꾸기 */
+    /** 기존의 예약의 결제수단 바꾸기 */
     changeSchedulePaymentMethod : async ({order_idx, method_idx}) => {
         try {
             const response = await axios.patch('/payment/bill/schedule', {order_idx, method_idx}, {

@@ -300,7 +300,8 @@ const SubscriptionPaymentHistory = () => {
         const subscriptionPayments = allPayments.filter(payment => 
           payment.order_name?.includes('구독') ||
           payment.order_name?.includes('subscription') ||
-          payment.order_name?.includes('Subscription')
+          payment.order_name?.includes('Subscription') ||
+          payment.order_name?.includes('FitSync Premium')
         );
         setPaymentHistory(subscriptionPayments);
       } else {
