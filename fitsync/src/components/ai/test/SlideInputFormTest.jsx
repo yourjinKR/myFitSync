@@ -42,7 +42,6 @@ const FormContainer = styled.div`
     z-index: 1000;
     max-width: 750px;
     margin: 0 auto;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
 `;
 
 // 상단 헤더 영역
@@ -53,7 +52,6 @@ const TopHeader = styled.div`
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
     position: relative;
     
     @media (max-width: 480px) {
@@ -236,7 +234,7 @@ const SlideTitle = styled.h2`
     flex-shrink: 0;
     
     @media (max-width: 480px) {
-        font-size: 2rem;
+        font-size: 4rem;
         gap: 0.5rem;
         margin-bottom: 0.8rem;
     }
@@ -254,8 +252,14 @@ const SlideSubtitle = styled.p`
     margin-right: auto;
     
     @media (max-width: 480px) {
-        font-size: 1.1rem;
+        font-size: 2.1rem;
         margin-bottom: 2rem;
+    }
+
+    p {
+        @media (max-width: 480px) {
+        font-size: 1.5rem;
+        }
     }
 `;
 
@@ -283,7 +287,7 @@ const InputGroup = styled.div`
 `;
 
 const InputLabel = styled.label`
-    font-size: 1.4rem;
+    font-size: 2.4rem;
     font-weight: 700;
     color: var(--text-primary);
     display: flex;
@@ -298,7 +302,7 @@ const InputLabel = styled.label`
     }
     
     @media (max-width: 480px) {
-        font-size: 1.2rem;
+        font-size: 2.2rem;
         gap: 0.6rem;
     }
 `;
@@ -309,7 +313,7 @@ const InputField = styled.input`
     color: var(--text-primary);
     border-radius: 16px;
     padding: 1.5rem 1.2rem;
-    font-size: 1.2rem;
+    font-size: 2.2rem;
     transition: all 0.3s ease;
     font-weight: 500;
     
@@ -328,7 +332,7 @@ const InputField = styled.input`
     
     @media (max-width: 480px) {
         padding: 1.3rem 1rem;
-        font-size: 1.1rem;
+        font-size: 2.1rem;
     }
 `;
 
@@ -338,7 +342,7 @@ const SelectField = styled.select`
     color: var(--text-primary);
     border-radius: 16px;
     padding: 1.5rem 1.2rem;
-    font-size: 1.2rem;
+    font-size: 2.2rem;
     transition: all 0.3s ease;
     cursor: pointer;
     font-weight: 500;
@@ -359,7 +363,7 @@ const SelectField = styled.select`
     
     @media (max-width: 480px) {
         padding: 1.3rem 1rem;
-        font-size: 1.1rem;
+        font-size: 2.1rem;
     }
 `;
 
@@ -385,7 +389,7 @@ const CheckboxCard = styled.label`
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.1rem;
+    font-size: 2.1rem;
     font-weight: 600;
     
     &:hover {
@@ -452,7 +456,7 @@ const BottomNavigation = styled.div`
 
 const NavButton = styled.button`
     padding: 1rem 2rem;
-    font-size: 1rem;
+    font-size: 1.7rem;
     font-weight: 600;
     border: none;
     border-radius: 12px;
@@ -498,7 +502,7 @@ const NavButton = styled.button`
     
     @media (max-width: 480px) {
         padding: 0.8rem 1.5rem;
-        font-size: 0.9rem;
+        font-size: 2rem;
         min-height: 44px;
         gap: 0.4rem;
     }
@@ -864,7 +868,6 @@ const SlideInputFormTest = () => {
 
     const slides = [
         { component: WelcomeSlide, title: "시작", subtitle: "AI 루틴 생성을 시작해보세요" },
-        { component: BasicInfoSlide, title: "기본 정보", subtitle: "나이, 성별, 키, 몸무게를 입력해주세요" },
         { component: BodyCompositionSlide, title: "체성분", subtitle: "체성분 정보로 더 정확한 분석을 해드려요" },
         { component: HealthConditionSlide, title: "건강 상태", subtitle: "불편한 부위를 알려주시면 안전한 루틴을 제공해요" },
         { component: GoalsSlide, title: "운동 목표", subtitle: "목표에 맞는 최적의 루틴을 추천해드려요" }
@@ -899,7 +902,7 @@ const SlideInputFormTest = () => {
         
         console.log('생성할 데이터:', finalFormData);
         // 실제 AI 생성 로직으로 이동
-        navigate('/ai', { state: { formData: finalFormData } });
+        navigate('/ai/test/result', { state: { formData: finalFormData } });
     };
 
     const isFormValid = formData.age && formData.gender && formData.height && formData.weight;
