@@ -3,9 +3,11 @@ package org.fitsync.service;
 import java.net.http.HttpResponse;
 import java.util.*;
 
+import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.PaymentMethodVO;
 import org.fitsync.domain.PaymentOrderVO;
 import org.fitsync.domain.PaymentOrderWithMethodVO;
+import org.fitsync.mapper.ApiLogMapper;
 import org.fitsync.mapper.PaymentMethodMapper;
 import org.fitsync.mapper.PaymentOrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 @Log4j
 @Service
@@ -30,6 +33,9 @@ public class PaymentServiceImple implements PaymentService {
 	
 	@Autowired
 	private PortOneApiClient portOneApiClient;
+
+	@Autowired
+	private ApiLogMapper apiLogMapper;
 	
 	/**
 	 * DB 연결 및 매퍼 상태 테스트
@@ -1735,6 +1741,19 @@ public class PaymentServiceImple implements PaymentService {
 				result.put("subscriptionStartDate", activeSubscription.getOrder_regdate());
 				result.put("subscriptionAmount", activeSubscription.getOrder_price());
 				result.put("orderIdx", activeSubscription.getOrder_idx());
+
+				// 사용량 조회
+				Map<String, Object> userUseage = apiLogMapper.selectTokenUsageDuringLatestPaidOrder(memberIdx);
+				System.out.println("userUseage!!!!! : " + userUseage);
+				int inputTokens = ((BigDecimal) userUseage.get("INPUT_TOKENS")).intValue();
+				int outputTokens = ((BigDecimal) userUseage.get("OUTPUT_TOKENS")).intValue();
+
+				double totalCost = calculateCost(inputTokens, outputTokens);
+
+				result.put("inputToken", inputTokens);
+				result.put("outputToken", outputTokens);
+				result.put("totalCost", totalCost);
+
 				
 			} else {
 				log.info("❌ 비구독자 - memberIdx: " + memberIdx);
@@ -1796,5 +1815,24 @@ public class PaymentServiceImple implements PaymentService {
 			return null;
 		}
 	}
+
+	// GPT-4o 요금 (USD 기준, 2024년 6월 기준)
+    private static final double INPUT_COST_PER_1000 = 0.005;   // $5 / 1M tokens
+    private static final double OUTPUT_COST_PER_1000 = 0.015;  // $15 / 1M tokens
+
+    /**
+     * 예상 비용 계산 (USD 기준)
+     * @param inputTokens 입력 토큰 수
+     * @param outputTokens 출력 토큰 수
+     * @return 총 비용 (소수점 6자리 반올림)
+     */
+    public static double calculateCost(int inputTokens, int outputTokens) {
+        double inputCost = inputTokens * INPUT_COST_PER_1000 / 1000.0;
+        double outputCost = outputTokens * OUTPUT_COST_PER_1000 / 1000.0;
+        double total = inputCost + outputCost;
+
+        // 소수점 6자리까지 반올림
+        return Math.round(total * 1_000_000) / 1_000_000.0;
+    }
 }
 

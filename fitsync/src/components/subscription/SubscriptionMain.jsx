@@ -1286,14 +1286,21 @@ const SubscriptionMain = () => {
           {/* 구독 진행률 */}
           <ProgressSection>
             <ProgressHeader>
-              <ProgressLabel>구독 기간</ProgressLabel>
-              <ProgressDays>
-                {daysLeft > 0 ? `${daysLeft}일 남음` : daysLeft === 0 ? 'D-Day' : '만료됨'}
-              </ProgressDays>
+              <ProgressLabel>사용량</ProgressLabel>
+                <ProgressDays>
+                  {subscriptionData?.totalCost >= 0
+                    ? `${Math.min(100, ((subscriptionData.totalCost / 3) * 100)).toFixed(2)}% 사용`
+                    : '사용량 계산 중'}
+                </ProgressDays>
             </ProgressHeader>
+
             <ProgressBarContainer>
               <ProgressBarFill 
-                $percentage={daysLeft > 0 ? Math.max(5, (daysLeft / 30) * 100) : 0} 
+                $percentage={
+                  subscriptionData.totalCost > 0 
+                    ? Math.min(100, Math.max(5, (subscriptionData.totalCost / 3) * 100)) 
+                    : 0
+                }
               />
             </ProgressBarContainer>
           </ProgressSection>

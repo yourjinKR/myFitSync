@@ -71,4 +71,31 @@
 	    WHERE apilog_idx = #{apilog_idx}
 	</update>
 
+	<!-- 구독 기간 중 AI 요청 사용량 -->
+	<select id="selectTokenUsageDuringLatestPaidOrder" parameterType="int" resultType="map">
+		<![CDATA[
+		SELECT
+			NVL(SUM(NVL(a.apilog_input_tokens, 0)), 0) AS input_tokens,
+			NVL(SUM(NVL(a.apilog_output_tokens, 0)), 0) AS output_tokens
+		FROM apilog a
+		WHERE a.member_idx = #{member_idx}
+		AND a.apilog_request_time >= (
+				SELECT MAX(p.order_paydate)
+				FROM payment_order p
+				WHERE p.member_idx = #{member_idx}
+				AND p.order_status = 'PAID'
+				AND p.order_paydate IS NOT NULL
+			)
+		AND a.apilog_request_time < (
+				SELECT ADD_MONTHS(MAX(p.order_paydate), 1)
+				FROM payment_order p
+				WHERE p.member_idx = #{member_idx}
+				AND p.order_status = 'PAID'
+				AND p.order_paydate IS NOT NULL
+			)
+		]]>
+	</select>
+
+
+
 </mapper>
