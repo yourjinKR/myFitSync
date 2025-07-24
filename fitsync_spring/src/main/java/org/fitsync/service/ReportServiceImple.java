@@ -43,9 +43,8 @@ public class ReportServiceImple implements ReportService {
 		for (ReportVO vo : list) {
 			System.out.println(vo.getReport_category().toLowerCase().equals("message"));
 			if(vo.getReport_category().toLowerCase().equals("message")) {
-				System.out.println("vo : " + vo);
 				MessageVO mvo = messageMapper.getMessage(vo.getIdx_num());
-				MemberVO memvo = memberMapper.selectTrainerByIdx(mvo.getReceiver_idx());
+				MemberVO memvo = memberMapper.selectTrainerByIdx(mvo.getSender_idx());
 				if(memvo != null) {
 					vo.setReported(memvo);					
 				}

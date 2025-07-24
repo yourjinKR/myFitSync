@@ -624,6 +624,9 @@ const Report = () => {
 
   // 현재 탭의 데이터 렌더링
   const renderTabContent = () => {
+    console.log(    reportData.message);
+    
+
     const currentData = reportData[activeTab];
 
     if (currentData === null) {
