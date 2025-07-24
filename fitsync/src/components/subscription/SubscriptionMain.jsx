@@ -1119,6 +1119,15 @@ const FAQAnswerContent = styled.div`
     &:last-child {
       margin-bottom: 0;
     }
+    
+    @media (min-width: 375px) {
+      font-size: 12px !important;
+    }
+    
+    @media (min-width: 414px) {
+      font-size: 14px !important;
+    }
+    
   }
 `;
 
@@ -1174,16 +1183,6 @@ const SubscriptionMain = () => {
   const handleSubscribe = () => {
     // 구독 결제 페이지로 이동하거나 결제수단 선택 모달 열기
     navigate('/subscription/methods?showModal=true&directPay=true');
-  };
-
-  const handleManageMethods = () => {
-    // 결제수단 관리 페이지로 이동
-    navigate('/subscription/methods');
-  };
-
-  const handleViewHistory = () => {
-    // 결제 내역 페이지로 이동
-    navigate('/subscription/history');
   };
 
   // FAQ 토글 함수
@@ -1269,7 +1268,6 @@ const SubscriptionMain = () => {
   }
 
   const isSubscriber = subscriptionData?.isSubscriber;
-  const daysLeft = subscriptionData?.subscriptionDaysLeft;
 
   return (
     <Container>

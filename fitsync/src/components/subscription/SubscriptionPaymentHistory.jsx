@@ -449,7 +449,7 @@ const SubscriptionPaymentHistory = () => {
                       </StatusBadge>
                     </PaymentTitle>
                     <PaymentAmount $status={payment.order_status}>
-                      {`${payment.order_price?.toLocaleString() || '0'}원` || 'N/A'}
+                      {payment.order_status !== 'CANCELLED' ? (`${payment.order_price?.toLocaleString() || '0'}원` || 'N/A') : ('')}
                     </PaymentAmount>
                   </PaymentRow>
                   
@@ -458,7 +458,8 @@ const SubscriptionPaymentHistory = () => {
                       {formatDate(payment)}
                     </PaymentDate>
                     <PaymentMethod>
-                      {payment.order_card || payment.order_provider} {payment.order_card_num || ''}
+                      {payment.order_status !== 'CANCELLED' ? (payment.order_card || payment.order_provider) : ('')}
+                      {payment.order_status !== 'CANCELLED' ? (payment.order_card_num || '') : ('')}
                     </PaymentMethod>
                   </PaymentRow>
                 </CardContent>
