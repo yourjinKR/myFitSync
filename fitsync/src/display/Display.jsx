@@ -40,6 +40,8 @@ import SideNav from '../layout/SideNav';
 import Report from '../components/admin/Report';
 import BodyInputForm from '../components/user/BodyInputForm';
 import Awards from '../components/admin/Awards';
+import ResponseResultPage from '../components/ai/test/ResponseResultPage';
+import AIWorkoutService from '../components/ai/test/AIWorkoutService';
 
 
 const DisplayWrapper = styled.div`
@@ -78,13 +80,13 @@ const Display = () => {
       console.error('앱 초기화 실패:', error);
     }
   };
-  
+
   const isShow = 
     !location.pathname.includes("/routine/detail") &&
     location.pathname !== '/routine/add' && 
     location.pathname !== '/routine/set' &&
     location.pathname !== '/test123';
-  
+
   const isAdmin = location.pathname.startsWith('/admin');
 
   return (
@@ -117,7 +119,9 @@ const Display = () => {
 
           <Route path='/ai' element={<AiServiceContainer/>}>
           </Route>
-          <Route path='/test123' element={<SlideInputFormTest/>}/>
+          <Route path='/ai/test/input' element={<SlideInputFormTest/>}/>
+          <Route path='/ai/test/result' element={<ResponseResultPage resultData={{}}/>}/>
+          <Route path='/ai/test/total' element={<AIWorkoutService/>}/>
 
           <Route path='/payment' element={<PaymentContainer/>}>
             <Route path='test' element={<KaKaoPayTest/>}/>

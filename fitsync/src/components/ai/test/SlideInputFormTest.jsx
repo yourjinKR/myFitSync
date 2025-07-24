@@ -234,7 +234,7 @@ const SlideTitle = styled.h2`
     flex-shrink: 0;
     
     @media (max-width: 480px) {
-        font-size: 4rem;
+        font-size: 2.8rem;
         gap: 0.5rem;
         margin-bottom: 0.8rem;
     }
