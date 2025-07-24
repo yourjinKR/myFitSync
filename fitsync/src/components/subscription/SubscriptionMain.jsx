@@ -125,7 +125,8 @@ const ProgressBarFill = styled.div`
   background: linear-gradient(90deg, #4CAF50, #8BC34A);
   border-radius: 4px;
   transition: width 0.3s ease;
-  width: ${props => Math.max(5, Math.min(100, props.$percentage || 0))}%;
+  width: ${props => Math.min(100, props.$percentage || 0)}%;
+  overflow: hidden;
 `;
 
 // 결제 정보 섹션
@@ -1296,7 +1297,7 @@ const SubscriptionMain = () => {
               <ProgressBarFill 
                 $percentage={
                   subscriptionData.totalCost > 0 
-                    ? Math.min(100, Math.max(5, (subscriptionData.totalCost / 3) * 100)) 
+                    ? Math.min(100, Math.min(100, (subscriptionData.totalCost / 3) * 100)) 
                     : 0
                 }
               />
