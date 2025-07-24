@@ -414,11 +414,30 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('가장 최근 결제건 불러오기 성공:', response.data);
+            console.log('결제수단 변경 성공 :', response.data);
             return response.data;
             
         } catch (error) {
-            console.error('가장 최근 결제건 불러오기 오류:', error);
+            console.error('결제수단 변경 실패 :', error);
+            throw error;
+        }
+    },
+
+    /** 구독 재연장 */
+    reschedule : async ({recentOrder}) => {
+        try {
+            const response = await axios.post('/payment/bill/reschedule', {recentOrder}, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('구독 재연장 성공 :', response.data);
+            return response.data;
+            
+        } catch (error) {
+            console.error('구독 재연장 실팽 :', error);
             throw error;
         }
     },

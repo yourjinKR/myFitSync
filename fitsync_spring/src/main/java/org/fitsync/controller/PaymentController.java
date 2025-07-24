@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.jsonwebtoken.io.IOException;
 import lombok.extern.log4j.Log4j;
 
@@ -676,6 +678,59 @@ public class PaymentController {
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
                 "예약 결제수단 변경 중 오류가 발생했습니다: " + e.getMessage(), 
                 "SCHEDULE_UPDATE_FAILED");
+        }
+    }
+
+    // 구독 재연장 (구독 연장을 취소 후 다시할때)
+    @PostMapping("/bill/reschedule")
+    public ResponseEntity<Map<String, Object>> reschedule(@RequestBody Map<String, Object> body, HttpSession session) {
+        Integer memberIdx = getMemberIdxFromSession(session);
+        if (memberIdx == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.", "AUTHENTICATION_REQUIRED");
+        }
+
+        try {
+            log.info("구독 연장 요청: " + body);
+            
+            // 요청 데이터 검증
+            Object completedOrderObj = body.get("recentOrder");
+            
+            if (completedOrderObj == null) {
+                return createErrorResponse(HttpStatus.BAD_REQUEST, 
+                    "필수 파라미터가 누락되었습니다. (order_idx, method_idx)", 
+                    "MISSING_PARAMETERS");
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            // 데이터 타입 변환
+            PaymentOrderVO completedOrder = objectMapper.convertValue(completedOrderObj, PaymentOrderVO.class);
+            
+            log.info("기존 오더를 기반으로 다시 구독을 연장 : " + completedOrder);
+            
+            // 서비스 호출
+            Map<String, Object> result = payService.scheduleNextMonthPayment(completedOrder);
+            Boolean success = (Boolean) result.get("isAutoScheduled");
+
+            if (success != null && success) {
+                log.info("구독 연장 성공 : " + result);
+                return createSuccessResponse((String) result.get("message"), result);
+            } else {
+                log.error("구독 연장 실패 : " + result);
+                return createErrorResponse(HttpStatus.BAD_REQUEST, 
+                    (String) result.get("message"), 
+                    "RESCHEDULE_FAILED");
+            }
+            
+        } catch (NumberFormatException e) {
+            log.error("잘못된 숫자 형식: ", e);
+            return createErrorResponse(HttpStatus.BAD_REQUEST, 
+                "잘못된 데이터 형식입니다. (order_idx, method_idx는 숫자여야 합니다)", 
+                "INVALID_NUMBER_FORMAT");
+        } catch (Exception e) {
+            log.error("구독 연장 중 오류 발생: ", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "구독 연장 중 오류가 발생했습니다: " + e.getMessage(), 
+                "RESCHEDULE_FAILED");
         }
     }
 

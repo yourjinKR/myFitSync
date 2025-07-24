@@ -1600,7 +1600,7 @@ public class PaymentServiceImple implements PaymentService {
 	 * @return 예약 결과
 	 */
 	@Override
-	public Object scheduleNextMonthPayment(PaymentOrderVO completedOrder) {
+	public Map<String, Object> scheduleNextMonthPayment(PaymentOrderVO completedOrder) {
 		try {
 			log.info("다음 달 자동 결제 예약 시작 - CompletedOrderIdx: " + completedOrder.getOrder_idx() + 
 					", MemberIdx: " + completedOrder.getMember_idx() + ", MethodIdx: " + completedOrder.getMethod_idx());

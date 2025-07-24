@@ -1223,12 +1223,22 @@ const SubscriptionMain = () => {
     }
   };
 
-  // 결제수단 변경 (구현 예정)
+  // 결제수단 변경
   const handleChangePaymentMethod = async () => {
     navigate("/subscription/methods", {state : {changeMode : true, recentOrder}});
-
-
   };
+
+  // 구독 연장
+  const handleSchedulingPayment = async () => {
+    const response = await PaymentUtil.reschedule({recentOrder});
+
+    if (response.success) {
+      alert("자동결제가 정상적으로 등록됐습니다 !");
+    } else {
+      alert("자동결제 등록을 실패했습니다 !");
+    }
+    await loadSubscriptionData();
+  }
 
   if (loading) {
     return (
@@ -1304,8 +1314,8 @@ const SubscriptionMain = () => {
           </PaymentInfoSection>
           
           {/* 액션 버튼들 - 예약 상태일 때만 표시 */}
-          {recentOrder.order_status === 'READY' && (
-            <ActionButtonsContainer>
+          {recentOrder.order_status === 'READY' ? 
+          (<ActionButtonsContainer>
               <PremiumActionButton onClick={handleChangePaymentMethod}>
                 결제수단 변경
               </PremiumActionButton>
@@ -1316,7 +1326,12 @@ const SubscriptionMain = () => {
                 구독 해지
               </PremiumActionButton>
             </ActionButtonsContainer>
-          )}
+          ) : 
+          (<ActionButtonsContainer>
+            <PremiumActionButton onClick={handleSchedulingPayment}>
+              구독 연장
+            </PremiumActionButton>
+          </ActionButtonsContainer>)}
         </PremiumServiceCard>
       )}
 
