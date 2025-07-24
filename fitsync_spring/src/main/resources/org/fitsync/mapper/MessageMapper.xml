@@ -18,7 +18,6 @@
             message_type,
             message_senddate,
             message_delete,
-            message_order,
             parent_idx
             <if test="attach_idx != null and attach_idx > 0">
                 ,attach_idx
@@ -27,13 +26,12 @@
             #{message_idx},
             #{room_idx},
             #{sender_idx},
-            #{receiver_idx},
-            #{message_content},
-            #{message_type},
+            #{receiver_idx, jdbcType=INTEGER},
+            #{message_content, jdbcType=CLOB},
+            #{message_type, jdbcType=VARCHAR},
             SYSTIMESTAMP,
             'N',
-            #{message_order},
-            #{parent_idx}
+            #{parent_idx, jdbcType=INTEGER}
             <if test="attach_idx != null and attach_idx > 0">
                 ,#{attach_idx}
             </if>

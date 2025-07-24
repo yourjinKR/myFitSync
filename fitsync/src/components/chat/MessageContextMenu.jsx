@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styled, { keyframes } from 'styled-components';
 
 const fadeIn = keyframes`
@@ -12,33 +13,64 @@ const fadeIn = keyframes`
   }
 `;
 
-// 🔥 가로스크롤 방지 + 위치 계산 정확도 개선
+// 🔥 핵심 해결책: Portal 기반으로 body에 직접 렌더링
 const MenuContainer = styled.div`
-  position: fixed; /* absolute 대신 fixed 사용 */
-  z-index: 10000; /* 더 높은 z-index */
+  position: fixed;
+  z-index: 10000;
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   padding: 4px 0;
   min-width: 140px;
-  max-width: 200px; /* 최대 너비 제한 */
+  max-width: 200px;
   animation: ${fadeIn} 0.15s ease-out;
-  
-  /* 🔥 가로스크롤 방지 핵심 CSS */
   width: auto;
   white-space: nowrap;
   overflow: hidden;
-  
-  /* 🔥 화면 경계를 넘지 않도록 강제 제한 */
   max-height: 300px;
   overflow-y: auto;
   
-  /* 🔥 정확한 위치 계산 */
-  ${props => props.$position && `
-    left: ${Math.max(10, Math.min(props.$position.x, window.innerWidth - 160))}px;
-    top: ${Math.max(10, Math.min(props.$position.y, window.innerHeight - 250))}px;
-  `}
+  /* 🔥 MessageItem에서 계산된 뷰포트 좌표 직접 사용 */
+  left: ${props => props.$x || 0}px;
+  top: ${props => props.$y || 0}px;
+  
+  /* 🔥 뷰포트 경계 방어 로직 */
+  transform: ${props => {
+    const x = props.$x || 0;
+    const y = props.$y || 0;
+    const menuWidth = 200;
+    const menuHeight = 300;
+    const padding = 10;
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let adjustX = 0;
+    let adjustY = 0;
+    
+    // 오른쪽 경계 체크
+    if (x + menuWidth > viewportWidth - padding) {
+      adjustX = -(menuWidth + 20);
+    }
+    
+    // 하단 경계 체크  
+    if (y + menuHeight > viewportHeight - padding) {
+      adjustY = -(menuHeight + 20);
+    }
+    
+    // 왼쪽 경계 체크
+    if (x + adjustX < padding) {
+      adjustX = -x + padding;
+    }
+    
+    // 상단 경계 체크
+    if (y + adjustY < padding) {
+      adjustY = -y + padding;
+    }
+    
+    return adjustX !== 0 || adjustY !== 0 ? `translate(${adjustX}px, ${adjustY}px)` : 'none';
+  }};
 `;
 
 const MenuButton = styled.button`
@@ -54,7 +86,7 @@ const MenuButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  white-space: nowrap;
   
   &:hover {
     background: var(--bg-tertiary);
@@ -78,10 +110,9 @@ const MenuIcon = styled.span`
   font-size: 1.2rem;
   width: 16px;
   text-align: center;
-  flex-shrink: 0; /* 아이콘 크기 고정 */
+  flex-shrink: 0;
 `;
 
-// 신고 모달 관련 스타일들은 기존과 동일
 const ReportModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -92,7 +123,7 @@ const ReportModalOverlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20000; /* 메뉴보다 높은 z-index */
+  z-index: 20000;
   animation: ${fadeIn} 0.2s ease;
 `;
 
@@ -103,8 +134,8 @@ const ReportModalContent = styled.div`
   width: 90%;
   max-width: 400px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  max-height: 80vh; /* 화면 높이 제한 */
-  overflow-y: auto; /* 내용이 길면 스크롤 */
+  max-height: 80vh;
+  overflow-y: auto;
 `;
 
 const ReportModalTitle = styled.h3`
@@ -127,7 +158,7 @@ const ReportTextarea = styled.textarea`
   outline: none;
   margin-bottom: 16px;
   font-family: inherit;
-  box-sizing: border-box; /* 패딩 포함한 크기 계산 */
+  box-sizing: border-box;
   
   &::placeholder {
     color: var(--text-tertiary);
@@ -178,6 +209,20 @@ const ReportButton = styled.button`
   }
 `;
 
+// 🔥 Portal 기반 컨텍스트 메뉴 컴포넌트
+const ContextMenuPortal = ({ isVisible, x, y, children }) => {
+  if (!isVisible) return null;
+
+  console.log('🌐 Portal 렌더링:', { x, y, isVisible });
+
+  return createPortal(
+    <MenuContainer $x={x} $y={y}>
+      {children}
+    </MenuContainer>,
+    document.body // 🔥 body에 직접 렌더링으로 컨테이너 제약 완전 회피
+  );
+};
+
 const MessageContextMenu = ({ 
   isVisible, 
   position, 
@@ -193,98 +238,72 @@ const MessageContextMenu = ({
   const [reportContent, setReportContent] = useState('');
   const menuRef = useRef(null);
 
-  // 🔥 정확한 위치 계산 함수
-  const calculatePosition = (rawPosition) => {
+  // 🔥 위치 검증 및 안전장치
+  const validateAndClampPosition = (rawPosition) => {
     if (!rawPosition || typeof rawPosition.x !== 'number' || typeof rawPosition.y !== 'number') {
-      console.warn('⚠️ 잘못된 위치 데이터:', rawPosition);
-      return { x: 100, y: 100 }; // 기본 위치
+      console.warn('⚠️ 잘못된 위치 데이터 - 기본값 사용:', rawPosition);
+      return { x: 100, y: 100 };
     }
 
-    const menuWidth = 160; // 메뉴 예상 너비
-    const menuHeight = 200; // 메뉴 예상 높이
-    const padding = 10; // 화면 가장자리 여백
+    let { x, y } = rawPosition;
+    const padding = 10;
+    const menuWidth = 200;
+    const menuHeight = 300;
     
-    // 🔥 뷰포트 크기
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // 뷰포트 경계 clamp
+    const maxX = window.innerWidth - menuWidth - padding;
+    const maxY = window.innerHeight - menuHeight - padding;
     
-    // 🔥 앱의 최대 너비 (Display.jsx와 동일)
-    const maxAppWidth = 750;
-    const isDesktop = viewportWidth > maxAppWidth;
-    
-    let x = rawPosition.x;
-    let y = rawPosition.y;
-    
-    // 🔥 데스크톱에서 중앙 정렬된 컨테이너 보정
-    if (isDesktop) {
-      const containerLeft = (viewportWidth - maxAppWidth) / 2;
-      const containerRight = containerLeft + maxAppWidth;
-      
-      // 터치/클릭 위치가 앱 컨테이너 내부인지 확인
-      if (x >= containerLeft && x <= containerRight) {
-        // 메뉴가 컨테이너 밖으로 나가지 않도록 조정
-        if (x + menuWidth > containerRight) {
-          x = containerRight - menuWidth - padding;
-        }
-      }
-    } else {
-      // 🔥 모바일에서는 화면 경계 체크
-      if (x + menuWidth > viewportWidth - padding) {
-        x = viewportWidth - menuWidth - padding;
-      }
-    }
-    
-    // 🔥 좌측 경계 체크
-    if (x < padding) {
-      x = padding;
-    }
-    
-    // 🔥 하단 경계 체크 (Nav 높이 고려)
-    const navHeight = 85;
-    const maxY = viewportHeight - navHeight - menuHeight - padding;
-    
-    if (y + menuHeight > maxY) {
-      y = maxY;
-    }
-    
-    // 🔥 상단 경계 체크
-    if (y < padding) {
-      y = padding;
-    }
-    
-    console.log('🎯 위치 계산 완료:', {
+    x = Math.max(padding, Math.min(x, maxX));
+    y = Math.max(padding, Math.min(y, maxY));
+
+    console.log('✅ Portal 위치 검증 완료:', {
       원본: rawPosition,
-      최종: { x, y },
-      뷰포트: { viewportWidth, viewportHeight },
-      데스크톱: isDesktop
+      보정후: { x, y },
+      뷰포트: { width: window.innerWidth, height: window.innerHeight }
     });
     
     return { x, y };
   };
 
-  // 🔥 계산된 위치 사용
-  const calculatedPosition = isVisible ? calculatePosition(position) : { x: 0, y: 0 };
+  const validatedPosition = isVisible ? validateAndClampPosition(position) : { x: 0, y: 0 };
 
-  // 메뉴 외부 클릭 시 닫기
+  // 🔥 외부 클릭 감지 (Portal 환경에 최적화)
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    if (!isVisible) return;
+
+    const handleGlobalClick = (event) => {
+      // 메뉴 내부 클릭은 무시
+      if (menuRef.current && menuRef.current.contains(event.target)) {
+        return;
+      }
+      
+      // 외부 클릭 시 메뉴 닫기
+      console.log('🖱️ Portal 외부 클릭 감지 - 메뉴 닫기');
+      onClose();
+    };
+
+    const handleGlobalTouch = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
+        console.log('👆 Portal 외부 터치 감지 - 메뉴 닫기');
         onClose();
       }
     };
 
-    if (isVisible) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside); // 모바일 지원
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
-      };
-    }
+    // 🔥 캡처 단계에서 이벤트 감지 (Portal 특성상 중요)
+    document.addEventListener('mousedown', handleGlobalClick, true);
+    document.addEventListener('touchstart', handleGlobalTouch, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick, true);
+      document.removeEventListener('touchstart', handleGlobalTouch, true);
+    };
   }, [isVisible, onClose]);
 
   // ESC 키로 닫기
   useEffect(() => {
+    if (!isVisible && !showReportModal) return;
+
     const handleEscKey = (event) => {
       if (event.key === 'Escape') {
         if (showReportModal) {
@@ -296,25 +315,27 @@ const MessageContextMenu = ({
       }
     };
 
-    if (isVisible || showReportModal) {
-      document.addEventListener('keydown', handleEscKey);
-      return () => document.removeEventListener('keydown', handleEscKey);
-    }
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
   }, [isVisible, showReportModal, onClose]);
 
-  // 🔥 스크롤 시 메뉴 닫기 (위치 오류 방지)
+  // 🔥 스크롤 시 메뉴 닫기 (Portal 환경 고려)
   useEffect(() => {
-    const handleScroll = () => {
-      if (isVisible) {
-        console.log('📜 스크롤 감지 - 메뉴 닫기');
-        onClose();
-      }
+    if (!isVisible) return;
+
+    const handleGlobalScroll = () => {
+      console.log('📜 Portal 환경 스크롤 감지 - 메뉴 닫기');
+      onClose();
     };
 
-    if (isVisible) {
-      document.addEventListener('scroll', handleScroll, true); // 모든 스크롤 이벤트 캐치
-      return () => document.removeEventListener('scroll', handleScroll, true);
-    }
+    // 모든 스크롤 가능한 요소에서 스크롤 감지
+    document.addEventListener('scroll', handleGlobalScroll, true);
+    window.addEventListener('scroll', handleGlobalScroll);
+    
+    return () => {
+      document.removeEventListener('scroll', handleGlobalScroll, true);
+      window.removeEventListener('scroll', handleGlobalScroll);
+    };
   }, [isVisible, onClose]);
 
   // 복사 가능 여부 확인
@@ -414,56 +435,56 @@ const MessageContextMenu = ({
     setReportContent('');
   };
 
-  if (!isVisible) return null;
-
   return (
     <>
-      {/* 🔥 정확한 위치 계산이 적용된 메뉴 */}
-      <MenuContainer ref={menuRef} $position={calculatedPosition}>
-        {/* 복사 버튼 */}
-        <MenuButton 
-          onClick={handleCopy} 
-          disabled={!canCopy()}
-          title={canCopy() ? '메시지 복사' : '복사할 내용이 없습니다'}
-        >
-          <MenuIcon>📋</MenuIcon>
-          복사
-        </MenuButton>
-
-        {/* 답장 버튼 */}
-        <MenuButton onClick={handleReply}>
-          <MenuIcon>↩️</MenuIcon>
-          답장
-        </MenuButton>
-
-        {/* 삭제 버튼 (내 메시지인 경우에만) */}
-        {isCurrentUser && (
+      {/* 🔥 Portal 기반 컨텍스트 메뉴 */}
+      <ContextMenuPortal 
+        isVisible={isVisible} 
+        x={validatedPosition.x} 
+        y={validatedPosition.y}
+      >
+        <div ref={menuRef}>
           <MenuButton 
-            onClick={handleDelete}
-            disabled={!canDelete()}
-            className={canDelete() ? 'danger' : ''}
-            title={
-              !canDelete() 
-                ? '삭제할 수 없습니다 (읽음 후 1분 경과)' 
-                : '메시지 삭제'
-            }
+            onClick={handleCopy} 
+            disabled={!canCopy()}
+            title={canCopy() ? '메시지 복사' : '복사할 내용이 없습니다'}
           >
-            <MenuIcon>🗑️</MenuIcon>
-            삭제
+            <MenuIcon>📋</MenuIcon>
+            복사
           </MenuButton>
-        )}
 
-        {/* 신고 버튼 (상대방 메시지인 경우에만) */}
-        {!isCurrentUser && (
-          <MenuButton onClick={handleReportClick} className="danger">
-            <MenuIcon>🚨</MenuIcon>
-            신고
+          <MenuButton onClick={handleReply}>
+            <MenuIcon>↩️</MenuIcon>
+            답장
           </MenuButton>
-        )}
-      </MenuContainer>
 
-      {/* 신고 모달 */}
-      {showReportModal && (
+          {isCurrentUser && (
+            <MenuButton 
+              onClick={handleDelete}
+              disabled={!canDelete()}
+              className={canDelete() ? 'danger' : ''}
+              title={
+                !canDelete() 
+                  ? '삭제할 수 없습니다 (읽음 후 1분 경과)' 
+                  : '메시지 삭제'
+              }
+            >
+              <MenuIcon>🗑️</MenuIcon>
+              삭제
+            </MenuButton>
+          )}
+
+          {!isCurrentUser && (
+            <MenuButton onClick={handleReportClick} className="danger">
+              <MenuIcon>🚨</MenuIcon>
+              신고
+            </MenuButton>
+          )}
+        </div>
+      </ContextMenuPortal>
+
+      {/* 🔥 신고 모달 (Portal 기반) */}
+      {showReportModal && createPortal(
         <ReportModalOverlay onClick={handleReportCancel}>
           <ReportModalContent onClick={(e) => e.stopPropagation()}>
             <ReportModalTitle>메시지 신고</ReportModalTitle>
@@ -490,7 +511,8 @@ const MessageContextMenu = ({
               </ReportButton>
             </ReportModalButtons>
           </ReportModalContent>
-        </ReportModalOverlay>
+        </ReportModalOverlay>,
+        document.body
       )}
     </>
   );

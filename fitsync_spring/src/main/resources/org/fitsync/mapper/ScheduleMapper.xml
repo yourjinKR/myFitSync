@@ -65,4 +65,10 @@
 	  WHERE s.user_idx = #{userIdx}
 	    AND TO_CHAR(s.schedule_date, 'YYYY-MM-DD') = #{date}
 	</select>
+	
+	<update id="updateScheduleChecked">
+	    UPDATE schedule
+	    SET schedule_check = 1
+	    WHERE schedule_idx = #{scheduleIdx}
+	</update>
 </mapper>

@@ -27,7 +27,6 @@ const Wrapper = styled.div`
   font-size: 1.4rem;
   background: var(--bg-primary);
   color: var(--text-primary);
-  min-height: 80vh;
 `;
 
 const TopBar = styled.div`
@@ -132,31 +131,54 @@ const CustomCalendar = styled.div`
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   background: var(--bg-secondary);
-  font-size: 1.2rem;
+  font-size: 1.35rem; /* 기존 1.2rem → 1.35rem */
   flex-grow: 1;
+  border-radius: 1.2rem; /* 기존 1rem → 1.2rem */
+  overflow: hidden;
+  box-shadow: 0 0.12rem 0.7rem rgba(0,0,0,0.12);
+  min-width: 420px; /* 추가: 최소 너비로 달력이 너무 작아지지 않게 */
+
+  @media (max-width: 600px) {
+    font-size: 1.08rem;
+    border-radius: 0.8rem;
+    min-width: unset;
+  }
 `;
 
 const DayCellBox = styled.div`
   background: ${({ isSelected }) => (isSelected ? 'var(--primary-blue)' : 'transparent')};
-  color: ${({ isSunday, isSaturday, isSelected }) =>
+  color: ${({ isSelected, isSunday, isSaturday }) =>
     isSelected
       ? 'var(--text-primary)'
       : isSunday
-      ? '#F44336'
+      ? 'var(--warning)'
       : isSaturday
-      ? '#4A90E2'
+      ? 'var(--primary-blue-light)'
       : 'var(--text-primary)'};
-  padding: 0.8rem 0.2rem;
+  padding: 1.2rem 0.2rem 0.7rem 0.2rem; /* 기존보다 상하 padding 증가 */
   border: 1px solid var(--border-light);
   border-top: none;
   border-left: none;
   cursor: ${({ isClickable }) => (isClickable ? 'pointer' : 'default')};
-  font-size: 1.2rem;
+  font-size: 1.25rem; /* 기존 1.2rem → 1.25rem */
   position: relative;
-  transition: background 0.2s;
+  min-height: 5.2rem; /* 기존 4.2rem → 5.2rem */
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  z-index: 1;
 
-  &:hover {
+  &:hover, &:focus {
     background: ${({ isSelected }) => (isSelected ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
+    box-shadow: 0 0 0 2px var(--primary-blue-light);
+    outline: none;
+  }
+
+  border-radius: ${({ isSelected }) => (isSelected ? '0.9rem' : '0')};
+
+  @media (max-width: 600px) {
+    font-size: 1rem;
+    min-height: 2.8rem;
+    padding: 0.7rem 0.1rem 0.4rem 0.1rem;
+    border-radius: ${({ isSelected }) => (isSelected ? '0.6rem' : '0')};
   }
 `;
 
@@ -206,16 +228,29 @@ const ScheduleDot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin: 0 2px;
   background-color: ${({ color }) => color || 'gray'};
+  border: 1.5px solid var(--bg-secondary);
+  box-shadow: 0 0 2px var(--border-dark);
+
+  @media (max-width: 600px) {
+    width: 6px;
+    height: 6px;
+  }
 `;
 
 const DotWrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 4px;
-  min-height: 12px;
+  margin-top: 6px;
+  min-height: 14px;
   flex-wrap: wrap;
+  gap: 2px;
+
+  @media (max-width: 600px) {
+    margin-top: 2px;
+    min-height: 8px;
+    gap: 1px;
+  }
 `;
 
 const Legend = styled.div`
@@ -726,18 +761,30 @@ useEffect(() => {
                         isSunday={dayOfWeek === 0}
                         isSaturday={dayOfWeek === 6}
                         isClickable={!!dateStr}
+                        tabIndex={!!dateStr ? 0 : -1}
+                        aria-label={dateStr ? `${day}일` : ''}
                         onClick={() => dateStr && handleDayClick(dateStr)}
+                        onKeyDown={e => {
+                          if ((e.key === 'Enter' || e.key === ' ') && dateStr) handleDayClick(dateStr);
+                        }}
                       >
-                        {day || ''}
+                        <span style={{
+                          fontWeight: isSelected ? 700 : 500,
+                          fontSize: isSelected ? '1.25em' : '1em',
+                          letterSpacing: '-0.02em',
+                          textShadow: isSelected ? '0 1px 6px var(--primary-blue-dark)' : 'none'
+                        }}>
+                          {day || ''}
+                        </span>
                         <DotWrapper>
                           {[...new Set(scheduleColors)].map((color) => (
                             <ScheduleDot
                               key={color}
                               color={
                                 color === 'green'
-                                  ? '#4CAF50'
+                                  ? 'var(--check-green)'
                                   : color === 'red'
-                                  ? '#F44336'
+                                  ? 'var(--warning)'
                                   : color === 'yellow'
                                   ? '#FFEB3B'
                                   : 'gray'

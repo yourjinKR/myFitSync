@@ -8,5 +8,6 @@ import org.fitsync.domain.MatchingVO;
 public interface MatchingMapper {
 	
 	public List<MatchingVO> getMatchedMembers(@Param("trainerIdx") int trainerIdx);
-	
+    public MatchingVO selectMatchingByTrainerAndUser(@Param("userIdx") int userIdx);
+    public void updateMatchingRemainMinusOne(@Param("matchingIdx") int matchingIdx);
 }

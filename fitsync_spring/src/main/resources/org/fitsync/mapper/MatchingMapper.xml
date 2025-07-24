@@ -38,4 +38,22 @@
 			  WHERE m.TRAINER_IDX = #{trainerIdx}
 		</select>
 		
+		<select id="selectMatchingByTrainerAndUser" resultType="org.fitsync.domain.MatchingVO">
+			SELECT * 
+			FROM (
+			  SELECT * 
+			  FROM matching 
+			    WHERE user_idx = #{userIdx} 
+			    AND matching_complete != 2 
+			  ORDER BY matching_idx DESC
+			) 
+			WHERE ROWNUM = 1
+		 </select>
+
+		 <update id="updateMatchingRemainMinusOne">
+		    UPDATE matching
+		    SET matching_remain = matching_remain - 1
+		    WHERE matching_idx = #{matchingIdx}
+		 </update>
+		
 </mapper>

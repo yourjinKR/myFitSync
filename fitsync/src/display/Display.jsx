@@ -38,6 +38,8 @@ import SubscriptionPaymentMethods from '../components/subscription/SubscriptionP
 import SubscriptionPaymentHistory from '../components/subscription/SubscriptionPaymentHistory';
 import SideNav from '../layout/SideNav';
 import Report from '../components/admin/Report';
+import BodyInputForm from '../components/user/BodyInputForm';
+import Awards from '../components/admin/Awards';
 
 
 const DisplayWrapper = styled.div`
@@ -95,6 +97,7 @@ const Display = () => {
           <Route path='/' element={<Main/>}/>
           <Route path='/login' element={<Login/>}/>
           <Route path='/Register' element={<Register/>}/>
+          <Route path="/body/input" element={<BodyInputForm/>} />
           <Route path='/trainer/:trainerIdx' element={<TrainerMain/>}/>
           <Route path='/trainer/view/:trainerIdx' element={<TrainerDetailView/>} />
           <Route path='/trainer/search' element={<TrainerSearch/>}/>
@@ -131,6 +134,7 @@ const Display = () => {
 
           <Route path='/admin' element={<AdminMain/>}>
             <Route path='report' element={<Report/>}/>
+            <Route path='awards' element={<Awards/>}/>
             <Route path='ai' element={<AItest/>}/>
             <Route path='api' element={<AdminApiContainer/>}/>
           </Route>

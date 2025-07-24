@@ -9,8 +9,8 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MessageVO {
-	private int message_idx, room_idx, sender_idx, receiver_idx, parent_idx, message_order;
-	private Integer attach_idx; // int → Integer로 변경 (NULL 허용)
+	private int message_idx, room_idx, sender_idx, receiver_idx, message_order;
+	private Integer attach_idx, parent_idx; // int → Integer로 변경 (NULL 허용)
 	private String message_content, message_type, message_delete;
 	private Timestamp message_senddate, message_deleverdate, message_readdate, message_editdate;
 	
@@ -21,6 +21,7 @@ public class MessageVO {
         this.receiver_idx = receiver_idx;
         this.message_content = message_content;
         this.attach_idx = null; // 기본값을 null로 설정
+        this.parent_idx = null;
     }
 	
 	public ChatAttachVO attach;

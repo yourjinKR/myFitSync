@@ -19,4 +19,6 @@ public interface ScheduleMapper {
     
     public List<ScheduleVO> selectSchedulesByDate(@Param("userIdx") int userIdx,
             @Param("date") String date);
+    
+    public void updateScheduleChecked(@Param("scheduleIdx") int scheduleIdx);
 }
