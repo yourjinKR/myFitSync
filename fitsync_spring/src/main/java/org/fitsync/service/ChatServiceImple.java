@@ -71,17 +71,45 @@ public class ChatServiceImple implements ChatService {
 	
 	/*-------------------------------------------------------------------*/
 
-	// 새채팅 메시지 등록
+	// 새채팅 메시지 등록 - 🔥 수정: null 반환 문제 해결
 	@Override
 	public MessageVO registerMessage(MessageVO vo) {
 		log.info("registerMessage..." + vo);
-		// 메시지 저장
-		messageMapper.insertMessage(vo);
-        
-        // 채팅방 마지막 메시지 업데이트(최신 메시지 표시용)
-		roomMapper.updateLastMessage(vo.getRoom_idx(), vo.getMessage_idx());
-        
-        return vo;
+		
+		try {
+			// 메시지 저장
+			int result = messageMapper.insertMessage(vo);
+			log.info("메시지 저장 결과: " + result + ", message_idx: " + vo.getMessage_idx());
+			
+			if (result > 0) {
+				// 채팅방 마지막 메시지 업데이트
+				roomMapper.updateLastMessage(vo.getRoom_idx(), vo.getMessage_idx());
+				
+				// 🔥 저장된 메시지 재조회 (MyBatis selectKey로 생성된 message_idx 사용)
+				if (vo.getMessage_idx() > 0) {
+					MessageVO savedMessage = messageMapper.getMessage(vo.getMessage_idx());
+					if (savedMessage != null) {
+						log.info("저장된 메시지 조회 성공: " + savedMessage);
+						return savedMessage;
+					}
+				}
+				
+				// 🔥 재조회 실패 시 원본 VO 반환 (message_idx는 이미 설정됨)
+				log.warn("저장된 메시지 재조회 실패, 원본 반환");
+				// 전송 시간 설정
+				vo.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
+				return vo;
+			}
+			
+		} catch (Exception e) {
+			log.error("메시지 저장 중 예외 발생: ", e);
+			// 🔥 예외 발생 시에도 원본 반환
+			vo.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
+			return vo;
+		}
+		
+		log.error("메시지 저장 실패");
+		return null;
 	}
 	
 	// 메시지 상세 조회

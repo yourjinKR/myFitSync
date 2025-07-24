@@ -3,7 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import ImageModal from './ImageModal';
 import MessageContextMenu from './MessageContextMenu';
 
-// 기존 스타일 컴포넌트들은 그대로 유지
+// 기존 스타일 컴포넌트들 유지
 const spin = keyframes`
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -72,7 +72,6 @@ const SenderName = styled.div`
   order: 1;
 `;
 
-// 🔥 핵심 수정: Pointer Events API + 우클릭 지원
 const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
@@ -89,7 +88,6 @@ const MessageBubble = styled.div`
   cursor: pointer;
   user-select: none;
   
-  /* 🔥 Pointer Events 최적화 */
   touch-action: manipulation;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -97,7 +95,6 @@ const MessageBubble = styled.div`
   -moz-user-select: none;
   -ms-user-select: none;
   
-  /* 시각적 피드백 강화 */
   &.long-pressing {
     transform: scale(0.98);
     opacity: 0.8;
@@ -105,7 +102,6 @@ const MessageBubble = styled.div`
     background-color: ${props => props.$isCurrentUser ? 'var(--primary-blue-hover)' : 'var(--bg-tertiary)'};
   }
   
-  /* PC 환경 호버 효과 */
   @media (hover: hover) and (pointer: fine) {
     &:hover {
       transform: scale(1.01);
@@ -160,9 +156,7 @@ const LoadingText = styled.div`
   font-weight: 500;
 `;
 
-const LoadingProgress = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== '$progress'
-})`
+const LoadingProgress = styled.div`
   position: absolute;
   bottom: 0;
   left: 0;
@@ -255,122 +249,216 @@ const ReplyText = styled.div`
   max-width: 150px;
 `;
 
-// 🔥 완전히 새로운 장누르기 훅 (Pointer Events API 기반)
-const useUniversalLongPress = (onLongPress, delay = 700) => {
-  const timeoutRef = useRef(null);
-  const [isLongPressing, setIsLongPressing] = useState(false);
-  const longPressExecuted = useRef(false);
+// 🔥 근본적 해결책 1: 통합 좌표 변환 시스템
+const useContextMenuPosition = () => {
+  const calculatePosition = useCallback((event, containerRef) => {
+    if (!containerRef.current) {
+      console.warn('🚨 컨테이너 참조가 없습니다');
+      return { x: 100, y: 100 };
+    }
 
-  // 🔥 입력 타입 자동 감지
-  const [inputMethod, setInputMethod] = useState('unknown');
-  
-  useEffect(() => {
-    const detectInputMethod = () => {
-      // 터치스크린 감지
-      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      // 마우스 감지 (대부분의 PC)
-      const hasMouse = window.matchMedia('(pointer: fine)').matches;
-      
-      if (hasTouch && !hasMouse) {
-        setInputMethod('touch');
-      } else if (hasMouse) {
-        setInputMethod('mouse');
-      } else {
-        setInputMethod('hybrid');
-      }
-    };
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
     
-    detectInputMethod();
-    console.log('🎯 입력 방식 감지:', inputMethod);
+    // 🔥 핵심: 스크롤바 너비 계산 (데스크톱 특화)
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    // 🔥 핵심: 이벤트 좌표 추출 (크로스 플랫폼)
+    let clientX, clientY;
+    if (event.touches && event.touches.length > 0) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
+
+    // 🔥 핵심: 컨테이너 기준 좌표로 변환 (auto margin 오프셋 해결)
+    let relativeX = clientX - containerRect.left;
+    let relativeY = clientY - containerRect.top;
+
+    console.log('🎯 좌표 변환 (근본 해결):', {
+      원본좌표: { clientX, clientY },
+      컨테이너정보: {
+        left: containerRect.left,
+        top: containerRect.top,
+        width: containerRect.width,
+        height: containerRect.height
+      },
+      변환좌표: { relativeX, relativeY },
+      스크롤바너비: scrollbarWidth,
+      뷰포트너비: window.innerWidth,
+      문서너비: document.documentElement.clientWidth
+    });
+
+    // 🔥 핵심: DPR(Device Pixel Ratio) 보정
+    const dpr = window.devicePixelRatio || 1;
+    if (dpr !== 1 && dpr > 1.5) {
+      console.log('📱 DPR 보정 적용:', dpr);
+      relativeX = relativeX / dpr;
+      relativeY = relativeY / dpr;
+    }
+
+    // 🔥 메뉴 크기 및 여백
+    const menuWidth = 160;
+    const menuHeight = 200;
+    const padding = 10;
+
+    // 🔥 핵심: 컨테이너 기준 최종 위치 계산 (뷰포트가 아닌 컨테이너 기준!)
+    let finalX = relativeX + padding;
+    let finalY = relativeY;
+
+    // 🔥 컨테이너 내부 경계 체크
+    if (finalX + menuWidth > containerRect.width - scrollbarWidth - padding) {
+      finalX = relativeX - menuWidth - padding;
+    }
+
+    if (finalX < padding) {
+      finalX = padding;
+      finalY = relativeY - menuHeight - padding;
+    }
+
+    if (finalY < padding) {
+      finalY = relativeY + padding;
+    }
+
+    if (finalY + menuHeight > containerRect.height - padding) {
+      finalY = containerRect.height - menuHeight - padding;
+    }
+
+    // 🔥 최종 뷰포트 좌표로 다시 변환 (Portal 렌더링용)
+    const viewportX = finalX + containerRect.left;
+    const viewportY = finalY + containerRect.top;
+
+    console.log('📍 최종 위치 (근본 해결):', {
+      컨테이너기준: { x: finalX, y: finalY },
+      뷰포트기준: { x: viewportX, y: viewportY }
+    });
+
+    return { x: viewportX, y: viewportY };
   }, []);
 
-  // 🔥 통합 시작 핸들러 (Pointer Events 우선)
-  const handlePressStart = useCallback((event) => {
-    console.log('🔥 장누르기 시작:', event.type, event.pointerType || 'unknown');
+  return calculatePosition;
+};
+
+// 🔥 근본적 해결책 2: ResizeObserver를 활용한 안정적인 측정
+const useStableRect = (ref) => {
+  const [rect, setRect] = useState(null);
+  
+  useEffect(() => {
+    if (!ref.current) return;
     
+    let timeoutId;
+    
+    const observer = new ResizeObserver((entries) => {
+      console.log('📏 ResizeObserver 감지');
+      for (const entry of entries) {
+        // 🔥 reflow 없이 안정적인 크기 제공
+        const boundingRect = entry.target.getBoundingClientRect();
+        
+        setRect({
+          left: boundingRect.left,
+          top: boundingRect.top,
+          width: boundingRect.width,
+          height: boundingRect.height,
+          right: boundingRect.right,
+          bottom: boundingRect.bottom
+        });
+      }
+    });
+    
+    observer.observe(ref.current);
+    
+    // 🔥 초기 측정을 위한 지연 (styled-components 타이밍 이슈 해결)
+    timeoutId = setTimeout(() => {
+      if (ref.current) {
+        const initialRect = ref.current.getBoundingClientRect();
+        setRect(initialRect);
+        console.log('📏 초기 Rect 측정 완료:', initialRect);
+      }
+    }, 150); // styled-components 렌더링 완료 대기
+    
+    return () => {
+      observer.disconnect();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
+  
+  return rect;
+};
+
+// 🔥 근본적 해결책 3: 통합 포인터 이벤트 처리
+const useUnifiedPointerEvents = (onContextMenu, containerRef) => {
+  const longPressTimer = useRef(null);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const longPressExecuted = useRef(false);
+  const calculatePosition = useContextMenuPosition();
+
+  const handlePointerDown = useCallback((event) => {
+    console.log('🔥 통합 포인터 이벤트 시작:', {
+      type: event.type,
+      pointerType: event.pointerType,
+      button: event.button,
+      isTrusted: event.isTrusted
+    });
+
     // 이미지 요소는 제외
     if (event.target.tagName && event.target.tagName.toLowerCase() === 'img') {
       return;
     }
-    
-    setIsLongPressing(true);
-    longPressExecuted.current = false;
-    
-    // 기존 타이머 정리
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      if (!longPressExecuted.current) {
-        console.log('✅ 장누르기 실행!');
-        longPressExecuted.current = true;
-        setIsLongPressing(false);
-        
-        // 🔥 정확한 위치 정보 추출 (뷰포트 기준)
-        let clientX, clientY;
-        
-        if (event.touches && event.touches.length > 0) {
-          // 터치 이벤트 - 뷰포트 기준 좌표
-          clientX = event.touches[0].clientX;
-          clientY = event.touches[0].clientY;
-        } else if (event.changedTouches && event.changedTouches.length > 0) {
-          // 터치 종료 이벤트
-          clientX = event.changedTouches[0].clientX;
-          clientY = event.changedTouches[0].clientY;
-        } else {
-          // 마우스 이벤트 - 뷰포트 기준 좌표 (clientX/Y 사용)
-          clientX = event.clientX;
-          clientY = event.clientY;
-        }
-        
-        // 🔥 유효한 좌표인지 확인
-        if (typeof clientX !== 'number' || typeof clientY !== 'number' || 
-            clientX < 0 || clientY < 0) {
-          console.warn('⚠️ 잘못된 좌표 감지, 기본값 사용:', { clientX, clientY });
-          clientX = window.innerWidth / 2;
-          clientY = window.innerHeight / 2;
-        }
-        
-        const position = { x: clientX, y: clientY };
-        
-        console.log('📍 최종 추출된 위치 (뷰포트 기준):', position);
-        
-        onLongPress(event, position);
-      }
-    }, delay);
-  }, [onLongPress, delay]);
 
-  // 🔥 통합 종료 핸들러
-  const handlePressEnd = useCallback((event) => {
-    console.log('🔥 장누르기 종료:', event.type);
+    // 🔥 우클릭 처리 (데스크톱)
+    if (event.button === 2) {
+      event.preventDefault();
+      console.log('🖱️ 우클릭 감지 - 즉시 메뉴 표시');
+      const position = calculatePosition(event, containerRef);
+      onContextMenu(event, position);
+      return;
+    }
+
+    // 🔥 터치/포인터 이벤트 처리 (모바일/하이브리드)
+    if (event.button === 0 || event.pointerType === 'touch' || event.type === 'touchstart') {
+      setIsLongPressing(true);
+      longPressExecuted.current = false;
+
+      longPressTimer.current = setTimeout(() => {
+        if (!longPressExecuted.current) {
+          console.log('📱 장누르기 완료 - 메뉴 표시');
+          longPressExecuted.current = true;
+          setIsLongPressing(false);
+          
+          const position = calculatePosition(event, containerRef);
+          onContextMenu(event, position);
+        }
+      }, 500); // 모바일 표준 장누르기 시간
+    }
+  }, [onContextMenu, containerRef, calculatePosition]);
+
+  const handlePointerUp = useCallback((event) => {
+    console.log('🔥 포인터 이벤트 종료:', event.type);
     
     setIsLongPressing(false);
     
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
   }, []);
 
-  // 🔥 우클릭 핸들러 (PC 환경 전용)
+  // 🔥 컨텍스트 메뉴 직접 처리 (네이티브 이벤트)
   const handleContextMenu = useCallback((event) => {
-    console.log('🖱️ 우클릭 감지 - 장누르기 대체 실행');
-    event.preventDefault(); // 기본 우클릭 메뉴 차단
+    event.preventDefault();
+    console.log('🖱️ 네이티브 컨텍스트메뉴 이벤트');
     
-    const position = {
-      x: event.clientX,
-      y: event.clientY
-    };
-    
-    onLongPress(event, position);
-  }, [onLongPress]);
+    const position = calculatePosition(event, containerRef);
+    onContextMenu(event, position);
+  }, [onContextMenu, containerRef, calculatePosition]);
 
   // 메모리 정리
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
       }
     };
   }, []);
@@ -378,30 +466,28 @@ const useUniversalLongPress = (onLongPress, delay = 700) => {
   // 🔥 Pointer Events API 지원 여부에 따른 핸들러 반환
   const supportsPointerEvents = typeof window !== 'undefined' && window.PointerEvent;
   
-  console.log('🎯 Pointer Events 지원:', supportsPointerEvents);
-  
   if (supportsPointerEvents) {
-    // 최신 브라우저: Pointer Events 사용
+    console.log('🎯 Pointer Events API 사용');
     return {
       eventHandlers: {
-        onPointerDown: handlePressStart,
-        onPointerUp: handlePressEnd,
-        onPointerLeave: handlePressEnd,
-        onPointerCancel: handlePressEnd,
-        onContextMenu: handleContextMenu // 우클릭 대체
+        onPointerDown: handlePointerDown,
+        onPointerUp: handlePointerUp,
+        onPointerLeave: handlePointerUp,
+        onPointerCancel: handlePointerUp,
+        onContextMenu: handleContextMenu
       },
       isLongPressing
     };
   } else {
-    // 구형 브라우저: 전통적인 이벤트 사용
+    console.log('🎯 전통적인 이벤트 사용');
     return {
       eventHandlers: {
-        onMouseDown: handlePressStart,
-        onMouseUp: handlePressEnd,
-        onMouseLeave: handlePressEnd,
-        onTouchStart: handlePressStart,
-        onTouchEnd: handlePressEnd,
-        onTouchCancel: handlePressEnd,
+        onMouseDown: handlePointerDown,
+        onMouseUp: handlePointerUp,
+        onMouseLeave: handlePointerUp,
+        onTouchStart: handlePointerDown,
+        onTouchEnd: handlePointerUp,
+        onTouchCancel: handlePointerUp,
         onContextMenu: handleContextMenu
       },
       isLongPressing
@@ -432,36 +518,44 @@ const MessageItem = ({
     position: { x: 0, y: 0 }
   });
 
-  // 🔥 새로운 장누르기 훅 사용
-  const { eventHandlers, isLongPressing } = useUniversalLongPress(
+  // 🔥 핵심: 채팅 컨테이너 참조 찾기
+  const containerRef = useRef(null);
+  
+  useEffect(() => {
+    // 🔥 상위 채팅 컨테이너 자동 탐지
+    const findChatContainer = (element) => {
+      let current = element;
+      while (current && current !== document.body) {
+        const computedStyle = window.getComputedStyle(current);
+        const maxWidth = computedStyle.maxWidth;
+        
+        // max-width: 750px인 컨테이너 찾기
+        if (maxWidth === '750px' || current.classList.toString().includes('Container')) {
+          return current;
+        }
+        current = current.parentElement;
+      }
+      return document.body;
+    };
+
+    if (containerRef.current) {
+      const chatContainer = findChatContainer(containerRef.current);
+      containerRef.current = chatContainer;
+      console.log('🎯 채팅 컨테이너 탐지:', chatContainer.tagName, chatContainer.className);
+    }
+  }, []);
+
+  // 🔥 새로운 통합 이벤트 시스템 사용
+  const { eventHandlers, isLongPressing } = useUnifiedPointerEvents(
     (event, position) => {
-      console.log('🎯 장누르기 콜백 실행:', position);
-      
-      // 🔥 정확한 위치 계산 (스크롤 고려)
-      const rawX = position.x;
-      const rawY = position.y;
-      
-      console.log('📍 원본 터치/클릭 위치:', { rawX, rawY });
-      console.log('📍 현재 스크롤 위치:', { 
-        scrollX: window.scrollX, 
-        scrollY: window.scrollY 
-      });
-      
-      // 🔥 뷰포트 기준 절대 위치로 변환 (스크롤 무관)
-      let finalX = rawX;
-      let finalY = rawY;
-      
-      // 터치 이벤트의 경우 이미 뷰포트 기준이므로 그대로 사용
-      // 마우스 이벤트의 경우에도 clientX/Y를 사용하므로 뷰포트 기준
-      
-      console.log('📍 최종 메뉴 위치 (뷰포트 기준):', { x: finalX, y: finalY });
+      console.log('🎯 컨텍스트 메뉴 콜백 (근본 해결):', position);
       
       setContextMenu({
         isVisible: true,
-        position: { x: finalX, y: finalY }
+        position: { x: position.x, y: position.y }
       });
     },
-    700
+    containerRef
   );
 
   // 이미지 클릭 핸들러
@@ -610,7 +704,11 @@ const MessageItem = ({
 
   return (
     <>
-    <MessageContainer id={`message-${message.message_idx}`} $isCurrentUser={isCurrentUser}>
+    <MessageContainer 
+      id={`message-${message.message_idx}`} 
+      $isCurrentUser={isCurrentUser}
+      ref={containerRef}
+    >
       {renderProfileImage()}
       
       <MessageGroup $isCurrentUser={isCurrentUser}>
@@ -631,10 +729,10 @@ const MessageItem = ({
         )}
         
         <MessageWithInfo $isCurrentUser={isCurrentUser}>
-          {/* 🔥 핵심 수정: 새로운 이벤트 핸들러 적용 */}
+          {/* 🔥 핵심: 새로운 통합 이벤트 핸들러 적용 */}
           <MessageBubble 
             $isCurrentUser={isCurrentUser}
-            {...eventHandlers} // 🔥 Pointer Events 기반 핸들러 적용
+            {...eventHandlers} // 🔥 근본 문제가 해결된 핸들러
             className={isLongPressing ? 'long-pressing' : ''}
           >
             {message.message_type === 'image' ? (
