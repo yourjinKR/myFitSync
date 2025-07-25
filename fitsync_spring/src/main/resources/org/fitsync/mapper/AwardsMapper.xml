@@ -38,6 +38,7 @@
 		<result property="awards_name" column="AWARDS_NAME" />
 		<result property="awards_certificate" column="AWARDS_CERTIFICATE" />
 		<result property="awards_approval" column="AWARDS_APPROVAL" />
+		<result property="awards_reason" column="AWARDS_REASON" />
 		
 		<association property="member" javaType="org.fitsync.domain.MemberVO">
 			<id property="member_idx" column="MEMBER_IDX"/>
@@ -53,6 +54,7 @@
 		    A.AWARDS_NAME,
 		    A.AWARDS_CERTIFICATE,
 		    A.AWARDS_APPROVAL,
+		    A.AWARDS_REASON,
 		    M.MEMBER_IDX,
 		    M.MEMBER_NAME
 		FROM AWARDS A
@@ -60,5 +62,15 @@
 		ON M.MEMBER_IDX = A.TRAINER_IDX
 		ORDER BY AWARDS_IDX DESC
 	</select>
+	
+	<update id="updateAwards" parameterType="org.fitsync.domain.AwardsVO">
+		UPDATE AWARDS 
+		SET 
+			<if test="awards_reason != ''">
+				AWARDS_REASON = #{awards_reason},
+			</if>
+			AWARDS_APPROVAL = #{awards_approval}
+		WHERE AWARDS_IDX = #{awards_idx}
+	</update>
 	
 </mapper>

@@ -12,4 +12,6 @@ public interface AwardsMapper {
 	public List<AwardsVO> selectApprovedAwards(@Param("trainerIdx") int trainerIdx);
 	// 경력 요청 리스트
 	public List<AwardsVO> getAwards();
+	// 경력 요청 처리
+	public int updateAwards(AwardsVO vo);
 }

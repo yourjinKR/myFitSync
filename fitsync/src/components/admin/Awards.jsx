@@ -44,6 +44,10 @@ const AwardsWrapper = styled.div`
     th:nth-child(4), td:nth-child(4) { flex: 2; }
     th:nth-child(5), td:nth-child(5) { flex: 2; }
     th:nth-child(6), td:nth-child(6) { flex: 3; }
+
+    button {
+      font-size: 1.6rem;
+    }
   }
 `;
 
@@ -88,10 +92,28 @@ const checkImage = (url) => {
   });
 }
 
+const handleInputChange = (e, postData, setPostData) => {
+  if(e.target.id !== 'reason6'){
+    e.target.closest("ul").nextSibling.style.display='none';
+    return setPostData({...postData, awards_reason: e.target.closest("li").innerText});
+  }else{
+    e.target.closest("ul").nextSibling.style.display='block';
+    return setPostData({...postData, awards_reason: ''});
+  }
+};
+
 const ApprovalModal = ({ postData, setPostData, onApprove, onClose }) => (
   <div>
     <h3>반려 사유 입력</h3>
-    <textarea
+    <ul>
+      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason1" /><label htmlFor="reason1">제출 서류 누락 또는 미비</label></li>
+      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason2" /><label htmlFor="reason2">서류 정보와 신청 정보 불일치</label></li>
+      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason3" /><label htmlFor="reason3">유효하지 않은 서류 제출</label></li>
+      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason4" /><label htmlFor="reason4">자격 요건 미충족</label></li>
+      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason5" /><label htmlFor="reason5">서류의 판독 불가 또는 해상도 저하</label></li>
+      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason6" /><label htmlFor="reason6">내부 심사 기준 미충족</label></li>
+    </ul>
+    <textarea style={{display: 'none'}}
       value={postData.awards_reason}
       onChange={(e) => setPostData({ ...postData, awards_reason: e.target.value })}
       placeholder="반려 사유를 입력해주세요."
@@ -103,6 +125,8 @@ const ApprovalModal = ({ postData, setPostData, onApprove, onClose }) => (
   </div>
 );
 
+
+
 const Awards = () => {
   const init = {
     awards_idx: '',
@@ -111,7 +135,7 @@ const Awards = () => {
   }
   const [awardData, setAwardData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState("");
+  const [modalData, setModalData] = useState(null);
   const [postData, setPostData] = useState(init);
   const [modalType, setModalType] = useState(""); // 추가
 
@@ -122,8 +146,6 @@ const Awards = () => {
       const data = response.data;
       if(data.success) {
         setAwardData(data.vo);
-      }else{
-
       }
     } catch (error) {
       console.error('Error fetching awards:', error);
@@ -132,7 +154,7 @@ const Awards = () => {
 
   const updateAward = async (post) => {
     try {
-      const response = await axios.put('/admin/awards/update', post
+      const response = await axios.put('/admin/awards', post
         ,{withCredentials: true}
       );
       const data = response.data;
@@ -140,6 +162,7 @@ const Awards = () => {
         alert(data.msg);
         setPostData(init);
         setModalOpen(false);
+        getAwards();
       }else{
         alert(data.msg);
       }
@@ -157,12 +180,11 @@ const Awards = () => {
   }
 
   const handleModalOpen = (type, content) => {
-    setModalOpen(true);
     setModalType(type);
     if(type === "approval") {
       setPostData({
         awards_idx: content.awards_idx,
-        awards_approval: 'N',
+        awards_approval: 'F',
         awards_reason: ''
       });
     } else if(type === "img") {
@@ -173,7 +195,15 @@ const Awards = () => {
             : <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1753341186/NoImage_d18r8v.jpg" alt="no-image" />
         );
       });
+    } else if(type === "reasaon") {
+       setModalData(
+          <>
+            <h3>반려 사유</h3>
+            <p>{content}</p>
+          </>
+        );
     }
+
   }
 
 
@@ -182,11 +212,29 @@ const Awards = () => {
   }, []);
 
   useEffect(() => {
-    console.log("🚀  :  Awards  :  awardData:", awardData)
   }, [awardData]);
+
   useEffect(() => {
-    console.log("🚀  :  postData:", postData)
-  }, [postData]);
+    if( postData.awards_approval === 'Y' && modalData === null) {
+      updateAward(postData);
+      return;
+    }
+    
+    if (postData.awards_idx === '' && modalData === null) {
+      setModalOpen(false);
+    }else{
+      setModalOpen(true);
+    }
+  }, [modalData, postData]);
+
+   useEffect(() => {
+    if (!modalOpen) {
+      if(modalData !== null) {
+        setModalData(null);
+        setPostData(init);
+      }
+    }
+  }, [modalOpen]);
 
   return (
     <AwardsWrapper>
@@ -215,13 +263,21 @@ const Awards = () => {
                   </button>
                 </td>
                 <td>{item.awards_category}</td>
-                <td>{item.awards_approval === 'Y' ? '승인완료' : item.awards_approval === 'N' ? '승인전' : '반려'}</td>
+                <td>
+                  {item.awards_approval === 'Y' ? 
+                    '승인완료' : 
+                    item.awards_approval === 'N' ? 
+                    '승인전' : 
+                    <button onClick={() => handleModalOpen('reasaon', item.awards_reason)}>반려</button>}
+                </td>
                 <td>
                   {/* 관리 버튼들 추가 */}
-                  <ButtonBox>
-                    <button className='success'>승인</button>
-                    <button className='warning' onClick={() => handleModalOpen("approval", item)}>반려</button>
-                  </ButtonBox>
+                  { item.awards_approval === 'N' ? (
+                    <ButtonBox>
+                      <button className='success' onClick={() => setPostData({...postData, awards_idx:item.awards_idx, awards_approval: 'Y'})}>승인</button>
+                      <button className='warning' onClick={() => handleModalOpen("approval", item)}>반려</button>
+                    </ButtonBox>
+                  ) : null}
                 </td>
               </tr>
             )) :

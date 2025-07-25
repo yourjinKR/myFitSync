@@ -128,5 +128,22 @@ public class AdminController {
 		}
 		return ResponseEntity.ok(result);
 	} 
+	
+	@PutMapping("/awards")
+	public ResponseEntity<?> updateAwards(@RequestBody AwardsVO vo, HttpSession session){
+		System.out.println(vo);
+		Map<String, Object> result = new HashMap<String, Object>();
+		boolean update = awardService.updateAwards(vo);
+		if(update) {
+			result.put("success", true);
+//			result.put("vo", vo);
+		}else {			
+			result.put("success", false);
+			result.put("msg", "데이터가 없습니다.");
+		}
+		return ResponseEntity.ok(result);
+	} 
+	
+	
 
 }

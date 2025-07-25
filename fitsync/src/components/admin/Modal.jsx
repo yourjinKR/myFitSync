@@ -18,7 +18,7 @@ const ModalContent = styled.div`
   background: var(--bg-white);
   padding: 20px;
   border-radius: 5px;
-  max-width: 600px;
+  max-width: 500px;
   width: 80%;
 
   h3 {
@@ -43,16 +43,31 @@ const ModalContent = styled.div`
     width: 100%;
     display: block;
   }
+  ul {
+    margin: 15px 0 30px;
+  }
+  li {
+    display: flex;
+    align-items: center;
+  }
+  label{
+    color: var(--text-black);
+    font-size: 1.8rem;
+    padding-left: 10px;
+  }
+  p {
+    background: var(--bg-white);
+    margin: 10px 0;
+    border: 1px solid var(--border-light);
+    border-radius: 5px;
+    padding: 10px;
+    text-align: center;
+    color: var(--text-black);
+    font-size: 2rem;
+  }
 `;
 
 const Modal = ({modalOpen, setModalOpen, modalData, setModalData}) => {
-  useEffect(() => {
-    if (!modalOpen) {
-      if(modalData !== null) {
-        setModalData(null);
-      }
-    }
-  }, [modalOpen]);
 
   return (
     <>

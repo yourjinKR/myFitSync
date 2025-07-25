@@ -11,5 +11,7 @@ public interface AwardsService {
 	public List<AwardsVO> getApprovedAwards(int trainerIdx);
 	// 경력 요청 리스트
 	public List<AwardsVO> getAwards();
+	// 경력 승인
+	public boolean updateAwards(AwardsVO vo);
 	
 }

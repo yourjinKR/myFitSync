@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AwardsVO {
 	private int trainer_idx, awards_idx;
-	private String awards_category, awards_name, awards_certificate, awards_approval;
+	private String awards_category, awards_name, awards_certificate, awards_approval, awards_reason;
 	
 	private MemberVO member;
 }

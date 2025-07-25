@@ -30,5 +30,10 @@ public class AwardsServiceImple implements AwardsService {
 	public List<AwardsVO> getAwards() {
 		return mapper.getAwards();
 	}
+	// 경력 요청 처리
+	@Override
+	public boolean updateAwards(AwardsVO vo) {
+		return mapper.updateAwards(vo) > 0;
+	}
 
 }
