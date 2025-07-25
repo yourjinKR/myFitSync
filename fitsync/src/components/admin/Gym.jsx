@@ -142,22 +142,17 @@ const SubmitButton = styled(ButtonSubmit)`
   cursor: pointer;
 `;
 
+const initLatLng = { lat: 37.5665, lng: 126.9780 };
+const initGym = {gym_name: "", gym_latitude: 37.5665, gym_longitude: 126.9780, gym_address: "",};
+
 const Gym = () => {
-  const [gyms, setGyms] = useState([
-    { id: 1, name: "Gym A", location: "Seoul", owner: "John Doe" },
-    { id: 2, name: "Gym B", location: "Busan", owner: "Jane Smith" },
-  ]);
+  const [gyms, setGyms] = useState([initGym]);
+  const [newGym, setNewGym] = useState(initGym);
   const [modalOpen, setModalOpen] = useState(false);
-  const [newGym, setNewGym] = useState({
-    gym_name: "",
-    gym_latitude: null,
-    gym_longitude: null,
-    gym_address: "",
-  });
 
   const fetchData = async () => {
     try {
-      const response = await GymUtil.getGym();
+      const response = await GymUtil.getGyms();
       setGyms(response.data);
     } catch (error) {
       console.error("Failed to fetch gyms:", error);
@@ -168,21 +163,43 @@ const Gym = () => {
     fetchData();
   }, []);
 
-  const [mapPos, setMapPos] = useState({ lat: 37.5665, lng: 126.9780 }); // 지도에 표시할 위치
+  useEffect(() => {
+    console.log(newGym);
+  },[newGym]);
 
-  const handleEdit = (id) => {
+  const [mapPos, setMapPos] = useState(initLatLng); // 지도에 표시할 위치
+
+  const handleAdd = () => {
+    setModalMode(ADD);
+    setNewGym(initGym);
+    setModalOpen(true);
+  }
+
+  const handleEdit = async (id) => {
     console.log(`Edit gym with id: ${id}`);
+    const {data, success} = await GymUtil.getGym(id);
+    if(success) {
+      setNewGym(data);
+    }
+
+    setModalMode(EDIT);
+    setModalOpen(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    const confirm = window.confirm('해당 체육관을 삭제하시겠습니까?');
+
+    if (!confirm) return;
+
     console.log(`Delete gym with id: ${id}`);
+    const {data, success} = await GymUtil.deleteGym(id);
+    if(success) {
+      fetchData();
+    }
   };
 
+  /** 체육관 추가 액션 함수 */
   const handleAddGym = async () => {
-    const newGymData = {
-      ...newGym,
-    };
-
     const response = await GymUtil.addGym(newGym);
     if (response.success) {
       fetchData();
@@ -190,7 +207,19 @@ const Gym = () => {
 
     setModalOpen(false);
     setNewGym({gym_name: "", gym_latitude: null, gym_longitude: null, gym_address: "",});
-    setMapPos(null);
+  };
+
+  /** 체육관 수정 액션 함수 */
+  const handleEditGym = async () => {
+    console.log('지금부터 수정할게요 뀨', newGym);
+    const gym = newGym;
+    
+    const response = await GymUtil.updateGym(gym);
+    if (response.success) {
+      fetchData();
+    }
+
+    setModalOpen(false);
   };
 
   const handleSearchLocation = () => {
@@ -206,18 +235,77 @@ const Gym = () => {
         const gym_longitude = parseFloat(x);
         const gym_address = address_name;
         setNewGym((prev) => ({ ...prev, gym_latitude, gym_longitude, gym_address }));
-        setMapPos({ lat : gym_latitude, lng : gym_longitude }); // 지도 표시
       } else {
         alert("주소를 찾을 수 없습니다.");
       }
     });
   };
+  
+  // 모드 분기
+  const ADD = {title : '추가', action : handleAddGym}
+  const EDIT = {title : '수정', action : handleEditGym}
+  const [modalMode, setModalMode] = useState(ADD);
+
+  /** 체육관 모달 */ 
+  const setGymModalData = () => {
+    return (
+      <ModalContent>
+        <ModalHeader>체육관 {modalMode.title}</ModalHeader>
+
+        {/* 위치 검색 폼 */}
+        <Form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearchLocation();
+          }}
+          marginBottom
+        >
+          <Input
+            type="text"
+            placeholder="위치 주소 입력 (예: 서울시 강남구...)"
+            value={newGym.gym_address}
+            onChange={(e) =>
+              setNewGym({ ...newGym, gym_address: e.target.value })
+            }
+            flex
+          />
+          <SubmitButton type="submit">찾기</SubmitButton>
+        </Form>
+
+        <MapContainer style={{ marginBottom: "20px" }}>
+          {newGym && <MapTest position={{lat : newGym.gym_latitude, lng : newGym.gym_longitude}} />}
+        </MapContainer>
+
+        {/* 체육관 등록 폼 */}
+        <Form
+          onSubmit={(e) => {
+            e.preventDefault();
+            modalMode.action();
+          }}
+          column
+        >
+          <Input
+            type="text"
+            placeholder="체육관명"
+            value={newGym.gym_name}
+            onChange={(e) => setNewGym({ ...newGym, gym_name: e.target.value })}
+          />
+          <SubmitButton type="submit" green>
+            {modalMode.title}
+          </SubmitButton>
+        </Form>
+      </ModalContent>
+    );
+  }
+
+  /** 체육관 수정 모달 */
+
 
   return (
     <GymWrapper>
       <div className="header">
         <h2>체육관 관리</h2>
-        <button onClick={() => setModalOpen(true)}>체육관 추가</button>
+        <button onClick={() => handleAdd()}>체육관 추가</button>
       </div>
 
       <table className="gym-table">
@@ -251,54 +339,7 @@ const Gym = () => {
       <Modal
         modalOpen={modalOpen}
         setModalOpen={setModalOpen}
-        modalData={
-          <ModalContent>
-            <ModalHeader>체육관 추가</ModalHeader>
-
-            {/* 위치 검색 폼 */}
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSearchLocation();
-              }}
-              marginBottom
-            >
-              <Input
-                type="text"
-                placeholder="위치 주소 입력 (예: 서울시 강남구...)"
-                value={newGym.gym_address}
-                onChange={(e) =>
-                  setNewGym({ ...newGym, gym_address: e.target.value })
-                }
-                flex
-              />
-              <SubmitButton type="submit">찾기</SubmitButton>
-            </Form>
-
-            <MapContainer style={{ marginBottom: "20px" }}>
-              {mapPos && <MapTest position={mapPos} />}
-            </MapContainer>
-
-            {/* 체육관 등록 폼 */}
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddGym();
-              }}
-              column
-            >
-              <Input
-                type="text"
-                placeholder="체육관명"
-                value={newGym.gym_name}
-                onChange={(e) => setNewGym({ ...newGym, gym_name: e.target.value })}
-              />
-              <SubmitButton type="submit" green>
-                추가
-              </SubmitButton>
-            </Form>
-          </ModalContent>
-        }
+        modalData={setGymModalData()}
       />
     </GymWrapper>
   );

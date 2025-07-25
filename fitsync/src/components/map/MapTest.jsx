@@ -23,9 +23,7 @@ const MapTest = ({ position }) => {
       style={{ width: "100%", height: "100%" }}
       level={3}
     >
-      <MapMarker position={center}>
-        <div style={{ fontSize: "12px", color: "var(--primary-blue)"}}>체육관 위치</div>
-      </MapMarker>
+      <MapMarker position={center}/>
     </Map>
   );
 };

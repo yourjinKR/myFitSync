@@ -150,22 +150,7 @@ public class AdminController {
 		}
 		return ResponseEntity.ok(result);
 	} 
-	
-	// 체육관 추가
-	@PostMapping("/gym")
-	public ResponseEntity<?> addGym(@RequestBody GymVO gym) {
-		System.out.println("gym !!!! : " + gym);
-		Map<String, Object> result = new HashMap<>();
-		try {
-			gymService.registerGym(gym);
-			result.put("success", true);
-		} catch (Exception e) {
-			result.put("success", false);
-			result.put("msg", e.getMessage());
-		}
-		return ResponseEntity.ok(result);
-	}
-	
+		
 	@GetMapping("/workout")
 	public ResponseEntity<?> getWorkOut(HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
@@ -220,9 +205,24 @@ public class AdminController {
 	    return ResponseEntity.ok(result);
 	}
 
+	// 체육관 추가
+	@PostMapping("/gym")
+	public ResponseEntity<?> addGym(@RequestBody GymVO gym) {
+		System.out.println("gym !!!! : " + gym);
+		Map<String, Object> result = new HashMap<>();
+		try {
+			gymService.registerGym(gym);
+			result.put("success", true);
+		} catch (Exception e) {
+			result.put("success", false);
+			result.put("msg", e.getMessage());
+		}
+		return ResponseEntity.ok(result);
+	}	
+	
 	// 체육관 가져오기
-	@GetMapping("/gym")
-	public ResponseEntity<?> getGym(@RequestBody int gym_idx) {
+	@GetMapping("/gym/{gymIdx}")
+	public ResponseEntity<?> getGym(@PathVariable("gymIdx") Integer gym_idx) {
 		GymVO gym = gymService.getGymById(gym_idx);
 		Map<String, Object> result = new HashMap<>();
 		result.put("success", true);
@@ -243,6 +243,7 @@ public class AdminController {
 	// 체육관 수정
 	@PutMapping("/gym")
 	public ResponseEntity<?> updateGym(@RequestBody GymVO gym) {
+		System.out.println(gym);
 		boolean updated = gymService.updateGym(gym);
 		Map<String, Object> result = new HashMap<>();
 		result.put("success", updated);
@@ -251,8 +252,8 @@ public class AdminController {
 	}
 
 	// 체육관 삭제
-	@DeleteMapping("/gym")
-	public ResponseEntity<?> deleteGym(@RequestBody int gym_idx) {
+	@DeleteMapping("/gym/{gymIdx}")
+	public ResponseEntity<?> deleteGym(@PathVariable("gymIdx") Integer gym_idx) {
 		boolean deleted = gymService.deleteGym(gym_idx);
 		Map<String, Object> result = new HashMap<>();
 		result.put("success", deleted);
