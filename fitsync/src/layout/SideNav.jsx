@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { FaHome, FaDumbbell, FaUserTie, FaComments, FaUserCircle, FaCrown, FaMoneyBillAlt, FaRegMoneyBillAlt, FaMoneyBillWave } from 'react-icons/fa';
+import { FaHome, FaDumbbell, FaUserTie, FaComments, FaUserCircle, FaCrown, FaMoneyBillAlt, FaRegMoneyBillAlt, FaMoneyBillWave, FaRobot } from 'react-icons/fa';
 
 const slideIn = keyframes`
     from {
@@ -152,6 +152,7 @@ const StyledLink = styled(Link)`
             ? { to: `/trainer/view/${memberIdx}`, label: "마이페이지", icon: <FaUserCircle /> }
             : { to: "/mypage", label: "마이페이지", icon: <FaUserCircle /> },
     { to: "/subscription", label: "구독/결제", icon: <FaMoneyBillWave /> },
+    { to: "/ai", label: "AI 서비스", icon: <FaRobot /> },
     { to: "/admin", label: "관리자", icon: <FaCrown /> },
 ];
 

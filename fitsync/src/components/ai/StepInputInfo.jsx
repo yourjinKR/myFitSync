@@ -903,7 +903,7 @@ const StepInputInfo = ({onGenerate}) => {
     };
 
     const handleClose = () => {
-        navigate('/ai');
+        navigate(-1);
     };
 
     const handleGenerate = () => {
