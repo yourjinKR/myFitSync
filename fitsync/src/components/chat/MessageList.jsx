@@ -5,7 +5,7 @@ import MessageItem from './MessageItem';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 `;
 
 const DateSeparator = styled.div`
@@ -62,19 +62,21 @@ const UnreadText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
-// 핸들러 전달이 추가된 MessageList 컴포넌트
+// MessageList 컴포넌트
 const MessageList = ({ 
   messages, 
   currentMemberIdx, 
   attachments, 
   roomData,
   onImageLoad = null,
-  onReply = null, // 답장 핸들러 추가
-  onDelete = null, // 삭제 핸들러 추가
-  onReport = null // 신고 핸들러 추가
+  onReply = null,
+  onDelete = null,
+  onReport = null,
+  onScrollToMessage = null
 }) => {
   
   const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false); // 초기 로드 완료 여부
 
   // 초기 읽지 않은 메시지 중 가장 오래된 메시지 ID 계산
   const initialOldestUnreadMessageIdx = useMemo(() => {
@@ -94,18 +96,86 @@ const MessageList = ({
     return oldestUnreadMessage.message_idx;
   }, [messages.length, currentMemberIdx]);
 
-  // 고정된 가장 오래된 읽지 않은 메시지 ID 설정
+  // 초기 로드 시에만 안읽음 구분선 설정
   useEffect(() => {
-    if (initialOldestUnreadMessageIdx && fixedOldestUnreadMessageIdx === null) {
-      setFixedOldestUnreadMessageIdx(initialOldestUnreadMessageIdx);
-      console.log('✅ 구분선 위치 고정:', initialOldestUnreadMessageIdx);
+    if (!initialLoadComplete && messages.length > 0) {
+      if (initialOldestUnreadMessageIdx && fixedOldestUnreadMessageIdx === null) {
+        setFixedOldestUnreadMessageIdx(initialOldestUnreadMessageIdx);
+        console.log('✅ 구분선 위치 고정 (초기 로드):', initialOldestUnreadMessageIdx);
+      }
+      setInitialLoadComplete(true);
     }
-  }, [initialOldestUnreadMessageIdx, fixedOldestUnreadMessageIdx]);
+  }, [initialOldestUnreadMessageIdx, fixedOldestUnreadMessageIdx, messages.length, initialLoadComplete]);
 
   // 답장 대상 메시지 찾기 함수
   const getParentMessage = (parentIdx) => {
     if (!parentIdx) return null;
     return messages.find(msg => msg.message_idx === parentIdx);
+  };
+
+  // 답장 미리보기 텍스트 생성
+  const getReplyPreviewText = (parentMsg, allAttachments) => {
+    if (!parentMsg) return '';
+    
+    console.log('🎯 MessageList 답장 미리보기 텍스트 생성:', {
+      messageType: parentMsg.message_type,
+      messageIdx: parentMsg.message_idx,
+      messageContent: parentMsg.message_content,
+      allAttachments: allAttachments,
+      hasAttachments: !!allAttachments,
+      attachmentForMessage: allAttachments[parentMsg.message_idx]
+    });
+    
+    if (parentMsg.message_type === 'image') {
+      const attachment = allAttachments && allAttachments[parentMsg.message_idx];
+      
+      console.log('🎯 MessageList 이미지 답장 미리보기 - 첨부파일 검색:', {
+        messageIdx: parentMsg.message_idx,
+        attachment: attachment,
+        hasFilename: !!(attachment && attachment.original_filename),
+        originalFilename: attachment?.original_filename
+      });
+      
+      if (attachment && attachment.original_filename) {
+        return `📷 ${attachment.original_filename}`;
+      }
+      
+      if (parentMsg.message_content && 
+          parentMsg.message_content.trim() !== '' && 
+          parentMsg.message_content !== '[이미지]') {
+        return parentMsg.message_content;
+      }
+      
+      return '📷 이미지';
+    }
+    
+    return parentMsg.message_content || '';
+  };
+
+  // 특정 메시지로 스크롤하는 함수
+  const handleScrollToMessage = (messageIdx) => {
+    console.log('🎯 MessageList에서 스크롤 요청 받음:', messageIdx);
+    
+    if (onScrollToMessage) {
+      onScrollToMessage(messageIdx);
+    } else {
+      const messageElement = document.getElementById(`message-${messageIdx}`);
+      if (messageElement) {
+        messageElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        
+        messageElement.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
+        setTimeout(() => {
+          messageElement.style.backgroundColor = '';
+        }, 2000);
+        
+        console.log('✅ 직접 스크롤 완료:', messageIdx);
+      } else {
+        console.warn('❌ 메시지 요소를 찾을 수 없음:', messageIdx);
+      }
+    }
   };
 
   const formatDate = (timestamp) => {
@@ -125,56 +195,88 @@ const MessageList = ({
     return currentDate !== previousDate;
   };
 
+  // 안읽음 구분선 표시 조건 수정 - 초기 로드 시에만 표시
   const shouldShowUnreadSeparator = (currentMessage) => {
-    if (!fixedOldestUnreadMessageIdx) return false;
+    // 초기 로드가 완료되지 않았거나, 고정된 ID가 없으면 표시하지 않음
+    if (!initialLoadComplete || !fixedOldestUnreadMessageIdx) return false;
     
     const shouldShow = currentMessage.message_idx === fixedOldestUnreadMessageIdx;
     
-    console.log('📍 읽지 않은 메시지 구분선 체크 (고정):', {
+    console.log('📍 읽지 않은 메시지 구분선 체크 (초기 로드 완료 후):', {
       currentMessageIdx: currentMessage.message_idx,
       fixedOldestUnreadMessageIdx: fixedOldestUnreadMessageIdx,
+      initialLoadComplete: initialLoadComplete,
       shouldShow: shouldShow
     });
     
     return shouldShow;
   };
 
+  // 연속 메시지 판단 로직
   const isConsecutiveMessage = (currentMessage, previousMessage) => {
     if (!previousMessage) return false;
     
     const currentTime = new Date(currentMessage.message_senddate);
     const previousTime = new Date(previousMessage.message_senddate);
     
+    // 같은 발신자인지 확인
     const isSameSender = currentMessage.sender_idx === previousMessage.sender_idx;
-    const isSameMinute = currentTime.getFullYear() === previousTime.getFullYear() &&
-                         currentTime.getMonth() === previousTime.getMonth() &&
-                         currentTime.getDate() === previousTime.getDate() &&
-                         currentTime.getHours() === previousTime.getHours() &&
-                         currentTime.getMinutes() === previousTime.getMinutes();
     
-    return isSameSender && isSameMinute;
+    // 같은 분(minute) 단위인지 확인
+    const currentMinute = currentTime.getFullYear() * 100000000 + 
+                         (currentTime.getMonth() + 1) * 1000000 + 
+                         currentTime.getDate() * 10000 + 
+                         currentTime.getHours() * 100 + 
+                         currentTime.getMinutes();
+    
+    const previousMinute = previousTime.getFullYear() * 100000000 + 
+                          (previousTime.getMonth() + 1) * 1000000 + 
+                          previousTime.getDate() * 10000 + 
+                          previousTime.getHours() * 100 + 
+                          previousTime.getMinutes();
+    
+    const isSameMinute = currentMinute === previousMinute;
+    
+    const result = isSameSender && isSameMinute;
+    
+    return result;
   };
 
+  // 그룹의 마지막 메시지 판단 로직
   const isLastInGroup = (currentMessage, nextMessage) => {
     if (!nextMessage) return true;
     
     const currentTime = new Date(currentMessage.message_senddate);
     const nextTime = new Date(nextMessage.message_senddate);
     
+    // 다음 메시지가 다른 발신자인지 확인
     const isDifferentSender = currentMessage.sender_idx !== nextMessage.sender_idx;
-    const isDifferentMinute = currentTime.getFullYear() !== nextTime.getFullYear() ||
-                              currentTime.getMonth() !== nextTime.getMonth() ||
-                              currentTime.getDate() !== nextTime.getDate() ||
-                              currentTime.getHours() !== nextTime.getHours() ||
-                              currentTime.getMinutes() !== nextTime.getMinutes();
     
-    return isDifferentSender || isDifferentMinute;
+    // 다음 메시지가 다른 분(minute) 단위인지 확인
+    const currentMinute = currentTime.getFullYear() * 100000000 + 
+                         (currentTime.getMonth() + 1) * 1000000 + 
+                         currentTime.getDate() * 10000 + 
+                         currentTime.getHours() * 100 + 
+                         currentTime.getMinutes();
+    
+    const nextMinute = nextTime.getFullYear() * 100000000 + 
+                      (nextTime.getMonth() + 1) * 1000000 + 
+                      nextTime.getDate() * 10000 + 
+                      nextTime.getHours() * 100 + 
+                      nextTime.getMinutes();
+    
+    const isDifferentMinute = currentMinute !== nextMinute;
+    
+    const result = isDifferentSender || isDifferentMinute;
+    
+    return result;
   };
 
   const getOtherPersonInfo = (message, isConsecutive) => {
     if (!roomData) return { name: '상대방', image: null };
     
     if (message.sender_idx !== currentMemberIdx) {
+      // 연속 메시지인 경우 이름과 이미지를 null로 반환
       if (isConsecutive) {
         return { name: null, image: null };
       }
@@ -213,6 +315,7 @@ const MessageList = ({
         
         // 답장 대상 메시지 찾기
         const parentMessage = getParentMessage(message.parent_idx);
+
         
         return (
           <React.Fragment key={message.message_idx}>
@@ -230,7 +333,6 @@ const MessageList = ({
               </UnreadSeparator>
             )}
             
-            {/* 개별 메시지 컴포넌트 - 핸들러들 전달 */}
             <MessageItem
               message={message}
               isCurrentUser={message.sender_idx === currentMemberIdx}
@@ -238,11 +340,15 @@ const MessageList = ({
               senderName={otherPersonInfo.name}
               senderImage={otherPersonInfo.image}
               showTime={isLastMessage}
+              isConsecutive={isConsecutive}
               onImageLoad={handleImageLoad}
-              onReply={onReply} // 답장 핸들러 전달
-              onDelete={onDelete} // 삭제 핸들러 전달
-              onReport={onReport} // 신고 핸들러 전달
-              parentMessage={parentMessage} // 답장 대상 메시지 전달
+              onReply={onReply}
+              onDelete={onDelete}
+              onReport={onReport}
+              parentMessage={parentMessage}
+              allAttachments={attachments}
+              getReplyPreviewText={getReplyPreviewText}
+              onScrollToMessage={handleScrollToMessage}
             />
           </React.Fragment>
         );

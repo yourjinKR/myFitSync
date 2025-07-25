@@ -49,7 +49,10 @@ const BarWrapper = styled.div`
   box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
 `;
 
-const BarFill = styled.div`
+// shouldForwardProp으로 progress prop 필터링
+const BarFill = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'progress'
+})`
   height: 100%;
   background-color: #0074D9;
   width: ${props => props.progress}%;

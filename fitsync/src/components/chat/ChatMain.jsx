@@ -9,6 +9,7 @@ const Container = styled.div`
   padding: 20px;
   height: 100%;
   background-color: var(--bg-primary);
+  position: relative;
 `;
 
 const Header = styled.div`
@@ -19,6 +20,25 @@ const Title = styled.h2`
   font-size: 2.4rem;
   color: var(--text-primary);
   margin-bottom: 8px;
+`;
+
+// 문의하기 버튼
+const InquiryButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--border-light);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* admin일 때 숨김 */
+  display: ${props => props.$isAdmin ? 'none' : 'block'};
 `;
 
 const RoomList = styled.div`
@@ -230,6 +250,15 @@ const ChatMain = () => {
     }
   };
 
+  // admin 여부 확인 (대소문자 무관)
+  const isAdmin = user?.member_type?.toLowerCase() === 'admin';
+
+  // 문의하기 버튼 클릭 핸들러
+  const handleInquiryClick = () => {
+    // 기능 구현해야함
+    console.log('문의하기 버튼 클릭됨');
+  };
+
   // 시간 포멧
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
@@ -395,6 +424,9 @@ const ChatMain = () => {
     <Container>
       <Header>
         <Title>채팅목록</Title>
+        <InquiryButton onClick={handleInquiryClick} $isAdmin={isAdmin}>
+          문의하기
+        </InquiryButton>
       </Header>
 
       {rooms.length === 0 ? (

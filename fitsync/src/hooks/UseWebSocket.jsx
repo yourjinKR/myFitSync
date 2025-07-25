@@ -37,7 +37,7 @@ export const useWebSocket = () => {
       };
       
       const websocketUrl = getWebSocketUrl();
-      console.log('🌐 WebSocket 연결 URL:', websocketUrl);
+      console.log('WebSocket 연결 URL:', websocketUrl);
       
       const stompClient = new Client({
         webSocketFactory: () => {
@@ -126,7 +126,7 @@ export const useWebSocket = () => {
     };
   }, []);
 
-  const subscribeToRoom = useCallback((room_idx, onMessageReceived, onReadReceived) => {
+  const subscribeToRoom = useCallback((room_idx, onMessageReceived, onReadReceived, onDeleteReceived) => {
     
     if (client && connected) {
       
@@ -154,12 +154,26 @@ export const useWebSocket = () => {
         }
       });
       
-      console.log('✅ 채팅방 구독 완료 - room_idx:', room_idx);
+      // 삭제 알림 구독 추가
+      const deleteSubscription = client.subscribe(`/topic/room/${room_idx}/delete`, (message) => {
+        console.log('🗑️ 실시간 삭제 알림 수신:', message.body);
+        try {
+          const deleteData = JSON.parse(message.body);
+          console.log('🗑️ 파싱된 삭제 데이터:', deleteData);
+          
+          onDeleteReceived && onDeleteReceived(deleteData);
+        } catch (error) {
+          console.error('삭제 알림 파싱 오류:', error);
+        }
+      });
+      
+      console.log('✅ 채팅방 구독 완료 (메시지/읽음/삭제) - room_idx:', room_idx);
       
       return () => {
         console.log('❌ 채팅방 구독 해제 - room_idx:', room_idx);
         messageSubscription.unsubscribe();
         readSubscription.unsubscribe();
+        deleteSubscription.unsubscribe(); // 삭제 구독도 해제
       };
     } else {
       console.warn('⚠️ WebSocket 연결되지 않음 - 구독 불가');
@@ -167,7 +181,7 @@ export const useWebSocket = () => {
     }
   }, [client, connected]);
 
-  // 🔥 메시지 전송 로직 개선 (타입 안전성 강화)
+  // 메시지 전송 로직 개선 (타입 안전성 강화)
   const sendMessage = useCallback((messageData) => {
     
     const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
@@ -176,7 +190,7 @@ export const useWebSocket = () => {
     if (client && connected && memberIdx && !isConnectingRef.current) {
       const uniqueId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // 🔥 타입 안전성 보장
+      // 타입 안전성 보장
       const messageWithSender = {
         room_idx: parseInt(messageData.room_idx), // 명시적 정수 변환
         sender_idx: memberIdx, // 정수 타입 보장
@@ -205,7 +219,7 @@ export const useWebSocket = () => {
     }
   }, [client, connected]);
 
-  // 🔥 읽음 처리 로직 개선
+  // 읽음 처리 로직 개선
   const markAsRead = useCallback((message_idx, room_idx) => {
     console.log('👁️ 읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
     
@@ -213,7 +227,7 @@ export const useWebSocket = () => {
     const memberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
     
     if (client && connected && memberIdx && !isConnectingRef.current) {
-      // 🔥 타입 안전성 보장
+      // 타입 안전성 보장
       const readData = {
         message_idx: parseInt(message_idx), // 명시적 정수 변환
         room_idx: parseInt(room_idx), // 명시적 정수 변환
@@ -238,10 +252,43 @@ export const useWebSocket = () => {
     }
   }, [client, connected]);
 
+  // 메시지 삭제 알림 전송 함수 추가
+  const sendDeleteNotification = useCallback((deleteData) => {
+    const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
+    const memberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
+    
+    if (client && connected && memberIdx && !isConnectingRef.current) {
+      // 타입 안전성 보장
+      const deleteNotification = {
+        type: 'message_deleted',
+        room_idx: parseInt(deleteData.room_idx),
+        message_idx: parseInt(deleteData.message_idx),
+        deleted_by: memberIdx,
+        timestamp: Date.now()
+      };
+      
+      console.log('🗑️ 삭제 알림 전송 (타입 안전):', deleteNotification);
+      
+      try {
+        client.publish({
+          destination: '/app/chat.delete',
+          body: JSON.stringify(deleteNotification)
+        });
+        console.log('✅ 삭제 알림 전송 완료');
+      } catch (error) {
+        console.error('❌ 삭제 알림 전송 실패:', error);
+      }
+    } else {
+      console.warn('⚠️ WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
+      console.warn('삭제 알림 상태:', { client: !!client, connected, memberIdx, isConnecting: isConnectingRef.current });
+    }
+  }, [client, connected]);
+
   return {
     connected,
     subscribeToRoom,
     sendMessage,
-    markAsRead
+    markAsRead,
+    sendDeleteNotification
   };
 };

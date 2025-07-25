@@ -1,19 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 
-// Nav.jsx에 가리지 않도록 위치 보장
 const Container = styled.div`
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border-medium);
   padding: 15px 20px;
   position: relative;
-  z-index: 30; /* Nav.jsx(999)보다 낮지만 Container 내부에서는 높게 */
+  z-index: 30;
   width: 100%;
-  /* Nav.jsx 영역을 침범하지 않도록 확실하게 위치 고정 */
   bottom: 0;
 `;
 
-// 답장 미리보기 컨테이너
 const ReplyPreviewContainer = styled.div`
   background: var(--bg-tertiary);
   border: 1px solid var(--border-light);
@@ -61,7 +58,6 @@ const CancelReplyButton = styled.button`
   }
 `;
 
-// 다중 파일 미리보기 컨테이너
 const MultiFilePreview = styled.div`
   display: flex;
   flex-direction: column;
@@ -227,12 +223,12 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
-// 답장 기능이 추가된 메시지 입력 컴포넌트
 const MessageInput = ({ 
   onSendMessage, 
   disabled,
-  replyToMessage = null, // 답장할 메시지
-  onCancelReply = null // 답장 취소 핸들러
+  replyToMessage = null,
+  onCancelReply = null,
+  attachments = {}
 }) => {
   const [messageText, setMessageText] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -242,14 +238,57 @@ const MessageInput = ({
   const fileInputRef = useRef(null);
   const textAreaRef = useRef(null);
 
-  // 답장 모드일 때 입력창에 포커스
   useEffect(() => {
     if (replyToMessage && textAreaRef.current) {
       textAreaRef.current.focus();
     }
   }, [replyToMessage]);
 
-  // 전송 처리 - 답장 기능 추가
+  // 답장 미리보기 텍스트
+  const getReplyPreviewText = () => {
+    if (!replyToMessage) return '';
+    
+    console.log('🎯 답장 미리보기 텍스트 생성:', {
+      messageType: replyToMessage.message_type,
+      messageIdx: replyToMessage.message_idx,
+      messageContent: replyToMessage.message_content,
+      attachments: attachments,
+      hasAttachments: !!attachments,
+      attachmentForMessage: attachments[replyToMessage.message_idx]
+    });
+    
+    if (replyToMessage.message_type === 'image') {
+      // 전체 attachments에서 해당 메시지의 첨부파일 찾기
+      const attachment = attachments && attachments[replyToMessage.message_idx];
+      
+      console.log('🎯 이미지 답장 미리보기 - 첨부파일 검색:', {
+        messageIdx: replyToMessage.message_idx,
+        attachment: attachment,
+        hasFilename: !!(attachment && attachment.original_filename),
+        originalFilename: attachment?.original_filename
+      });
+      
+      // 첨부파일 정보가 있고 파일명이 있으면 파일명 표시
+      if (attachment && attachment.original_filename) {
+        return `📷 ${attachment.original_filename}`;
+      }
+      
+      // 메시지 내용이 '[이미지]'가 아닌 경우 해당 텍스트 사용
+      if (replyToMessage.message_content && 
+          replyToMessage.message_content.trim() !== '' && 
+          replyToMessage.message_content !== '[이미지]') {
+        return replyToMessage.message_content;
+      }
+      
+      // 기본값
+      return '📷 이미지';
+    }
+    
+    // 텍스트 메시지인 경우
+    return replyToMessage.message_content || '';
+  };
+
+  // 전송 처리 (기존과 동일)
   const handleSend = async () => {
     if (isUploading) {
       console.log('⏳ 이미 업로드 진행 중...');
@@ -261,7 +300,6 @@ const MessageInput = ({
     const textToSend = messageText.trim();
     const filesToSend = [...selectedFiles];
     
-    // 즉시 UI 초기화
     setMessageText('');
     setSelectedFiles([]);
     setPreviewUrls({});
@@ -292,15 +330,14 @@ const MessageInput = ({
             fileName: file.name,
             messageContent: messageContent,
             isLastFile: isLastFile,
-            parentIdx: replyToMessage?.message_idx // 답장 정보 추가
+            parentIdx: replyToMessage?.message_idx
           });
           
-          // 답장 정보와 함께 메시지 전송
           await onSendMessage(
             messageContent, 
             'image', 
             file, 
-            replyToMessage?.message_idx // parent_idx로 전달
+            replyToMessage?.message_idx
           );
           
           if (index < filesToSend.length - 1) {
@@ -316,14 +353,13 @@ const MessageInput = ({
         setIsUploading(false);
       }
     } else {
-      // 텍스트만 있는 경우
       console.log('텍스트 메시지 전송:', textToSend, '답장:', replyToMessage?.message_idx);
       try {
         await onSendMessage(
           textToSend, 
           'text', 
           null, 
-          replyToMessage?.message_idx // parent_idx로 전달
+          replyToMessage?.message_idx
         );
       } catch (error) {
         console.error('텍스트 메시지 전송 실패:', error);
@@ -436,22 +472,8 @@ const MessageInput = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // 답장 미리보기 텍스트 생성
-  const getReplyPreviewText = () => {
-    if (!replyToMessage) return '';
-    
-    if (replyToMessage.message_type === 'image') {
-      return replyToMessage.message_content && replyToMessage.message_content !== '[이미지]' 
-        ? replyToMessage.message_content 
-        : '📷 이미지';
-    }
-    
-    return replyToMessage.message_content || '';
-  };
-
   return (
     <Container>
-      {/* 답장 미리보기 (답장 모드일 때만 표시) */}
       {replyToMessage && (
         <ReplyPreviewContainer>
           <ReplyPreviewContent>
@@ -467,7 +489,6 @@ const MessageInput = ({
         </ReplyPreviewContainer>
       )}
 
-      {/* 다중 파일 미리보기 영역 */}
       {selectedFiles.length > 0 && (
         <MultiFilePreview>
           {selectedFiles.map((file, index) => (
@@ -485,7 +506,6 @@ const MessageInput = ({
         </MultiFilePreview>
       )}
 
-      {/* 메시지 입력 영역 */}
       <InputContainer>
         <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled || isUploading} title="이미지 첨부">
           <svg

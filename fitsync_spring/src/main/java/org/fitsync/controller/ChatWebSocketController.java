@@ -30,7 +30,7 @@ public class ChatWebSocketController {
         try {
             System.out.println("🔍 수신된 메시지 데이터: " + message);
             
-            // 🔥 안전한 타입 변환 및 null 체크
+            // 안전한 타입 변환 및 null 체크
             Integer sender_idx = extractIntegerFromMessage(message, "sender_idx");
             Integer receiver_idx = extractIntegerFromMessage(message, "receiver_idx");
             Integer room_idx = extractIntegerFromMessage(message, "room_idx");
@@ -81,7 +81,7 @@ public class ChatWebSocketController {
             
             System.out.println("✅ 메시지 처리 시작 - unique_id: " + unique_id + ", content: " + message_content);
             
-            // 🔥 MessageVO 객체 생성 (null 안전)
+            // MessageVO 객체 생성 (null 안전)
             MessageVO vo = new MessageVO();
             vo.setRoom_idx(room_idx);
             vo.setSender_idx(sender_idx);
@@ -91,13 +91,13 @@ public class ChatWebSocketController {
             vo.setParent_idx(parent_idx); // null일 수 있음
             vo.setAttach_idx(null); // 기본값
             
-            // 🔥 메시지 저장
+            // 메시지 저장
             MessageVO savedMessage = null;
             try {
                 savedMessage = chatService.registerMessage(vo);
                 if (savedMessage == null) {
                     System.err.println("❌ 메시지 저장 실패: savedMessage가 null");
-                    // 🔥 null인 경우에도 브로드캐스트를 위해 원본 vo 사용
+                    // null인 경우에도 브로드캐스트를 위해 원본 vo 사용
                     savedMessage = vo;
                     // message_idx가 없는 경우 임시로 설정
                     if (savedMessage.getMessage_idx() == 0) {
@@ -108,12 +108,12 @@ public class ChatWebSocketController {
             } catch (Exception e) {
                 System.err.println("❌ 메시지 저장 중 예외 발생: " + e.getMessage());
                 e.printStackTrace();
-                // 🔥 예외 발생 시에도 브로드캐스트 시도
+                // 예외 발생 시에도 브로드캐스트 시도
                 savedMessage = vo;
                 savedMessage.setMessage_idx(-1); // 임시 ID
             }
             
-            // 🔥 브로드캐스트 - null이 아닌 경우에만
+            // 브로드캐스트 - null이 아닌 경우에만
             if (savedMessage != null) {
                 try {
                     // 현재 시간으로 설정
@@ -188,6 +188,53 @@ public class ChatWebSocketController {
             
         } catch (Exception e) {
             System.err.println("❌ 읽음 처리 전체 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    @MessageMapping("/chat.delete")
+    public void handleMessageDelete(@Payload Map<String, Object> deleteData, SimpMessageHeaderAccessor headerAccessor) {
+        try {
+            System.out.println("🗑️ 메시지 삭제 알림 수신: " + deleteData);
+            
+            // 안전한 타입 변환
+            Integer messageIdx = extractIntegerFromMessage(deleteData, "message_idx");
+            Integer roomIdx = extractIntegerFromMessage(deleteData, "room_idx");
+            Integer deletedBy = extractIntegerFromMessage(deleteData, "deleted_by");
+            String type = extractStringFromMessage(deleteData, "type");
+            
+            // 필수 값 검증
+            if (messageIdx == null || roomIdx == null || deletedBy == null) {
+                System.err.println("❌ 삭제 알림 데이터 누락:");
+                System.err.println("   message_idx: " + messageIdx);
+                System.err.println("   room_idx: " + roomIdx);
+                System.err.println("   deleted_by: " + deletedBy);
+                return;
+            }
+            
+            System.out.println("🗑️ 삭제 알림 처리 시작 - message_idx: " + messageIdx + ", room_idx: " + roomIdx + ", deleted_by: " + deletedBy);
+            
+            // 삭제 알림을 채팅방의 모든 참여자에게 브로드캐스트
+            try {
+                String deleteTopic = "/topic/room/" + roomIdx + "/delete";
+                Map<String, Object> deleteNotification = Map.of(
+                    "type", "message_deleted",
+                    "message_idx", messageIdx,
+                    "room_idx", roomIdx,
+                    "deleted_by", deletedBy,
+                    "timestamp", System.currentTimeMillis()
+                );
+                
+                messagingTemplate.convertAndSend(deleteTopic, deleteNotification);
+                System.out.println("✅ 삭제 알림 브로드캐스트 완료 - topic: " + deleteTopic);
+                
+            } catch (Exception e) {
+                System.err.println("❌ 삭제 알림 브로드캐스트 실패: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ 메시지 삭제 알림 처리 전체 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }
