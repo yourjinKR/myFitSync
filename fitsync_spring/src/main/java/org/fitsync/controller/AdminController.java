@@ -1,9 +1,11 @@
 package org.fitsync.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.ApiLogVO;
@@ -180,22 +182,41 @@ public class AdminController {
 	
 	@PutMapping("/workout")
 	public ResponseEntity<?> updateWorkOut(
-	    @RequestParam("pt_idx") String ptIdx,
-	    @RequestParam("pt_name") String ptName,
-	    @RequestParam("pt_category") String ptCategory,
-	    @RequestParam("pt_content") String ptContent,
-	    @RequestParam(value = "pt_image_url", required = false) List<String> ptImageUrl,
-	    @RequestParam(value = "pt_image", required = false) List<MultipartFile> ptImage,
+	    @RequestParam("pt_idx") int pt_idx,
+	    @RequestParam("pt_name") String pt_name,
+	    @RequestParam("pt_category") String pt_category,
+	    @RequestParam("pt_content") String pt_content,
+	    @RequestParam("pt_image") List<Object> ptImage,
+	    HttpServletRequest request,
 	    HttpSession session
 	) {
 	    Map<String, Object> result = new HashMap<>();
-	    System.out.println("pt_idx: " + ptIdx);
-	    System.out.println("pt_name: " + ptName);
-	    System.out.println("pt_category: " + ptCategory);
-	    System.out.println("pt_content: " + ptContent);
-	    System.out.println("pt_image_url: " + ptImageUrl);
-	    System.out.println("pt_image: " + ptImage);
-	    // 파일 저장 및 비즈니스 로직 처리
+	    PtVO vo = new PtVO();
+	    vo.setPt_idx(pt_idx);
+	    vo.setPt_name(pt_name);
+	    vo.setPt_category(pt_category);
+	    vo.setPt_content(pt_content);
+	    System.out.println(ptImage);
+
+	    // 1. 문자열(기존 이미지)도 같이 받기
+	    String[] imageParams = request.getParameterValues("pt_image");
+	    List<String> imageList = new ArrayList<>();
+
+//	    for (int i = 0; i < imageParams.length; i++) {
+//	        MultipartFile file = (ptImage.size() > i) ? ptImage.get(i) : null;
+//	        if (file != null && !file.isEmpty()) {
+//	            // 새 파일 저장 후 경로 추가
+//	            String fileName = file.getOriginalFilename();
+//	            imageList.add(fileName); // 또는 저장 경로
+//	        } else {
+//	            // 기존 이미지 URL
+//	            imageList.add(imageParams[i]);
+//	        }
+//	    }
+//
+//	    vo.setPt_image(String.join(",", imageList));
+	    System.out.println("최종 이미지 리스트: " + vo.getPt_image());
+
 	    return ResponseEntity.ok(result);
 	}
 

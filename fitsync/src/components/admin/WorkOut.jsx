@@ -221,13 +221,11 @@ const WorkOut = () => {
     formData.append('pt_category', postData.pt_category);
     formData.append('pt_content', postData.pt_content);
 
-    postData.pt_image.forEach((img, i) => {
-      if (img && typeof img !== "string") {
-        formData.append('pt_image', img);
-      } else if (img) {
-        formData.append('pt_image_url', img);
-      }
+    let imgData = [];
+    postData.pt_image.forEach(img => {
+      imgData.push(img);
     });
+    formData.append('pt_image', imgData.join(","));
 
     const response = await axios.put('/admin/workout', formData, {
       withCredentials: true,
