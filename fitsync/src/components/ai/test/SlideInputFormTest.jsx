@@ -308,63 +308,84 @@ const InputLabel = styled.label`
 `;
 
 const InputField = styled.input`
-    background: var(--bg-secondary);
-    border: 3px solid var(--border-light);
-    color: var(--text-primary);
-    border-radius: 16px;
-    padding: 1.5rem 1.2rem;
-    font-size: 2.2rem;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    
-    &:focus {
-        border-color: var(--primary-blue);
-        outline: none;
-        transform: translateY(-2px);
-        background: var(--bg-tertiary);
-    }
-    
-    &::placeholder {
-        color: var(--text-tertiary);
-        font-size: 1.1rem;
-        font-weight: 400;
-    }
-    
-    @media (max-width: 480px) {
-        padding: 1.3rem 1rem;
-        font-size: 2.1rem;
-    }
+  background: var(--bg-secondary);
+  border: 3px solid var(--border-light);
+  color: var(--text-primary);
+  border-radius: 16px;
+  padding: 1.5rem 1.2rem;
+  font-size: 2.2rem;
+  transition: all 0.3s ease;
+  font-weight: 500;
+
+  &:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+    transform: translateY(-2px);
+    background: var(--bg-tertiary);
+  }
+
+  &::placeholder {
+    color: var(--text-tertiary);
+    font-size: 1.1rem;
+    font-weight: 400;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.3rem 1rem;
+    font-size: 2.1rem;
+  }
+
+  /* 화살표 제거 */
+  /* Chrome, Safari, Edge, Opera */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Firefox */
+  &[type='number'] {
+    -moz-appearance: textfield;
+  }
 `;
 
+
 const SelectField = styled.select`
+  background: var(--bg-secondary);
+  border: 3px solid var(--border-light);
+  color: var(--text-primary);
+  border-radius: 16px;
+  padding: 1.5rem 1.2rem;
+  font-size: 2.2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-weight: 500;
+  appearance: none; /* 기본 화살표 제거 */
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23666' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 1.2rem center;
+  background-size: 1.5rem;
+  
+  &:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+    background: var(--bg-tertiary);
+  }
+
+  /* option 기본 스타일 */
+  option {
     background: var(--bg-secondary);
-    border: 3px solid var(--border-light);
     color: var(--text-primary);
-    border-radius: 16px;
-    padding: 1.5rem 1.2rem;
-    font-size: 2.2rem;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    font-weight: 500;
-    
-    &:focus {
-        border-color: var(--primary-blue);
-        outline: none;
-        transform: translateY(-2px);
-        background: var(--bg-tertiary);
-    }
-    
-    option {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        padding: 1rem;
-        font-weight: 500;
-    }
-    
-    @media (max-width: 480px) {
-        padding: 1.3rem 1rem;
-        font-size: 2.1rem;
-    }
+    font-size: 1.8rem;
+    padding: 1.2rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.3rem 1rem;
+    font-size: 2.1rem;
+    background-position: right 1rem center;
+    background-size: 1.3rem;
+  }
 `;
 
 // 체크박스 그룹
@@ -407,7 +428,7 @@ const CheckboxCard = styled.label`
     
     @media (max-width: 480px) {
         padding: 1rem;
-        font-size: 1rem;
+        font-size: 1.8rem;
         gap: 0.8rem;
     }
 `;
@@ -511,24 +532,20 @@ const NavButton = styled.button`
 const NextButton = styled(NavButton)`
     background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 100%);
     color: white;
-    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.3);
     font-weight: 700;
     
     &:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
     }
 `;
 
 const SubmitButton = styled(NavButton)`
     background: linear-gradient(135deg, var(--check-green) 0%, var(--success) 100%);
     color: white;
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
     font-weight: 700;
     
     &:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
     }
 `;
 
