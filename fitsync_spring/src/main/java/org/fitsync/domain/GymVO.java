@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GymVO {
 	private int gym_idx;
-	private String gym_name, gym_latitude, gym_longitude;
+	private String gym_name, gym_latitude, gym_longitude, gym_address;
 }

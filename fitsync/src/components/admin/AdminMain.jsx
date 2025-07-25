@@ -39,6 +39,7 @@ const AdminMain = () => {
                 <Link to="/admin/api">api 모니터링</Link>
                 <Link to="/admin/awards">자격인증</Link>
                 <Link to="/admin/report">신고</Link>
+                <Link to="/admin/gym">체육관 추가</Link>
             </AdminNav>
             <AdminContent>
                 <Outlet />

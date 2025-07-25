@@ -8,15 +8,18 @@ import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.AwardsVO;
+import org.fitsync.domain.GymVO;
 import org.fitsync.domain.ReportVO;
 import org.fitsync.mapper.AwardsMapper;
 import org.fitsync.service.ApiLogServiceImple;
 import org.fitsync.service.AwardsServiceImple;
+import org.fitsync.service.GymServiceImple;
 import org.fitsync.service.ReportServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +42,9 @@ public class AdminController {
 	
 	@Autowired
 	AwardsServiceImple awardService;
+
+	@Autowired
+	GymServiceImple gymService;
 	
     @GetMapping(value = "/test", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<String> test() {
@@ -144,6 +150,60 @@ public class AdminController {
 		return ResponseEntity.ok(result);
 	} 
 	
-	
+	// 체육관 추가
+	@PostMapping("/gym")
+	public ResponseEntity<?> addGym(@RequestBody GymVO gym) {
+		System.out.println("gym !!!! : " + gym);
+		Map<String, Object> result = new HashMap<>();
+		try {
+			gymService.registerGym(gym);
+			result.put("success", true);
+		} catch (Exception e) {
+			result.put("success", false);
+			result.put("msg", e.getMessage());
+		}
+		return ResponseEntity.ok(result);
+	}
+
+	// 체육관 가져오기
+	@GetMapping("/gym")
+	public ResponseEntity<?> getGym(@RequestBody int gym_idx) {
+		GymVO gym = gymService.getGymById(gym_idx);
+		Map<String, Object> result = new HashMap<>();
+		result.put("success", true);
+		result.put("data", gym);
+		return ResponseEntity.ok(result);
+	}
+
+	// 체육관 목록 가져오기
+	@GetMapping("/gyms")
+	public ResponseEntity<?> getGymList() {
+		List<GymVO> gyms = gymService.getAllGyms();
+		Map<String, Object> result = new HashMap<>();
+		result.put("success", true);
+		result.put("data", gyms);
+		return ResponseEntity.ok(result);
+	}
+
+	// 체육관 수정
+	@PutMapping("/gym")
+	public ResponseEntity<?> updateGym(@RequestBody GymVO gym) {
+		boolean updated = gymService.updateGym(gym);
+		Map<String, Object> result = new HashMap<>();
+		result.put("success", updated);
+		result.put("msg", updated ? "수정 완료" : "수정 실패");
+		return ResponseEntity.ok(result);
+	}
+
+	// 체육관 삭제
+	@DeleteMapping("/gym")
+	public ResponseEntity<?> deleteGym(@RequestBody int gym_idx) {
+		boolean deleted = gymService.deleteGym(gym_idx);
+		Map<String, Object> result = new HashMap<>();
+		result.put("success", deleted);
+		result.put("msg", deleted ? "삭제 완료" : "삭제 실패");
+		return ResponseEntity.ok(result);
+	}
+
 
 }

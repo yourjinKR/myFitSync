@@ -42,6 +42,7 @@ import BodyInputForm from '../components/user/BodyInputForm';
 import Awards from '../components/admin/Awards';
 import ResponseResultPage from '../components/ai/test/ResponseResultPage';
 import AIWorkoutService from '../components/ai/test/AIWorkoutService';
+import Gym from '../components/admin/Gym';
 
 
 const DisplayWrapper = styled.div`
@@ -141,6 +142,7 @@ const Display = () => {
             <Route path='awards' element={<Awards/>}/>
             <Route path='ai' element={<AItest/>}/>
             <Route path='api' element={<AdminApiContainer/>}/>
+            <Route path='gym' element={<Gym/>}/>
           </Route>
 
         </Routes>
