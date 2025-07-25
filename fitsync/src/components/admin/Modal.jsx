@@ -27,6 +27,20 @@ const ModalContent = styled.div`
     font-size: 3rem;
     font-weight:bold;
   }
+  select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.6rem;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    margin: 10px 0;
+    background: var(--bg-white);
+    color: var(--text-black);
+    option {
+      font-size: 1.6rem;
+      color: var(--text-black);
+    }
+  }
   textarea {
     width: 100%;
     height: 100px;
@@ -65,19 +79,56 @@ const ModalContent = styled.div`
     color: var(--text-black);
     font-size: 2rem;
   }
+  & > table > tbody > tr > th {
+    display: flex;
+    flex: 1 !important;
+    justify-content: flex-start;
+    align-items: center;
+    color: var(--text-black);
+  }
+  & > table > tbody > tr > td {
+    display: flex;
+    flex: 3.5 !important;
+    justify-content: flex-start;
+    align-items: center;
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 1.6rem;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      background: var(--bg-white);
+      color: var(--text-black);
+    }
+    
+    img {
+      border: 1px solid var(--border-light);
+      width: 150px;
+      cursor: pointer;
+    }
+    input[type="file"] {
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      position: absolute;
+      opacity: 0;
+      z-index: -1;
+    }
+  }
 `;
 
-const Modal = ({modalOpen, setModalOpen, modalData, setModalData}) => {
+const Modal = ({ modalOpen, setModalOpen, modalData, setModalData }) => {
 
   return (
     <>
       {modalOpen && (
-          <DetailModal onClick={() => setModalOpen(false)}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              {modalData}
-            </ModalContent>
-          </DetailModal>
-        )}
+        <DetailModal onClick={() => setModalOpen(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            {modalData}
+          </ModalContent>
+        </DetailModal>
+      )}
     </>
   );
 };

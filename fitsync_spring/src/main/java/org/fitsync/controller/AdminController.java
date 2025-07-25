@@ -9,11 +9,12 @@ import javax.servlet.http.HttpSession;
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.GymVO;
+import org.fitsync.domain.PtVO;
 import org.fitsync.domain.ReportVO;
-import org.fitsync.mapper.AwardsMapper;
 import org.fitsync.service.ApiLogServiceImple;
 import org.fitsync.service.AwardsServiceImple;
 import org.fitsync.service.GymServiceImple;
+import org.fitsync.service.PtServiceImple;
 import org.fitsync.service.ReportServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -27,7 +28,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/admin")
@@ -36,15 +39,15 @@ public class AdminController {
 	
 	@Autowired
 	ReportServiceImple rservice;
-	
 	@Autowired
 	ApiLogServiceImple apiLogService;
-	
 	@Autowired
 	AwardsServiceImple awardService;
 
 	@Autowired
 	GymServiceImple gymService;
+	@Autowired
+	PtServiceImple ptService;
 	
     @GetMapping(value = "/test", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<String> test() {
@@ -110,7 +113,6 @@ public class AdminController {
 	@PutMapping("/report/hidden/{report_idx}")
 	public ResponseEntity<?> updateReport(@PathVariable int report_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
-		System.out.println("처리전");
 		boolean update = rservice.updateReport(report_idx, -1);
 		if(update) {
 			result.put("success", true);
@@ -130,22 +132,19 @@ public class AdminController {
 			result.put("vo", vo);
 		}else {			
 			result.put("success", false);
-			result.put("msg", "데이터가 없습니다.");
+			result.put("msg", "데이터 호출에 실패하였습니다.");
 		}
 		return ResponseEntity.ok(result);
 	} 
 	
 	@PutMapping("/awards")
 	public ResponseEntity<?> updateAwards(@RequestBody AwardsVO vo, HttpSession session){
-		System.out.println(vo);
 		Map<String, Object> result = new HashMap<String, Object>();
 		boolean update = awardService.updateAwards(vo);
 		if(update) {
 			result.put("success", true);
-//			result.put("vo", vo);
 		}else {			
 			result.put("success", false);
-			result.put("msg", "데이터가 없습니다.");
 		}
 		return ResponseEntity.ok(result);
 	} 
@@ -163,6 +162,41 @@ public class AdminController {
 			result.put("msg", e.getMessage());
 		}
 		return ResponseEntity.ok(result);
+	}
+	
+	@GetMapping("/workout")
+	public ResponseEntity<?> getWorkOut(HttpSession session){
+		Map<String, Object> result = new HashMap<String, Object>();
+		List<PtVO> list = ptService.getWorkOut();
+		if(list != null) {
+			result.put("success", true);
+			result.put("list", list);
+		}else {			
+			result.put("success", false);
+			result.put("msg", "데이터 호출에 실패하였습니다.");
+		}
+		return ResponseEntity.ok(result);
+	} 
+	
+	@PutMapping("/workout")
+	public ResponseEntity<?> updateWorkOut(
+	    @RequestParam("pt_idx") String ptIdx,
+	    @RequestParam("pt_name") String ptName,
+	    @RequestParam("pt_category") String ptCategory,
+	    @RequestParam("pt_content") String ptContent,
+	    @RequestParam(value = "pt_image_url", required = false) List<String> ptImageUrl,
+	    @RequestParam(value = "pt_image", required = false) List<MultipartFile> ptImage,
+	    HttpSession session
+	) {
+	    Map<String, Object> result = new HashMap<>();
+	    System.out.println("pt_idx: " + ptIdx);
+	    System.out.println("pt_name: " + ptName);
+	    System.out.println("pt_category: " + ptCategory);
+	    System.out.println("pt_content: " + ptContent);
+	    System.out.println("pt_image_url: " + ptImageUrl);
+	    System.out.println("pt_image: " + ptImage);
+	    // 파일 저장 및 비즈니스 로직 처리
+	    return ResponseEntity.ok(result);
 	}
 
 	// 체육관 가져오기

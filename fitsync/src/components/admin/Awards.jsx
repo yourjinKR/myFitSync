@@ -142,7 +142,8 @@ const Awards = () => {
 
   const getAwards = async () => {
     try {
-      const response = await axios.get('/admin/awards');
+      const response = await axios.get('/admin/awards'
+        ,{withCredentials: true});
       const data = response.data;
       if(data.success) {
         setAwardData(data.vo);
@@ -203,7 +204,6 @@ const Awards = () => {
           </>
         );
     }
-
   }
 
 

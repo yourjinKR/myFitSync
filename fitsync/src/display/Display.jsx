@@ -43,6 +43,7 @@ import Awards from '../components/admin/Awards';
 import ResponseResultPage from '../components/ai/test/ResponseResultPage';
 import AIWorkoutService from '../components/ai/test/AIWorkoutService';
 import Gym from '../components/admin/Gym';
+import WorkOut from '../components/admin/WorkOut';
 
 
 const DisplayWrapper = styled.div`
@@ -138,6 +139,7 @@ const Display = () => {
           </Route>
 
           <Route path='/admin' element={<AdminMain/>}>
+            <Route path='workout' element={<WorkOut/>}/>
             <Route path='report' element={<Report/>}/>
             <Route path='awards' element={<Awards/>}/>
             <Route path='ai' element={<AItest/>}/>

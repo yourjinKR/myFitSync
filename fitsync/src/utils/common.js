@@ -1,0 +1,1 @@
+export const blank_img = "https://res.cloudinary.com/dhupmoprk/image/upload/v1753341186/NoImage_d18r8v.jpg"
