@@ -6,6 +6,7 @@ import { FormGroup, Label, Input, TimeSelect, TimeInputWrapper, ButtonSubmit, Se
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../action/userAction';
+import AreaDropDown from '../../hooks/AreaDropDown';
 
 const MemberRegisterWrapper = styled.div`
   margin: 0 auto;
@@ -155,6 +156,7 @@ const MemberRegister = () => {
 
   return (
     <MemberRegisterWrapper>
+      {/* <AreaDropDown/> */}
       <FormGroup>
         <Label htmlFor='body_height'>키 <span>(필수)</span></Label>
         <Input
@@ -172,6 +174,7 @@ const MemberRegister = () => {
           inputMode="decimal"
         />
       </FormGroup>
+      
       <FormGroup>
         <Label htmlFor='body_weight'>몸무게 <span>(필수)</span></Label>
         <Input
@@ -209,17 +212,28 @@ const MemberRegister = () => {
         </Select>
       </FormGroup>
       <FormGroup>
-        <Label htmlFor='member_disease'>질병 <span>(필수)</span></Label>
-        <Input
-          type="text"
-          onChange={handleChange}
-          value={info.member_disease}
+        <Label htmlFor='member_disease'>불편상항 <span>(필수)</span></Label>
+        <Select 
+          onChange={handleChange} 
           name="member_disease"
           id="member_disease"
-          placeholder="예) 고혈압, 당뇨 등"
           ref={el => (inputRefs.current.member_disease = el)}
           $invalid={invalid.member_disease}
-        />
+        >
+          <option value="없음">없음</option>
+          <option value="손목">손목</option>
+          <option value="팔꿈치">팔꿈치</option>
+          <option value="어깨">어깨</option>
+          <option value="목">목</option>
+          <option value="허리">허리</option>
+          <option value="골반">골반</option>
+          <option value="발목">발목</option>
+          <option value="무릎">무릎</option>
+          <option value="심장">심장</option>
+          <option value="기저질환">기저질환</option>
+          <option value="저혈압">저혈압</option>
+          <option value="고혈압">고혈압</option>
+        </Select>
       </FormGroup>
       <FormGroup>
         <Label htmlFor='member_time_start'>운동 시간대 <span>(필수, 24시간제)</span></Label>

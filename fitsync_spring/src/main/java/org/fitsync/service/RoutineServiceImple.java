@@ -39,7 +39,9 @@ public class RoutineServiceImple implements RoutineService {
 	public List<RoutineListVO> getRoutineList(int member_idx) {
 		List<RoutineListVO> list = null;
 		List<RoutineListVO> sortList = new ArrayList<RoutineListVO>();
+		System.out.println("member_idx : " + member_idx);
 		RoutineArrVO sort = rlmapper.sortGet(member_idx);
+		System.out.println("sort : " + sort);
 		list = rlmapper.getRoutineList(member_idx);
 		if(sort != null) {
 			String[] arr =  sort.getRoutine_arr().split(",");

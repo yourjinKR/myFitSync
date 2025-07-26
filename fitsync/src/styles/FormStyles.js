@@ -22,6 +22,7 @@ const sharedInputStyles = css`
   width: 100%;
   height: 44px;
   padding: 0 12px;
+  color: var(--text-black);
   border: 1.5px solid #e3e7f1;
   border-radius: 8px;
   font-size: 1rem;
@@ -51,6 +52,9 @@ export const Input = styled.input`
 
 export const Select = styled.select`
   ${sharedInputStyles}
+  option {
+    color: var(--text-black);
+  }
 `;
 
 export const TextArea = styled.textarea`
