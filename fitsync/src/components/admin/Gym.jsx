@@ -2,7 +2,6 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Modal from "./Modal";
-import { set } from "date-fns";
 import { ButtonSubmit } from "../../styles/FormStyles";
 import MapTest, { MapContainer } from "../map/MapTest";
 import { GymUtil } from "../../utils/GymUtils";
@@ -142,171 +141,247 @@ const SubmitButton = styled(ButtonSubmit)`
   cursor: pointer;
 `;
 
+const ErrorMessage = styled.div`
+  color: var(--warning);
+  font-size: 1.4rem;
+  margin-top: 10px;
+  text-align: center;
+`;
+
 const initLatLng = { lat: 37.5665, lng: 126.9780 };
-const initGym = {gym_name: "", gym_latitude: 37.5665, gym_longitude: 126.9780, gym_address: "",};
+const initGym = {
+  gym_name: "", 
+  gym_latitude: 37.5665, 
+  gym_longitude: 126.9780, 
+  gym_address: ""
+};
 
 const Gym = () => {
-  const [gyms, setGyms] = useState([initGym]);
+  const [gyms, setGyms] = useState([]);
   const [newGym, setNewGym] = useState(initGym);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const fetchData = async () => {
+  // 체육관 목록 조회
+  const fetchGyms = async () => {
     try {
+      setIsLoading(true);
       const response = await GymUtil.getGyms();
-      setGyms(response.data);
+      if (response.success && response.data) {
+        setGyms(response.data);
+      }
     } catch (error) {
       console.error("Failed to fetch gyms:", error);
+      setError("체육관 목록을 불러오는데 실패했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchGyms();
   }, []);
 
-  useEffect(() => {
-    console.log(newGym);
-  },[newGym]);
-
-  const [mapPos, setMapPos] = useState(initLatLng); // 지도에 표시할 위치
-
+  // 체육관 추가 모달 열기
   const handleAdd = () => {
-    setModalMode(ADD);
+    setModalMode('add');
     setNewGym(initGym);
-    setModalOpen(true);
-  }
-
-  const handleEdit = async (id) => {
-    console.log(`Edit gym with id: ${id}`);
-    const {data, success} = await GymUtil.getGym(id);
-    if(success) {
-      setNewGym(data);
-    }
-
-    setModalMode(EDIT);
+    setError('');
     setModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    const confirm = window.confirm('해당 체육관을 삭제하시겠습니까?');
-
-    if (!confirm) return;
-
-    console.log(`Delete gym with id: ${id}`);
-    const {data, success} = await GymUtil.deleteGym(id);
-    if(success) {
-      fetchData();
-    }
-  };
-
-  /** 체육관 추가 액션 함수 */
-  const handleAddGym = async () => {
-    const response = await GymUtil.addGym(newGym);
-    if (response.success) {
-      fetchData();
-    }
-
-    setModalOpen(false);
-    setNewGym({gym_name: "", gym_latitude: null, gym_longitude: null, gym_address: "",});
-  };
-
-  /** 체육관 수정 액션 함수 */
-  const handleEditGym = async () => {
-    console.log('지금부터 수정할게요 뀨', newGym);
-    const gym = newGym;
-    
-    const response = await GymUtil.updateGym(gym);
-    if (response.success) {
-      fetchData();
-    }
-
-    setModalOpen(false);
-  };
-
-  const handleSearchLocation = () => {
-    if (!newGym.gym_address || !window.kakao?.maps) return;
-
-    const geocoder = new window.kakao.maps.services.Geocoder();
-    geocoder.addressSearch(newGym.gym_address, (result, status) => {
-      if (status === window.kakao.maps.services.Status.OK) {
-        console.log(result[0]);
-        
-        const { y, x, address_name } = result[0];
-        const gym_latitude = parseFloat(y);
-        const gym_longitude = parseFloat(x);
-        const gym_address = address_name;
-        setNewGym((prev) => ({ ...prev, gym_latitude, gym_longitude, gym_address }));
+  // 체육관 수정 모달 열기
+  const handleEdit = async (gymIdx) => {
+    try {
+      setIsLoading(true);
+      const response = await GymUtil.getGym(gymIdx);
+      if (response.success && response.data) {
+        setNewGym(response.data);
+        setModalMode('edit');
+        setError('');
+        setModalOpen(true);
       } else {
-        alert("주소를 찾을 수 없습니다.");
+        setError("체육관 정보를 불러오는데 실패했습니다.");
       }
-    });
+    } catch (error) {
+      console.error("Failed to fetch gym:", error);
+      setError("체육관 정보를 불러오는데 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
-  // 모드 분기
-  const ADD = {title : '추가', action : handleAddGym}
-  const EDIT = {title : '수정', action : handleEditGym}
-  const [modalMode, setModalMode] = useState(ADD);
 
-  /** 체육관 모달 */ 
-  const setGymModalData = () => {
-    return (
-      <ModalContent>
-        <ModalHeader>체육관 {modalMode.title}</ModalHeader>
+  // 체육관 삭제
+  const handleDelete = async (gymIdx) => {
+    const confirmDelete = window.confirm('해당 체육관을 삭제하시겠습니까?');
+    if (!confirmDelete) return;
 
-        {/* 위치 검색 폼 */}
-        <Form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSearchLocation();
-          }}
-          marginBottom
-        >
-          <Input
-            type="text"
-            placeholder="위치 주소 입력 (예: 서울시 강남구...)"
-            value={newGym.gym_address}
-            onChange={(e) =>
-              setNewGym({ ...newGym, gym_address: e.target.value })
-            }
-            flex
-          />
-          <SubmitButton type="submit">찾기</SubmitButton>
-        </Form>
+    try {
+      setIsLoading(true);
+      const response = await GymUtil.deleteGym(gymIdx);
+      if (response.success) {
+        await fetchGyms(); // 목록 새로고침
+      } else {
+        setError("체육관 삭제에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to delete gym:", error);
+      setError("체육관 삭제에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        <MapContainer style={{ marginBottom: "20px" }}>
-          {newGym && <MapTest position={{lat : newGym.gym_latitude, lng : newGym.gym_longitude}} />}
-        </MapContainer>
+  // 주소 검색
+  const handleSearchLocation = async (e) => {
+    e.preventDefault();
+    
+    if (!newGym.gym_address.trim()) {
+      setError("주소를 입력해주세요.");
+      return;
+    }
 
-        {/* 체육관 등록 폼 */}
-        <Form
-          onSubmit={(e) => {
-            e.preventDefault();
-            modalMode.action();
-          }}
-          column
-        >
-          <Input
-            type="text"
-            placeholder="체육관명"
-            value={newGym.gym_name}
-            onChange={(e) => setNewGym({ ...newGym, gym_name: e.target.value })}
-          />
-          <SubmitButton type="submit" green>
-            {modalMode.title}
-          </SubmitButton>
-        </Form>
-      </ModalContent>
-    );
-  }
+    if (!window.kakao?.maps) {
+      setError("카카오 지도 서비스를 불러올 수 없습니다.");
+      return;
+    }
 
-  /** 체육관 수정 모달 */
+    try {
+      const geocoder = new window.kakao.maps.services.Geocoder();
+      geocoder.addressSearch(newGym.gym_address, (result, status) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+          const { y, x, address_name } = result[0];
+          setNewGym(prev => ({
+            ...prev,
+            gym_latitude: parseFloat(y),
+            gym_longitude: parseFloat(x),
+            gym_address: address_name
+          }));
+          setError('');
+        } else {
+          setError("주소를 찾을 수 없습니다. 다시 시도해주세요.");
+        }
+      });
+    } catch (error) {
+      console.error("Address search error:", error);
+      setError("주소 검색 중 오류가 발생했습니다.");
+    }
+  };
 
+  // 체육관 저장 (추가/수정)
+  const handleSaveGym = async (e) => {
+    e.preventDefault();
+    
+    if (!newGym.gym_name.trim()) {
+      setError("체육관명을 입력해주세요.");
+      return;
+    }
+
+    if (!newGym.gym_address.trim()) {
+      setError("주소를 검색해주세요.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      let response;
+      
+      if (modalMode === 'add') {
+        response = await GymUtil.addGym(newGym);
+      } else {
+        response = await GymUtil.updateGym(newGym);
+      }
+
+      if (response.success) {
+        await fetchGyms(); // 목록 새로고침
+        setModalOpen(false);
+        setNewGym(initGym);
+        setError('');
+      } else {
+        setError(response.message || "저장에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Save gym error:", error);
+      setError("저장 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 모달 닫기
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setNewGym(initGym);
+    setError('');
+  };
+
+  // 모달 컨텐츠
+  const renderModalContent = () => (
+    <ModalContent>
+      <ModalHeader>
+        체육관 {modalMode === 'add' ? '추가' : '수정'}
+      </ModalHeader>
+
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+
+      {/* 위치 검색 폼 */}
+      <Form onSubmit={handleSearchLocation} marginBottom>
+        <Input
+          type="text"
+          placeholder="위치 주소 입력 (예: 서울시 강남구...)"
+          value={newGym.gym_address}
+          onChange={(e) =>
+            setNewGym(prev => ({ ...prev, gym_address: e.target.value }))
+          }
+          flex
+        />
+        <SubmitButton type="submit" disabled={isLoading}>
+          {isLoading ? "검색중..." : "찾기"}
+        </SubmitButton>
+      </Form>
+
+      {/* 지도 */}
+      <MapContainer style={{ marginBottom: "20px" }}>
+        <MapTest 
+          position={{
+            lat: newGym.gym_latitude, 
+            lng: newGym.gym_longitude
+          }} 
+        />
+      </MapContainer>
+
+      {/* 체육관 등록/수정 폼 */}
+      <Form onSubmit={handleSaveGym} column>
+        <Input
+          type="text"
+          placeholder="체육관명"
+          value={newGym.gym_name}
+          onChange={(e) => 
+            setNewGym(prev => ({ ...prev, gym_name: e.target.value }))
+          }
+        />
+        <SubmitButton type="submit" green disabled={isLoading}>
+          {isLoading 
+            ? "저장중..." 
+            : modalMode === 'add' ? '추가' : '수정'
+          }
+        </SubmitButton>
+      </Form>
+    </ModalContent>
+  );
 
   return (
     <GymWrapper>
       <div className="header">
         <h2>체육관 관리</h2>
-        <button onClick={() => handleAdd()}>체육관 추가</button>
+        <button onClick={handleAdd} disabled={isLoading}>
+          체육관 추가
+        </button>
       </div>
+
+      {error && <ErrorMessage>{error}</ErrorMessage>}
 
       <table className="gym-table">
         <thead>
@@ -318,28 +393,46 @@ const Gym = () => {
           </tr>
         </thead>
         <tbody>
-          {gyms.map((gym) => (
-            <tr key={gym.gym_idx}>
-              <td>{gym.gym_idx}</td>
-              <td>{gym.gym_name}</td>
-              <td>{gym.gym_address}</td>
-              <td className="actions">
-                <button className="edit" onClick={() => handleEdit(gym.gym_idx)}>
-                  Edit
-                </button>
-                <button className="delete" onClick={() => handleDelete(gym.gym_idx)}>
-                  Delete
-                </button>
-              </td>
+          {isLoading ? (
+            <tr>
+              <td colSpan="4">로딩중...</td>
             </tr>
-          ))}
+          ) : gyms.length === 0 ? (
+            <tr>
+              <td colSpan="4">등록된 체육관이 없습니다.</td>
+            </tr>
+          ) : (
+            gyms.map((gym) => (
+              <tr key={gym.gym_idx}>
+                <td>{gym.gym_idx}</td>
+                <td>{gym.gym_name}</td>
+                <td>{gym.gym_address}</td>
+                <td className="actions">
+                  <button 
+                    className="edit" 
+                    onClick={() => handleEdit(gym.gym_idx)}
+                    disabled={isLoading}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    className="delete" 
+                    onClick={() => handleDelete(gym.gym_idx)}
+                    disabled={isLoading}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
       <Modal
         modalOpen={modalOpen}
-        setModalOpen={setModalOpen}
-        modalData={setGymModalData()}
+        setModalOpen={handleCloseModal}
+        modalData={renderModalContent()}
       />
     </GymWrapper>
   );
