@@ -1276,7 +1276,7 @@ const SubscriptionMain = () => {
       {isSubscriber && (
         <PremiumServiceCard>
           {/* 프리미엄 아이콘 */}
-          <PremiumIcon>💎</PremiumIcon>
+          {/* <PremiumIcon>💎</PremiumIcon> */}
           
           {/* 프리미엄 타이틀 */}
           <PremiumTitle>FitSync Premium</PremiumTitle>

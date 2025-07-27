@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApiResponseDto {
+public class ApiResponseDTO {
     private String content;
     private Integer logIdx;
 }

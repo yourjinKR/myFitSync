@@ -1,6 +1,6 @@
 package org.fitsync.service;
 
-import org.fitsync.domain.ApiResponseDto;
+import org.fitsync.domain.ApiResponseDTO;
 
 import io.jsonwebtoken.io.IOException;
 
@@ -10,7 +10,7 @@ public interface AIService {
      * @param userMessage 사용자 입력
      * @return AI 응답 텍스트
      */
-     ApiResponseDto requestAIResponse(String userMessage, int memberIdx) throws Exception;
+     ApiResponseDTO requestAIResponse(String userMessage, int memberIdx) throws Exception;
 
 }
 

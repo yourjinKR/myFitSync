@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.fitsync.domain.ApiLogVO;
-import org.fitsync.domain.ApiResponseDto;
+import org.fitsync.domain.ApiResponseDTO;
 import org.fitsync.mapper.ApiLogMapper;
 import org.fitsync.mapper.PtMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +53,7 @@ public class AIServiceImple implements AIService {
 	
 
     @Override
-    public ApiResponseDto requestAIResponse(String userMessage, int memberIdx) throws IOException {
+    public ApiResponseDTO requestAIResponse(String userMessage, int memberIdx) throws IOException {
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
         String workoutList = getWorkoutNamesCommaSeparated();
         Integer logIdx = null;
@@ -191,7 +191,7 @@ public class AIServiceImple implements AIService {
             throw new IOException("GPT 요청 실패: " + content);
         }
 
-        return new ApiResponseDto(content, logIdx);
+        return new ApiResponseDTO(content, logIdx);
     }
 
 }
