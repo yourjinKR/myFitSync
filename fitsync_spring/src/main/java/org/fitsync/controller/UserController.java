@@ -22,6 +22,8 @@ import lombok.extern.log4j.Log4j;
 
 import java.util.List;
 
+import javax.servlet.http.HttpSession;
+
 @Log4j
 @RestController
 @RequestMapping("/user")
@@ -121,12 +123,14 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("매칭 차감 실패");
         }
     }
+    
     // 인바디 데이터 불러오기
     @GetMapping("body/{member_idx}")
     public ResponseEntity<List<BodyVO>> getBodyList(@PathVariable("member_idx") int member_idx) {
         List<BodyVO> list = bodyService.getBodyListByMemberIdx(member_idx);
         return ResponseEntity.ok(list);
     }
+    
     // 인바디 데이터 추가 등록
     @PostMapping("/body/{member_idx}")
     public ResponseEntity<String> insertBody(@PathVariable int member_idx, @RequestBody BodyVO vo) {
@@ -138,5 +142,43 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("fail");
         }
     }
+    
+    // 최신 body 정보 조회
+    @GetMapping("/latest/{memberIdx}")
+    public ResponseEntity<?> getLatestBodyByMember(@PathVariable("memberIdx") int memberIdx) {
+        try {
+            BodyVO latestBody = bodyService.getLatestBodyByMemberIdx(memberIdx);
+            if (latestBody == null) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("최신 인바디 데이터가 없습니다.");
+            }
+            return ResponseEntity.ok(latestBody);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("서버 오류 발생: " + e.getMessage());
+        }
+    }
+    
+    // 최신 인바디 정보 수정
+    @PatchMapping("body/{bodyIdx}")
+    public ResponseEntity<?> updateBodyData(
+        @PathVariable("bodyIdx") int bodyIdx,
+        @RequestBody BodyVO updatedBody
+    ) {
+        try {
+            updatedBody.setBody_idx(bodyIdx);
+            int result = bodyService.updateBodyData(updatedBody);
+
+            if (result > 0) {
+                return ResponseEntity.ok("수정이 완료되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("수정에 실패했습니다.");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("서버 오류 발생: " + e.getMessage());
+        }
+    }
+
+
     
 }

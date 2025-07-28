@@ -30,4 +30,9 @@ public class BodyServiceImple implements BodyService {
     public BodyVO getLatestBodyByMemberIdx(int member_idx) {
         return mapper.selectLatestByMemberIdx(member_idx);
     }
+    
+    @Override
+    public int updateBodyData(BodyVO body) {
+        return mapper.updateBodyData(body);
+    }
 }

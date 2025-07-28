@@ -5,6 +5,7 @@ import BodyComparisonChart from './BodyComparisonChart';
 import TrainerCalendarView from '../trainer/TrainerCalendarView';
 import Routine from '../routine/Routine';
 import axios from 'axios';
+import LatestBodyInfo from './LatestBodyInfo';
 
 
 const Container = styled.div`
@@ -33,7 +34,7 @@ const SectionTitle = styled.h2`
 const MyPage = () => {
     const [routineList, setRoutineList] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [chartKey, setChartKey] = useState(0);
     // API에서 데이터 받아오는 함수
     const handleRoutineResponse = async () => {
       try {
@@ -58,6 +59,10 @@ const MyPage = () => {
     handleRoutineResponse();
   }, []);
 
+   // 인바디 수정 시 차트 갱신
+  const handleBodyUpdate = () => {
+    setChartKey(prev => prev + 1);
+  };
   if (loading) return <div>로딩중...</div>;
   
   return (
@@ -67,8 +72,12 @@ const MyPage = () => {
         <TrainerCalendarView />
       </Section>
       <Section>
+        <SectionTitle>최근 인바디 정보</SectionTitle>
+        <LatestBodyInfo onUpdate={handleBodyUpdate} />
+      </Section>
+      <Section>
         <SectionTitle>인바디 변화 그래프</SectionTitle>
-        <BodyComparisonChart />
+        <BodyComparisonChart key={chartKey}/>
       </Section>
       <Section>
         <SectionTitle>내 루틴</SectionTitle>

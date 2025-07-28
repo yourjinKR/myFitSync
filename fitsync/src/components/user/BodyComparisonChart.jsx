@@ -107,7 +107,6 @@ const ModalContent = styled.div`
   width: 95vw;
 `;
 
-// 색상 정의
 const chartColors = {
   weight: '#1976d2',
   muscle: '#43a047',
@@ -116,11 +115,10 @@ const chartColors = {
   bmi: '#0091ea',
 };
 
-// 본체 컴포넌트
 const BodyComparisonChart = () => {
   const [bodyData, setBodyData] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [activeMetrics, setActiveMetrics] = useState(['weight', 'muscle', 'fat', 'fatPercent', 'bmi']);
+  const [selectedMetric, setSelectedMetric] = useState('weight');
   const { member_idx } = useSelector((state) => state.user.user);
 
   const fetchData = () => {
@@ -132,12 +130,6 @@ const BodyComparisonChart = () => {
   useEffect(() => {
     if (member_idx) fetchData();
   }, [member_idx]);
-
-  const toggleMetric = (metric) => {
-    setActiveMetrics(prev =>
-      prev.includes(metric) ? prev.filter(m => m !== metric) : [...prev, metric]
-    );
-  };
 
   const sortedData = [...bodyData].sort(
     (a, b) => new Date(a.body_regdate) - new Date(b.body_regdate)
@@ -184,10 +176,25 @@ const BodyComparisonChart = () => {
 
   const data = {
     labels,
-    datasets: activeMetrics.map(metric => ({
-      ...datasetsConfig[metric],
+    datasets: [{
+      ...datasetsConfig[selectedMetric],
       tension: 0.3,
-    }))
+    }]
+  };
+
+  const generateScales = (metric) => {
+    return {
+      x: {
+        ticks: { color: '#555' },
+        grid: { color: '#e0e0e0' }
+      },
+      [datasetsConfig[metric].yAxisID]: {
+        type: 'linear',
+        position: 'left',
+        title: { display: true, text: datasetsConfig[metric].label },
+        grid: { drawOnChartArea: true }
+      }
+    };
   };
 
   const options = {
@@ -201,46 +208,7 @@ const BodyComparisonChart = () => {
         }
       }
     },
-    scales: {
-      x: {
-        ticks: { color: '#555' },
-        grid: { color: '#e0e0e0' }
-      },
-      yWeight: {
-        type: 'linear',
-        position: 'left',
-        title: { display: true, text: '몸무게' },
-        grid: { drawOnChartArea: false },
-      },
-      yMuscle: {
-        type: 'linear',
-        position: 'right',
-        title: { display: true, text: '골격근량' },
-        offset: true,
-        grid: { drawOnChartArea: false },
-      },
-      yFat: {
-        type: 'linear',
-        position: 'right',
-        title: { display: true, text: '체지방량' },
-        offset: true,
-        grid: { drawOnChartArea: false },
-      },
-      yFatPercent: {
-        type: 'linear',
-        position: 'right',
-        title: { display: true, text: '체지방률' },
-        offset: true,
-        grid: { drawOnChartArea: false },
-      },
-      yBMI: {
-        type: 'linear',
-        position: 'right',
-        title: { display: true, text: 'BMI' },
-        offset: true,
-        grid: { drawOnChartArea: false },
-      },
-    }
+    scales: generateScales(selectedMetric)
   };
 
   const hasIncompleteData = bodyData.some(
@@ -276,8 +244,8 @@ const BodyComparisonChart = () => {
         {Object.keys(datasetsConfig).map(metric => (
           <ToggleButton
             key={metric}
-            active={activeMetrics.includes(metric)}
-            onClick={() => toggleMetric(metric)}
+            active={selectedMetric === metric}
+            onClick={() => setSelectedMetric(metric)}
           >
             {datasetsConfig[metric].label}
           </ToggleButton>
