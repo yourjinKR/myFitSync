@@ -51,9 +51,10 @@ const RoutineAdd = () => {
   // 운동 데이터 가져오기
   const getWorkOut = async () => {
     const response = await axios.get("/routine/workout");
-    setInit(response.data.list);
-    setList(response.data.list);
-    const categories = Array.from(new Set(response.data.list.map((workout) => workout.pt_category)));
+    const data = response.data.list.filter((workout) => workout.pt_hidden === 0);
+    setInit(data);
+    setList(data);
+    const categories = Array.from(new Set(data.map((workout) => workout.pt_category)));
     setCategory(categories);
   };
 

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { set } from 'date-fns';
-import React, { use, useEffect, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import ReviewScore from '../review/ReviewScore';
 
@@ -562,6 +562,30 @@ const ChatHistory = styled.div`
   }
 `;
 
+const WrapperTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    font-size: 1.6rem;
+    background: var(--primary-blue);
+    color: var(--text-white);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  input {
+    background: var(--bg-tertiary);
+    min-width: 250px;
+    font-size: 1.4rem;
+    padding: 10px;
+  }
+`;
+
 const Report = () => {
   const init = {
     url: '',
@@ -580,6 +604,7 @@ const Report = () => {
   const [modalData, setModalData] = useState(init);
   const [userTarget, setUserTarget] = useState(targetInfo);
   const [totalData, setTotalData] = useState(null);
+  const searchRef = useRef(null);
   const [reportData, setReportData] = useState({
     member: null,
     message: null,
@@ -624,9 +649,6 @@ const Report = () => {
 
   // 현재 탭의 데이터 렌더링
   const renderTabContent = () => {
-    console.log(    reportData.message);
-    
-
     const currentData = reportData[activeTab];
 
     if (currentData === null) {
@@ -1013,7 +1035,6 @@ const Report = () => {
       const response = await axios.put(`/admin/report/${userTarget.report_idx}/${target}`, {
       }, { withCredentials: true });
       if (response.data.success) {
-        alert("제재가 완료되었습니다.");
         setModalOpen(false);
         handleReport(activeTab); // 리포트 데이터 새로고침
       } else {
@@ -1100,6 +1121,26 @@ const Report = () => {
     }
   };
 
+  const handleSearch = () => {
+    const searchTerm = searchRef.current.value;
+    reportData[activeTab] = reportData[activeTab].filter(item => {
+      if (activeTab === 'member') {
+        return item.reported?.member_name.includes(searchTerm) || item.reporter?.member_name.includes(searchTerm);
+      } else if (activeTab === 'message') {
+        return item.reported?.member_name.includes(searchTerm) || item.reporter?.member_name.includes(searchTerm) || item.message?.message_content.includes(searchTerm);
+      } else if (activeTab === 'review') {
+        return item.reported?.member_name.includes(searchTerm) || item.reporter?.member_name.includes(searchTerm) || item.review?.review_title.includes(searchTerm);
+      }
+      return false; // 기본적으로 검색어가 없으면 빈 배열 반환
+    });
+    setReportData(prev => ({
+      ...prev,
+      [activeTab]: reportData[activeTab]
+    }));
+    setEmpty(reportData[activeTab].length === 0 ? "검색 결과가 없습니다." : "");
+  };
+
+
   // 문서 클릭시 툴팁 닫기
   useEffect(() => {
     const handleDocumentClick = () => {
@@ -1114,18 +1155,32 @@ const Report = () => {
 
   return (
     <ReportWrapper>
-      <ul>
-        {tabs.map(tab => (
-          <li key={tab.id}>
-            <button
-              className={activeTab === tab.id ? 'active' : ''}
-              onClick={() => handleTabChange(tab.id)}
-            >
-              {tab.label}
-            </button>
-          </li>
-        ))}
-      </ul>
+      
+       <WrapperTop> 
+        <ul>
+          {tabs.map(tab => (
+            <li key={tab.id}>
+              <button
+                className={activeTab === tab.id ? 'active' : ''}
+                onClick={() => handleTabChange(tab.id)}
+              >
+                {tab.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div>
+          <input
+            ref={searchRef}
+            onKeyUp={e => {
+              if (e.key === 'Enter') handleSearch();
+            }}
+            type="text"
+            name="search"
+          />
+          <button onClick={handleSearch}>검색</button>
+        </div>
+      </WrapperTop>
       <TabContent>
         {renderTabContent()}
       </TabContent>

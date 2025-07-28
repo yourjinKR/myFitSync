@@ -33,7 +33,6 @@ const ModalContent = styled.div`
     font-size: 1.6rem;
     border: 1px solid var(--border-light);
     border-radius: 4px;
-    margin: 10px 0;
     background: var(--bg-white);
     color: var(--text-black);
     option {
@@ -49,7 +48,6 @@ const ModalContent = styled.div`
     border: 1px solid var(--border-light);
     border-radius: 4px;
     resize: none;
-    margin: 10px 0;
     background: var(--bg-white);
     color: var(--text-black);
   }
@@ -58,7 +56,7 @@ const ModalContent = styled.div`
     display: block;
   }
   ul {
-    margin: 15px 0 30px;
+    margin: 15px 0;
   }
   li {
     display: flex;
@@ -67,7 +65,9 @@ const ModalContent = styled.div`
   label{
     color: var(--text-black);
     font-size: 1.8rem;
-    padding-left: 10px;
+  }
+  input[type="radio"] {
+    margin-right: 10px;
   }
   p {
     background: var(--bg-white);
@@ -82,13 +82,14 @@ const ModalContent = styled.div`
   & > table > tbody > tr > th {
     display: flex;
     flex: 1 !important;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     color: var(--text-black);
+    padding: 0;
   }
   & > table > tbody > tr > td {
     display: flex;
-    flex: 3.5 !important;
+    flex: 4 !important;
     justify-content: flex-start;
     align-items: center;
 
@@ -101,7 +102,7 @@ const ModalContent = styled.div`
       background: var(--bg-white);
       color: var(--text-black);
     }
-    
+  
     img {
       border: 1px solid var(--border-light);
       width: 150px;
@@ -115,6 +116,9 @@ const ModalContent = styled.div`
       opacity: 0;
       z-index: -1;
     }
+  }
+  button {
+    margin-top: 15px;
   }
 `;
 

@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @RestController
 @RequestMapping("/admin")
@@ -47,7 +48,6 @@ public class AdminController {
 	ApiLogServiceImple apiLogService;
 	@Autowired
 	AwardsServiceImple awardService;
-
 	@Autowired
 	GymServiceImple gymService;
 	@Autowired
@@ -167,45 +167,85 @@ public class AdminController {
 		return ResponseEntity.ok(result);
 	} 
 	
-	@PutMapping("/workout")
-	public ResponseEntity<?> updateWorkOut(
-	    @RequestParam("pt_idx") int pt_idx,
+	// 운동 추가
+	@PostMapping("/workout")
+	public ResponseEntity<?> insertWorkOut(
+	    @RequestParam(value = "pt_image", required = false) List<MultipartFile> newfile,
+	    @RequestParam(value = "pt_image_description", required = false) List<String> descriptions,
 	    @RequestParam("pt_name") String pt_name,
 	    @RequestParam("pt_category") String pt_category,
-	    @RequestParam("pt_content") String pt_content,
-	    @RequestParam("pt_image") List<Object> ptImage,
-	    HttpServletRequest request,
-	    HttpSession session
+	    @RequestParam("pt_content") String pt_content
 	) {
-	    Map<String, Object> result = new HashMap<>();
+	    if (newfile == null) {
+	    	newfile = new ArrayList<>();
+	    }
+	    if (descriptions == null) {
+	        descriptions = new ArrayList<>();
+	    }
+	    
+	    
 	    PtVO vo = new PtVO();
-	    vo.setPt_idx(pt_idx);
 	    vo.setPt_name(pt_name);
 	    vo.setPt_category(pt_category);
 	    vo.setPt_content(pt_content);
-	    System.out.println(ptImage);
-
-	    // 1. 문자열(기존 이미지)도 같이 받기
-	    String[] imageParams = request.getParameterValues("pt_image");
-	    List<String> imageList = new ArrayList<>();
-
-//	    for (int i = 0; i < imageParams.length; i++) {
-//	        MultipartFile file = (ptImage.size() > i) ? ptImage.get(i) : null;
-//	        if (file != null && !file.isEmpty()) {
-//	            // 새 파일 저장 후 경로 추가
-//	            String fileName = file.getOriginalFilename();
-//	            imageList.add(fileName); // 또는 저장 경로
-//	        } else {
-//	            // 기존 이미지 URL
-//	            imageList.add(imageParams[i]);
-//	        }
-//	    }
-//
-//	    vo.setPt_image(String.join(",", imageList));
-	    System.out.println("최종 이미지 리스트: " + vo.getPt_image());
-
+	    Map<String, Object> result = new HashMap<String, Object>();
+	    boolean success = ptService.insertWorkOut(vo, newfile, descriptions);
+	    if(success) {
+	    	result.put("success", true);
+	    }else {
+	    	result.put("success", false);
+	    	result.put("msg", "추가에 실패하였습니다.");
+	    }
+	    
 	    return ResponseEntity.ok(result);
 	}
+	// 운동 수정
+	@PutMapping("/workout")
+	public ResponseEntity<?> updateWorkOut(
+			@RequestParam(value = "pt_image", required = false) List<MultipartFile> newfile,
+			@RequestParam(value = "pt_image_description", required = false) List<String> descriptions,
+			@RequestParam("pt_idx") int pt_idx,
+			@RequestParam("pt_name") String pt_name,
+			@RequestParam("pt_category") String pt_category,
+			@RequestParam("pt_content") String pt_content
+			) {
+		if (newfile == null) {
+			newfile = new ArrayList<>();
+		}
+		if (descriptions == null) {
+			descriptions = new ArrayList<>();
+		}
+		
+		PtVO vo = new PtVO();
+		vo.setPt_idx(pt_idx);
+		vo.setPt_name(pt_name);
+		vo.setPt_category(pt_category);
+		vo.setPt_content(pt_content);
+		Map<String, Object> result = new HashMap<String, Object>();
+		boolean success = ptService.updateWorkOut(vo, newfile, descriptions);
+		if(success) {
+			result.put("success", true);
+		}else {
+			result.put("success", false);
+			result.put("msg", "수정에 실패하였습니다.");
+		}
+		
+		return ResponseEntity.ok(result);
+	}
+	
+	// 운동 삭제
+	@PutMapping("/workout/{pt_idx}")
+	public ResponseEntity<?> hideWorkOut(@PathVariable int pt_idx) {
+	    Map<String, Object> result = new HashMap<String, Object>();
+	    if(ptService.hideWorkOut(pt_idx)) {
+	    	result.put("success", true);
+	    }else {
+	    	result.put("success", false);
+	    	result.put("msg", "처리에 실패하였습니다.");
+	    }
+	    return ResponseEntity.ok(result);
+	}
+
 
 	// 체육관 추가
 	@PostMapping("/gym")

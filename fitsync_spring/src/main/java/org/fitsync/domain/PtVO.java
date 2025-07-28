@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PtVO {
-	private int pt_idx;
+	private int pt_idx, pt_hidden;
 	private String pt_name, pt_category, pt_image, pt_content, pt_writer;
 }

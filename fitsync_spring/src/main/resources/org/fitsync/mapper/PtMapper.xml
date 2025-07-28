@@ -14,9 +14,44 @@
 	<select id="getWorkOutName" resultType="string">
 	    SELECT PT_NAME
 	    FROM PT
+	    WHERE PT_HIDDEN = 0
 	</select>
 	
 	<select id="selectPtById" resultType="org.fitsync.domain.PtVO">
 	  	SELECT * FROM PT WHERE PT_IDX = #{ptId}
 	</select>
+	<!-- 운동 수정 -->
+	<update id="updateWorkOut" parameterType="org.fitsync.domain.PtVO">
+		UPDATE PT 
+		SET 
+		    PT_NAME = #{pt_name}, 
+		    PT_CATEGORY = #{pt_category},
+		    PT_IMAGE = #{pt_image},
+		    PT_CONTENT = #{pt_content}
+	    WHERE PT_IDX = #{pt_idx} 
+	</update>
+	<!-- 운동삭제 -->
+	<update id="hideWorkOut" parameterType="int">
+		UPDATE PT 
+		SET PT_HIDDEN = 
+		CASE 
+            WHEN PT_HIDDEN = 0 THEN 1
+            WHEN PT_HIDDEN = 1 THEN 0
+            ELSE PT_HIDDEN
+        END
+		WHERE PT_IDX = #{pt_idx}
+	</update>
+	
+	<insert id="insertWorkOut" parameterType="org.fitsync.domain.PtVO">
+		INSERT INTO PT 
+		VALUES(
+			PT_SEQ.NEXTVAL,
+			#{pt_name},
+			#{pt_category}, 
+			#{pt_image},
+			#{pt_content},
+			NULL,
+			0
+		)
+	</insert>
 </mapper>
