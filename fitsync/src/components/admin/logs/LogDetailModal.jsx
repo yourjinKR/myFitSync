@@ -32,6 +32,7 @@ import {
     ExerciseRequestItem,
     ExerciseDetail
 } from '../../../styles/chartStyle';
+import versionUtils from '../../../utils/utilFunc';
 
 // 로그 상세 모달 컴포넌트
 const LogDetailModal = ({
@@ -41,6 +42,7 @@ const LogDetailModal = ({
     onNavigate,
     navigationInfo,
     rawData,
+    rawDataIdx,
     rawDataMap
 }) => {
     // 토글 상태 관리
@@ -82,10 +84,13 @@ const LogDetailModal = ({
         try {
             let exerciseNames = [];
             
+            console.log(versionUtils.isVersionGreater(log.apilog_version, "0.2.0"));
+            if (versionUtils.isVersionGreater(log.apilog_version, "0.2.0") === true) {
+                console.log('idx로 매핑');
+            }
             // userInput이 문자열인 경우 JSON 파싱 시도
-            if (typeof userInput === 'string') {
+            if (typeof userInput === 'string') {                
                 const parsed = JSON.parse(userInput);
-                
                 // 다양한 구조에서 운동명 추출
                 if (Array.isArray(parsed)) {
                     // 루틴 배열인 경우
@@ -101,6 +106,8 @@ const LogDetailModal = ({
                 }
             } else if (Array.isArray(userInput)) {
                 // 이미 파싱된 루틴 배열인 경우
+                console.log('여기서부터 아마 코드 시작');
+                
                 exerciseNames = userInput.flatMap(routine => 
                     routine.exercises?.map(ex => ex.pt_name || ex.name || ex.exercise_name) || []
                 ).filter(Boolean);
@@ -932,10 +939,6 @@ const LogDetailModal = ({
                                         hasParsedUserMessage: !!log.parsed_userMassage,
                                         hasFeedback: !!log.apilog_feedback,
                                         userId: log.user_id,
-                                        hasRawData: !!rawData,
-                                        rawDataSize: rawData ? rawData.length : 0,
-                                        hasRawDataMap: !!rawDataMap,
-                                        rawDataMapSize: rawDataMap ? Object.keys(rawDataMap).length : 0,
                                         totalTime: log.apilog_total_time ? `${log.apilog_total_time}s` : 'N/A',
                                         split: log.parsed_userMassage?.split || 'N/A',
                                         isSplit: log.parsed_userMassage?.isSplit || false

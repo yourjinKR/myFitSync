@@ -174,6 +174,7 @@ const AdminApiContainer = () => {
                         onClose={() => setSelectedLog(null)}
                         onNavigate={handleSelectedLog}
                         rawData={rawData}
+                        rawDataIdx={rawDataIdx}
                         rawDataMap={rawDataMap}
                         navigationInfo={{
                             currentIndex: filteredLogs.findIndex(log => log.apilog_idx === selectedLog?.apilog_idx),
