@@ -211,10 +211,6 @@ const BodyComparisonChart = () => {
     scales: generateScales(selectedMetric)
   };
 
-  const hasIncompleteData = bodyData.some(
-    d => !d.body_weight || !d.body_skeletal_muscle || !d.body_fat || !d.body_fat_percentage || !d.body_bmi
-  );
-
   if (!bodyData || bodyData.length === 0) {
     return (
       <EmptyState>
@@ -254,7 +250,7 @@ const BodyComparisonChart = () => {
 
       <Line data={data} options={options} />
 
-      {hasIncompleteData && (
+      {true && (
         <StyledButton onClick={() => setShowModal(true)}>정보 추가하기</StyledButton>
       )}
 
