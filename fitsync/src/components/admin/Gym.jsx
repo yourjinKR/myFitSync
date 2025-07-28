@@ -4,6 +4,7 @@ import Modal from "./Modal";
 import { ButtonSubmit } from "../../styles/FormStyles";
 import MapTest, { MapContainer } from "../map/MapTest";
 import { GymUtil } from "../../utils/GymUtils";
+import { FaAlignLeft, FaAngleDoubleLeft, FaAngleDoubleRight, FaAngleLeft, FaAngleRight, FaHandPointLeft } from "react-icons/fa";
 
 const GymWrapper = styled.div`
   width: calc(100% - 40px);
@@ -13,7 +14,6 @@ const GymWrapper = styled.div`
   padding: 20px;
   background: var(--bg-secondary);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   .header {
     display: flex;
@@ -193,7 +193,6 @@ const PaginationControls = styled.div`
       color: var(--text-white);
       border-color: var(--primary-blue);
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
     }
 
     &:disabled {
@@ -207,7 +206,6 @@ const PaginationControls = styled.div`
       background: var(--primary-blue);
       color: var(--text-white);
       border-color: var(--primary-blue);
-      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
     }
 
     &.nav-button {
@@ -240,6 +238,7 @@ const PaginationInfo = styled.div`
     font-weight: 600;
     
     .highlight {
+      font-size: 1.5rem;
       color: var(--primary-blue);
       font-weight: 700;
     }
@@ -278,7 +277,6 @@ const PageSizeSelector = styled.div`
     &:focus {
       outline: none;
       border-color: var(--primary-blue);
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
     }
   }
 `;
@@ -517,7 +515,7 @@ const Gym = () => {
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
           >
-            처음
+            <FaAngleDoubleLeft/>
           </button>
           
           {/* 이전 그룹 */}
@@ -526,7 +524,7 @@ const Gym = () => {
             onClick={() => handlePageChange(startPage - 1)}
             disabled={startPage === 1}
           >
-            이전
+            <FaAngleLeft/>
           </button>
           
           {/* 페이지 번호들 (현재 그룹의 10개만) */}
@@ -546,7 +544,7 @@ const Gym = () => {
             onClick={() => handlePageChange(endPage + 1)}
             disabled={endPage === totalPages}
           >
-            다음
+            <FaAngleRight/>
           </button>
           
           {/* 맨 마지막으로 */}
@@ -555,13 +553,13 @@ const Gym = () => {
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
           >
-            마지막
+            <FaAngleDoubleRight/>
           </button>
         </PaginationControls>
 
         <PaginationInfo>
           <div className="page-info">
-            페이지 <span className="highlight">{currentPage}</span> / {totalPages}
+            <span className="highlight">{currentPage}</span> / {totalPages}
             {totalPages > pagesPerGroup && (
               <span> (그룹 {currentGroup} / {Math.ceil(totalPages / pagesPerGroup)})</span>
             )}
