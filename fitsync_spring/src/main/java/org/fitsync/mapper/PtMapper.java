@@ -1,6 +1,7 @@
 package org.fitsync.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.fitsync.domain.PtVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +11,8 @@ public interface PtMapper {
 	public List<PtVO> getWorkOut();
 	// 이름 불러오기
 	List<String> getWorkOutName();
+	// idx와 이름 매핑
+	List<Map<String, Object>> getWorkOutNameMap();
 	
 	public PtVO selectPtById(int ptIdx);
 	

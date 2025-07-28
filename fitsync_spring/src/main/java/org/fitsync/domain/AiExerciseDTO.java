@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AiExerciseDTO {
     private String pt_name;
+    private int pt_idx;
     private int set_volume;
     private int set_count;
     private int set_num;
