@@ -89,15 +89,24 @@ public class AIServiceImple implements AIService {
 	}
 
     @Override
-    public ApiResponseDTO requestAIResponse(String userMessage, int memberIdx) throws IOException {
+    public ApiResponseDTO requestAIResponse(String userMessage, int memberIdx) throws IOException {    	
+    	ObjectMapper objectMapper = new ObjectMapper();
+    	
+    	Map<String, Object> map = objectMapper.readValue(userMessage, new TypeReference<Map<String, Object>>() {});
+    	int userSplit = (int) map.get("split");
+    	System.out.println("user split : " +  userSplit);
+    	
+    	
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
         String workoutList = getWorkoutNamesCommaSeparated();
         String workoutListJson = getWorkoutMapForPrompt();
         Integer logIdx = null;
         String finalResponseJson = null;
+        ApiLogVO apiLog = new ApiLogVO();
 
         String content = "";
         String status = "success";
+        List<String> exceptionReasons = new ArrayList<>();
         String errorMessage = null;
         int inputTokens = 0;
         int outputTokens = 0;
@@ -148,9 +157,6 @@ public class AIServiceImple implements AIService {
 		    "  }\n" +
 		    "]";
 
-        // 2. 메시지를 Jackson으로 구성
-        ObjectMapper mapper = new ObjectMapper();
-
         Map<String, Object> systemMessage = new HashMap<>();
         systemMessage.put("role", "system");
         systemMessage.put("content", systemContent);
@@ -167,7 +173,7 @@ public class AIServiceImple implements AIService {
         body.put("model", apiModel);
         body.put("messages", messages);
 
-        String requestBody = mapper.writeValueAsString(body);
+        String requestBody = objectMapper.writeValueAsString(body);
 
         try {
             URL url = new URL(API_URL);
@@ -191,18 +197,20 @@ public class AIServiceImple implements AIService {
 
             responseTime = new Timestamp(System.currentTimeMillis());
 
-            JsonNode root = mapper.readTree(responseBuilder.toString());
+            JsonNode root = objectMapper.readTree(responseBuilder.toString());
             content = root.path("choices").get(0).path("message").path("content").asText();
             inputTokens = root.path("usage").path("prompt_tokens").asInt();
             outputTokens = root.path("usage").path("completion_tokens").asInt();
 
             // 1. AI 응답 JSON 파싱
-            ObjectMapper objMapper = new ObjectMapper();
-            List<AiRoutineDTO> aiRoutines = objMapper.readValue(content, new TypeReference<List<AiRoutineDTO>>() {});
+            List<AiRoutineDTO> aiRoutines = objectMapper.readValue(content, new TypeReference<List<AiRoutineDTO>>() {});
+            System.out.println("response split : " +  aiRoutines.size());
 
             // 2. PT 이름 맵핑 정보 로드 (DB 1회 호출)
             Map<Integer, String> ptNameMap = getWorkoutNameMap();
-
+            
+            
+            List<Integer> unknownPtIdxList = new ArrayList<>();
             // 3. pt_idx → pt_name 매핑 수행
             for (AiRoutineDTO routine : aiRoutines) {
                 for (AiExerciseDTO exercise : routine.getExercises()) {
@@ -211,22 +219,29 @@ public class AIServiceImple implements AIService {
                         exercise.setPt_name(ptName);
                     } else {
                         System.err.println("⚠️ Unknown pt_idx: " + exercise.getPt_idx());
-                        exercise.setPt_name("Unknown"); // 또는 예외처리
+                        exercise.setPt_name("Unknown");
+                        unknownPtIdxList.add(exercise.getPt_idx());
                     }
                 }
             }
-
-            // 4. 결과 확인용 출력 (선택)
-            aiRoutines.forEach(routine -> {
-                System.out.println("💪 루틴: " + routine.getRoutine_name());
-                routine.getExercises().forEach(ex -> {
-                    System.out.printf(" → %s (idx: %d, %dkg x %d회 x %d세트)\n",
-                        ex.getPt_name(), ex.getPt_idx(), ex.getSet_volume(), ex.getSet_count(), ex.getSet_num());
-                });
-            });
             
-            // 매핑이 완료된 aiRoutines → JSON 문자열로 다시 변환
-            finalResponseJson = objMapper.writeValueAsString(aiRoutines);
+            // 잘못된 idx가 응답했을 경우 (invalid_exercise)
+            if (!unknownPtIdxList.isEmpty()) {
+                exceptionReasons.add("invalid_exercise: unknown pt_idx(s) = " + unknownPtIdxList);
+            }
+            // 사용자의 분할 수 요청과 응답이 다를 경우 (invalid_exercise)
+            if (userSplit != aiRoutines.size()) {
+            	exceptionReasons.add("split_mismatch: expected=" + userSplit + ", actual=" + aiRoutines.size());
+            }
+            // 예외 최종 기록
+            if (!exceptionReasons.isEmpty()) {
+                apiLog.setApilog_status("exception");
+                apiLog.setApilog_status_reason(String.join("; ", exceptionReasons));
+            }
+ 
+            // 4. 매핑이 완료된 aiRoutines → JSON 문자열로 다시 변환
+            finalResponseJson = objectMapper.writeValueAsString(aiRoutines);
+            
 
         } catch (IOException e) {
             responseTime = new Timestamp(System.currentTimeMillis());
@@ -236,16 +251,15 @@ public class AIServiceImple implements AIService {
 
         // 로그 저장
         try {
-            ApiLogVO apiLog = new ApiLogVO();
             apiLog.setMember_idx(memberIdx);
             apiLog.setApilog_prompt(requestBody);
-            apiLog.setApilog_response(finalResponseJson);
+            apiLog.setApilog_response(content);
             apiLog.setApilog_request_time(requestTime);
             apiLog.setApilog_response_time(responseTime);
             apiLog.setApilog_input_tokens(inputTokens);
             apiLog.setApilog_output_tokens(outputTokens);
             apiLog.setApilog_model(apiModel);
-            apiLog.setApilog_version("0.2.0");
+            apiLog.setApilog_version("0.2.1");
             apiLog.setApilog_status(status);
             apiLog.setApilog_service_type("사용자 정보 기반 운동 루틴 추천");
 

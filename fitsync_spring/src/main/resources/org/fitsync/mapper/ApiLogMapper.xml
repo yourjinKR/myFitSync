@@ -22,6 +22,9 @@
 	        apilog_model,
 	        apilog_version,
 	        apilog_status,
+	        <if test="apilog_status_reason != null">
+	        	apilog_status_reason,
+	        </if>
 	        apilog_service_type
 	    ) VALUES (
 	        #{apilog_idx},
@@ -35,6 +38,9 @@
 	        #{apilog_model},
 	        #{apilog_version},
 	        #{apilog_status},
+	       	<if test="apilog_status_reason != null">
+	        	#{apilog_status_reason},
+	        </if>
 	        #{apilog_service_type}
 	    )
 	</insert>
