@@ -54,4 +54,17 @@
             WHERE member_idx = #{member_idx}
         )
     </select>
+    
+    <!-- 최신 인바디 정보 수정 -->
+    <update id="updateBodyData" parameterType="org.fitsync.domain.BodyVO">
+	    UPDATE BODY
+	    SET 
+	        BODY_WEIGHT = #{body_weight},
+	        BODY_SKELETAL_MUSCLE = #{body_skeletal_muscle},
+	        BODY_FAT = #{body_fat},
+	        BODY_FAT_PERCENTAGE = #{body_fat_percentage},
+	        BODY_BMI = #{body_bmi}
+	    WHERE BODY_IDX = #{body_idx}
+	</update> 
+	
 </mapper>

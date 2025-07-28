@@ -137,14 +137,22 @@ const WorkoutRecordModal = ({ records, onClose }) => {
       fetchAllDetails();
     }
   }, [records]);
-
+  
+  const formatDate = (timestamp) => {
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+  const dd = date.getDate().toString().padStart(2, '0');
+  return `${yyyy}.${mm}.${dd}`;
+  };
+  
   if (!records || recordDetails.length === 0) return null;
 
   return (
     <ModalBackdrop onClick={onClose}>
       <ModalContainer onClick={e => e.stopPropagation()}>
         <CloseButton onClick={onClose}>닫기</CloseButton>
-        <Title>{records[0].record_date} 운동 기록</Title>
+        <Title>{formatDate(records[0].record_date)} 운동 기록</Title>
         {recordDetails.map((detail, idx) => (
           <div key={idx} style={{ marginBottom: '2rem' }}>
             <SectionTitle>{detail.pt.pt_name}</SectionTitle>
