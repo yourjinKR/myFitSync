@@ -1209,7 +1209,6 @@ const SubscriptionMain = () => {
       const response = await PaymentUtil.cancelScheduledPayment(recentOrder.order_idx);
       
       if (response.success) {
-        alert('예약 결제가 성공적으로 취소되었습니다.');
         // 구독 정보 새로고침
         await loadSubscriptionData();
       } else {
@@ -1233,7 +1232,6 @@ const SubscriptionMain = () => {
     const response = await PaymentUtil.reschedule({recentOrder});
 
     if (response.success) {
-      alert("자동결제가 정상적으로 등록됐습니다 !");
     } else {
       alert("자동결제 등록을 실패했습니다 !");
     }

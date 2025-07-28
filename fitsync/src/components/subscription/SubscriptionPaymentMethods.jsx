@@ -528,9 +528,10 @@ const SubscriptionPaymentMethods = () => {
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [isSub, setIsSub] = useState(false);
+  const [recentOrder, setRecentOrder] = useState({});
 
   const location = useLocation();
-  let {changeMode, recentOrder} = location.state || false;
+  let {changeMode} = location.state || false;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -578,10 +579,13 @@ const SubscriptionPaymentMethods = () => {
       const response = await PaymentUtil.getBillingKeys();
 
       const isSubResponse = await PaymentUtil.checkSubscriptionStatus();
+
+      const recentOrderResponse = await PaymentUtil.getRecentHistory();
       
       if (response.success && isSubResponse.success) {
         setPaymentMethods(response.data || []);
         setIsSub(isSubResponse.data.isSubscriber || false);
+        setRecentOrder(recentOrderResponse.data);
       } else {
         setError(response.message || '결제수단을 불러올 수 없습니다.');
       }
@@ -748,7 +752,7 @@ const SubscriptionPaymentMethods = () => {
   // 결제하기 버튼 클릭 핸들러
   const handlePaymentStart = async (method) => {
     // 기존 예약건 변경
-    if (changeMode) {
+    if (recentOrder.order_type === 'SCHEDULE') {
       console.log(recentOrder.method_idx);
       console.log(method.method_idx);
       const response = recentOrder.method_idx !== method.method_idx ? 
@@ -756,8 +760,7 @@ const SubscriptionPaymentMethods = () => {
         : null;
 
       if (response !== null) {
-        alert('결제수단이 변경됐습니다 !');
-        navigate('/subscription/history');
+        loadPaymentMethods();
       }
 
       return;
@@ -917,9 +920,9 @@ const SubscriptionPaymentMethods = () => {
                     </CardInfoSection>
 
                     {/* 결제하기 버튼 */}
-                    {isSub === false || (changeMode === true && method.method_idx !== recentOrder.method_idx) ? (
+                    {isSub === false || (method.method_idx !== recentOrder.method_idx) ? (
                       <PaymentButton onClick={() => handlePaymentStart(method)}>
-                        이 결제수단으로 구독하기
+                        해당 결제수단으로 구독하기
                       </PaymentButton>
                     ) : (<></>)}
                   </CardContent>
