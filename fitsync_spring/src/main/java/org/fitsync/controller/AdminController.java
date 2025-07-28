@@ -13,6 +13,7 @@ import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.GymVO;
 import org.fitsync.domain.PtVO;
 import org.fitsync.domain.ReportVO;
+import org.fitsync.domain.SearchCriteria;
 import org.fitsync.service.ApiLogServiceImple;
 import org.fitsync.service.AwardsServiceImple;
 import org.fitsync.service.GymServiceImple;
@@ -24,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -232,11 +234,15 @@ public class AdminController {
 
 	// 체육관 목록 가져오기
 	@GetMapping("/gyms")
-	public ResponseEntity<?> getGymList() {
-		List<GymVO> gyms = gymService.getAllGyms();
+	public ResponseEntity<?> getGymList(@ModelAttribute SearchCriteria cri) {
+		List<GymVO> gyms = gymService.getAllGyms(cri);
+		int totalCount = gymService.getGymCount(cri);
+		
+		
 		Map<String, Object> result = new HashMap<>();
 		result.put("success", true);
 		result.put("data", gyms);
+		result.put("totalCount", totalCount);
 		return ResponseEntity.ok(result);
 	}
 

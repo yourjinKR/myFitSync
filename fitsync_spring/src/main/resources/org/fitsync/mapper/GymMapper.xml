@@ -18,11 +18,48 @@
   </insert>
 
   <!-- 2. 전체 체육관 목록 조회 -->
-  <select id="selectAllGyms" resultType="org.fitsync.domain.GymVO">
-    SELECT *
-    FROM gym
-    ORDER BY gym_idx DESC
-  </select>
+	<select id="selectAllGyms" parameterType="org.fitsync.domain.SearchCriteria" resultType="org.fitsync.domain.GymVO">
+	  SELECT * FROM (
+	    SELECT inner.*, ROWNUM rn FROM (
+	      SELECT * FROM gym
+	      <where>
+			<choose>
+			  <when test="keywordType == 'name' and keyword != null and keyword != ''">
+			    AND gym_name LIKE '%' || #{keyword} || '%'
+			  </when>
+			  <when test="keywordType == 'address' and keyword != null and keyword != ''">
+			    AND gym_address LIKE '%' || #{keyword} || '%'
+			  </when>
+			  <when test="keywordType == 'idx' and keyword != null and keyword != ''">
+			    AND gym_idx = TO_NUMBER(#{keyword})
+			  </when>
+			</choose>
+	      </where>
+	      ORDER BY gym_idx DESC
+	    ) inner
+	    WHERE ROWNUM &lt;= #{endRow}
+	  )
+	  WHERE rn &gt;= #{startRow}
+	</select>
+	
+	<!-- 검색조건에 맞는 체육관 갯수 가져오기 -->
+	<select id="countAllGyms" parameterType="org.fitsync.domain.SearchCriteria" resultType="int">
+	  SELECT COUNT(*)
+	  FROM gym
+	  <where>
+	    <choose>
+	      <when test="keywordType == 'name' and keyword != null and keyword != ''">
+	        AND gym_name LIKE '%' || #{keyword} || '%'
+	      </when>
+	      <when test="keywordType == 'address' and keyword != null and keyword != ''">
+	        AND gym_address LIKE '%' || #{keyword} || '%'
+	      </when>
+	      <when test="keywordType == 'idx' and keyword != null and keyword != ''">
+	        AND gym_idx = TO_NUMBER(#{keyword})
+	      </when>
+	    </choose>
+	  </where>
+	</select>
 
   <!-- 3. 특정 체육관 조회 (by gym_idx) -->
   <select id="selectGymById" parameterType="int" resultType="org.fitsync.domain.GymVO">

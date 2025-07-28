@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Modal from "./Modal";
@@ -82,21 +81,13 @@ const GymWrapper = styled.div`
       }
 
       .edit {
-        background: var(--primary-blue);
-        color: var(--text-white);
-
-        &:hover {
-          background: var(--primary-blue-hover);
-        }
+        background: var(--success);
+        color: var(--text-primary);
       }
 
       .delete {
         background: var(--warning);
-        color: var(--text-white);
-
-        &:hover {
-          background: #d32f2f;
-        }
+        color: var(--text-primary);
       }
     }
   }
@@ -148,7 +139,150 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-const initLatLng = { lat: 37.5665, lng: 126.9780 };
+const SearchContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+
+  select {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1.4rem;
+  }
+`;
+
+const PaginationContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .pagination-button {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    border: 2px solid var(--border-light);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-blue);
+      color: var(--text-white);
+      border-color: var(--primary-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: var(--bg-tertiary);
+      color: var(--text-tertiary);
+    }
+
+    &.active {
+      background: var(--primary-blue);
+      color: var(--text-white);
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    }
+
+    &.nav-button {
+      background: var(--bg-secondary);
+      border-color: var(--border-medium);
+      
+      &:hover:not(:disabled) {
+        background: var(--primary-blue-light);
+      }
+    }
+  }
+
+  .page-ellipsis {
+    padding: 0 8px;
+    color: var(--text-tertiary);
+    font-size: 1.6rem;
+    font-weight: bold;
+  }
+`;
+
+const PaginationInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  .page-info {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    
+    .highlight {
+      color: var(--primary-blue);
+      font-weight: 700;
+    }
+  }
+
+  .total-info {
+    font-size: 1.3rem;
+    color: var(--text-secondary);
+    
+    .total-count {
+      color: var(--primary-blue);
+      font-weight: 600;
+    }
+  }
+`;
+
+const PageSizeSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  label {
+    font-size: 1.4rem;
+    color: var(--text-primary);
+  }
+  
+  select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    cursor: pointer;
+    
+    &:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    }
+  }
+`;
+
 const initGym = {
   gym_name: "", 
   gym_latitude: 37.5665, 
@@ -160,17 +294,34 @@ const Gym = () => {
   const [gyms, setGyms] = useState([]);
   const [newGym, setNewGym] = useState(initGym);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // 검색 및 페이징 관련 상태
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchType, setSearchType] = useState('name');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   // 체육관 목록 조회
-  const fetchGyms = async () => {
+  const fetchGyms = async (page = currentPage, keyword = searchKeyword, keywordType = searchType, size = pageSize) => {
     try {
       setIsLoading(true);
-      const response = await GymUtil.getGyms();
+      const response = await GymUtil.getGyms({
+        keyword,
+        keywordType,
+        page,
+        pageSize: size
+      });
+      
       if (response.success && response.data) {
         setGyms(response.data);
+        setTotalCount(response.totalCount || 0);
+        setTotalPages(Math.ceil((response.totalCount || 0) / size));
+        setCurrentPage(page);
       }
     } catch (error) {
       console.error("Failed to fetch gyms:", error);
@@ -182,9 +333,36 @@ const Gym = () => {
 
   useEffect(() => {
     fetchGyms();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 체육관 추가 모달 열기
+  // 검색 실행
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchGyms(1, searchKeyword, searchType, pageSize);
+  };
+
+  // 페이지 변경
+  const handlePageChange = (page) => {
+    fetchGyms(page, searchKeyword, searchType, pageSize);
+  };
+
+  // 페이지 크기 변경 핸들러
+  const handlePageSizeChange = (e) => {
+    const newSize = parseInt(e.target.value);
+    setPageSize(newSize);
+    setCurrentPage(1);
+    fetchGyms(1, searchKeyword, searchType, newSize);
+  };
+
+  // 검색 초기화
+  const handleResetSearch = () => {
+    setSearchKeyword('');
+    setSearchType('name');
+    setCurrentPage(1);
+    fetchGyms(1, '', 'name', pageSize);
+  };
+
   const handleAdd = () => {
     setModalMode('add');
     setNewGym(initGym);
@@ -192,7 +370,6 @@ const Gym = () => {
     setModalOpen(true);
   };
 
-  // 체육관 수정 모달 열기
   const handleEdit = async (gymIdx) => {
     try {
       setIsLoading(true);
@@ -213,7 +390,6 @@ const Gym = () => {
     }
   };
 
-  // 체육관 삭제
   const handleDelete = async (gymIdx) => {
     const confirmDelete = window.confirm('해당 체육관을 삭제하시겠습니까?');
     if (!confirmDelete) return;
@@ -222,7 +398,7 @@ const Gym = () => {
       setIsLoading(true);
       const response = await GymUtil.deleteGym(gymIdx);
       if (response.success) {
-        await fetchGyms(); // 목록 새로고침
+        await fetchGyms(currentPage, searchKeyword, searchType);
       } else {
         setError("체육관 삭제에 실패했습니다.");
       }
@@ -234,7 +410,6 @@ const Gym = () => {
     }
   };
 
-  // 주소 검색
   const handleSearchLocation = async (e) => {
     e.preventDefault();
     
@@ -270,7 +445,6 @@ const Gym = () => {
     }
   };
 
-  // 체육관 저장 (추가/수정)
   const handleSaveGym = async (e) => {
     e.preventDefault();
     
@@ -295,7 +469,7 @@ const Gym = () => {
       }
 
       if (response.success) {
-        await fetchGyms(); // 목록 새로고침
+        await fetchGyms(currentPage, searchKeyword, searchType);
         setModalOpen(false);
         setNewGym(initGym);
         setError('');
@@ -310,14 +484,103 @@ const Gym = () => {
     }
   };
 
-  // 모달 닫기
   const handleCloseModal = () => {
     setModalOpen(false);
     setNewGym(initGym);
     setError('');
   };
 
-  // 모달 컨텐츠
+  // 페이지네이션 렌더링
+  const renderPagination = () => {
+    const startItem = (currentPage - 1) * pageSize + 1;
+    const endItem = Math.min(currentPage * pageSize, totalCount);
+    
+    // 페이지 그룹 계산 (10개씩)
+    const pagesPerGroup = 10;
+    const currentGroup = Math.ceil(currentPage / pagesPerGroup);
+    const startPage = (currentGroup - 1) * pagesPerGroup + 1;
+    const endPage = Math.min(currentGroup * pagesPerGroup, totalPages);
+    
+    return (
+      <PaginationContainer>
+        <PaginationInfo>
+          {totalCount > 0 
+            ? `총 ${totalCount}개 중 ${startItem}-${endItem}개 표시`
+            : '검색 결과가 없습니다'
+          }
+        </PaginationInfo>
+        
+        <PaginationControls>
+          {/* 맨 처음으로 */}
+          <button 
+            className="pagination-button nav-button"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          >
+            처음
+          </button>
+          
+          {/* 이전 그룹 */}
+          <button 
+            className="pagination-button nav-button"
+            onClick={() => handlePageChange(startPage - 1)}
+            disabled={startPage === 1}
+          >
+            이전
+          </button>
+          
+          {/* 페이지 번호들 (현재 그룹의 10개만) */}
+          {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(page => (
+            <button
+              key={page}
+              className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+              onClick={() => handlePageChange(page)}
+            >
+              {page}
+            </button>
+          ))}
+          
+          {/* 다음 그룹 */}
+          <button 
+            className="pagination-button nav-button"
+            onClick={() => handlePageChange(endPage + 1)}
+            disabled={endPage === totalPages}
+          >
+            다음
+          </button>
+          
+          {/* 맨 마지막으로 */}
+          <button 
+            className="pagination-button nav-button"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            마지막
+          </button>
+        </PaginationControls>
+
+        <PaginationInfo>
+          <div className="page-info">
+            페이지 <span className="highlight">{currentPage}</span> / {totalPages}
+            {totalPages > pagesPerGroup && (
+              <span> (그룹 {currentGroup} / {Math.ceil(totalPages / pagesPerGroup)})</span>
+            )}
+          </div>
+        </PaginationInfo>
+
+        <PageSizeSelector>
+          <label>페이지 크기:</label>
+          <select value={pageSize} onChange={handlePageSizeChange}>
+            <option value={5}>5개씩</option>
+            <option value={10}>10개씩</option>
+            <option value={20}>20개씩</option>
+            <option value={50}>50개씩</option>
+          </select>
+        </PageSizeSelector>
+      </PaginationContainer>
+    );
+  };
+
   const renderModalContent = () => (
     <ModalContent>
       <ModalHeader>
@@ -326,7 +589,6 @@ const Gym = () => {
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
 
-      {/* 위치 검색 폼 */}
       <Form onSubmit={handleSearchLocation} marginBottom>
         <Input
           type="text"
@@ -342,7 +604,6 @@ const Gym = () => {
         </SubmitButton>
       </Form>
 
-      {/* 지도 */}
       <MapContainer style={{ marginBottom: "20px" }}>
         <MapTest 
           position={{
@@ -352,7 +613,6 @@ const Gym = () => {
         />
       </MapContainer>
 
-      {/* 체육관 등록/수정 폼 */}
       <Form onSubmit={handleSaveGym} column>
         <Input
           type="text"
@@ -380,6 +640,31 @@ const Gym = () => {
           체육관 추가
         </button>
       </div>
+
+      {/* 검색 영역 */}
+      <SearchContainer>
+        <select 
+          value={searchType} 
+          onChange={(e) => setSearchType(e.target.value)}
+        >
+          <option value="name">체육관명</option>
+          <option value="address">주소</option>
+          <option value="idx">번호</option>
+        </select>
+        <Input
+          type="text"
+          placeholder="검색어를 입력하세요"
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          flex
+        />
+        <SubmitButton onClick={handleSearch} disabled={isLoading}>
+          검색
+        </SubmitButton>
+        <button onClick={handleResetSearch} disabled={isLoading}>
+          초기화
+        </button>
+      </SearchContainer>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
 
@@ -413,14 +698,14 @@ const Gym = () => {
                     onClick={() => handleEdit(gym.gym_idx)}
                     disabled={isLoading}
                   >
-                    Edit
+                    수정
                   </button>
                   <button 
                     className="delete" 
                     onClick={() => handleDelete(gym.gym_idx)}
                     disabled={isLoading}
                   >
-                    Delete
+                    삭제
                   </button>
                 </td>
               </tr>
@@ -428,6 +713,9 @@ const Gym = () => {
           )}
         </tbody>
       </table>
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && renderPagination()}
 
       <Modal
         modalOpen={modalOpen}

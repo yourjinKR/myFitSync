@@ -2,15 +2,22 @@ import axios from "axios";
 
 export const GymUtil = {
     /** 체육관 리스트 불러오기 */
-    getGyms : async () => {
+    getGyms: async ({ keyword = '', keywordType = '', page = 1, pageSize = 10 } = {}) => {
         try {
-            const response = await axios.get('/admin/gyms');
+            const response = await axios.get('/admin/gyms', {
+            params: {
+                keyword,
+                keywordType,
+                page,
+                pageSize,
+            },
+            });
 
-            console.log("체육관 불러오기 : " , response.data);
-            
+            console.log("체육관 불러오기:", response.data);
             return response.data;
         } catch (error) {
-            
+            console.error("체육관 불러오기 실패:", error);
+            throw error;
         }
     },
     

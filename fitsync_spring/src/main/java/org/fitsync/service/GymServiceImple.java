@@ -3,6 +3,7 @@ package org.fitsync.service;
 import java.util.List;
 
 import org.fitsync.domain.GymVO;
+import org.fitsync.domain.SearchCriteria;
 import org.fitsync.mapper.GymMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,13 @@ public class GymServiceImple implements GymService {
     }
 
     @Override
-    public List<GymVO> getAllGyms() {
-        return gymMapper.selectAllGyms();
+    public List<GymVO> getAllGyms(SearchCriteria cri) {
+        return gymMapper.selectAllGyms(cri);
+    }
+    
+    @Override
+    public int getGymCount(SearchCriteria cri) {
+    	return gymMapper.countAllGyms(cri);
     }
 
     @Override
