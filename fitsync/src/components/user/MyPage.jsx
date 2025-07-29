@@ -1,4 +1,3 @@
-// MyPage.jsx
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import BodyComparisonChart from './BodyComparisonChart';
@@ -6,7 +5,8 @@ import TrainerCalendarView from '../trainer/TrainerCalendarView';
 import Routine from '../routine/Routine';
 import axios from 'axios';
 import LatestBodyInfo from './LatestBodyInfo';
-
+import TrainerProfileHeader from '../trainer/TrainerProfileHeader';
+import { useSelector } from 'react-redux';
 
 const Container = styled.div`
   display: flex;
@@ -32,41 +32,81 @@ const SectionTitle = styled.h2`
 `;
 
 const MyPage = () => {
-    const [routineList, setRoutineList] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [chartKey, setChartKey] = useState(0);
-    // API에서 데이터 받아오는 함수
-    const handleRoutineResponse = async () => {
-      try {
-        const response = await axios.get("/routine/getList", { withCredentials: true });
-        const data = response.data;
-        const vo = data.vo;
+  const { user: loginUser } = useSelector((state) => state.user); // Redux에서 유저 정보 가져옴
+  const [user, setUser] = useState(null);
+  const [isEdit, setIsEdit] = useState(false);
+  const [routineList, setRoutineList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [chartKey, setChartKey] = useState(0);
 
-        if (vo !== undefined && vo.length !== 0) {
-          vo.forEach((item) => {
-            // 필요한 가공이 있으면 여기서
-          });
-        }
-        setRoutineList(vo);
+  useEffect(() => {
+    if (loginUser) {
+      setUser(loginUser); // 로그인된 유저 정보를 세팅
+    }
+    handleRoutineResponse();
+  }, []);
+
+  const handleRoutineResponse = async () => {
+    try {
+      const response = await axios.get("/routine/getList", { withCredentials: true });
+      const vo = response.data.vo;
+      setRoutineList(vo ?? []);
+    } catch (error) {
+      console.error('루틴 데이터 불러오기 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get('/user/profile', { withCredentials: true });
+        setUser(res.data);
+        
       } catch (error) {
-        console.error('루틴 데이터 불러오기 실패:', error);
+        console.error('유저 정보 불러오기 실패', error);
       } finally {
         setLoading(false);
       }
     };
 
-  useEffect(() => {
-    handleRoutineResponse();
+    fetchUser();
   }, []);
 
-   // 인바디 수정 시 차트 갱신
-  const handleBodyUpdate = () => {
-    setChartKey(prev => prev + 1);
+  const onEditToggle = () => setIsEdit((prev) => !prev);
+
+  const onChange = (field, value) => {
+    setUser((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
-  if (loading) return <div>로딩중...</div>;
-  
+
+  const handleImageChange = (newImageUrl) => {
+  setUser((prev) => ({
+    ...prev,
+    member_image: newImageUrl,
+  }));
+};
+
+
+  const handleBodyUpdate = () => setChartKey((prev) => prev + 1);
+
+  if (loading || !user) return <div>로딩중...</div>;
+  if (!user) return <div>유저 정보를 불러올 수 없습니다.</div>;
+
   return (
     <Container>
+      <TrainerProfileHeader
+        trainer={user}
+        mode="user"
+        isEdit={isEdit}
+        onEditToggle={onEditToggle}
+        onChange={onChange}
+        loginUserId={loginUser?.member_email}
+        onImageChange={handleImageChange}
+      />
       <Section>
         <SectionTitle>운동 캘린더</SectionTitle>
         <TrainerCalendarView />
@@ -77,7 +117,7 @@ const MyPage = () => {
       </Section>
       <Section>
         <SectionTitle>인바디 변화 그래프</SectionTitle>
-        <BodyComparisonChart key={chartKey}/>
+        <BodyComparisonChart key={chartKey} />
       </Section>
       <Section>
         <SectionTitle>내 루틴</SectionTitle>
@@ -91,9 +131,7 @@ const MyPage = () => {
             {routineList.map((routineItem) => (
               <div
                 key={routineItem.routine_list_idx}
-                style={{
-                  flexShrink: 0,
-                }}
+                style={{ flexShrink: 0 }}
               >
                 <Routine data={routineItem} />
               </div>
@@ -103,10 +141,8 @@ const MyPage = () => {
           <div>등록된 루틴이 없습니다.</div>
         )}
       </Section>
-
     </Container>
   );
 };
-
 
 export default MyPage;

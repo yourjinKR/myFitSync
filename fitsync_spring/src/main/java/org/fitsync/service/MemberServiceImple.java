@@ -5,14 +5,20 @@ import java.util.Map;
 
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.BodyVO;
+import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.SearchCriteria;
 import org.fitsync.mapper.BodyMapper;
+import org.fitsync.mapper.ChatAttachMapper;
 import org.fitsync.mapper.MemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 
 import lombok.extern.log4j.Log4j;
 
@@ -22,9 +28,14 @@ public class MemberServiceImple implements MemberService {
 
 	@Autowired
 	private MemberMapper mapper;
-	
 	@Autowired
 	private BodyMapper bodymapper;
+	@Autowired
+	private CloudinaryService cloudinaryService;
+	@Autowired
+	private Cloudinary cloudinary;
+	@Autowired
+	private ChatAttachMapper chatAttachMapper;
 	
 	// 유저 존재여부
 	@Override
@@ -111,5 +122,37 @@ public class MemberServiceImple implements MemberService {
 		log.info(mapper.getMemberForAIRecommendation(memberIdx));
 		return mapper.getMemberForAIRecommendation(memberIdx);
 	}
+	
+	// 유저 정보 가져오기
+	@Override
+	public MemberVO getMemberByIdx(int memberIdx) {
+		return mapper.selectMemberByIdx(memberIdx);
+	}
+	
+	// 회원 프로필 사진 변경
+	@Override
+	public String updateProfileImage(int memberIdx, MultipartFile file) throws Exception {
+	    // 1. 기존 프로필 이미지 정보 가져오기
+	    ChatAttachVO oldAttach = chatAttachMapper.selectProfileImageByMemberIdx(memberIdx);
+
+	    // 2. 새 이미지 업로드 및 chatattach 저장
+	    ChatAttachVO newAttach = cloudinaryService.uploadFile(file);
+
+	    // 3. member 테이블 프로필 이미지 URL 업데이트
+	    mapper.updateMemberProfileImage(memberIdx, newAttach.getCloudinary_url());
+
+	    // 4. 기존 이미지 삭제 처리 (있을 경우)
+	    if (oldAttach != null && oldAttach.getCloudinary_public_id() != null) {
+	        // chatattach 테이블에서 삭제
+	    	chatAttachMapper.deleteAttach(oldAttach.getAttach_idx());
+
+	        // 클라우디너리에서 삭제 (메소드 직접 호출)
+	        cloudinary.uploader().destroy(oldAttach.getCloudinary_public_id(), ObjectUtils.emptyMap());
+	    }
+
+	    // 5. 프론트에 새 이미지 URL 반환
+	    return newAttach.getCloudinary_url();
+	}
+
 	
 }

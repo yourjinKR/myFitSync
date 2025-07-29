@@ -39,5 +39,24 @@
     <delete id="deleteAttach" parameterType="int">
         DELETE FROM chatattach WHERE attach_idx = #{attach_idx}
     </delete>
+	
+    <!-- 프로필 이미지 조회용 ResultMap -->
+    <resultMap id="ChatAttachResultMap" type="org.fitsync.domain.ChatAttachVO">
+        <id property="attach_idx" column="ATTACH_IDX" />
+        <result property="original_filename" column="ORIGINAL_FILENAME" />
+        <result property="cloudinary_url" column="CLOUDINARY_URL" />
+        <result property="cloudinary_public_id" column="CLOUDINARY_PUBLIC_ID" />
+        <result property="file_size_bytes" column="FILE_SIZE_BYTES" />
+        <result property="mime_type" column="MIME_TYPE" />
+        <result property="file_extension" column="FILE_EXTENSION" />
+        <result property="uploaddate" column="UPLOADDATE" />
+    </resultMap>
 
+    <!-- 기존 프로필 이미지 정보 조회 -->
+    <select id="selectProfileImageByMemberIdx" parameterType="int" resultMap="ChatAttachResultMap">
+        SELECT * FROM chatattach
+        WHERE cloudinary_url = (
+            SELECT member_image FROM member WHERE member_idx = #{memberIdx}
+        )
+    </select>
 </mapper>

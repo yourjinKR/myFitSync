@@ -157,4 +157,16 @@
 		WHERE MEMBER_IDX = #{MEMBER_IDX}
 	</select>
 	
+	<select id="selectMemberByIdx" resultType="org.fitsync.domain.MemberVO">
+		SELECT *
+		FROM MEMBER
+		WHERE MEMBER_IDX = #{member_idx}
+	</select>
+	
+	<update id="updateMemberProfileImage">
+	    UPDATE member
+	    SET member_image = #{imageUrl}
+	    WHERE member_idx = #{memberIdx}
+	</update>
+	
 </mapper>

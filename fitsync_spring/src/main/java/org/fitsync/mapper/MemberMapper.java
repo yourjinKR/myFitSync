@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 import org.fitsync.domain.AwardsVO;
+import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.SearchCriteria;
@@ -35,4 +36,11 @@ public interface MemberMapper {
 	
 	// AI 요청시 필요 정보
 	public MemberVO getMemberForAIRecommendation(int memberIdx);
+	
+	// 유저 정보 불러오기
+	public MemberVO selectMemberByIdx(@Param("member_idx") int memberIdx);
+	
+	// 멤버 프로필 사진 변경
+    public void updateMemberProfileImage(@Param("memberIdx") int memberIdx,
+            @Param("imageUrl") String imageUrl);
 }

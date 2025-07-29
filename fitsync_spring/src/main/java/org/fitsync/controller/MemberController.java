@@ -7,14 +7,17 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.BodyVO;
+import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.SearchCriteria;
 import org.fitsync.service.BodyService;
 import org.fitsync.service.BodyServiceImple;
+import org.fitsync.service.CloudinaryService;
 import org.fitsync.service.MemberServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.log4j.Log4j;
 
@@ -115,4 +119,27 @@ public class MemberController {
         return ResponseEntity.ok(trainers);
 	}
 	
+	// 멤버 프로필사진 수정
+    @PostMapping("/update-profile-image")
+    public ResponseEntity<?> updateProfileImage(
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+
+        Object sessionIdx = session.getAttribute("member_idx");
+        if (sessionIdx == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        int memberIdx = Integer.parseInt(sessionIdx.toString());
+
+        try {
+            String imageUrl = service.updateProfileImage(memberIdx, file);
+            return ResponseEntity.ok(imageUrl);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body("이미지 업로드 실패: " + e.getMessage());
+        }
+    }
+
+
 }

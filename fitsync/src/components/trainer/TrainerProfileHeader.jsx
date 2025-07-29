@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { MdEdit, MdCheck } from 'react-icons/md'; // 수정/저장 아이콘
+import { MdEdit, MdCheck } from 'react-icons/md';
+import ProfileImageEditable from '../ProfileImageEditable';
 
 const ProfileHeader = styled.div`
   text-align: center;
@@ -93,45 +94,77 @@ const SummaryItem = styled.div`
   gap: 8px;
 `;
 
-const TrainerProfileHeader = ({ trainer, isEdit, onChange, onEditToggle, loginUserId }) => {
-  console.log(trainer.profile_image);
+/**
+ * @param {object} props
+ * @param {object} props.trainer - 트레이너 객체 (또는 null)
+ * @param {object} props.user - 유저 객체 (또는 null)
+ * @param {boolean} props.isEdit - 수정 모드 여부 (트레이너만)
+ * @param {function} props.onChange - 필드 변경 핸들러 (트레이너만)
+ * @param {function} props.onEditToggle - 수정/저장 버튼 핸들러 (트레이너만)
+ * @param {string} props.loginUserId - 로그인 유저 이메일
+ * @param {'trainer' | 'user'} props.mode - 모드 구분
+ */
+const TrainerProfileHeader = ({
+  trainer,
+  user,
+  isEdit,
+  onChange,
+  onEditToggle,
+  loginUserId,
+  mode = 'trainer',
+  onImageChange 
+}) => {
+  const isTrainer = mode === 'trainer';
+  
+  const profileImage = trainer?.profile_image || trainer?.member_image;
+  
+  // 이름은 trainer 이름 우선, 없으면 user 이름
+  const name = trainer?.name || trainer?.member_name || '이름 없음';
+
+  const isMine = loginUserId && (trainer?.member_email === loginUserId || user?.member_email === loginUserId);
+  console.log(profileImage);
   
   return (
     <ProfileHeader>
-      <ProfileImage src={trainer.profile_image}/> 
-
+      <ProfileImageEditable imageUrl={profileImage} onSuccess={onImageChange} />
       <NameWrapper>
-        <Name>{trainer.name} 선생님</Name>
+        <Name>
+          {name}
+          {isTrainer ? ' 선생님' : ''}
+        </Name>
 
-        {loginUserId && trainer?.member_email && loginUserId === trainer.member_email && (
+        {isTrainer && isMine && (
           <EditButton onClick={onEditToggle} title={isEdit ? '저장하기' : '수정하기'}>
             {isEdit ? <MdCheck /> : <MdEdit />}
           </EditButton>
         )}
       </NameWrapper>
 
-      <ReviewCount>⭐ 후기 {trainer.reviews}개</ReviewCount>
+      {isTrainer && <ReviewCount>⭐ 후기 {trainer?.reviews || 0}개</ReviewCount>}
 
-      {isEdit ? (
-        <QuoteInput
-          type="text"
-          value={trainer.intro ?? ''}
-          onChange={(e) => onChange('intro', e.target.value)}
-          placeholder="한줄소개를 입력하세요"
-        />
-      ) : (
-        <Quote>
-          {trainer.intro && trainer.intro.trim() !== ''
-            ? `"${trainer.intro}"`
-            : '"한줄소개가 아직 등록되지 않았습니다."'}
-        </Quote>
+      {isTrainer &&
+        (isEdit ? (
+          <QuoteInput
+            type="text"
+            value={trainer?.intro ?? ''}
+            onChange={(e) => onChange('intro', e.target.value)}
+            placeholder="한줄소개를 입력하세요"
+          />
+        ) : (
+          <Quote>
+            {trainer?.intro?.trim()
+              ? `"${trainer.intro}"`
+              : '"한줄소개가 아직 등록되지 않았습니다."'}
+          </Quote>
+        ))}
+
+      {isTrainer && (
+        <SummaryBox>
+          <SummaryItem>📜 자격증 {trainer?.certifications?.length || 0}개</SummaryItem>
+          <SummaryItem>🏋️‍♂️ 전문: {(trainer?.specialties || []).join(', ')}</SummaryItem>
+          <SummaryItem>💰 1회 {trainer?.priceBase?.toLocaleString() || 0}원</SummaryItem>
+        </SummaryBox>
       )}
-
-      <SummaryBox>
-        <SummaryItem>📜 자격증 {trainer.certifications.length}개</SummaryItem>
-        <SummaryItem>🏋️‍♂️ 전문: {(trainer.specialties || []).join(', ')}</SummaryItem>
-        <SummaryItem>💰 1회 {trainer.priceBase.toLocaleString()}원</SummaryItem>
-      </SummaryBox>
     </ProfileHeader>
   );
 };

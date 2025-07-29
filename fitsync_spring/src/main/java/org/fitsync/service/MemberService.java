@@ -6,6 +6,7 @@ import java.util.Map;
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
+import org.springframework.web.multipart.MultipartFile;
 import org.fitsync.domain.SearchCriteria;
 
 public interface MemberService {
@@ -26,4 +27,8 @@ public interface MemberService {
 	public List<MemberVO> getTrainerList(SearchCriteria cri);
 	// AI 요청시 필요 정보
 	public MemberVO getMemberForAIRecommendation(int memberIdx);
+	// 유저 정보 조회
+	public MemberVO getMemberByIdx(int memberIdx);
+	// 멤버 프로필 사진 변경
+	public String updateProfileImage(int memberIdx, MultipartFile file) throws Exception;
 }

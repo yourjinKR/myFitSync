@@ -2,6 +2,7 @@ package org.fitsync.controller;
 
 import org.fitsync.domain.BodyVO;
 import org.fitsync.domain.MatchingVO;
+import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.PtVO;
 import org.fitsync.domain.RecordSetVO;
 import org.fitsync.domain.RecordVO;
@@ -41,6 +42,8 @@ public class UserController {
     private MatchingService matchingService;
     @Autowired
     private BodyService bodyService;
+    @Autowired
+    private MemberService memberService;
 
     // 운동 기록 날짜 리스트
     @GetMapping("/{memberIdx}/records/dates")
@@ -178,7 +181,25 @@ public class UserController {
                 .body("서버 오류 발생: " + e.getMessage());
         }
     }
+    
+    // 유저 정보 불러오기
+    @GetMapping("/profile")
+    public ResponseEntity<?> getUserProfile(HttpSession session) {
+        Object sessionIdx = session.getAttribute("member_idx");
 
+        if (sessionIdx == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
 
+        int memberIdx = Integer.parseInt(sessionIdx.toString());
+
+        MemberVO user = memberService.getMemberByIdx(memberIdx);
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("회원 정보를 찾을 수 없습니다.");
+        }
+
+        return ResponseEntity.ok(user);
+    }
     
 }
