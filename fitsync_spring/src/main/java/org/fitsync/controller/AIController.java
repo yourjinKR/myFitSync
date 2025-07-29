@@ -24,6 +24,7 @@ import org.fitsync.domain.ApiResponseDTO;
 import org.fitsync.mapper.PtMapper;
 import org.fitsync.service.AIServiceImple;
 import org.fitsync.service.ApiLogServiceImple;
+import org.fitsync.service.PaymentServiceImple;
 
 @Log4j
 @RestController
@@ -36,6 +37,8 @@ public class AIController {
 	private AIServiceImple aiService;
 	@Autowired
 	private ApiLogServiceImple apiLogService;
+	@Autowired
+	private PaymentServiceImple payService;
 	
 	public String getWorkoutNamesJsonArray() {
 	    List<String> names = ptMapper.getWorkOutName();
@@ -77,10 +80,21 @@ public class AIController {
 		Object memberIdx = session.getAttribute("member_idx");
 		
 	    try {
+	    	if (memberIdx == null) {
+	    		return ResponseEntity.badRequest()
+		                .body(new ApiResponseDTO("memberIdx 세션 정보가 없습니다.", null));
+	    	}
+	    	
 	        String userMessage = request.get("message");
 	        if (userMessage == null || userMessage.trim().isEmpty()) {
 	            return ResponseEntity.badRequest()
 	                .body(new ApiResponseDTO("메시지가 비어 있습니다.", null));
+	        }
+	        
+	        Map<String, Object> subStatus = payService.checkSubscriptionStatus((int) memberIdx);
+	        if ((double)subStatus.get("totalCost") > 3) {
+	        	return ResponseEntity.badRequest()
+		                .body(new ApiResponseDTO("사용량이 초과되어 서비스를 사용할 수 없습니다.", null));
 	        }
 
 	        ApiResponseDTO response = aiService.requestAIResponse(userMessage, (int)memberIdx);

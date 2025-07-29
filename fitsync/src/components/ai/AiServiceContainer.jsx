@@ -12,6 +12,7 @@ import AiUtil from '../../utils/AiUtils';
 import { checkAllExerciseNames } from '../../utils/KorUtil';
 import { PaymentUtil } from '../../utils/PaymentUtil';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const ServiceContainer = styled.div`
     max-width: 1000px;
@@ -117,31 +118,41 @@ const AiServiceContainer = () => {
     const {rawDataIdx, rawDataMap} = useWorkoutNames();
     const [subscriptionData, setSubscriptionData] = useState(null);
 
+    const nav = useNavigate();
+
+    const fetchMemberData = async () => {
+        try {
+            if (!user.user.isLogin) {
+                alert("로그인이 필요한 서비스입니다!");
+                nav(-1);
+                return;
+            }
+
+            const memberResponse = await getMemberTotalData();
+            const subscriptionResponse = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx);
+            setMemberData(memberResponse);
+            setSubscriptionData(subscriptionResponse.data);
+
+        } catch (error) {
+            console.error('멤버 데이터 로드 실패:', error);
+        }
+    };
 
     // 멤버, 구독 정보 데이터 로드
     useEffect(() => {
-        const fetchMemberData = async () => {
-            try {
-                const memberResponse = await getMemberTotalData();
-                const subscriptionResponse = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx).data;
-                setMemberData(memberResponse);
-                setSubscriptionData(subscriptionResponse);
-
-                console.log(user);
-                if (!user.user.isLogin) {
-                    console.log("로그인 안했습니다 나가셈");
-                }
-                if (user.user.member_idx) {
-                    console.log(user.user.member_idx);
-                    console.log("멤버 검증");
-                }
-
-            } catch (error) {
-                console.error('멤버 데이터 로드 실패:', error);
-            }
-        };
         fetchMemberData();
     }, []);
+
+    // // 사용량 초과시 호출되지 않음
+    // useEffect(() => {
+    //     if (subscriptionData  === null) return;        
+    //     if(subscriptionData.totalCost > 3) {
+    //         alert('사용량이 초과됐습니다!');
+    //         nav(-1);
+    // } else {
+    //         console.log('아직 사용 가능');
+    //     }
+    // },[subscriptionData]);
 
     useEffect(() => {
         if (aiResult === null) return;
@@ -161,9 +172,16 @@ const AiServiceContainer = () => {
 
     // AI 루틴 생성 처리
     const handleGenerateRoutine = async (inputData) => {
+        console.log(subscriptionData.totalCost);
+        
+        if (subscriptionData.totalCost > 3) {
+            alert('사용량이 초과되어 사용할 수 없음');
+            return;
+        }
         setCurrentStep(2);
         setFeedbackCompleted(false); // 새로운 루틴 생성 시 피드백 상태 초기화
         
+
         try {
             const startTime = performance.now();
             
@@ -194,6 +212,7 @@ const AiServiceContainer = () => {
             // 이름 체크
             const changedNameResult = checkAllExerciseNames(result, rawDataMap);
             setAiResult(changedNameResult);
+            fetchMemberData();
 
             setCurrentStep(3);
         } catch (error) {
@@ -298,6 +317,7 @@ const AiServiceContainer = () => {
                     memberData={memberData}
                     setMemberData={setMemberData}
                     onGenerate={handleGenerateRoutine}
+                    available={subscriptionData?.totalCost < 3 || false}
                 />
             )}
             

@@ -834,7 +834,7 @@ const GoalsSlide = ({ formData, setFormData }) => {
     );
 };
 
-const StepInputInfo = ({onGenerate}) => {
+const StepInputInfo = ({onGenerate, available}) => {
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [formData, setFormData] = useState({
@@ -993,11 +993,11 @@ const StepInputInfo = ({onGenerate}) => {
             
             <BottomNavigation>
                 {buttonConfig.type === 'submit' ? (
-                    <SubmitButton onClick={handleButtonClick} disabled={buttonConfig.disabled}>
+                    <SubmitButton onClick={handleButtonClick} disabled={buttonConfig.disabled || !available}>
                         {buttonConfig.text}
                     </SubmitButton>
                 ) : (
-                    <NextButton onClick={handleButtonClick} disabled={buttonConfig.disabled}>
+                    <NextButton onClick={handleButtonClick} disabled={buttonConfig.disabled || !available}>
                         {buttonConfig.text}
                     </NextButton>
                 )}
