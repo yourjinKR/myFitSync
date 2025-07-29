@@ -18,35 +18,9 @@ const ErrorMessage = styled.div`
   color: #e74c3c;
 `;
 
-const TrainerInfoList = () => {
-
-  const [trainers, setTrainers] = useState([]);
-  const [loading, setLoading] = useState(true);
+const TrainerInfoList = ({trainers, setTrainers, fetchTrainers}) => {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // 컴포넌트 마운트 시 트레이너 목록 조회
-  useEffect(() => {
-    fetchTrainers();
-  }, []);
-
-  // 트레이너 목록을 서버에서 가져오는 함수 - 기존 MemberController의 임시 API 활용
-  const fetchTrainers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // 실제 API 호출
-      const response = await axios.get('/member/trainers');
-      setTrainers(response.data || []);
-      
-    } catch (error) {
-      console.error('트레이너 목록 조회 실패:', error);
-      setError('트레이너 목록을 불러오는데 실패했습니다.');
-      setTrainers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // 로딩 중일 때
   if (loading) {
