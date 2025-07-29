@@ -19,7 +19,7 @@ import { getMemberTotalData } from '../../utils/memberUtils';
 import styled from 'styled-components';
 import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
 import { useSelector } from 'react-redux';
-import { ApilogUtil } from '../../utils/apiLogUtils';
+import AiUtil from '../../utils/AiUtils';
 
 const PageContainer = styled(Container)`
     padding: 2rem;
@@ -588,7 +588,7 @@ const AItest = () => {
                     <StyledButton type="button" onClick={debugWorkoutData}>
                         운동명 데이터 확인
                     </StyledButton>
-                    <StyledButton type='button' onClick={ApilogUtil.getApiStats}>
+                    <StyledButton type='button' onClick={AiUtil.getApiStats}>
                         로그 통계
                     </StyledButton>
                 </ButtonGroup>
