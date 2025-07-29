@@ -169,4 +169,10 @@
 	    WHERE member_idx = #{memberIdx}
 	</update>
 	
+	<update id="updateProfileVisibility">
+	    UPDATE member
+	    SET member_hidden = #{member_hidden}
+	    WHERE member_idx = #{memberIdx}
+	</update>
+	
 </mapper>

@@ -49,13 +49,25 @@
 			) 
 			WHERE ROWNUM = 1
 		 </select>
-
-		 <update id="updateMatchingRemainMinusOne">
+		
+		<select id="selectMatchingRemain" resultType="int" parameterType="int">
+		    SELECT matching_remain
+		    FROM matching
+		    WHERE matching_idx = #{matchingIdx}
+		</select>
+		
+		<update id="updateMatchingRemainMinusOne" parameterType="int">
 		    UPDATE matching
 		    SET matching_remain = matching_remain - 1
 		    WHERE matching_idx = #{matchingIdx}
-		 </update>
-		 
+		</update>
+		
+		<update id="updateMatchingCompleteTo1">
+		    UPDATE matching
+		    SET matching_complete = #{completeStatus}
+		    WHERE matching_idx = #{matchingIdx}
+		</update>
+	
 	<!-- 매칭 생성 -->
     <insert id="insertMatching" parameterType="org.fitsync.domain.MatchingVO">
         <selectKey keyProperty="matching_idx" resultType="int" order="BEFORE">

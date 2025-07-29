@@ -31,4 +31,7 @@ public interface MemberService {
 	public MemberVO getMemberByIdx(int memberIdx);
 	// 멤버 프로필 사진 변경
 	public String updateProfileImage(int memberIdx, MultipartFile file) throws Exception;
+	// 트레이너 프로필 공개/비공개 설정
+	public void updateProfileVisibility(int memberIdx, boolean memberHidden);
+
 }

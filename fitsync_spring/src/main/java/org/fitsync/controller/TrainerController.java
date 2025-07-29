@@ -323,4 +323,18 @@ public class TrainerController {
         return ResponseEntity.ok(awards);
     }
     
+    @PutMapping("{memberIdx}/visibility")
+    public ResponseEntity<?> updateVisibility(
+            @PathVariable("memberIdx") int memberIdx,
+            @RequestBody Map<String, Object> payload
+    ) {
+        try {
+            boolean memberHidden = Boolean.parseBoolean(payload.get("member_hidden").toString());
+            memberService.updateProfileVisibility(memberIdx, memberHidden);
+            return ResponseEntity.ok("프로필 공개 여부가 변경되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류 발생: " + e.getMessage());
+        }
+    }
 }

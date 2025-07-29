@@ -43,4 +43,8 @@ public interface MemberMapper {
 	// 멤버 프로필 사진 변경
     public void updateMemberProfileImage(@Param("memberIdx") int memberIdx,
             @Param("imageUrl") String imageUrl);
+    
+    public void updateProfileVisibility(@Param("memberIdx") int memberIdx, @Param("member_hidden") int memberHidden);
+
+
 }

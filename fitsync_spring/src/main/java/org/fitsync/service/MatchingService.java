@@ -13,7 +13,7 @@ public interface MatchingService {
     // PT 횟수 차감
     public void decreaseMatchingRemain(int matchingIdx);
     
- // 매칭 생성
+    // 매칭 생성
     public MatchingVO createMatching(MatchingVO matching);
     // 매칭 조회
     public MatchingVO getMatching(int matching_idx);

@@ -175,8 +175,6 @@ const TrainerDetailView = () => {
 
   const handleEditToggle = async () => {
     if (isEditMode) {
-      console.log('[디버깅] editedTrainer.images:', editedTrainer.images);
-      // 저장 로직
       const payload = {
         member_idx: trainerIdx,
         member_intro: editedTrainer.intro || '',

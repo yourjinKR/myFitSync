@@ -6,6 +6,7 @@ import org.fitsync.domain.MatchingVO;
 import org.fitsync.mapper.MatchingMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.log4j.Log4j;
 
@@ -27,8 +28,21 @@ public class MatchingServiceImple implements MatchingService {
     }
 
     @Override
+    @Transactional
     public void decreaseMatchingRemain(int matchingIdx) {
+        int remain = mapper.selectMatchingRemain(matchingIdx);
+
+        if (remain <= 0) {
+            return;
+        }
+
         mapper.updateMatchingRemainMinusOne(matchingIdx);
+
+        int newRemain = remain - 1;
+
+        if (newRemain == 0) {
+            mapper.updateMatchingCompleteTo1(matchingIdx, 2);
+        }
     }
     
     @Override

@@ -9,7 +9,10 @@ public interface MatchingMapper {
     
     public List<MatchingVO> getMatchedMembers(@Param("trainerIdx") int trainerIdx);
     public MatchingVO selectMatchingByTrainerAndUser(@Param("userIdx") int userIdx);
+    public int selectMatchingRemain(@Param("matchingIdx") int matchingIdx);
     public void updateMatchingRemainMinusOne(@Param("matchingIdx") int matchingIdx);
+    public void updateMatchingCompleteTo1(@Param("matchingIdx") int matchingIdx,
+            @Param("completeStatus") int completeStatus);
     
     // 매칭 생성
     public int insertMatching(MatchingVO matching);

@@ -153,6 +153,10 @@ public class MemberServiceImple implements MemberService {
 	    // 5. 프론트에 새 이미지 URL 반환
 	    return newAttach.getCloudinary_url();
 	}
-
+	
+	@Override
+	public void updateProfileVisibility(int memberIdx, boolean memberHidden) {
+	    mapper.updateProfileVisibility(memberIdx, memberHidden ? 1 : 0);
+	}
 	
 }
