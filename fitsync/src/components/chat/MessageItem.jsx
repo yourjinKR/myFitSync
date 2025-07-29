@@ -2,6 +2,8 @@ import React, { useCallback, useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import ImageModal from './ImageModal';
 import MessageContextMenu from './MessageContextMenu';
+import { useSelector } from 'react-redux';
+import chatApi from '../../utils/ChatApi';
 
 const spin = keyframes`
   0% { transform: rotate(0deg); }
@@ -24,9 +26,8 @@ const MessageContainer = styled.div`
   border-radius: 8px;
   position: relative;
   
-  /* 연속 메시지의 경우 왼쪽 여백을 프로필 이미지 + gap 만큼 추가 */
   ${props => props.$isConsecutive && !props.$isCurrentUser ? `
-    margin-left: 44px; /* 36px(프로필) + 8px(gap) */
+    margin-left: 44px;
   ` : ''}
   
   gap: ${props => props.$isConsecutive ? '0px' : '8px'};
@@ -41,7 +42,6 @@ const ProfileImage = styled.div`
   flex-shrink: 0;
   margin-top: 0;
   
-  /* 연속 메시지에서는 투명처리하여 공간은 유지 */
   opacity: ${props => props.$isConsecutive ? 0 : 1};
   
   img {
@@ -82,7 +82,6 @@ const SenderName = styled.div`
   margin-left: 4px;
   order: 1;
   
-  /* 연속 메시지에서는 이름 숨김 */
   display: ${props => props.$isConsecutive ? 'none' : 'block'};
 `;
 
@@ -115,13 +114,6 @@ const MessageBubble = styled.div`
     transition: all 0.1s ease;
     background-color: ${props => props.$isCurrentUser ? 'var(--primary-blue-hover)' : 'var(--bg-tertiary)'};
   }
-  
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      transform: scale(1.01);
-      transition: transform 0.1s ease;
-    }
-  }
 `;
 
 const MessageText = styled.div`
@@ -134,6 +126,57 @@ const MessageText = styled.div`
   overflow-wrap: break-word;
   max-width: 100%;
   hyphens: auto;
+`;
+
+// 매칭 버튼 컨테이너 스타일
+const MatchingContainer = styled.div`
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+// 매칭 요청 버튼 스타일
+const MatchingButton = styled.button`
+  background: ${props => props.$disabled ? 'var(--border-medium)' : 'var(--primary-blue)'};
+  color: ${props => props.$disabled ? 'var(--text-tertiary)' : 'white'};
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  &:hover:not(:disabled) {
+    background: var(--primary-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    transform: none;
+  }
+`;
+
+// 매칭 상태 표시 스타일
+const MatchingStatus = styled.div`
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
 `;
 
 // ReplyContainer
@@ -249,12 +292,11 @@ const MessageWithInfo = styled.div`
   order: 2;
 `;
 
-// 🔥 수정된 부분: 메시지 정보를 가로로 배치
 const MessageInfo = styled.div`
   display: flex;
-  flex-direction: row; /* 세로 → 가로로 변경 */
-  align-items: center; /* 세로 중앙 정렬 */
-  gap: 6px; /* 읽음 상태와 시간 사이 간격 */
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
   font-size: 1.1rem;
   opacity: 0.7;
   white-space: nowrap;
@@ -262,11 +304,9 @@ const MessageInfo = styled.div`
   flex-shrink: 0;
   margin-top: 0;
   
-  /* 연속 메시지에서는 시간 정보 숨김 */
   opacity: ${props => props.$showTime ? 0.7 : 0};
   visibility: ${props => props.$showTime ? 'visible' : 'hidden'};
   
-  /* 현재 사용자 메시지인 경우 순서 변경 (읽음상태 - 시간) */
   ${props => props.$isCurrentUser ? 'flex-direction: row;' : 'flex-direction: row-reverse;'}
 `;
 
@@ -275,25 +315,127 @@ const MessageTime = styled.span`
   font-size: 1rem;
 `;
 
-// 🔥 수정된 부분: ReadStatus 스타일 개선
 const ReadStatus = styled.div`
   color: var(--text-secondary);
   font-size: 0.9rem;
   display: flex;
   align-items: center;
-  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  white-space: nowrap;
 `;
 
 const ReadTime = styled.span`
-  font-size: 0.9rem; /* 폰트 크기 약간 키움 */
+  font-size: 0.9rem;
   color: var(--text-tertiary);
 `;
+
+// 강화된 매칭 데이터 파싱 함수
+const parseMatchingDataFromMessage = (message) => {
+  console.log('🔍 매칭 데이터 파싱 시작:', {
+    messageType: message.message_type,
+    messageContent: message.message_content,
+    messageIdx: message.message_idx
+  });
+
+  if (message.message_type !== 'matching_request') {
+    console.log('❌ 매칭 요청 메시지가 아님');
+    return null;
+  }
+
+  if (!message.message_content) {
+    console.log('❌ 메시지 내용이 없음');
+    return null;
+  }
+
+  try {
+    const content = message.message_content;
+    console.log('🔍 파싱할 메시지 내용:', content);
+
+    // 다양한 패턴으로 매칭 데이터 추출 시도
+    const patterns = [
+      /\|MATCHING_DATA:(.+)$/,           // 기본 패턴
+      /MATCHING_DATA:(.+)$/,             // | 없는 패턴
+      /\{.*"matching_idx".*\}/,          // JSON 패턴 직접 매칭
+    ];
+
+    let matchingDataStr = null;
+
+    // 패턴별로 시도
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) {
+        if (pattern === patterns[2]) {
+          // JSON 패턴인 경우 전체 매치 사용
+          matchingDataStr = match[0];
+        } else {
+          // 캡처 그룹 사용
+          matchingDataStr = match[1];
+        }
+        console.log('✅ 패턴 매칭 성공:', pattern, '→', matchingDataStr);
+        break;
+      }
+    }
+
+    if (!matchingDataStr) {
+      console.log('❌ 매칭 데이터 패턴을 찾을 수 없음');
+      return null;
+    }
+
+    // JSON 파싱 시도
+    const matchingData = JSON.parse(matchingDataStr);
+    console.log('✅ 매칭 데이터 파싱 성공:', matchingData);
+
+    // 필수 필드 검증
+    if (!matchingData.matching_idx) {
+      console.log('❌ matching_idx가 없음');
+      return null;
+    }
+
+    return matchingData;
+
+  } catch (error) {
+    console.error('❌ 매칭 데이터 파싱 실패:', error);
+    console.error('❌ 파싱 실패한 내용:', message.message_content);
+    return null;
+  }
+};
+
+// 표시용 메시지 내용 정리하는 함수
+const getDisplayMessageContent = (message) => {
+  if (message.message_type !== 'matching_request') {
+    return message.message_content;
+  }
+
+  try {
+    const content = message.message_content || '';
+    
+    // 다양한 패턴으로 매칭 데이터 부분 제거
+    const patterns = [
+      /\|MATCHING_DATA:.+$/,
+      /MATCHING_DATA:.+$/,
+      /\{.*"matching_idx".*\}$/
+    ];
+
+    let displayContent = content;
+    
+    for (const pattern of patterns) {
+      displayContent = displayContent.replace(pattern, '').trim();
+      if (displayContent !== content) {
+        console.log('✅ 표시용 메시지 내용 정리:', displayContent);
+        break;
+      }
+    }
+
+    return displayContent || content;
+  } catch (error) {
+    console.error('❌ 표시용 메시지 내용 정리 실패:', error);
+    return message.message_content;
+  }
+};
 
 // useContextMenuPosition 훅
 const useContextMenuPosition = () => {
   const calculatePosition = useCallback((event, containerRef) => {
     if (!containerRef.current) {
-      console.warn('🚨 컨테이너 참조가 없습니다');
       return { x: 100, y: 100 };
     }
 
@@ -440,7 +582,7 @@ const useUnifiedPointerEvents = (onContextMenu, containerRef) => {
   }
 };
 
-// props
+// MessageItem 컴포넌트
 const MessageItem = ({ 
   message, 
   isCurrentUser, 
@@ -456,8 +598,30 @@ const MessageItem = ({
   parentMessage = null,
   allAttachments = {},
   getReplyPreviewText = null,
-  onScrollToMessage = null
+  onScrollToMessage = null,
+  roomData = null
 }) => {
+
+  // Redux에서 사용자 정보 가져오기
+  const { user } = useSelector(state => state.user);
+
+  // 매칭 데이터 파싱 및 로깅
+  const parsedMatchingData = parseMatchingDataFromMessage(message);
+  const displayContent = getDisplayMessageContent(message);
+
+  console.log('🎯 MessageItem 렌더링:', {
+    messageIdx: message.message_idx,
+    messageType: message.message_type,
+    isMatchingRequest: message.message_type === 'matching_request',
+    parsedMatchingData: parsedMatchingData,
+    matchingIdx: parsedMatchingData?.matching_idx
+  });
+
+  // 매칭 데이터 추출 (파싱된 데이터 사용)
+  const matchingData = parsedMatchingData || {};
+  const matchingIdx = matchingData.matching_idx;
+  const matchingTotal = matchingData.matching_total || 0;
+  const matchingComplete = matchingData.matching_complete || 0;
 
   // 상태 관리
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -467,6 +631,11 @@ const MessageItem = ({
     isVisible: false,
     position: { x: 0, y: 0 }
   });
+  
+  // 매칭 관련 상태
+  const [matchingLoading, setMatchingLoading] = useState(false);
+  const [hasCompletedMatchingWithTrainer, setHasCompletedMatchingWithTrainer] = useState(false);
+  const [isMatchingCheckComplete, setIsMatchingCheckComplete] = useState(false);
 
   const containerRef = useRef(null);
   
@@ -490,6 +659,112 @@ const MessageItem = ({
       containerRef.current = chatContainer;
     }
   }, []);
+
+  // 매칭 요청 메시지 여부 확인
+  const isMatchingRequestMessage = message.message_type === 'matching_request';
+
+  // 매칭 버튼 클릭 가능 여부 (회원만 클릭 가능, 자신이 보낸 매칭 요청은 클릭 불가)
+  const canClickMatchingButton = !isCurrentUser && user?.member_type === 'user';
+
+  console.log('🎯 매칭 버튼 상태 분석:', {
+    isMatchingRequestMessage,
+    canClickMatchingButton,
+    matchingIdx,
+    userMemberType: user?.member_type,
+    isCurrentUser
+  });
+
+  // 완료된 매칭 확인 (조건부 실행)
+  useEffect(() => {
+    if (isMatchingRequestMessage && canClickMatchingButton && !isMatchingCheckComplete && roomData) {
+      console.log('🔍 완료된 매칭 확인 시작...');
+      checkCompletedMatchingWithTrainer();
+    }
+  }, [isMatchingRequestMessage, canClickMatchingButton, isMatchingCheckComplete, user?.member_idx, roomData]);
+
+  // 특정 트레이너와의 완료된 매칭 확인 함수
+  const checkCompletedMatchingWithTrainer = async () => {
+    try {
+      const currentTrainerIdx = roomData?.trainer_idx;
+      
+      console.log('🔍 매칭 확인 파라미터:', {
+        currentTrainerIdx,
+        userMemberIdx: user.member_idx,
+        roomData
+      });
+      
+      if (!currentTrainerIdx) {
+        console.log('❌ 트레이너 IDX 없음');
+        setHasCompletedMatchingWithTrainer(false);
+        setIsMatchingCheckComplete(true);
+        return;
+      }
+      
+      const result = await chatApi.checkCompletedMatchingBetween(currentTrainerIdx, user.member_idx);
+      
+      console.log('✅ 매칭 확인 결과:', result);
+      
+      if (result.success) {
+        setHasCompletedMatchingWithTrainer(result.hasCompletedMatching);
+        setIsMatchingCheckComplete(true);
+      } else {
+        setHasCompletedMatchingWithTrainer(false);
+        setIsMatchingCheckComplete(true);
+      }
+      
+    } catch (error) {
+      console.error('❌ 매칭 확인 중 오류:', error);
+      setHasCompletedMatchingWithTrainer(false);
+      setIsMatchingCheckComplete(true);
+    }
+  };
+
+  // 매칭 요청 수락 핸들러
+  const handleMatchingAccept = async () => {
+    console.log('🎯 매칭 수락 클릭:', {
+      matchingIdx,
+      matchingData,
+      parsedMatchingData
+    });
+
+    if (!matchingIdx) {
+      alert('매칭 정보를 찾을 수 없습니다. 메시지가 손상되었을 수 있습니다.');
+      return;
+    }
+    
+    if (matchingLoading) {
+      return;
+    }
+    
+    if (hasCompletedMatchingWithTrainer) {
+      alert('해당 트레이너와 이미 진행 중인 매칭이 있습니다.');
+      return;
+    }
+    
+    setMatchingLoading(true);
+    
+    try {
+      console.log('📤 매칭 수락 API 호출:', matchingIdx);
+      const result = await chatApi.acceptMatching(matchingIdx);
+      
+      console.log('📥 매칭 수락 결과:', result);
+      
+      if (result.success) {
+        alert('매칭이 성공적으로 수락되었습니다!');
+        setHasCompletedMatchingWithTrainer(true);
+      } else {
+        alert(result.message || '매칭 수락에 실패했습니다.');
+        await checkCompletedMatchingWithTrainer();
+      }
+      
+    } catch (error) {
+      console.error('❌ 매칭 수락 중 오류:', error);
+      alert('매칭 수락 중 오류가 발생했습니다.');
+      await checkCompletedMatchingWithTrainer();
+    } finally {
+      setMatchingLoading(false);
+    }
+  };
 
   const { eventHandlers, isLongPressing } = useUnifiedPointerEvents(
     (event, position) => {
@@ -534,7 +809,6 @@ const MessageItem = ({
     e.stopPropagation();
     
     if (parentMessage && onScrollToMessage) {
-      console.log('🎯 부모 메시지로 스크롤 이동:', parentMessage.message_idx);
       onScrollToMessage(parentMessage.message_idx);
     }
   }, [parentMessage, onScrollToMessage]);
@@ -548,7 +822,6 @@ const MessageItem = ({
       return;
     }
     
-    console.log('🖼️ 이미지 모달 열기:', attachments?.original_filename);
     setIsModalOpen(true);
   }, [attachments, isLongPressing]);
 
@@ -561,7 +834,7 @@ const MessageItem = ({
   }, []);
 
   const handleCopy = useCallback((message) => {
-    console.log('📋 메시지 복사됨:', message.message_content);
+    // 복사 완료 처리
   }, []);
 
   const handleReply = useCallback((message) => {
@@ -577,7 +850,6 @@ const MessageItem = ({
   }, [onReport]);
 
   const handleImageLoad = useCallback(() => {
-    console.log(`✅ 이미지 로딩 완료 - message_idx: ${message.message_idx}`);
     setImageLoading(false);
     setLoadingProgress(100);
     
@@ -589,7 +861,6 @@ const MessageItem = ({
   }, [onImageLoad, message.message_idx]);
 
   const handleImageError = useCallback(() => {
-    console.log(`❌ 이미지 로딩 실패 - message_idx: ${message.message_idx}`);
     setImageLoading(false);
     setLoadingProgress(0);
   }, [message.message_idx]);
@@ -613,7 +884,6 @@ const MessageItem = ({
 
   useEffect(() => {
     if (attachments && message.message_type === 'image') {
-      console.log(`✅ 첨부파일 상태 업데이트 - message_idx: ${message.message_idx}`, attachments);
       setImageLoading(false);
       setLoadingProgress(100);
     }
@@ -627,7 +897,7 @@ const MessageItem = ({
     });
   };
 
-  // 프로필 이미지 렌더링 - 연속 메시지 고려
+  // 프로필 이미지 렌더링
   const renderProfileImage = () => {
     if (isCurrentUser) return null;
     
@@ -636,7 +906,6 @@ const MessageItem = ({
                          senderImage.trim() !== '' &&
                          senderImage.startsWith('http');
     
-    // 발신자 이름이 없는 경우 투명 처리
     if (!senderName) {
       return <ProfileImage className="invisible" $isConsecutive={true} />;
     }
@@ -662,7 +931,7 @@ const MessageItem = ({
     );
   };
 
-  // 🔥 수정된 부분: 읽음 상태 정보 개선
+  // 읽음 상태 정보
   const getReadStatusInfo = () => {
     if (!isCurrentUser) return null;
     
@@ -675,20 +944,78 @@ const MessageItem = ({
 
   const readStatusInfo = getReadStatusInfo();
 
+  // 매칭 상태 렌더링 함수
+  const renderMatchingStatus = () => {
+    console.log('🎯 매칭 상태 렌더링:', {
+      canClickMatchingButton,
+      isMatchingCheckComplete,
+      hasCompletedMatchingWithTrainer,
+      matchingIdx,
+      parsedMatchingData
+    });
+
+    if (canClickMatchingButton) {
+      // 회원 계정에서 보는 경우
+      
+      // API 호출 완료 전에는 로딩 상태 표시
+      if (!isMatchingCheckComplete) {
+        return (
+          <MatchingButton disabled={true} $disabled={true}>
+            상태 확인 중...
+          </MatchingButton>
+        );
+      }
+      
+      // 이미 완료된 매칭이 있는 경우
+      if (hasCompletedMatchingWithTrainer) {
+        return <MatchingStatus>해당 트레이너와 이미 진행 중인 매칭이 있습니다</MatchingStatus>;
+      }
+      
+      // 파싱된 매칭 데이터 기반으로 버튼 상태 결정
+      if (matchingIdx && typeof matchingIdx === 'number' && matchingIdx > 0) {
+        console.log('✅ 매칭 수락 버튼 활성화:', matchingIdx);
+        return (
+          <MatchingButton
+            onClick={handleMatchingAccept}
+            disabled={matchingLoading}
+            $disabled={matchingLoading}
+          >
+            {matchingLoading ? '처리 중...' : '매칭수락'}
+          </MatchingButton>
+        );
+      } else {
+        console.log('❌ 매칭 정보 파싱 실패:', {
+          matchingIdx,
+          type: typeof matchingIdx,
+          parsedMatchingData
+        });
+        return (
+          <MatchingButton disabled={true} $disabled={true}>
+            매칭 정보 파싱 실패
+          </MatchingButton>
+        );
+      }
+    } else {
+      // 트레이너 계정에서 보거나 다른 상황
+      if (isCurrentUser) {
+        return <MatchingStatus>매칭 요청 전송됨</MatchingStatus>;
+      } else {
+        return <MatchingStatus>매칭 요청</MatchingStatus>;
+      }
+    }
+  };
+
   return (
     <>
-    {/* 연속 메시지 prop 전달 */}
     <MessageContainer 
       id={`message-${message.message_idx}`} 
       $isCurrentUser={isCurrentUser}
       $isConsecutive={isConsecutive}
       ref={containerRef}
     >
-      {/* 연속 메시지가 아닐 때만 프로필 이미지 렌더링 */}
       {!isCurrentUser && !isConsecutive && senderName && renderProfileImage()}
       
       <MessageGroup $isCurrentUser={isCurrentUser}>
-        {/* 연속 메시지에서는 발신자 이름 숨김 */}
         {!isCurrentUser && senderName && (
           <SenderName $isConsecutive={isConsecutive}>{senderName}</SenderName>
         )}
@@ -699,7 +1026,7 @@ const MessageItem = ({
             {...eventHandlers}
             className={isLongPressing ? 'long-pressing' : ''}
           >
-            {/* 답장 미리보기 - 클릭 기능 */}
+            {/* 답장 미리보기 */}
             {parentMessage && (
               <ReplyContainer 
                 $isCurrentUser={isCurrentUser}
@@ -737,13 +1064,18 @@ const MessageItem = ({
                 )}
               </ImageContainer>
             ) : (
-              <MessageText>{message.message_content}</MessageText>
+              <MessageText>{displayContent}</MessageText>
+            )}
+
+            {/* 매칭 요청 버튼 */}
+            {isMatchingRequestMessage && (
+              <MatchingContainer>
+                {renderMatchingStatus()}
+              </MatchingContainer>
             )}
           </MessageBubble>
           
-          {/* 🔥 수정된 부분: MessageInfo 구조 변경 */}
           <MessageInfo $isCurrentUser={isCurrentUser} $showTime={showTime}>
-            {/* 현재 사용자 메시지인 경우 읽음 상태를 시간 왼쪽에 배치 */}
             {readStatusInfo && (
               <ReadStatus>
                 <ReadTime>{readStatusInfo.text}</ReadTime>

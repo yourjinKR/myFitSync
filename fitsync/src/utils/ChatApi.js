@@ -74,6 +74,31 @@ const chatApi = {
       withCredentials: true
     });
     return response.data;
+  },
+
+  // 매칭 요청 생성
+  createMatching: async (user_idx, matching_total) => {
+    const response = await axios.post('/api/chat/matching', {
+      user_idx,
+      matching_total
+    }, { withCredentials: true });
+    return response.data;
+  },
+
+  // 매칭 수락 (완료 처리)
+  acceptMatching: async (matching_idx) => {
+    const response = await axios.put(`/api/chat/accept/${matching_idx}`, {}, {
+      withCredentials: true
+    });
+    return response.data;
+  },
+
+  // 특정 트레이너-회원간 완료된 매칭 존재 여부 확인
+  checkCompletedMatchingBetween: async (trainer_idx, user_idx) => {
+    const response = await axios.get(`/api/chat/check-completed/${trainer_idx}/${user_idx}`, {
+      withCredentials: true
+    });
+    return response.data;
   }
 };
 

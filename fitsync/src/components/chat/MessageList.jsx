@@ -349,6 +349,7 @@ const MessageList = ({
               allAttachments={attachments}
               getReplyPreviewText={getReplyPreviewText}
               onScrollToMessage={handleScrollToMessage}
+              roomData={roomData}
             />
           </React.Fragment>
         );

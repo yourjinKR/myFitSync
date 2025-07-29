@@ -41,12 +41,19 @@ public class ChatWebSocketController {
             // parent_idx는 null일 수 있음 (답장이 아닌 경우)
             Integer parent_idx = extractIntegerFromMessage(message, "parent_idx");
             
+            // 매칭 데이터 추출 (matching_request 타입인 경우)
+            Map<String, Object> matching_data = null;
+            if ("matching_request".equals(message_type)) {
+                matching_data = (Map<String, Object>) message.get("matching_data");
+                System.out.println("매칭 데이터 추출: " + matching_data);
+            }
+            
             // 기본값 설정
             if (message_type == null || message_type.trim().isEmpty()) {
                 message_type = "text";
             }
             
-            System.out.println("🔍 파싱된 데이터:");
+            System.out.println("파싱된 데이터:");
             System.out.println("   sender_idx: " + sender_idx);
             System.out.println("   receiver_idx: " + receiver_idx);
             System.out.println("   room_idx: " + room_idx);
@@ -54,6 +61,7 @@ public class ChatWebSocketController {
             System.out.println("   message_type: " + message_type);
             System.out.println("   parent_idx: " + parent_idx);
             System.out.println("   unique_id: " + unique_id);
+            System.out.println("   matching_data: " + matching_data);
             
             // 필수 값 검증
             if (sender_idx == null || receiver_idx == null || room_idx == null || 
@@ -91,6 +99,11 @@ public class ChatWebSocketController {
             vo.setParent_idx(parent_idx); // null일 수 있음
             vo.setAttach_idx(null); // 기본값
             
+            // 매칭 데이터 설정
+            if (matching_data != null) {
+                vo.setMatching_data(matching_data);
+            }
+            
             // 메시지 저장
             MessageVO savedMessage = null;
             try {
@@ -119,6 +132,11 @@ public class ChatWebSocketController {
                     // 현재 시간으로 설정
                     savedMessage.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
                     
+                    // 매칭 데이터도 함께 브로드캐스트
+                    if (matching_data != null) {
+                        savedMessage.setMatching_data(matching_data);
+                    }
+                    
                     System.out.println("📡 메시지 브로드캐스트 시작: " + savedMessage.getMessage_idx());
                     messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
                     System.out.println("✅ 메시지 브로드캐스트 완료");
@@ -138,7 +156,7 @@ public class ChatWebSocketController {
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload Map<String, Object> readData) {
         try {
-            System.out.println("🔍 읽음 처리 수신 데이터: " + readData);
+            System.out.println("읽음 처리 수신 데이터: " + readData);
             
             Integer receiver_idx = extractIntegerFromMessage(readData, "receiver_idx");
             Integer message_idx = extractIntegerFromMessage(readData, "message_idx");
