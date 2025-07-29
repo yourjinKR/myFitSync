@@ -140,6 +140,13 @@
 				OR member_activity_area LIKE '%' || #{keyword} || '%'
 			)
 		</if>
+		<if test="gender != null">
+			AND member_gender = #{gender}
+		</if>
+		<if test="time != null and time != ''">
+		  AND TO_DATE(SUBSTR(#{time}, 1, 5), 'HH24:MI') &lt;= TO_DATE(SUBSTR(member_time, 7, 5), 'HH24:MI')
+		  AND TO_DATE(SUBSTR(#{time}, 7, 5), 'HH24:MI') &gt;= TO_DATE(SUBSTR(member_time, 1, 5), 'HH24:MI')
+		</if>
 		ORDER BY member_idx DESC
 	</select>
 
