@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useDebounce } from 'use-debounce';
+import { useSelector } from 'react-redux';
+import MatchingModal from './MatchingModal';
+import chatApi from '../../utils/ChatApi';
 
-// Header.jsx에 가리지 않도록 위치 조정
 const HeaderContainer = styled.div`
   position: sticky;
   top: 0;
-  z-index: 50; /* Header.jsx(999)보다 낮지만 Container 내부에서는 높게 */
+  z-index: 50;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-light);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -18,8 +20,8 @@ const HeaderContent = styled.div`
   align-items: center;
   padding: 15px 20px;
   gap: 15px;
-  height: 60px; /* 고정 높이 설정 */
-  min-height: 60px; /* 최소 높이 유지 */
+  height: 60px;
+  min-height: 60px;
 `;
 
 const BackButton = styled.button`
@@ -44,7 +46,10 @@ const BackButton = styled.button`
 
 const HeaderMain = styled.div`
   flex: 1;
-  min-width: 0; /* flex 아이템이 줄어들 수 있도록 */
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 const RoomTitle = styled.h1`
@@ -55,9 +60,34 @@ const RoomTitle = styled.h1`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 36px; /* SearchContainer와 동일한 높이 */
+  height: 36px;
   display: flex;
-  align-items: center; /* 수직 중앙 정렬 */
+  align-items: center;
+  flex-shrink: 1;
+`;
+
+const MatchingButton = styled.button`
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  
+  &:hover {
+    background: var(--primary-blue-hover);
+    transform: scale(1.05);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const SearchContainer = styled.div`
@@ -68,8 +98,9 @@ const SearchContainer = styled.div`
   border: 1px solid var(--border-medium);
   border-radius: 20px;
   padding: 8px 12px;
-  height: 36px; /* 고정 높이 설정 */
-  box-sizing: border-box; /* 패딩과 보더 포함한 크기 계산 */
+  height: 36px;
+  box-sizing: border-box;
+  flex: 1;
 `;
 
 const SearchInput = styled.input`
@@ -104,15 +135,15 @@ const NavButton = styled.button`
   background: var(--bg-tertiary);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
-  width: 28px; /* 크기 조정 */
-  height: 28px; /* 크기 조정 */
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
-  font-size: 1.2rem; /* 폰트 크기도 조정 */
+  font-size: 1.2rem;
   
   &:hover:not(:disabled) {
     background: var(--bg-primary);
@@ -124,13 +155,12 @@ const NavButton = styled.button`
   }
 `;
 
-/* SearchToggleButton - DOM prop 전달 방지 */
 const SearchToggleButton = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'isActive'
 })`
-  background: var(--bg-secondary); /* 항상 동일한 배경색 */
+  background: var(--bg-secondary);
   color: var(--text-primary);
-  border: 1px solid var(--border-medium); /* 기본 테두리 색상 */
+  border: 1px solid var(--border-medium);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -142,25 +172,136 @@ const SearchToggleButton = styled.button.withConfig({
   transition: all 0.2s;
   flex-shrink: 0;
   
-  /* 호버 시에만 파란 테두리 */
   &:hover {
     border-color: var(--primary-blue);
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3); /* 파란색 그림자 효과 */
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
   }
 `;
 
-const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResult, messages = [], attachments = {} }) => {
+const ChatRoomHeader = ({ 
+  roomDisplayName, 
+  onSearchResults, 
+  onScrollToSearchResult, 
+  messages = [], 
+  attachments = {},
+  roomData = null,
+  onSendMessage = null
+}) => {
   // 검색 관련 상태
-  const [isSearchMode, setIsSearchMode] = useState(false); // 검색 모드 활성화 여부
-  const [searchQuery, setSearchQuery] = useState(''); // 검색어
-  const [searchResults, setSearchResults] = useState([]); // 검색 결과
-  const [currentResultIndex, setCurrentResultIndex] = useState(-1); // 현재 선택된 검색 결과 인덱스
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [currentResultIndex, setCurrentResultIndex] = useState(-1);
+  
+  // 매칭 관련 상태
+  const { user } = useSelector(state => state.user);
+  const [showMatchingModal, setShowMatchingModal] = useState(false);
+  const [isMatchingLoading, setIsMatchingLoading] = useState(false);
   
   const searchInputRef = useRef(null);
   
   // 디바운스된 검색어 (300ms 지연)
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
+
+  // 트레이너 여부 확인
+  const isTrainer = user?.member_type === 'trainer';
+
+  // 상대방 정보 가져오기 함수
+  const getOtherPersonInfo = () => {
+    if (!roomData || !user) {
+      return null;
+    }
+      
+    const currentMemberIdx = user.member_idx;
+      
+    if (roomData.trainer_idx === currentMemberIdx) {
+      // 내가 트레이너인 경우 → 회원 정보 반환
+      return {
+        member_idx: roomData.user_idx,
+        name: roomData.user_name || '회원',
+        type: 'user'
+      };
+    } else {
+      // 내가 일반 사용자인 경우 → 트레이너 정보 반환
+      return {
+        member_idx: roomData.trainer_idx,
+        name: roomData.trainer_name || '트레이너',
+        type: 'trainer'
+      };
+    }
+  };
+
+  // 매칭 요청 처리 함수 개선
+  const handleMatchingRequest = async (matchingTotal) => {
+    console.log('🎯 매칭 요청 시작:', { matchingTotal });
+    
+    setIsMatchingLoading(true);
+      
+    try {
+      const otherPerson = getOtherPersonInfo();
+      
+      if (!otherPerson) {
+        alert('상대방 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      console.log('👤 상대방 정보:', otherPerson);
+
+      // 매칭 생성
+      const result = await chatApi.createMatching(otherPerson.member_idx, matchingTotal);
+      
+      console.log('📥 매칭 생성 결과:', result);
+        
+      if (result.success) {
+        // 매칭 정보를 더 명확하게 포함
+        const baseMessage = `PT ${matchingTotal}회 매칭 요청`;
+        
+        // JSON을 더 안전하게 직렬화
+        const matchingDataJson = JSON.stringify({
+          matching_idx: result.matching.matching_idx,
+          trainer_idx: result.matching.trainer_idx,
+          user_idx: result.matching.user_idx,
+          matching_total: result.matching.matching_total,
+          matching_remain: result.matching.matching_remain,
+          matching_complete: result.matching.matching_complete
+        });
+        
+        // 구분 기호를 더 명확하게
+        const messageWithMatchingData = `${baseMessage}|MATCHING_DATA:${matchingDataJson}`;
+        
+        console.log('📤 전송할 메시지:', {
+          baseMessage,
+          matchingDataJson,
+          fullMessage: messageWithMatchingData
+        });
+          
+        if (onSendMessage) {
+          await onSendMessage(
+            messageWithMatchingData, 
+            'matching_request', 
+            null, 
+            null,
+            null // matching_data는 메시지 내용에 포함했으므로 null
+          );
+          
+          console.log('✅ 매칭 요청 메시지 전송 완료');
+        }
+          
+        setShowMatchingModal(false);
+          
+      } else {
+        console.error('❌ 매칭 생성 실패:', result.message);
+        alert(result.message || '매칭 요청 생성에 실패했습니다.');
+      }
+        
+    } catch (error) {
+      console.error('❌ 매칭 요청 중 오류:', error);
+      alert('매칭 요청 중 오류가 발생했습니다.');
+    } finally {
+      setIsMatchingLoading(false);
+    }
+  };
 
   // 검색 모드 토글 함수
   const toggleSearchMode = useCallback(() => {
@@ -168,19 +309,14 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
       const newSearchMode = !prev;
       
       if (newSearchMode) {
-        // 검색 모드 활성화 시
-        console.log('🔍 검색 모드 활성화');
-        // 다음 렌더링 후 input에 포커스
         setTimeout(() => {
           searchInputRef.current?.focus();
         }, 0);
       } else {
-        // 검색 모드 비활성화 시
-        console.log('❌ 검색 모드 비활성화');
         setSearchQuery('');
         setSearchResults([]);
         setCurrentResultIndex(-1);
-        onSearchResults?.([]); // 부모 컴포넌트에 빈 결과 전달
+        onSearchResults?.([]);
       }
       
       return newSearchMode;
@@ -196,17 +332,14 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
       return;
     }
 
-    // 텍스트 메시지와 이미지 파일명 모두 검색
     const results = messages
       .filter(message => {
-        // 1. 텍스트 메시지: message_content가 있고 '[이미지]'가 아닌 경우
         if (message.message_content && 
             message.message_content !== '[이미지]' && 
             message.message_content.toLowerCase().includes(query.toLowerCase())) {
           return true;
         }
         
-        // 2. 이미지 메시지: original_filename으로 검색
         if (message.message_type === 'image') {
           const attachment = attachments[message.message_idx];
           if (attachment && attachment.original_filename) {
@@ -224,8 +357,6 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
     setSearchResults(results);
     setCurrentResultIndex(results.length > 0 ? 0 : -1);
     onSearchResults?.(results);
-
-    console.log(`🔍 검색 결과: "${query}" → ${results.length}개 발견 (텍스트 + 이미지 파일명)`);
   }, [messages, attachments, onSearchResults]);
 
   // 디바운스된 검색어 변경 시 검색 수행
@@ -235,7 +366,7 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
     }
   }, [debouncedSearchQuery, isSearchMode, performSearch]);
 
-  // 다음/이전 검색 결과로 이동 - 수정된 부분
+  // 다음/이전 검색 결과로 이동
   const navigateToResult = useCallback((direction) => {
     if (searchResults.length === 0) return;
 
@@ -243,20 +374,18 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
     if (direction === 'next') {
       newIndex = currentResultIndex < searchResults.length - 1 
         ? currentResultIndex + 1 
-        : 0; // 마지막에서 처음으로
+        : 0;
     } else {
       newIndex = currentResultIndex > 0 
         ? currentResultIndex - 1 
-        : searchResults.length - 1; // 처음에서 마지막으로
+        : searchResults.length - 1;
     }
 
     setCurrentResultIndex(newIndex);
     
-    // 해당 메시지로 스크롤 - onScrollToSearchResult 사용
     const targetMessage = searchResults[newIndex];
     if (targetMessage && onScrollToSearchResult) {
-      console.log('📍 검색 결과로 이동:', targetMessage.message_idx);
-      onScrollToSearchResult(targetMessage.message_idx); // 부모 컴포넌트의 스크롤 함수 호출
+      onScrollToSearchResult(targetMessage.message_idx);
     }
   }, [searchResults, currentResultIndex, onScrollToSearchResult]);
 
@@ -270,9 +399,9 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
         break;
       case 'Enter':
         if (e.shiftKey) {
-          navigateToResult('prev'); // Shift + Enter: 이전 결과
+          navigateToResult('prev');
         } else {
-          navigateToResult('next'); // Enter: 다음 결과
+          navigateToResult('next');
         }
         break;
       case 'ArrowUp':
@@ -302,13 +431,25 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
           ←
         </BackButton>
 
-        {/* 채팅방 이름 또는 검색바 */}
+        {/* 채팅방 이름과 매칭 버튼 */}
         <HeaderMain>
           {!isSearchMode ? (
-            // 일반 모드: 채팅방 이름 표시
-            <RoomTitle>{roomDisplayName}</RoomTitle>
+            <>
+              {/* 채팅방 이름 */}
+              <RoomTitle>{roomDisplayName}</RoomTitle>
+              
+              {/* 매칭하기 버튼 */}
+              {isTrainer && (
+                <MatchingButton 
+                  onClick={() => setShowMatchingModal(true)} 
+                  disabled={isMatchingLoading}
+                >
+                  매칭하기
+                </MatchingButton>
+              )}
+            </>
           ) : (
-            // 검색 모드: 검색바 표시
+            /* 검색 모드: 검색바가 전체 공간 차지 */
             <SearchContainer>
               <SearchInput
                 ref={searchInputRef}
@@ -368,6 +509,13 @@ const ChatRoomHeader = ({ roomDisplayName, onSearchResults, onScrollToSearchResu
         </SearchToggleButton>
       </HeaderContent>
 
+      {/* 매칭 모달 */}
+      <MatchingModal
+        isOpen={showMatchingModal}
+        onClose={() => setShowMatchingModal(false)}
+        onSubmit={handleMatchingRequest}
+        isLoading={isMatchingLoading}
+      />
     </HeaderContainer>
   );
 };

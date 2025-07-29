@@ -12,5 +12,14 @@ public interface MatchingService {
     public MatchingVO getMatchingByTrainerAndUser(int userIdx);
     // PT 횟수 차감
     public void decreaseMatchingRemain(int matchingIdx);
+    
+ // 매칭 생성
+    public MatchingVO createMatching(MatchingVO matching);
+    // 매칭 조회
+    public MatchingVO getMatching(int matching_idx);
+    // 매칭 완료 처리
+    public boolean acceptMatching(int matching_idx, int user_idx);
+    // 특정 트레이너-회원간 완료된 매칭 존재 여부 확인
+    public boolean hasCompletedMatchingBetween(int trainer_idx, int user_idx);
 	
 }

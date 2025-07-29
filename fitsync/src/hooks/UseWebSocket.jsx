@@ -181,7 +181,7 @@ export const useWebSocket = () => {
     }
   }, [client, connected]);
 
-  // 메시지 전송 로직 개선 (타입 안전성 강화)
+  // 메시지 전송 로직
   const sendMessage = useCallback((messageData) => {
     
     const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
@@ -190,7 +190,7 @@ export const useWebSocket = () => {
     if (client && connected && memberIdx && !isConnectingRef.current) {
       const uniqueId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // 타입 안전성 보장
+      // 타입 안전성 보장 + 매칭 데이터 지원
       const messageWithSender = {
         room_idx: parseInt(messageData.room_idx), // 명시적 정수 변환
         sender_idx: memberIdx, // 정수 타입 보장
@@ -201,8 +201,33 @@ export const useWebSocket = () => {
         unique_id: uniqueId,
         timestamp: Date.now()
       };
+
+      // 매칭 데이터가 있는 경우 추가 (새로운 기능)
+      if (messageData.matching_data && typeof messageData.matching_data === 'object') {
+        console.log('매칭 데이터 포함된 메시지 전송:', messageData.matching_data);
+        
+        // 매칭 데이터 유효성 검증 및 타입 안전성 보장
+        const validatedMatchingData = {
+          matching_idx: messageData.matching_data.matching_idx ? parseInt(messageData.matching_data.matching_idx) : null,
+          trainer_idx: messageData.matching_data.trainer_idx ? parseInt(messageData.matching_data.trainer_idx) : null,
+          user_idx: messageData.matching_data.user_idx ? parseInt(messageData.matching_data.user_idx) : null,
+          matching_total: messageData.matching_data.matching_total ? parseInt(messageData.matching_data.matching_total) : 0,
+          matching_remain: messageData.matching_data.matching_remain ? parseInt(messageData.matching_data.matching_remain) : 0,
+          matching_complete: messageData.matching_data.matching_complete ? parseInt(messageData.matching_data.matching_complete) : 0
+        };
+        
+        // null이나 undefined 값 제거
+        Object.keys(validatedMatchingData).forEach(key => {
+          if (validatedMatchingData[key] === null || validatedMatchingData[key] === undefined) {
+            delete validatedMatchingData[key];
+          }
+        });
+        
+        messageWithSender.matching_data = validatedMatchingData;
+        console.log('✅ 매칭 데이터 검증 및 타입 변환 완료:', validatedMatchingData);
+      }
       
-      console.log('📤 메시지 전송 시도 (타입 안전):', messageWithSender);
+      console.log('📤 메시지 전송 시도 (매칭 데이터 지원):', messageWithSender);
       
       try {
         client.publish({

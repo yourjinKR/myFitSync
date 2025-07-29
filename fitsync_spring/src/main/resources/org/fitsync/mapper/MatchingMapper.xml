@@ -55,5 +55,53 @@
 		    SET matching_remain = matching_remain - 1
 		    WHERE matching_idx = #{matchingIdx}
 		 </update>
+		 
+	<!-- 매칭 생성 -->
+    <insert id="insertMatching" parameterType="org.fitsync.domain.MatchingVO">
+        <selectKey keyProperty="matching_idx" resultType="int" order="BEFORE">
+            SELECT matching_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO matching (
+            matching_idx,
+            trainer_idx,
+            user_idx,
+            matching_total,
+            matching_remain,
+            matching_complete,
+            matching_start,
+            matching_end
+        ) VALUES (
+            #{matching_idx},
+            #{trainer_idx},
+            #{user_idx},
+            #{matching_total},
+            #{matching_remain},
+            #{matching_complete},
+            SYSDATE,
+            NULL
+        )
+    </insert>
+    
+    <!-- 매칭 조회 -->
+    <select id="getMatching" parameterType="int" resultType="org.fitsync.domain.MatchingVO">
+        SELECT * FROM matching WHERE matching_idx = #{matching_idx}
+    </select>
+    
+    <!-- 매칭 완료 처리 -->
+    <update id="updateMatchingComplete" parameterType="int">
+        UPDATE matching 
+        SET matching_complete = 1, 
+            matching_end = SYSDATE 
+        WHERE matching_idx = #{matching_idx}
+    </update>
+    
+    <!-- 특정 트레이너-회원간 완료된 매칭 개수 조회 -->
+    <select id="countCompletedMatchingBetween" parameterType="int" resultType="int">
+        SELECT COUNT(*) 
+        FROM matching 
+        WHERE trainer_idx = #{trainer_idx} 
+        AND user_idx = #{user_idx}
+        AND matching_complete = 1
+    </select>
 		
 </mapper>
