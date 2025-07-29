@@ -83,11 +83,6 @@ const LogDetailModal = ({
 
         try {
             let exerciseNames = [];
-            
-            console.log(versionUtils.isVersionGreater(log.apilog_version, "0.2.0"));
-            if (versionUtils.isVersionGreater(log.apilog_version, "0.2.0") === true) {
-                console.log('idx로 매핑');
-            }
             // userInput이 문자열인 경우 JSON 파싱 시도
             if (typeof userInput === 'string') {                
                 const parsed = JSON.parse(userInput);
@@ -106,8 +101,6 @@ const LogDetailModal = ({
                 }
             } else if (Array.isArray(userInput)) {
                 // 이미 파싱된 루틴 배열인 경우
-                console.log('여기서부터 아마 코드 시작');
-                
                 exerciseNames = userInput.flatMap(routine => 
                     routine.exercises?.map(ex => ex.pt_name || ex.name || ex.exercise_name) || []
                 ).filter(Boolean);

@@ -17,7 +17,7 @@
 	    WHERE PT_HIDDEN = 0
 	</select>
 	
-	<select id="getWorkOutNameMap" resultType="map">
+	<select id="getWorkOutNameMap" resultType="org.fitsync.domain.PtVO">
 	    SELECT PT_IDX, PT_NAME
 	    FROM PT
 	</select>

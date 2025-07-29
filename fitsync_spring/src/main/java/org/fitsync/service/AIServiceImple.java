@@ -17,6 +17,7 @@ import org.fitsync.domain.AiExerciseDTO;
 import org.fitsync.domain.AiRoutineDTO;
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.ApiResponseDTO;
+import org.fitsync.domain.PtVO;
 import org.fitsync.mapper.ApiLogMapper;
 import org.fitsync.mapper.PtMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,23 +58,10 @@ public class AIServiceImple implements AIService {
 	
 	// idx와 이름 매핑하여 부르기
 	public Map<Integer, String> getWorkoutNameMap() {
-	    List<Map<String, Object>> rows = ptMapper.getWorkOutNameMap();
-
-	    Map<Integer, String> result = new HashMap<>();
-	    for (Map<String, Object> row : rows) {
-	        Object idxObj = row.get("PT_IDX");
-	        Object nameObj = row.get("PT_NAME");
-
-	        if (idxObj != null && nameObj != null) {
-	            int idx = (idxObj instanceof BigDecimal)
-	                    ? ((BigDecimal) idxObj).intValue()
-	                    : Integer.parseInt(idxObj.toString());
-	            String name = nameObj.toString();
-	            result.put(idx, name);
-	        }
-	    }
-	    return result;
+	    List<PtVO> ptList = ptMapper.getWorkOutNameMap();
+	    return ptList.stream().collect(Collectors.toMap(PtVO::getPt_idx, PtVO::getPt_name));
 	}
+	
 	// JSON으로 변환
 	public String getWorkoutMapForPrompt() {
 	    Map<Integer, String> map = getWorkoutNameMap();
@@ -87,6 +75,7 @@ public class AIServiceImple implements AIService {
 	    sb.append("]");
 	    return sb.toString();
 	}
+	
 
     @Override
     public ApiResponseDTO requestAIResponse(String userMessage, int memberIdx) throws IOException {    	
@@ -98,7 +87,6 @@ public class AIServiceImple implements AIService {
     	
     	
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
-        String workoutList = getWorkoutNamesCommaSeparated();
         String workoutListJson = getWorkoutMapForPrompt();
         Integer logIdx = null;
         String finalResponseJson = null;

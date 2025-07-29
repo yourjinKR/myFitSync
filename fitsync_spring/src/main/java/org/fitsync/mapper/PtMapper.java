@@ -12,7 +12,7 @@ public interface PtMapper {
 	// 이름 불러오기
 	List<String> getWorkOutName();
 	// idx와 이름 매핑
-	List<Map<String, Object>> getWorkOutNameMap();
+	List<PtVO> getWorkOutNameMap();
 	
 	public PtVO selectPtById(int ptIdx);
 	
