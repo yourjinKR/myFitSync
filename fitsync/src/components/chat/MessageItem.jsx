@@ -4,6 +4,7 @@ import ImageModal from './ImageModal';
 import MessageContextMenu from './MessageContextMenu';
 import { useSelector } from 'react-redux';
 import chatApi from '../../utils/ChatApi';
+import { useWebSocket } from '../../hooks/UseWebSocket';
 
 const spin = keyframes`
   0% { transform: rotate(0deg); }
@@ -328,12 +329,14 @@ const ReadTime = styled.span`
   color: var(--text-tertiary);
 `;
 
-// 강화된 매칭 데이터 파싱 함수
+// 매칭 데이터 파싱 함수 - DB 우선 처리
 const parseMatchingDataFromMessage = (message) => {
-  console.log('🔍 매칭 데이터 파싱 시작:', {
+  console.log('🔍 매칭 데이터 파싱 시작 (DB 우선):', {
     messageType: message.message_type,
-    messageContent: message.message_content,
-    messageIdx: message.message_idx
+    messageIdx: message.message_idx,
+    hasMatchingData: !!message.matching_data,
+    matchingDataLength: message.matching_data?.length,
+    hasMatchingDataMap: !!message.matching_data_map
   });
 
   if (message.message_type !== 'matching_request') {
@@ -341,62 +344,37 @@ const parseMatchingDataFromMessage = (message) => {
     return null;
   }
 
-  if (!message.message_content) {
-    console.log('❌ 메시지 내용이 없음');
-    return null;
-  }
-
-  try {
-    const content = message.message_content;
-    console.log('🔍 파싱할 메시지 내용:', content);
-
-    // 다양한 패턴으로 매칭 데이터 추출 시도
-    const patterns = [
-      /\|MATCHING_DATA:(.+)$/,           // 기본 패턴
-      /MATCHING_DATA:(.+)$/,             // | 없는 패턴
-      /\{.*"matching_idx".*\}/,          // JSON 패턴 직접 매칭
-    ];
-
-    let matchingDataStr = null;
-
-    // 패턴별로 시도
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) {
-        if (pattern === patterns[2]) {
-          // JSON 패턴인 경우 전체 매치 사용
-          matchingDataStr = match[0];
-        } else {
-          // 캡처 그룹 사용
-          matchingDataStr = match[1];
-        }
-        console.log('✅ 패턴 매칭 성공:', pattern, '→', matchingDataStr);
-        break;
+  // DB에서 조회한 matching_data 필드 (JSON 문자열)
+  if (message.matching_data && typeof message.matching_data === 'string' && message.matching_data.trim() !== '') {
+    try {
+      console.log('✅ DB에서 조회한 매칭 데이터 파싱 시도:', message.matching_data);
+      const matchingData = JSON.parse(message.matching_data);
+      
+      // 필수 필드 검증
+      if (matchingData.matching_idx && typeof matchingData.matching_idx === 'number') {
+        console.log('✅ DB 매칭 데이터 파싱 성공:', matchingData);
+        return matchingData;
+      } else {
+        console.log('❌ DB 매칭 데이터에 matching_idx가 없음');
       }
+    } catch (error) {
+      console.error('❌ DB 매칭 데이터 JSON 파싱 실패:', error);
     }
-
-    if (!matchingDataStr) {
-      console.log('❌ 매칭 데이터 패턴을 찾을 수 없음');
-      return null;
-    }
-
-    // JSON 파싱 시도
-    const matchingData = JSON.parse(matchingDataStr);
-    console.log('✅ 매칭 데이터 파싱 성공:', matchingData);
-
-    // 필수 필드 검증
-    if (!matchingData.matching_idx) {
-      console.log('❌ matching_idx가 없음');
-      return null;
-    }
-
-    return matchingData;
-
-  } catch (error) {
-    console.error('❌ 매칭 데이터 파싱 실패:', error);
-    console.error('❌ 파싱 실패한 내용:', message.message_content);
-    return null;
   }
+
+  // WebSocket으로 수신한 matching_data_map (실시간 메시지용)
+  if (message.matching_data_map && typeof message.matching_data_map === 'object' && message.matching_data_map !== null) {
+    console.log('✅ WebSocket 매칭 데이터 Map 사용:', message.matching_data_map);
+    
+    if (message.matching_data_map.matching_idx && typeof message.matching_data_map.matching_idx === 'number') {
+      return message.matching_data_map;
+    } else {
+      console.log('❌ WebSocket 매칭 데이터에 matching_idx가 없음');
+    }
+  }
+
+  console.log('❌ 매칭 데이터 파싱 실패 - 모든 소스에서 유효한 데이터를 찾을 수 없음');
+  return null;
 };
 
 // 표시용 메시지 내용 정리하는 함수
@@ -405,10 +383,16 @@ const getDisplayMessageContent = (message) => {
     return message.message_content;
   }
 
+  // message_content를 그대로 표시
+  if (message.matching_data && typeof message.matching_data === 'string') {
+    console.log('✅ DB 저장된 매칭 메시지 - message_content 그대로 사용:', message.message_content);
+    return message.message_content;
+  }
+
+  // 기존 방식 (폴백용)
   try {
     const content = message.message_content || '';
     
-    // 다양한 패턴으로 매칭 데이터 부분 제거
     const patterns = [
       /\|MATCHING_DATA:.+$/,
       /MATCHING_DATA:.+$/,
@@ -599,29 +583,32 @@ const MessageItem = ({
   allAttachments = {},
   getReplyPreviewText = null,
   onScrollToMessage = null,
-  roomData = null
+  roomData = null,
+  hasCompletedMatchingWithTrainer = false,
+  isMatchingCheckComplete = true,
+  isMatchingCheckLoading = false
 }) => {
 
   // Redux에서 사용자 정보 가져오기
   const { user } = useSelector(state => state.user);
+  
+  // WebSocket 훅에서 브로드캐스트 함수 가져오기
+  const { broadcastMatchingStatus } = useWebSocket();
 
-  // 매칭 데이터 파싱 및 로깅
+  // 매칭 데이터 파싱
   const parsedMatchingData = parseMatchingDataFromMessage(message);
   const displayContent = getDisplayMessageContent(message);
 
-  console.log('🎯 MessageItem 렌더링:', {
-    messageIdx: message.message_idx,
-    messageType: message.message_type,
-    isMatchingRequest: message.message_type === 'matching_request',
-    parsedMatchingData: parsedMatchingData,
-    matchingIdx: parsedMatchingData?.matching_idx
-  });
-
-  // 매칭 데이터 추출 (파싱된 데이터 사용)
+  // 매칭 데이터 추출
   const matchingData = parsedMatchingData || {};
   const matchingIdx = matchingData.matching_idx;
   const matchingTotal = matchingData.matching_total || 0;
   const matchingComplete = matchingData.matching_complete || 0;
+
+  // 실시간 매칭 상태 관리를 단순화
+  const [currentMatchingStatus, setCurrentMatchingStatus] = useState(null);
+  const [isMatchingStatusLoading, setIsMatchingStatusLoading] = useState(false);
+  const statusFetchedRef = useRef(false);
 
   // 상태 관리
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -634,11 +621,76 @@ const MessageItem = ({
   
   // 매칭 관련 상태
   const [matchingLoading, setMatchingLoading] = useState(false);
-  const [hasCompletedMatchingWithTrainer, setHasCompletedMatchingWithTrainer] = useState(false);
-  const [isMatchingCheckComplete, setIsMatchingCheckComplete] = useState(false);
 
   const containerRef = useRef(null);
-  
+
+  // 단 한 번만 실행되는 매칭 상태 조회 함수
+  useEffect(() => {
+    // 매칭 요청 메시지가 아니면 스킵
+    if (message.message_type !== 'matching_request') {
+      return;
+    }
+
+    // 유효한 matchingIdx가 없으면 스킵
+    if (!matchingIdx || matchingIdx <= 0) {
+      console.log('❌ 유효하지 않은 matching_idx:', matchingIdx);
+      return;
+    }
+
+    // 이미 조회했으면 스킵
+    if (statusFetchedRef.current) {
+      console.log('✅ 이미 매칭 상태를 조회했음 - 스킵');
+      return;
+    }
+
+    // 로딩 중이면 스킵
+    if (isMatchingStatusLoading) {
+      console.log('⏳ 이미 매칭 상태 조회 중 - 스킵');
+      return;
+    }
+
+    // 단 한 번만 실행되도록 플래그 설정
+    statusFetchedRef.current = true;
+    
+    const fetchMatchingStatus = async () => {
+      setIsMatchingStatusLoading(true);
+      
+      try {
+        console.log('🔍 매칭 상태 조회 시작 (단 한 번만):', matchingIdx);
+        
+        const response = await chatApi.getMatchingStatus(matchingIdx);
+        
+        if (response.success && response.matching) {
+          const latestMatchingData = response.matching;
+          setCurrentMatchingStatus(latestMatchingData);
+          
+          console.log('✅ 매칭 상태 조회 성공:', {
+            matchingIdx: latestMatchingData.matching_idx,
+            matchingComplete: latestMatchingData.matching_complete,
+            matchingRemain: latestMatchingData.matching_remain,
+            originalComplete: matchingComplete,
+            isUpdated: latestMatchingData.matching_complete !== matchingComplete
+          });
+        } else {
+          console.warn('⚠️ 매칭 상태 조회 실패:', response.message);
+          setCurrentMatchingStatus(null);
+        }
+      } catch (error) {
+        console.error('❌ 매칭 상태 조회 중 오류:', error);
+        setCurrentMatchingStatus(null);
+      } finally {
+        setIsMatchingStatusLoading(false);
+      }
+    };
+
+    // 약간의 지연을 두고 실행 (렌더링 완료 후)
+    const timeoutId = setTimeout(fetchMatchingStatus, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [matchingIdx]);
+
   useEffect(() => {
     const findChatContainer = (element) => {
       let current = element;
@@ -666,60 +718,27 @@ const MessageItem = ({
   // 매칭 버튼 클릭 가능 여부 (회원만 클릭 가능, 자신이 보낸 매칭 요청은 클릭 불가)
   const canClickMatchingButton = !isCurrentUser && user?.member_type === 'user';
 
-  console.log('🎯 매칭 버튼 상태 분석:', {
+  // 최신 매칭 상태 사용 (DB 조회 결과 우선, 없으면 메시지 속 데이터 사용)
+  const latestMatchingComplete = currentMatchingStatus ? currentMatchingStatus.matching_complete : matchingComplete;
+
+  console.log('🎯 매칭 버튼 상태 분석 (수정된 버전):', {
+    messageIdx: message.message_idx,
     isMatchingRequestMessage,
     canClickMatchingButton,
     matchingIdx,
+    originalMatchingComplete: matchingComplete,
+    latestMatchingComplete: latestMatchingComplete,
+    hasCurrentStatus: !!currentMatchingStatus,
+    isMatchingStatusLoading,
+    statusFetched: statusFetchedRef.current,
     userMemberType: user?.member_type,
-    isCurrentUser
+    isCurrentUser,
+    hasCompletedMatchingWithTrainer,
+    isMatchingCheckComplete,
+    isMatchingCheckLoading
   });
 
-  // 완료된 매칭 확인 (조건부 실행)
-  useEffect(() => {
-    if (isMatchingRequestMessage && canClickMatchingButton && !isMatchingCheckComplete && roomData) {
-      console.log('🔍 완료된 매칭 확인 시작...');
-      checkCompletedMatchingWithTrainer();
-    }
-  }, [isMatchingRequestMessage, canClickMatchingButton, isMatchingCheckComplete, user?.member_idx, roomData]);
-
-  // 특정 트레이너와의 완료된 매칭 확인 함수
-  const checkCompletedMatchingWithTrainer = async () => {
-    try {
-      const currentTrainerIdx = roomData?.trainer_idx;
-      
-      console.log('🔍 매칭 확인 파라미터:', {
-        currentTrainerIdx,
-        userMemberIdx: user.member_idx,
-        roomData
-      });
-      
-      if (!currentTrainerIdx) {
-        console.log('❌ 트레이너 IDX 없음');
-        setHasCompletedMatchingWithTrainer(false);
-        setIsMatchingCheckComplete(true);
-        return;
-      }
-      
-      const result = await chatApi.checkCompletedMatchingBetween(currentTrainerIdx, user.member_idx);
-      
-      console.log('✅ 매칭 확인 결과:', result);
-      
-      if (result.success) {
-        setHasCompletedMatchingWithTrainer(result.hasCompletedMatching);
-        setIsMatchingCheckComplete(true);
-      } else {
-        setHasCompletedMatchingWithTrainer(false);
-        setIsMatchingCheckComplete(true);
-      }
-      
-    } catch (error) {
-      console.error('❌ 매칭 확인 중 오류:', error);
-      setHasCompletedMatchingWithTrainer(false);
-      setIsMatchingCheckComplete(true);
-    }
-  };
-
-  // 매칭 요청 수락 핸들러
+  // 매칭 요청 수락 핸들러 (브로드캐스트 추가)
   const handleMatchingAccept = async () => {
     console.log('🎯 매칭 수락 클릭:', {
       matchingIdx,
@@ -751,16 +770,33 @@ const MessageItem = ({
       
       if (result.success) {
         alert('매칭이 성공적으로 수락되었습니다!');
-        setHasCompletedMatchingWithTrainer(true);
+        
+        // 로컬 상태도 즉시 업데이트
+        setCurrentMatchingStatus(prev => ({
+          ...prev,
+          matching_complete: 1
+        }));
+        
+        // 매칭 상태 브로드캐스트 전송
+        if (roomData && broadcastMatchingStatus) {
+          const statusData = {
+            trainer_idx: roomData.trainer_idx,
+            user_idx: user.member_idx,
+            status_type: 'accepted',
+            matching_idx: matchingIdx
+          };
+          
+          console.log('🎯 매칭 수락 브로드캐스트 전송:', statusData);
+          broadcastMatchingStatus(statusData);
+        }
+        
       } else {
         alert(result.message || '매칭 수락에 실패했습니다.');
-        await checkCompletedMatchingWithTrainer();
       }
       
     } catch (error) {
       console.error('❌ 매칭 수락 중 오류:', error);
       alert('매칭 수락 중 오류가 발생했습니다.');
-      await checkCompletedMatchingWithTrainer();
     } finally {
       setMatchingLoading(false);
     }
@@ -944,21 +980,35 @@ const MessageItem = ({
 
   const readStatusInfo = getReadStatusInfo();
 
-  // 매칭 상태 렌더링 함수
+  // 매칭 상태 렌더링 함수 수정 (실시간 DB 상태 사용)
   const renderMatchingStatus = () => {
     console.log('🎯 매칭 상태 렌더링:', {
       canClickMatchingButton,
       isMatchingCheckComplete,
+      isMatchingCheckLoading,
+      isMatchingStatusLoading,
       hasCompletedMatchingWithTrainer,
       matchingIdx,
-      parsedMatchingData
+      originalMatchingComplete: matchingComplete,
+      latestMatchingComplete: latestMatchingComplete,
+      hasCurrentStatus: !!currentMatchingStatus,
+      statusFetched: statusFetchedRef.current
     });
 
     if (canClickMatchingButton) {
       // 회원 계정에서 보는 경우
       
-      // API 호출 완료 전에는 로딩 상태 표시
-      if (!isMatchingCheckComplete) {
+      // 매칭 상태 조회 중일 때 로딩 표시
+      if (isMatchingStatusLoading) {
+        return (
+          <MatchingButton disabled={true} $disabled={true}>
+            매칭 상태 확인 중...
+          </MatchingButton>
+        );
+      }
+      
+      // 일반 로딩 중일 때 로딩 표시
+      if (isMatchingCheckLoading) {
         return (
           <MatchingButton disabled={true} $disabled={true}>
             상태 확인 중...
@@ -966,14 +1016,27 @@ const MessageItem = ({
         );
       }
       
-      // 이미 완료된 매칭이 있는 경우
-      if (hasCompletedMatchingWithTrainer) {
-        return <MatchingStatus>해당 트레이너와 이미 진행 중인 매칭이 있습니다</MatchingStatus>;
+      // 실시간 DB 상태 우선 사용하여 매칭 완료 여부 체크
+      if (latestMatchingComplete === 2) {
+        console.log('🏁 매칭 완료됨 (latest matching_complete = 2) - 버튼 비활성화:', matchingIdx);
+        return <MatchingStatus>완료된 매칭입니다</MatchingStatus>;
       }
       
-      // 파싱된 매칭 데이터 기반으로 버튼 상태 결정
-      if (matchingIdx && typeof matchingIdx === 'number' && matchingIdx > 0) {
-        console.log('✅ 매칭 수락 버튼 활성화:', matchingIdx);
+      // 실시간 DB 상태 우선 사용하여 매칭 수락 여부 체크
+      if (latestMatchingComplete === 1) {
+        console.log('✅ 매칭 이미 수락됨 (latest matching_complete = 1) - 버튼 비활성화:', matchingIdx);
+        return <MatchingStatus>이미 수락된 매칭입니다</MatchingStatus>;
+      }
+      
+      // 이미 완료된 매칭이 있는 경우 (다른 트레이너와의 진행 중인 PT)
+      if (hasCompletedMatchingWithTrainer) {
+        return <MatchingStatus>이미 진행 중인 PT가 있습니다</MatchingStatus>;
+      }
+      
+      // 매칭 대기 상태 (latest matching_complete = 0)에서만 버튼 활성화
+      if (matchingIdx && typeof matchingIdx === 'number' && matchingIdx > 0 && latestMatchingComplete === 0) {
+        console.log(`✅ 매칭 수락 버튼 활성화 (latest matching_complete = ${latestMatchingComplete}):`, matchingIdx);
+        
         return (
           <MatchingButton
             onClick={handleMatchingAccept}
@@ -984,21 +1047,29 @@ const MessageItem = ({
           </MatchingButton>
         );
       } else {
-        console.log('❌ 매칭 정보 파싱 실패:', {
+        console.log('❌ 매칭 정보 파싱 실패 또는 대기 상태가 아님:', {
           matchingIdx,
           type: typeof matchingIdx,
+          latestMatchingComplete,
           parsedMatchingData
         });
         return (
           <MatchingButton disabled={true} $disabled={true}>
-            매칭 정보 파싱 실패
+            {latestMatchingComplete > 0 ? '매칭 처리됨' : '매칭 정보 파싱 실패'}
           </MatchingButton>
         );
       }
     } else {
       // 트레이너 계정에서 보거나 다른 상황
       if (isCurrentUser) {
-        return <MatchingStatus>매칭 요청 전송됨</MatchingStatus>;
+        // 트레이너가 보낸 매칭 요청의 실시간 상태 표시
+        if (latestMatchingComplete === 2) {
+          return <MatchingStatus>완료된 매칭</MatchingStatus>;
+        } else if (latestMatchingComplete === 1) {
+          return <MatchingStatus>수락된 매칭</MatchingStatus>;
+        } else {
+          return <MatchingStatus>매칭 요청 전송됨</MatchingStatus>;
+        }
       } else {
         return <MatchingStatus>매칭 요청</MatchingStatus>;
       }

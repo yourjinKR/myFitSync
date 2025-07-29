@@ -67,18 +67,14 @@
             user_idx,
             matching_total,
             matching_remain,
-            matching_complete,
-            matching_start,
-            matching_end
+            matching_complete
         ) VALUES (
             #{matching_idx},
             #{trainer_idx},
             #{user_idx},
             #{matching_total},
             #{matching_remain},
-            #{matching_complete},
-            SYSDATE,
-            NULL
+            #{matching_complete}
         )
     </insert>
     
@@ -90,8 +86,7 @@
     <!-- 매칭 완료 처리 -->
     <update id="updateMatchingComplete" parameterType="int">
         UPDATE matching 
-        SET matching_complete = 1, 
-            matching_end = SYSDATE 
+        SET matching_complete = 1
         WHERE matching_idx = #{matching_idx}
     </update>
     

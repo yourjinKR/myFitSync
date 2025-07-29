@@ -232,9 +232,9 @@ const ChatRoomHeader = ({
     }
   };
 
-  // 매칭 요청 처리 함수 개선
+  // 매칭 요청 처리 함수 개선 (DB 저장 방식)
   const handleMatchingRequest = async (matchingTotal) => {
-    console.log('🎯 매칭 요청 시작:', { matchingTotal });
+    console.log('🎯 매칭 요청 시작 (DB 저장 방식):', { matchingTotal });
     
     setIsMatchingLoading(true);
       
@@ -248,44 +248,42 @@ const ChatRoomHeader = ({
 
       console.log('👤 상대방 정보:', otherPerson);
 
-      // 매칭 생성
+      // 백엔드에서 매칭 생성
       const result = await chatApi.createMatching(otherPerson.member_idx, matchingTotal);
       
       console.log('📥 매칭 생성 결과:', result);
         
       if (result.success) {
-        // 매칭 정보를 더 명확하게 포함
-        const baseMessage = `PT ${matchingTotal}회 매칭 요청`;
-        
-        // JSON을 더 안전하게 직렬화
-        const matchingDataJson = JSON.stringify({
+        // 매칭 데이터를 깔끔하게 구성
+        const matchingData = {
           matching_idx: result.matching.matching_idx,
           trainer_idx: result.matching.trainer_idx,
           user_idx: result.matching.user_idx,
           matching_total: result.matching.matching_total,
           matching_remain: result.matching.matching_remain,
           matching_complete: result.matching.matching_complete
-        });
+        };
         
-        // 구분 기호를 더 명확하게
-        const messageWithMatchingData = `${baseMessage}|MATCHING_DATA:${matchingDataJson}`;
+        // 표시용 메시지 내용 (매칭 데이터 분리)
+        const displayMessage = `PT ${matchingTotal}회 매칭 요청`;
         
-        console.log('📤 전송할 메시지:', {
-          baseMessage,
-          matchingDataJson,
-          fullMessage: messageWithMatchingData
+        console.log('📤 전송할 데이터 (DB 저장 방식):', {
+          displayMessage,
+          matchingData,
+          messageType: 'matching_request'
         });
           
+        // 메시지 전송 (매칭 데이터는 별도 Map으로)
         if (onSendMessage) {
           await onSendMessage(
-            messageWithMatchingData, 
-            'matching_request', 
-            null, 
-            null,
-            null // matching_data는 메시지 내용에 포함했으므로 null
+            displayMessage,           // 표시용 메시지 내용
+            'matching_request',       // 메시지 타입
+            null,                     // 파일 없음
+            null,                     // 답장 없음
+            matchingData              // 매칭 데이터 (Map 형태로 전달)
           );
           
-          console.log('✅ 매칭 요청 메시지 전송 완료');
+          console.log('✅ 매칭 요청 메시지 전송 완료 (DB 저장 방식)');
         }
           
         setShowMatchingModal(false);
