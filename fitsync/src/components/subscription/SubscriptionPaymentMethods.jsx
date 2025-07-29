@@ -4,6 +4,7 @@ import { PaymentUtil } from '../../utils/PaymentUtil';
 import AddPaymentMethodModal from './AddPaymentMethodModal';
 import PaymentConfirmModal from './PaymentConfirmModal';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 // 스타일 컴포넌트들
 const Container = styled.div`
@@ -529,6 +530,7 @@ const SubscriptionPaymentMethods = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [isSub, setIsSub] = useState(false);
   const [recentOrder, setRecentOrder] = useState({});
+  const user = useSelector(state => state.user);
 
   const location = useLocation();
   let {changeMode} = location.state || false;
@@ -578,7 +580,7 @@ const SubscriptionPaymentMethods = () => {
       
       const response = await PaymentUtil.getBillingKeys();
 
-      const isSubResponse = await PaymentUtil.checkSubscriptionStatus();
+      const isSubResponse = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx);
 
       const recentOrderResponse = await PaymentUtil.getRecentHistory();
       

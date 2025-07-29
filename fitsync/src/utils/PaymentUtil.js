@@ -348,9 +348,9 @@ export const PaymentUtil = {
     },
 
     /** 구독자 판별 */
-    checkSubscriptionStatus: async () => {
+    checkSubscriptionStatus: async (member_idx) => {
         try {
-            const response = await axios.get('/payment/subscription', {
+            const response = await axios.get(`/payment/subscription/${member_idx}`, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'application/json'

@@ -10,6 +10,8 @@ import IsLoading from '../IsLoading';
 import { useWorkoutNames } from '../../hooks/admin/useWorkoutNames';
 import AiUtil from '../../utils/AiUtils';
 import { checkAllExerciseNames } from '../../utils/KorUtil';
+import { PaymentUtil } from '../../utils/PaymentUtil';
+import { useSelector } from 'react-redux';
 
 const ServiceContainer = styled.div`
     max-width: 1000px;
@@ -106,19 +108,34 @@ const ProgressLabel = styled.div`
 `;
 
 const AiServiceContainer = () => {
+    const user = useSelector(state => state.user);
     const [currentStep, setCurrentStep] = useState(1); // 1: 입력, 2: 로딩, 3: 결과, 4: 완료
     const [memberData, setMemberData] = useState(null);
     const [aiResult, setAiResult] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [feedbackCompleted, setFeedbackCompleted] = useState(false); // 피드백 완료 상태
     const {rawDataIdx, rawDataMap} = useWorkoutNames();
+    const [subscriptionData, setSubscriptionData] = useState(null);
 
-    // 멤버 데이터 로드
+
+    // 멤버, 구독 정보 데이터 로드
     useEffect(() => {
         const fetchMemberData = async () => {
             try {
-                const data = await getMemberTotalData();
-                setMemberData(data);
+                const memberResponse = await getMemberTotalData();
+                const subscriptionResponse = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx).data;
+                setMemberData(memberResponse);
+                setSubscriptionData(subscriptionResponse);
+
+                console.log(user);
+                if (!user.user.isLogin) {
+                    console.log("로그인 안했습니다 나가셈");
+                }
+                if (user.user.member_idx) {
+                    console.log(user.user.member_idx);
+                    console.log("멤버 검증");
+                }
+
             } catch (error) {
                 console.error('멤버 데이터 로드 실패:', error);
             }

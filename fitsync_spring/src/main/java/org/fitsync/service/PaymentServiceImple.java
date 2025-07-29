@@ -1706,8 +1706,8 @@ public class PaymentServiceImple implements PaymentService {
 			
 			if (isSubscriber) {
 				// 2. 구독 상세 정보 설정
-				result.put("subscriptionType", activeSubscription.getOrder_type());
-				result.put("subscriptionStatus", activeSubscription.getOrder_status());
+//				result.put("subscriptionType", activeSubscription.getOrder_type());
+//				result.put("subscriptionStatus", activeSubscription.getOrder_status());
 				
 				// 3. 구독 유효기간 계산
 				if ("PAID".equals(activeSubscription.getOrder_status()) && activeSubscription.getOrder_paydate() != null) {
@@ -1719,28 +1719,28 @@ public class PaymentServiceImple implements PaymentService {
 					java.util.Date expiryDate = cal.getTime();
 					
 					result.put("lastPaymentDate", payDate);
-					result.put("subscriptionExpiryDate", expiryDate);
-					result.put("subscriptionDaysLeft", calculateDaysLeft(expiryDate));
+//					result.put("subscriptionExpiryDate", expiryDate);
+//					result.put("subscriptionDaysLeft", calculateDaysLeft(expiryDate));
 					
 					log.info("✅ 활성 구독자 - 마지막 결제일: " + payDate + ", 만료일: " + expiryDate);
 					
 				} else if ("READY".equals(activeSubscription.getOrder_status()) && activeSubscription.getSchedule_date() != null) {
 					// 예약 결제 대기 중인 구독의 경우
-					result.put("nextPaymentDate", activeSubscription.getSchedule_date());
-					result.put("scheduleId", activeSubscription.getSchedule_id());
+//					result.put("nextPaymentDate", activeSubscription.getSchedule_date());
+//					result.put("scheduleId", activeSubscription.getSchedule_id());
 					
 					log.info("📅 예약 구독자 - 다음 결제 예정일: " + activeSubscription.getSchedule_date());
 				}
 				
 				// 4. 결제 수단 정보 (있는 경우)
 				if (activeSubscription.getMethod_idx() > 0) {
-					result.put("paymentMethodIdx", activeSubscription.getMethod_idx());
+//					result.put("paymentMethodIdx", activeSubscription.getMethod_idx());
 				}
 				
 				// 5. 구독 시작 정보
-				result.put("subscriptionStartDate", activeSubscription.getOrder_regdate());
-				result.put("subscriptionAmount", activeSubscription.getOrder_price());
-				result.put("orderIdx", activeSubscription.getOrder_idx());
+//				result.put("subscriptionStartDate", activeSubscription.getOrder_regdate());
+//				result.put("subscriptionAmount", activeSubscription.getOrder_price());
+//				result.put("orderIdx", activeSubscription.getOrder_idx());
 
 				// 사용량 조회
 				Map<String, Object> userUseage = apiLogMapper.selectTokenUsageDuringLatestPaidOrder(memberIdx);
@@ -1750,8 +1750,8 @@ public class PaymentServiceImple implements PaymentService {
 
 				double totalCost = calculateCost(inputTokens, outputTokens);
 
-				result.put("inputToken", inputTokens);
-				result.put("outputToken", outputTokens);
+//				result.put("inputToken", inputTokens);
+//				result.put("outputToken", outputTokens);
 				result.put("totalCost", totalCost);
 
 				

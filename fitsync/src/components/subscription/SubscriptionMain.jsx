@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { faqData, initFaqData, PaymentUtil } from '../../utils/PaymentUtil';
+import { useSelector } from 'react-redux';
 
 const Container = styled.div`
   /* 컨테이너에서 이미 패딩과 배경이 설정되므로 여기서는 제거 */
@@ -1139,6 +1140,7 @@ const SubscriptionMain = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openFAQs, setOpenFAQs] = useState({}); // FAQ 토글 상태를 객체로 변경
+  const user = useSelector(state => state.user);
 
   // FAQ 데이터
   const faqData = initFaqData;
@@ -1151,7 +1153,7 @@ const SubscriptionMain = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await PaymentUtil.checkSubscriptionStatus();
+      const result = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx);
       const recnetOrderResult = await PaymentUtil.getRecentHistory();
       
       // 유저 구독 정보
