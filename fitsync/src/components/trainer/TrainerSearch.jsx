@@ -22,15 +22,9 @@ const SearchBox = styled.div`
   }
 `;
 
-const handleTrainerSearchSubmit = (e) => {
-  e.preventDefault();
-  console.log('검색 시작');
-
-}
-
-
 const TrainerSearch = () => {
   const [trainers, setTrainers] = useState([]);
+  const [keyword, setKeyword] = useState(null);
 
   // 컴포넌트 마운트 시 트레이너 목록 조회
   useEffect(() => {
@@ -41,7 +35,12 @@ const TrainerSearch = () => {
   const fetchTrainers = async () => {
     try {
       // 실제 API 호출
-      const response = await axios.get('/member/trainers');
+      const response = await axios.get('/member/trainers', {
+        params : {
+          keyword
+        }
+      });
+      console.log(response.data);
       
       setTrainers(response.data || []);
       
@@ -52,12 +51,22 @@ const TrainerSearch = () => {
     }
   };
 
+  // 검색
+  const handleTrainerSearchSubmit = (e) => {
+    e.preventDefault();
+    fetchTrainers();
+  }
+
   return (
     <div>
       <TrainerProfileList/>
       <SearchBox>
         <form onSubmit={handleTrainerSearchSubmit}>
-          <input type="text" />
+          <input 
+            type="text"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            />
           <button>검색</button>
         </form>
       </SearchBox>

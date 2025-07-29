@@ -7,6 +7,7 @@ import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.BodyVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
+import org.fitsync.domain.SearchCriteria;
 import org.fitsync.mapper.BodyMapper;
 import org.fitsync.mapper.MemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,8 +101,8 @@ public class MemberServiceImple implements MemberService {
     
 	// 트레이너 목록 가져오기
 	@Override
-	public List<MemberVO> getTrainerList() {
-	    return mapper.getTrainerList();
+	public List<MemberVO> getTrainerList(SearchCriteria cri) {
+	    return mapper.getTrainerList(cri);
 	}
 	
 	// AI 요청시 필요 정보

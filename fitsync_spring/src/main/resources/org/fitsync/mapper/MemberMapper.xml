@@ -117,24 +117,30 @@
 	  WHERE member_idx = #{member_idx}
 	</update>
 	 
-	<!-- 트레이너 목록 가져오기 -->
-	<select id="getTrainerList" resultType="org.fitsync.domain.MemberVO">
-	    SELECT 
-	        member_idx,
-	        member_email,
-	        member_name,
-	        member_image,
-	        member_status,
-	        member_day,
-	        member_type,
-	        member_time,
-	        member_activity_area,
-	        member_info,
-	        member_info_image
-	    FROM member 
-	    WHERE member_type = 'trainer'
-	    AND member_status = 'active'
-	    ORDER BY member_idx DESC
+	<!-- 트레이너 목록 가져오기 (검색 기능 추가) -->
+	<select id="getTrainerList" parameterType="org.fitsync.domain.SearchCriteria" resultType="org.fitsync.domain.MemberVO">
+		SELECT 
+			member_idx,
+			member_email,
+			member_name,
+			member_image,
+			member_status,
+			member_day,
+			member_type,
+			member_time,
+			member_activity_area,
+			member_info,
+			member_info_image
+		FROM member 
+		WHERE member_type = 'trainer'
+		AND member_status = 'active'
+		<if test="keyword != null and keyword != ''">
+			AND (
+				member_name LIKE '%' || #{keyword} || '%' 
+				OR member_activity_area LIKE '%' || #{keyword} || '%'
+			)
+		</if>
+		ORDER BY member_idx DESC
 	</select>
 
 	<!-- 루틴 추천을 위한  유저 정보 불러오기 -->

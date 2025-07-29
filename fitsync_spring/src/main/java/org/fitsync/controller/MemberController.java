@@ -8,6 +8,7 @@ import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.BodyVO;
 import org.fitsync.domain.MemberVO;
+import org.fitsync.domain.SearchCriteria;
 import org.fitsync.service.BodyService;
 import org.fitsync.service.BodyServiceImple;
 import org.fitsync.service.MemberServiceImple;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -108,8 +110,8 @@ public class MemberController {
 
 	// 트레이너 목록 가져오기
 	@GetMapping("/trainers")
-	public ResponseEntity<List<MemberVO>> getTrainerList() {
-        List<MemberVO> trainers = service.getTrainerList();
+	public ResponseEntity<List<MemberVO>> getTrainerList(@ModelAttribute SearchCriteria cri) {
+        List<MemberVO> trainers = service.getTrainerList(cri);
         return ResponseEntity.ok(trainers);
 	}
 	

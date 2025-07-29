@@ -6,6 +6,7 @@ import java.util.Map;
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
+import org.fitsync.domain.SearchCriteria;
 
 public interface MemberService {
 	// 유저 존재여부
@@ -22,7 +23,7 @@ public interface MemberService {
     // 트레이너 정보 수정
 	public void updateTrainerProfile(MemberVO member);
     // 트레이너 목록 가져오기
-	public List<MemberVO> getTrainerList();
+	public List<MemberVO> getTrainerList(SearchCriteria cri);
 	// AI 요청시 필요 정보
 	public MemberVO getMemberForAIRecommendation(int memberIdx);
 }
