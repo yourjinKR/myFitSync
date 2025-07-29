@@ -1758,6 +1758,10 @@ public class PaymentServiceImple implements PaymentService {
 			} else {
 				log.info("❌ 비구독자 - memberIdx: " + memberIdx);
 				result.put("message", "현재 유효한 구독이 없습니다.");
+				ApiLogVO log = apiLogMapper.selectFirstRoutineLog(memberIdx);
+				System.out.println(log);
+				boolean isLog = log != null ? true : false;
+				result.put("isLog", isLog);
 			}
 			
 			// 6. 최근 구독 내역 조회 (비구독자도 과거 내역 확인)

@@ -834,7 +834,8 @@ const GoalsSlide = ({ formData, setFormData }) => {
     );
 };
 
-const StepInputInfo = ({onGenerate, available}) => {
+const StepInputInfo = ({memberData, onGenerate, available=false}) => {
+    console.log("available:", available); // false여야 함
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [formData, setFormData] = useState({
@@ -924,7 +925,7 @@ const StepInputInfo = ({onGenerate, available}) => {
     };
 
     const isFormValid = formData.age && formData.gender && formData.height && formData.weight;
-
+        
     const getButtonConfig = () => {
         switch (currentSlide) {
             case 0:

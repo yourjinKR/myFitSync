@@ -135,6 +135,19 @@
 			)
 		]]>
 	</select>
+	
+	<!-- 회원의 최초 루틴 추천 로그 1건만 조회 -->
+	<select id="selectFirstRoutineLog" parameterType="int" resultType="org.fitsync.domain.ApiLogVO">
+	    SELECT *
+	    FROM (
+	        SELECT *
+	        FROM apilog
+	        WHERE member_idx = #{member_idx}
+	          AND apilog_service_type LIKE '%루틴 추천%'
+	        ORDER BY apilog_request_time ASC
+	    )
+	    WHERE ROWNUM = 1
+	</select>
 
 
 

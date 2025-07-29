@@ -317,7 +317,16 @@ const AiServiceContainer = () => {
                     memberData={memberData}
                     setMemberData={setMemberData}
                     onGenerate={handleGenerateRoutine}
-                    available={subscriptionData?.totalCost < 3 || false}
+                    // 구독을 안했지만 최초 1회일 경우 가능
+                    // 구독을 했지만 총 사용량이 3 넘지 않을 경우 가능
+                    available={
+                        subscriptionData
+                            ? (
+                                (subscriptionData.totalCost < 3 && subscriptionData.isSubscriber) ||
+                                (!subscriptionData.isSubscriber && !subscriptionData.isLog)
+                            )
+                            : false
+                    }
                 />
             )}
             
@@ -332,7 +341,7 @@ const AiServiceContainer = () => {
                     onFeedback={() => setShowFeedbackModal(true)}
                     onRetry={() => {
                         setCurrentStep(1);
-                        setFeedbackCompleted(false); // 다시 시도 시 피드백 상태 초기화
+                        setFeedbackCompleted(false); // 다시 시도할때 피드백 상태 초기화
                     }}
                     onSubmit={handleFeedback}
                     feedbackCompleted={feedbackCompleted}

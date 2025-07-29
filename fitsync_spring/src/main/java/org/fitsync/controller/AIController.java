@@ -91,11 +91,22 @@ public class AIController {
 	                .body(new ApiResponseDTO("메시지가 비어 있습니다.", null));
 	        }
 	        
+	        // 잔여 토큰 확인
 	        Map<String, Object> subStatus = payService.checkSubscriptionStatus((int) memberIdx);
-	        if ((double)subStatus.get("totalCost") > 3) {
+	        
+	        System.out.println(subStatus);
+	        
+	        boolean isSub = (boolean)subStatus.get("isSubscriber");
+	        boolean isLog = (boolean)subStatus.get("isLog");
+	        
+	        if (!isSub) {
+	        	if (isLog) return ResponseEntity.badRequest().body(new ApiResponseDTO("미구독 유저입니다.", null));
+	        	System.out.println("최초 1회 요청 서비스 실행함");
+	        }
+	        else if (isSub && (double)subStatus.get("totalCost") > 3) {
 	        	return ResponseEntity.badRequest()
 		                .body(new ApiResponseDTO("사용량이 초과되어 서비스를 사용할 수 없습니다.", null));
-	        }
+	        } 
 
 	        ApiResponseDTO response = aiService.requestAIResponse(userMessage, (int)memberIdx);
 	        return ResponseEntity.ok(response);
