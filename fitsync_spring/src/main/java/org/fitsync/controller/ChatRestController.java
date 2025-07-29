@@ -456,4 +456,57 @@ public class ChatRestController {
         }
     }
     
+    // 특정 매칭의 현재 상태 조회 API
+    @GetMapping("/matching/{matching_idx}/status")
+    public ResponseEntity<Map<String, Object>> getMatchingStatus(
+            @PathVariable int matching_idx,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            Integer member_idx = (Integer) session.getAttribute("member_idx");
+            if (member_idx == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(result);
+            }
+            
+            System.out.println("매칭 상태 조회 요청 - matching_idx: " + matching_idx + ", member_idx: " + member_idx);
+            
+            // 매칭 정보 조회
+            MatchingVO matching = matchingService.getMatching(matching_idx);
+            
+            if (matching != null) {
+                // 권한 확인 (해당 매칭의 트레이너나 회원만 조회 가능)
+                if (matching.getTrainer_idx() == member_idx || matching.getUser_idx() == member_idx) {
+                    result.put("success", true);
+                    result.put("matching", matching);
+                    
+                    System.out.println("매칭 상태 조회 성공:");
+                    System.out.println("   매칭 IDX: " + matching.getMatching_idx());
+                    System.out.println("   매칭 완료 상태: " + matching.getMatching_complete());
+                    System.out.println("   매칭 남은 횟수: " + matching.getMatching_remain());
+                    
+                    return ResponseEntity.ok(result);
+                } else {
+                    result.put("success", false);
+                    result.put("message", "해당 매칭에 대한 접근 권한이 없습니다.");
+                    return ResponseEntity.status(403).body(result);
+                }
+            } else {
+                result.put("success", false);
+                result.put("message", "매칭 정보를 찾을 수 없습니다.");
+                return ResponseEntity.status(404).body(result);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("매칭 상태 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "매칭 상태 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+    
 }

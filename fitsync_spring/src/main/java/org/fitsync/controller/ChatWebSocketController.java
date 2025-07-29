@@ -22,30 +22,43 @@ public class ChatWebSocketController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
     
-    // 중복 메시지 방지를 위한 처리된 메시지 ID 저장소
     private final Set<String> processedMessages = ConcurrentHashMap.newKeySet();
     
     @MessageMapping("/chat.send")
     public synchronized void sendMessage(@Payload Map<String, Object> message, SimpMessageHeaderAccessor headerAccessor) {
         try {
-            System.out.println("🔍 수신된 메시지 데이터: " + message);
             
-            // 안전한 타입 변환 및 null 체크
+            // 기본 데이터 추출
             Integer sender_idx = extractIntegerFromMessage(message, "sender_idx");
             Integer receiver_idx = extractIntegerFromMessage(message, "receiver_idx");
             Integer room_idx = extractIntegerFromMessage(message, "room_idx");
             String message_content = extractStringFromMessage(message, "message_content");
             String message_type = extractStringFromMessage(message, "message_type");
             String unique_id = extractStringFromMessage(message, "unique_id");
-            
-            // parent_idx는 null일 수 있음 (답장이 아닌 경우)
             Integer parent_idx = extractIntegerFromMessage(message, "parent_idx");
             
-            // 매칭 데이터 추출 (matching_request 타입인 경우)
+            // 매칭 데이터 추출 및 검증
             Map<String, Object> matching_data = null;
             if ("matching_request".equals(message_type)) {
                 matching_data = (Map<String, Object>) message.get("matching_data");
-                System.out.println("매칭 데이터 추출: " + matching_data);
+                
+                // 매칭 데이터 유효성 검증
+                if (matching_data != null && !matching_data.isEmpty()) {
+                    // 필수 필드 확인
+                    Object matchingIdx = matching_data.get("matching_idx");
+                    Object trainerIdx = matching_data.get("trainer_idx");
+                    Object userIdx = matching_data.get("user_idx");
+                    Object matchingTotal = matching_data.get("matching_total");
+                    
+                    if (matchingIdx == null || trainerIdx == null || userIdx == null || matchingTotal == null) {
+                        System.err.println("매칭 데이터 필수 필드 누락");
+                        matching_data = null;
+                    } else {
+                        System.out.println("매칭 데이터 유효성 검증 통과");
+                    }
+                } else {
+                    System.err.println("매칭 데이터가 없거나 비어있음");
+                }
             }
             
             // 기본값 설정
@@ -53,55 +66,40 @@ public class ChatWebSocketController {
                 message_type = "text";
             }
             
-            System.out.println("파싱된 데이터:");
-            System.out.println("   sender_idx: " + sender_idx);
-            System.out.println("   receiver_idx: " + receiver_idx);
-            System.out.println("   room_idx: " + room_idx);
-            System.out.println("   message_content: " + message_content);
-            System.out.println("   message_type: " + message_type);
-            System.out.println("   parent_idx: " + parent_idx);
-            System.out.println("   unique_id: " + unique_id);
-            System.out.println("   matching_data: " + matching_data);
-            
             // 필수 값 검증
             if (sender_idx == null || receiver_idx == null || room_idx == null || 
                 message_content == null || message_content.trim().isEmpty()) {
-                System.err.println("❌ 필수 메시지 데이터 누락 또는 잘못된 형식");
+                System.err.println("필수 메시지 데이터 누락");
                 return;
             }
             
             // 중복 메시지 검사
             if (unique_id != null && !unique_id.trim().isEmpty()) {
                 if (processedMessages.contains(unique_id)) {
-                    System.out.println("중복 메시지 감지 및 차단 - unique_id: " + unique_id);
                     return;
                 }
                 
                 processedMessages.add(unique_id);
                 
-                // 메모리 누수 방지
                 if (processedMessages.size() > 1000) {
                     processedMessages.clear();
                     processedMessages.add(unique_id);
-                    System.out.println("🧹 처리된 메시지 캐시 정리 완료");
                 }
             }
             
-            System.out.println("✅ 메시지 처리 시작 - unique_id: " + unique_id + ", content: " + message_content);
-            
-            // MessageVO 객체 생성 (null 안전)
+            // MessageVO 객체 생성 - 매칭 데이터 지원
             MessageVO vo = new MessageVO();
             vo.setRoom_idx(room_idx);
             vo.setSender_idx(sender_idx);
             vo.setReceiver_idx(receiver_idx);
             vo.setMessage_content(message_content.trim());
             vo.setMessage_type(message_type);
-            vo.setParent_idx(parent_idx); // null일 수 있음
-            vo.setAttach_idx(null); // 기본값
+            vo.setParent_idx(parent_idx);
+            vo.setAttach_idx(null);
             
-            // 매칭 데이터 설정
-            if (matching_data != null) {
-                vo.setMatching_data(matching_data);
+            // 매칭 데이터 설정 (Map 형태로)
+            if (matching_data != null && !matching_data.isEmpty()) {
+                vo.setMatching_data_map(matching_data);
             }
             
             // 메시지 저장
@@ -109,46 +107,90 @@ public class ChatWebSocketController {
             try {
                 savedMessage = chatService.registerMessage(vo);
                 if (savedMessage == null) {
-                    System.err.println("❌ 메시지 저장 실패: savedMessage가 null");
-                    // null인 경우에도 브로드캐스트를 위해 원본 vo 사용
+                    System.err.println("메시지 저장 실패: savedMessage가 null");
                     savedMessage = vo;
-                    // message_idx가 없는 경우 임시로 설정
                     if (savedMessage.getMessage_idx() == 0) {
-                        savedMessage.setMessage_idx(-1); // 임시 ID
+                        savedMessage.setMessage_idx(-1);
+                    }
+                } else {
+                    System.out.println("메시지 저장 성공 - message_idx: " + savedMessage.getMessage_idx());
+                    
+                    // 저장된 매칭 데이터 확인
+                    if (savedMessage.hasMatchingData()) {
+                        System.out.println("저장된 매칭 데이터 확인:");
+                        System.out.println("   매칭 IDX: " + savedMessage.getMatchingIdx());
+                        System.out.println("   매칭 총 횟수: " + savedMessage.getMatchingTotal());
+                        System.out.println("   매칭 완료 상태: " + savedMessage.getMatchingComplete());
                     }
                 }
-                System.out.println("✅ 메시지 저장 처리 - message_idx: " + savedMessage.getMessage_idx());
             } catch (Exception e) {
-                System.err.println("❌ 메시지 저장 중 예외 발생: " + e.getMessage());
+                System.err.println("메시지 저장 중 예외 발생: " + e.getMessage());
                 e.printStackTrace();
-                // 예외 발생 시에도 브로드캐스트 시도
                 savedMessage = vo;
-                savedMessage.setMessage_idx(-1); // 임시 ID
+                savedMessage.setMessage_idx(-1);
             }
             
-            // 브로드캐스트 - null이 아닌 경우에만
+            // 브로드캐스트
             if (savedMessage != null) {
                 try {
-                    // 현재 시간으로 설정
                     savedMessage.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
                     
-                    // 매칭 데이터도 함께 브로드캐스트
-                    if (matching_data != null) {
-                        savedMessage.setMatching_data(matching_data);
+                    // 매칭 데이터도 브로드캐스트에 포함 (Map 형태로)
+                    if (savedMessage.hasMatchingData()) {
+                        Map<String, Object> matchingDataMap = savedMessage.getMatchingDataAsMap();
+                        savedMessage.setMatching_data_map(matchingDataMap);
+                        System.out.println("브로드캐스트용 매칭 데이터 설정: " + matchingDataMap);
                     }
                     
-                    System.out.println("📡 메시지 브로드캐스트 시작: " + savedMessage.getMessage_idx());
+                    System.out.println("메시지 브로드캐스트 시작: " + savedMessage.getMessage_idx());
                     messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
-                    System.out.println("✅ 메시지 브로드캐스트 완료");
+                    System.out.println("메시지 브로드캐스트 완료 (매칭 데이터 포함)");
                     
                 } catch (Exception e) {
-                    System.err.println("❌ 메시지 브로드캐스트 실패: " + e.getMessage());
+                    System.err.println("메시지 브로드캐스트 실패: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
             
         } catch (Exception e) {
-            System.err.println("❌ 메시지 처리 전체 실패: " + e.getMessage());
+            System.err.println("메시지 처리 전체 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // 새로운 매칭 상태 브로드캐스트 메서드 추가
+    @MessageMapping("/matching.status")
+    public void broadcastMatchingStatus(@Payload Map<String, Object> statusData) {
+        try {
+            
+            Integer trainer_idx = extractIntegerFromMessage(statusData, "trainer_idx");
+            Integer user_idx = extractIntegerFromMessage(statusData, "user_idx");
+            String status_type = extractStringFromMessage(statusData, "status_type"); // "accepted", "rejected"
+            Integer matching_idx = extractIntegerFromMessage(statusData, "matching_idx");
+            
+            if (trainer_idx == null || user_idx == null || status_type == null) {
+                System.err.println("매칭 상태 브로드캐스트 필수 데이터 누락");
+                return;
+            }
+            
+            // 매칭 상태 변경 알림 데이터 구성
+            Map<String, Object> matchingStatusUpdate = Map.of(
+                "type", "matching_status_changed",
+                "trainer_idx", trainer_idx,
+                "user_idx", user_idx,
+                "status_type", status_type,
+                "matching_idx", matching_idx != null ? matching_idx : -1,
+                "timestamp", System.currentTimeMillis()
+            );
+            
+            // 트레이너에게 알림 - 트레이너 전용 구독 채널
+            messagingTemplate.convertAndSend("/topic/trainer/" + trainer_idx + "/matching", matchingStatusUpdate);
+            
+            // 해당 트레이너와 진행 중인 모든 채팅방에 알림
+            messagingTemplate.convertAndSend("/topic/trainer/" + trainer_idx + "/rooms/matching", matchingStatusUpdate);
+            
+        } catch (Exception e) {
+            System.err.println("매칭 상태 브로드캐스트 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -162,29 +204,21 @@ public class ChatWebSocketController {
             Integer message_idx = extractIntegerFromMessage(readData, "message_idx");
             Integer room_idx = extractIntegerFromMessage(readData, "room_idx");
             
-            // 필수 값 검증
             if (receiver_idx == null || message_idx == null || room_idx == null) {
-                System.err.println("❌ 읽음 처리 데이터 누락:");
-                System.err.println("   receiver_idx: " + receiver_idx);
-                System.err.println("   message_idx: " + message_idx);
-                System.err.println("   room_idx: " + room_idx);
+                System.err.println("읽음 처리 데이터 누락");
                 return;
             }
             
-            System.out.println("📖 읽음 처리 시작 - message_idx: " + message_idx + ", receiver_idx: " + receiver_idx);
-            
-            // 읽음 처리
             int result = 0;
             try {
                 result = chatService.readMark(message_idx, receiver_idx);
             } catch (Exception e) {
-                System.err.println("❌ 읽음 처리 실패: " + e.getMessage());
+                System.err.println("읽음 처리 실패: " + e.getMessage());
                 e.printStackTrace();
                 return;
             }
             
             if (result > 0) {
-                System.out.println("✅ 읽음 처리 완료 - message_idx: " + message_idx);
                 
                 try {
                     String readTopic = "/topic/room/" + room_idx + "/read";
@@ -195,17 +229,17 @@ public class ChatWebSocketController {
                     );
                     
                     messagingTemplate.convertAndSend(readTopic, readNotification);
-                    System.out.println("✅ 읽음 확인 브로드캐스트 완료");
+                    System.out.println("읽음 확인 브로드캐스트 완료");
                 } catch (Exception e) {
-                    System.err.println("❌ 읽음 확인 브로드캐스트 실패: " + e.getMessage());
+                    System.err.println("읽음 확인 브로드캐스트 실패: " + e.getMessage());
                     e.printStackTrace();
                 }
             } else {
-                System.out.println("⚠️ 읽음 처리 결과 없음 - message_idx: " + message_idx);
+                System.out.println("읽음 처리 결과 없음 - message_idx: " + message_idx);
             }
             
         } catch (Exception e) {
-            System.err.println("❌ 읽음 처리 전체 실패: " + e.getMessage());
+            System.err.println("읽음 처리 전체 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -213,26 +247,16 @@ public class ChatWebSocketController {
     @MessageMapping("/chat.delete")
     public void handleMessageDelete(@Payload Map<String, Object> deleteData, SimpMessageHeaderAccessor headerAccessor) {
         try {
-            System.out.println("🗑️ 메시지 삭제 알림 수신: " + deleteData);
             
-            // 안전한 타입 변환
             Integer messageIdx = extractIntegerFromMessage(deleteData, "message_idx");
             Integer roomIdx = extractIntegerFromMessage(deleteData, "room_idx");
             Integer deletedBy = extractIntegerFromMessage(deleteData, "deleted_by");
-            String type = extractStringFromMessage(deleteData, "type");
             
-            // 필수 값 검증
             if (messageIdx == null || roomIdx == null || deletedBy == null) {
-                System.err.println("❌ 삭제 알림 데이터 누락:");
-                System.err.println("   message_idx: " + messageIdx);
-                System.err.println("   room_idx: " + roomIdx);
-                System.err.println("   deleted_by: " + deletedBy);
+                System.err.println("삭제 알림 데이터 누락");
                 return;
             }
             
-            System.out.println("🗑️ 삭제 알림 처리 시작 - message_idx: " + messageIdx + ", room_idx: " + roomIdx + ", deleted_by: " + deletedBy);
-            
-            // 삭제 알림을 채팅방의 모든 참여자에게 브로드캐스트
             try {
                 String deleteTopic = "/topic/room/" + roomIdx + "/delete";
                 Map<String, Object> deleteNotification = Map.of(
@@ -244,15 +268,15 @@ public class ChatWebSocketController {
                 );
                 
                 messagingTemplate.convertAndSend(deleteTopic, deleteNotification);
-                System.out.println("✅ 삭제 알림 브로드캐스트 완료 - topic: " + deleteTopic);
+                System.out.println("삭제 알림 브로드캐스트 완료");
                 
             } catch (Exception e) {
-                System.err.println("❌ 삭제 알림 브로드캐스트 실패: " + e.getMessage());
+                System.err.println("삭제 알림 브로드캐스트 실패: " + e.getMessage());
                 e.printStackTrace();
             }
             
         } catch (Exception e) {
-            System.err.println("❌ 메시지 삭제 알림 처리 전체 실패: " + e.getMessage());
+            System.err.println("메시지 삭제 알림 처리 전체 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -276,11 +300,11 @@ public class ChatWebSocketController {
             } else if (value instanceof Number) {
                 return ((Number) value).intValue();
             } else {
-                System.err.println("⚠️ " + key + " 예상치 못한 타입: " + value.getClass().getName() + ", 값: " + value);
+                System.err.println(key + " 예상치 못한 타입: " + value.getClass().getName());
                 return null;
             }
         } catch (NumberFormatException e) {
-            System.err.println("❌ " + key + " 숫자 변환 실패: " + value + " - " + e.getMessage());
+            System.err.println(key + " 숫자 변환 실패: " + value);
             return null;
         }
     }
@@ -295,7 +319,7 @@ public class ChatWebSocketController {
         try {
             return value.toString();
         } catch (Exception e) {
-            System.err.println("❌ " + key + " 문자열 변환 실패: " + value + " - " + e.getMessage());
+            System.err.println(key + " 문자열 변환 실패: " + value);
             return null;
         }
     }

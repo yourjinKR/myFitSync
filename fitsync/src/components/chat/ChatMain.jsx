@@ -27,7 +27,7 @@ const InquiryButton = styled.button`
   position: absolute;
   top: 20px;
   right: 20px;
-  background: var(--border-light);
+  background: var(--primary-blue);
   color: white;
   border: none;
   padding: 10px 16px;
@@ -39,6 +39,23 @@ const InquiryButton = styled.button`
   
   /* admin일 때 숨김 */
   display: ${props => props.$isAdmin ? 'none' : 'block'};
+  
+  &:hover {
+    background: var(--primary-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
 `;
 
 const RoomList = styled.div`
@@ -185,6 +202,7 @@ const ChatMain = () => {
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [unreadCounts, setUnreadCounts] = useState({}); // 읽지 않은 메시지 개수 저장
   const [lastMessages, setLastMessages] = useState({}); // 각 방의 마지막 메시지
+  const [inquiryLoading, setInquiryLoading] = useState(false); // 문의하기 버튼 로딩 상태
 
   // 컴포넌트 마운트시 초기화
   useEffect(() => {
@@ -253,10 +271,86 @@ const ChatMain = () => {
   // admin 여부 확인 (대소문자 무관)
   const isAdmin = user?.member_type?.toLowerCase() === 'admin';
 
-  // 문의하기 버튼 클릭 핸들러
-  const handleInquiryClick = () => {
-    // 기능 구현해야함
-    console.log('문의하기 버튼 클릭됨');
+  // 문의하기 버튼 클릭 핸들러 (관리자와의 채팅방 생성/이동)
+  const handleInquiryClick = async () => {
+    if (inquiryLoading) return;
+    
+    setInquiryLoading(true);
+    
+    try {
+      console.log('🎧 문의하기 버튼 클릭 - 관리자와의 채팅방 생성/이동');
+      
+      const ADMIN_MEMBER_IDX = 141; // 관리자 계정 member_idx
+      const currentUserIdx = user.member_idx;
+      
+      // 현재 사용자가 트레이너인지 일반 사용자인지 확인
+      const isCurrentUserTrainer = user.member_type === 'trainer';
+      
+      let trainer_idx, user_idx, room_name;
+      
+      if (isCurrentUserTrainer) {
+        // 현재 사용자가 트레이너인 경우: 트레이너가 관리자에게 문의
+        trainer_idx = currentUserIdx;
+        user_idx = ADMIN_MEMBER_IDX;
+        room_name = `${user.member_name} 트레이너님의 문의`;
+      } else {
+        // 현재 사용자가 일반 회원인 경우: 회원이 관리자에게 문의
+        trainer_idx = ADMIN_MEMBER_IDX;
+        user_idx = currentUserIdx;
+        room_name = `${user.member_name} 회원님의 문의`;
+      }
+      
+      console.log('📋 채팅방 생성 파라미터:', {
+        trainer_idx,
+        user_idx,
+        room_name,
+        isCurrentUserTrainer,
+        currentUserType: user.member_type
+      });
+      
+      // 채팅방 생성 또는 기존 방 조회
+      const roomResponse = await ChatApi.registerRoom(trainer_idx, user_idx, room_name);
+      
+      if (roomResponse && roomResponse.room_idx) {
+        console.log('✅ 관리자와의 채팅방 생성/조회 성공:', roomResponse);
+        
+        // 관리자 정보 구성 (채팅방에서 사용할 정보)
+        const adminInfo = {
+          member_idx: ADMIN_MEMBER_IDX,
+          member_name: '운영자',
+          member_image: null, // 관리자 프로필 이미지가 있다면 설정
+          member_type: 'admin'
+        };
+        
+        // 채팅방으로 이동
+        navigate(`/chat/${roomResponse.room_idx}`, {
+          state: { 
+            roomData: roomResponse,
+            adminInfo: adminInfo
+          }
+        });
+        
+        console.log('🚀 관리자 채팅방으로 이동 완료');
+        
+      } else {
+        console.error('❌ 채팅방 생성 응답이 올바르지 않음:', roomResponse);
+        alert('문의하기 채팅방 생성에 실패했습니다.');
+      }
+      
+    } catch (error) {
+      console.error('❌ 문의하기 채팅방 생성 중 오류:', error);
+      
+      if (error.response?.status === 401) {
+        alert('로그인이 만료되었습니다.');
+        navigate('/login');
+      } else if (error.response?.status === 403) {
+        alert('문의하기 권한이 없습니다.');
+      } else {
+        alert('문의하기 채팅방 생성 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setInquiryLoading(false);
+    }
   };
 
   // 시간 포멧
@@ -424,8 +518,12 @@ const ChatMain = () => {
     <Container>
       <Header>
         <Title>채팅목록</Title>
-        <InquiryButton onClick={handleInquiryClick} $isAdmin={isAdmin}>
-          문의하기
+        <InquiryButton 
+          onClick={handleInquiryClick} 
+          $isAdmin={isAdmin}
+          disabled={inquiryLoading}
+        >
+          {inquiryLoading ? '연결 중...' : '문의하기'}
         </InquiryButton>
       </Header>
 

@@ -72,7 +72,10 @@ const MessageList = ({
   onReply = null,
   onDelete = null,
   onReport = null,
-  onScrollToMessage = null
+  onScrollToMessage = null,
+  hasCompletedMatchingWithTrainer = false,
+  isMatchingCheckComplete = true,
+  isMatchingCheckLoading = false
 }) => {
   
   const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
@@ -350,6 +353,9 @@ const MessageList = ({
               getReplyPreviewText={getReplyPreviewText}
               onScrollToMessage={handleScrollToMessage}
               roomData={roomData}
+              hasCompletedMatchingWithTrainer={hasCompletedMatchingWithTrainer}
+              isMatchingCheckComplete={isMatchingCheckComplete}
+              isMatchingCheckLoading={isMatchingCheckLoading}
             />
           </React.Fragment>
         );

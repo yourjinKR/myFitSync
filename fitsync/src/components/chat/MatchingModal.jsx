@@ -141,10 +141,10 @@ const MatchingModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                         id="matching-total"
                         type="number"
                         min="1"
-                        max="100"
+                        max="200"
                         value={matchingTotal}
                         onChange={(e) => setMatchingTotal(e.target.value)}
-                        placeholder="PT 횟수를 입력하세요 (예: 10)"
+                        placeholder="PT 횟수를 입력하세요.(최대200일)"
                         autoFocus
                     />
                 </InputGroup>

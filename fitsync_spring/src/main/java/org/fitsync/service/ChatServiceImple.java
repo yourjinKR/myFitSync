@@ -71,12 +71,18 @@ public class ChatServiceImple implements ChatService {
 	
 	/*-------------------------------------------------------------------*/
 
-	// 새채팅 메시지 등록 - 🔥 수정: null 반환 문제 해결
+	// 새채팅 메시지 등록
 	@Override
 	public MessageVO registerMessage(MessageVO vo) {
-		log.info("registerMessage..." + vo);
+		log.info("registerMessage (매칭 데이터 지원)..." + vo);
 		
 		try {
+			// 매칭 데이터가 Map 형태로 있다면 JSON 문자열로 변환
+			if (vo.getMatching_data_map() != null && !vo.getMatching_data_map().isEmpty()) {
+				vo.setMatchingDataFromMap(vo.getMatching_data_map());
+				log.info("✅ 매칭 데이터 JSON 변환 완료: " + vo.getMatching_data());
+			}
+			
 			// 메시지 저장
 			int result = messageMapper.insertMessage(vo);
 			log.info("메시지 저장 결과: " + result + ", message_idx: " + vo.getMessage_idx());
@@ -85,25 +91,31 @@ public class ChatServiceImple implements ChatService {
 				// 채팅방 마지막 메시지 업데이트
 				roomMapper.updateLastMessage(vo.getRoom_idx(), vo.getMessage_idx());
 				
-				// 🔥 저장된 메시지 재조회 (MyBatis selectKey로 생성된 message_idx 사용)
+				// 저장된 메시지 재조회 (매칭 데이터 포함)
 				if (vo.getMessage_idx() > 0) {
 					MessageVO savedMessage = messageMapper.getMessage(vo.getMessage_idx());
 					if (savedMessage != null) {
-						log.info("저장된 메시지 조회 성공: " + savedMessage);
+						log.info("✅ 저장된 메시지 조회 성공 (매칭 데이터 포함): " + savedMessage);
+						
+						// 🔥 매칭 데이터 로그 출력
+						if (savedMessage.hasMatchingData()) {
+							log.info("✅ 매칭 데이터 확인: " + savedMessage.getMatching_data());
+							log.info("✅ 매칭 IDX: " + savedMessage.getMatchingIdx());
+							log.info("✅ 매칭 총 횟수: " + savedMessage.getMatchingTotal());
+						}
+						
 						return savedMessage;
 					}
 				}
 				
-				// 🔥 재조회 실패 시 원본 VO 반환 (message_idx는 이미 설정됨)
+				// 재조회 실패 시 원본 VO 반환
 				log.warn("저장된 메시지 재조회 실패, 원본 반환");
-				// 전송 시간 설정
 				vo.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
 				return vo;
 			}
 			
 		} catch (Exception e) {
 			log.error("메시지 저장 중 예외 발생: ", e);
-			// 🔥 예외 발생 시에도 원본 반환
 			vo.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
 			return vo;
 		}
@@ -112,18 +124,44 @@ public class ChatServiceImple implements ChatService {
 		return null;
 	}
 	
-	// 메시지 상세 조회
 	@Override
 	public MessageVO getMessage(int message_idx) {
 		log.info("getMessage..." + message_idx);
-		return messageMapper.getMessage(message_idx);
+		MessageVO message = messageMapper.getMessage(message_idx);
+		
+		// 🔥 매칭 데이터 로그 출력
+		if (message != null && message.hasMatchingData()) {
+			log.info("✅ 조회된 메시지의 매칭 데이터: " + message.getMatching_data());
+			log.info("✅ 매칭 IDX: " + message.getMatchingIdx());
+		}
+		
+		return message;
 	}
 
-	// 채팅방의 모든 메시지 조회
 	@Override
 	public List<MessageVO> readMessageList(int room_idx) {
 		log.info("readMessageList..." + room_idx);
-		return messageMapper.getMessageList(room_idx);
+		List<MessageVO> messages = messageMapper.getMessageList(room_idx);
+		
+		// 매칭 데이터가 포함된 메시지 로그 출력
+		long matchingMessageCount = messages.stream()
+			.filter(MessageVO::hasMatchingData)
+			.count();
+		
+		if (matchingMessageCount > 0) {
+			log.info("✅ 매칭 데이터 포함 메시지 개수: " + matchingMessageCount);
+			
+			// 각 매칭 메시지의 상세 정보 로그
+			messages.stream()
+				.filter(MessageVO::hasMatchingData)
+				.forEach(msg -> {
+					log.info("✅ 매칭 메시지 - IDX: " + msg.getMessage_idx() + 
+							", 매칭 IDX: " + msg.getMatchingIdx() + 
+							", 매칭 총 횟수: " + msg.getMatchingTotal());
+				});
+		}
+		
+		return messages;
 	}
 
 	// 모든 메시지 페이징처리 조회

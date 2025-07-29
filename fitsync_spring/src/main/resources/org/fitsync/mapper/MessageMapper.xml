@@ -22,6 +22,9 @@
             <if test="attach_idx != null and attach_idx > 0">
                 ,attach_idx
             </if>
+            <if test="matching_data != null and matching_data != ''">
+                ,matching_data
+            </if>
         ) VALUES (
             #{message_idx},
             #{room_idx},
@@ -34,6 +37,9 @@
             #{parent_idx, jdbcType=INTEGER}
             <if test="attach_idx != null and attach_idx > 0">
                 ,#{attach_idx}
+            </if>
+            <if test="matching_data != null and matching_data != ''">
+                ,#{matching_data, jdbcType=CLOB}
             </if>
         )
     </insert>

@@ -98,6 +98,11 @@ const ChatRoom = () => {
   const [imageLoadingCount, setImageLoadingCount] = useState(0);
   const [totalImageCount, setTotalImageCount] = useState(0);
 
+  // 매칭 상태 관리 수정 - 기본값 변경 및 로딩 상태 분리
+  const [hasCompletedMatchingWithTrainer, setHasCompletedMatchingWithTrainer] = useState(false);
+  const [isMatchingCheckComplete, setIsMatchingCheckComplete] = useState(true);
+  const [isMatchingCheckLoading, setIsMatchingCheckLoading] = useState(false);
+
   // ref 관리
   const initialReadDone = useRef(false);
   const messagesEndRef = useRef(null);
@@ -106,7 +111,7 @@ const ChatRoom = () => {
   const lastScrollHeight = useRef(0);
 
   // WebSocket 연결 및 기능들
-  const { connected, subscribeToRoom, sendMessage, markAsRead, sendDeleteNotification } = useWebSocket();
+  const { connected, subscribeToRoom, sendMessage, markAsRead, sendDeleteNotification, subscribeToMatchingUpdates } = useWebSocket();
 
   useEffect(() => {
     console.log('🏗️ ChatRoom 컴포넌트 마운트됨');
@@ -164,6 +169,60 @@ const ChatRoom = () => {
       user_image: isCurrentUserTrainer ? null : user.member_image
     };
   }, [user, roomId, location.state]);
+
+  // 매칭 상태 확인 함수 수정
+  const checkCompletedMatchingWithTrainer = useCallback(async () => {
+    if (!roomData || !user?.member_idx || user?.member_type !== 'user') {
+      console.log('❌ 매칭 확인 조건 불충족:', {
+        hasRoomData: !!roomData,
+        hasMemberIdx: !!user?.member_idx,
+        isUser: user?.member_type === 'user'
+      });
+      setIsMatchingCheckComplete(true);
+      return;
+    }
+
+    setIsMatchingCheckLoading(true);
+    setIsMatchingCheckComplete(false);
+
+    try {
+      const currentTrainerIdx = roomData.trainer_idx;
+      
+      console.log('🔍 매칭 확인 파라미터:', {
+        currentTrainerIdx,
+        userMemberIdx: user.member_idx,
+        roomData
+      });
+      
+      if (!currentTrainerIdx) {
+        console.log('❌ 트레이너 IDX 없음');
+        setHasCompletedMatchingWithTrainer(false);
+        return;
+      }
+      
+      const result = await chatApi.checkCompletedMatchingBetween(currentTrainerIdx, user.member_idx);
+      
+      console.log('✅ 매칭 확인 결과:', result);
+      
+      if (result.success) {
+        setHasCompletedMatchingWithTrainer(result.hasCompletedMatching);
+        console.log('🎯 매칭 상태 업데이트:', {
+          hasCompletedMatching: result.hasCompletedMatching,
+          trainerIdx: currentTrainerIdx,
+          userIdx: user.member_idx
+        });
+      } else {
+        setHasCompletedMatchingWithTrainer(false);
+      }
+      
+    } catch (error) {
+      console.error('❌ 매칭 확인 중 오류:', error);
+      setHasCompletedMatchingWithTrainer(false);
+    } finally {
+      setIsMatchingCheckComplete(true);
+      setIsMatchingCheckLoading(false);
+    }
+  }, [roomData, user?.member_idx, user?.member_type]);
 
   // 읽지 않은 메시지 스크롤 함수
   const scrollToUnreadSeparatorTop = useCallback(async (targetMessageIdx, retryCount = 0) => {
@@ -479,6 +538,11 @@ const ChatRoom = () => {
       setTotalImageCount(0);
       setAttachments({});
       
+      // 매칭 상태 초기화 수정
+      setHasCompletedMatchingWithTrainer(false);
+      setIsMatchingCheckComplete(true);
+      setIsMatchingCheckLoading(false);
+      
       console.log('🔄 채팅방 초기화');
 
       const memberIdx = await getMemberIdxForChat();
@@ -507,6 +571,14 @@ const ChatRoom = () => {
       }
     };
   }, [roomId, user, navigate, location.state, createTemporaryRoomData]);
+
+  // roomData가 설정된 후 매칭 상태 확인 수정
+  useEffect(() => {
+    if (roomData && user?.member_type === 'user' && isMatchingCheckComplete) {
+      console.log('🔍 회원 계정 - 매칭 상태 확인 시작');
+      checkCompletedMatchingWithTrainer();
+    }
+  }, [roomData, user?.member_type, checkCompletedMatchingWithTrainer]);
 
   // 모든 이미지 로딩 완료 후 스크롤 실행
   useEffect(() => {
@@ -663,6 +735,40 @@ const ChatRoom = () => {
       return unsubscribe;
     }
   }, [connected, roomId, subscribeToRoom, markAsRead, currentMemberIdx]);
+
+  // 매칭 상태 업데이트 구독 수정
+  useEffect(() => {
+    if (connected && roomData && user?.member_type === 'user') {
+      const trainerIdx = roomData.trainer_idx;
+      
+      if (trainerIdx) {
+        console.log('🎯 매칭 상태 업데이트 구독 시작 - 트레이너:', trainerIdx);
+        
+        const unsubscribeMatching = subscribeToMatchingUpdates(
+          trainerIdx,
+          (matchingUpdate) => {
+            console.log('🔄 매칭 상태 업데이트 수신:', matchingUpdate);
+            
+            // 매칭이 수락된 경우 상태 업데이트
+            if (matchingUpdate.status_type === 'accepted') {
+              console.log('✅ 매칭 수락됨 - 실시간 상태 업데이트');
+              
+              // 실시간으로 매칭 상태 업데이트
+              if (matchingUpdate.user_idx === user.member_idx) {
+                console.log('🎉 내가 수락한 매칭 - 상태 즉시 업데이트');
+                setHasCompletedMatchingWithTrainer(true);
+                
+                // 다른 매칭 요청 메시지들도 즉시 업데이트되도록 메시지 리스트 갱신
+                setMessages(prevMessages => [...prevMessages]);
+              }
+            }
+          }
+        );
+
+        return unsubscribeMatching;
+      }
+    }
+  }, [connected, roomData, user?.member_type, user?.member_idx, subscribeToMatchingUpdates]);
 
   // 특정 메시지로 스크롤 함수 (검색용)
   const scrollToMessage = useCallback((messageIdx, retryCount = 0) => {
@@ -1078,6 +1184,9 @@ const ChatRoom = () => {
             onDelete={handleDeleteMessage}
             onReport={handleReportMessage}
             onScrollToMessage={scrollToMessage}
+            hasCompletedMatchingWithTrainer={hasCompletedMatchingWithTrainer}
+            isMatchingCheckComplete={isMatchingCheckComplete}
+            isMatchingCheckLoading={isMatchingCheckLoading}
           />
           <div ref={messagesEndRef} />
         </MessagesContainer>
