@@ -2,6 +2,8 @@ package org.fitsync.service;
 
 import java.util.List;
 
+import org.fitsync.domain.ApiLogSearchCriteria;
+import org.fitsync.domain.ApiLogStatsDTO;
 import org.fitsync.domain.ApiLogVO;
 
 public interface ApiLogService {
@@ -10,6 +12,8 @@ public interface ApiLogService {
     ApiLogVO selectApiLogById(int apilog_idx);
     
     List<ApiLogVO> selectApiList();
+    
+    ApiLogStatsDTO selectApiLogStats(ApiLogSearchCriteria cri);
     
     void updateExceptionReason(ApiLogVO log);
     

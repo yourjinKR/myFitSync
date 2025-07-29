@@ -8,6 +8,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.fitsync.domain.ApiLogSearchCriteria;
+import org.fitsync.domain.ApiLogStatsDTO;
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.GymVO;
@@ -62,6 +64,12 @@ public class AdminController {
     public ResponseEntity<List<ApiLogVO>> getAllApi() {
         return ResponseEntity.ok(apiLogService.selectApiList());
     }
+    
+    @GetMapping(value = "/api/stats", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<ApiLogStatsDTO> getApiStats(@ModelAttribute ApiLogSearchCriteria cri) {
+    	return ResponseEntity.ok(apiLogService.selectApiLogStats(cri));
+    }
+    
     
 	@PatchMapping(value = "/updateExceptionReason", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<String> updateExceptionReason(@RequestBody ApiLogVO log) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { parseApiLogData } from '../../utils/apiLogUtils';
+import { ApilogUtil } from '../../utils/apiLogUtils';
 
 /**
  * API 로그 데이터 관리 훅
@@ -14,7 +14,7 @@ export const useApiLogs = () => {
         setLoading(true);
         try {
             const response = await axios.get('/admin/getAllApi');
-            setApiLogs(response.data.map(item => parseApiLogData(item)));
+            setApiLogs(response.data.map(item => ApilogUtil.parseApiLogData(item)));
         } catch (error) {
             console.error('API 로그 가져오기 실패:', error);
         } finally {

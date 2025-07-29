@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import org.fitsync.domain.AiExerciseDTO;
 import org.fitsync.domain.AiRoutineDTO;
+import org.fitsync.domain.ApiLogSearchCriteria;
+import org.fitsync.domain.ApiLogStatsDTO;
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.PtVO;
 import org.fitsync.mapper.ApiLogMapper;
@@ -81,6 +83,11 @@ public class ApiLogServiceImple implements ApiLogService{
 	    }
 
 	    return list;
+	}
+	
+	@Override
+	public ApiLogStatsDTO selectApiLogStats(ApiLogSearchCriteria cri) {
+		return apiLogMapper.selectApiLogStats(cri);
 	}
 	
 	@Override

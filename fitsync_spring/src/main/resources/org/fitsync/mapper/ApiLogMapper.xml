@@ -57,6 +57,40 @@
 	    FROM apilog
 	    ORDER BY apilog_idx
 	</select>
+	
+	<!-- 로그 대시보드 개요 정보 가져오기 (필터링 적용) -->
+	<select id="selectApiLogStats" parameterType="org.fitsync.domain.ApiLogSearchCriteria" resultType="org.fitsync.domain.ApiLogStatsDTO">
+	  SELECT
+	    COUNT(*) AS totalCount,
+	    SUM(CASE WHEN apilog_status = 'success' THEN 1 ELSE 0 END) AS successCount,
+	    SUM(CASE WHEN apilog_status = 'exception' THEN 1 ELSE 0 END) AS exceptionCount,
+	    SUM(CASE WHEN apilog_status = 'fail' THEN 1 ELSE 0 END) AS failCount,
+	    ROUND(AVG((CAST(apilog_response_time AS DATE) - CAST(apilog_request_time AS DATE)) * 86400), 2) AS avgResponseTime,
+	    SUM(NVL(apilog_input_tokens, 0)) AS inputTokens,
+	    SUM(NVL(apilog_output_tokens, 0)) AS outputTokens,
+	    SUM(NVL(apilog_input_tokens, 0) + NVL(apilog_output_tokens, 0)) AS totalTokens,
+	    COUNT(DISTINCT member_idx) AS uniqueUsers,
+	    ROUND(SUM((CAST(apilog_response_time AS DATE) - CAST(apilog_request_time AS DATE)) * 86400), 2) AS totalProcessingTime
+	  FROM apilog
+	  <where>
+	    <if test="status != null and status != 'all'">
+	      AND apilog_status = #{status}
+	    </if>
+	    <if test="model != null and model != 'all'">
+	      AND apilog_model = #{model}
+	    </if>
+	    <if test="serviceType != null and serviceType != 'all'">
+	      AND apilog_service_type = #{serviceType}
+	    </if>
+	    <if test="version != null and version != 'all'">
+	      AND apilog_version = #{version}
+	    </if>
+	    <if test="fromDate != null and toDate != null">
+	      AND apilog_request_time BETWEEN TO_DATE(#{fromDate}, 'YYYY-MM-DD') AND TO_DATE(#{toDate}, 'YYYY-MM-DD') + 1
+	    </if>
+	  </where>
+	</select>
+
     
     <!-- 예외 사유 업데이트 쿼리 -->
     <update id="updateExceptionReason" parameterType="org.fitsync.domain.ApiLogVO">

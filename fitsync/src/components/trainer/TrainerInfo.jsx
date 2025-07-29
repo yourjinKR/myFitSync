@@ -104,6 +104,7 @@ const TrainerInfo = ({idx, trainerData}) => {
   // 기본값 처리
   const trainerName = trainerData?.member_name || `트레이너 ${idx + 1}`;
   const trainerInfo = trainerData?.member_info || '트레이너 소개 정보가 없습니다.';
+  const trainerPurpose = trainerData?.member_purpose || `트레이너의 전문 분야`;
   const trainerImage = trainerData?.member_image;
 
   return (
@@ -114,7 +115,7 @@ const TrainerInfo = ({idx, trainerData}) => {
       <InfoBox>
         <h3>{trainerName}</h3>
         <p>{trainerInfo}</p>
-        <p>테스트중</p>
+        <p>{trainerPurpose}</p>
       </InfoBox>
       <ChatCTA onClick={handleChatClick} >1:1 상담</ChatCTA>
     </InfoWrapper>

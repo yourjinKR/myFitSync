@@ -12,6 +12,9 @@ public class SearchCriteria {
     private String keywordType;    // 검색 기준: name, address, idx 등
     private int page = 1;         // 현재 페이지
     private int pageSize = 10;    // 페이지당 항목 수
+    
+    private String gender;
+    private String time;
 
     public int getStartRow() {
         return (page - 1) * pageSize + 1;
