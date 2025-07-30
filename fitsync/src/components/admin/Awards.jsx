@@ -169,6 +169,7 @@ const ApprovalModal = ({ postData, setPostData, onApprove, onClose }) => (
 
 const Awards = () => {
   const init = {
+    trainer_idx: '',
     awards_idx: '',
     awards_approval: '',
     awards_reason: ''
@@ -226,6 +227,7 @@ const Awards = () => {
     setModalType(type);
     if(type === "approval") {
       setPostData({
+        trainer_idx: content.trainer_idx,
         awards_idx: content.awards_idx,
         awards_approval: 'F',
         awards_reason: ''

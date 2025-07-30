@@ -957,7 +957,7 @@ const Report = () => {
                             </td>
                             <td className='ta-c'>
                               <button onClick={() => handleDetailModal(user, "isReview", "")}>
-                                {user.review.review_title}
+                                {user.review?.review_title}
                               </button>
                             </td>
                             <td><p className='txt-ov'>{user.report_content}</p></td>
