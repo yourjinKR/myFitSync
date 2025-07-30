@@ -263,10 +263,11 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         />
 
       <SectionTitle>위치</SectionTitle>
-      <TrainerMapContainer 
-        gymInfo={trainer.gymInfo}
-        isEdit={isEdit}
-        onChange={onChange}/>
+      {trainer.gymInfo !== null || isEdit ? (
+        <TrainerMapContainer 
+          gymInfo={trainer.gymInfo}
+          isEdit={isEdit}
+          onChange={onChange}/>) : (<>등록된 체육관이 없습니다 !</>)}
     </>
   );
 };

@@ -8,15 +8,20 @@ export const MapContainer = styled.div`
   margin-bottom: 10px;
 `;
 
-const MapTest = ({ position ={lat : 37.5665, lng: 126.9780,} }) => {
+const MapTest = ({ position }) => {
+    const center = {
+    lat: position.lat ?? 37.5665,
+    lng: position.lng ?? 126.9780,
+  };
+  
   return (
     <Map
-      center={position}
+      center={center}
       style={{ width: "100%", height: "100%" }}
       level={3}
       draggable={false}
     >
-      <MapMarker position={position}/>
+      <MapMarker position={center}/>
     </Map>
   );
 };

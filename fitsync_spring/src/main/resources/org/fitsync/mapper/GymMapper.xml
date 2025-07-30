@@ -106,6 +106,13 @@
     WHERE gym_idx = #{gym_idx}
   </delete>
   
+  <!-- 6. 해당 체육관 외래키 삭제  -->
+	<update id="clearMemberGymReference" parameterType="int">
+	  UPDATE member
+	  SET gym_idx = NULL
+	  WHERE gym_idx = #{gym_idx}
+	</update>
+  
   <!-- 멤버 ID로 체육관 조회  -->
   <select id="selectGymByMemberId" parameterType="int" resultType="org.fitsync.domain.GymVO">
     SELECT *

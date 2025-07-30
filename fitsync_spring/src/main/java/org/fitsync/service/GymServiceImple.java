@@ -7,6 +7,7 @@ import org.fitsync.domain.SearchCriteria;
 import org.fitsync.mapper.GymMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.log4j.Log4j;
 
@@ -43,8 +44,19 @@ public class GymServiceImple implements GymService {
     }
 
     @Override
+    @Transactional
     public boolean deleteGym(int gym_idx) {
-        return gymMapper.deleteGym(gym_idx) > 0;
+        try {
+            gymMapper.clearMemberGymReference(gym_idx);
+
+            int rows = gymMapper.deleteGym(gym_idx);
+
+            return rows > 0;
+
+        } catch (Exception e) {
+            log.error("체육관 삭제 중 오류 발생", e);
+            throw new RuntimeException("체육관 삭제 실패", e);
+        }
     }
     
     @Override

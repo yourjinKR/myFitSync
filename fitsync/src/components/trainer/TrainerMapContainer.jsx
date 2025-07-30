@@ -4,6 +4,7 @@ import MapTest from '../map/MapTest';
 import styled from 'styled-components';
 import { ButtonSubmit } from '../../styles/FormStyles';
 import { GymUtil } from '../../utils/GymUtils';
+import { interpolate } from 'framer-motion';
 
 const MapContainer = styled.div`
   width: 100%;
@@ -116,7 +117,7 @@ const NoResults = styled.div`
 `;
 
 const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
-    const position = {lat : gymInfo.gym_latitude, lng : gymInfo.gym_longitude} || null;
+    const position = {lat : gymInfo?.gym_latitude, lng : gymInfo?.gym_longitude} || null;
 
     const [keyword, setKeyword] = useState('');
     const [gymList, setGymList] = useState([]);
@@ -251,11 +252,11 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
         <div>
             <div>
                 {/* 이름 */}
-                {gymInfo.gym_name}
+                {gymInfo?.gym_name}
             </div>
             <div>
                 {/* 주소 */}
-                {gymInfo.gym_address}
+                {gymInfo?.gym_address}
             </div>
             {isEdit && (
                 <GymSearchContainer>
@@ -302,9 +303,11 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
                 </GymSearchContainer>
             )}
             
-            <MapContainer>
-                <MapTest position={position}/>
-            </MapContainer>
+            {gymInfo !== null ? (
+                <MapContainer>
+                    <MapTest position={position}/>
+                </MapContainer>
+            ) : (<></>)}
         </div>
     );
 };

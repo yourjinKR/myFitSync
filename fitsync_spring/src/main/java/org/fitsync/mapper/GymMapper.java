@@ -24,6 +24,9 @@ public interface GymMapper {
     // 체육관 삭제
     int deleteGym(int gym_idx);
     
+    // 외래키 삭제
+    int clearMemberGymReference(int gym_idx);
+    
     // 유저 멤버로 체육관 찾기
     GymVO selectGymByMemberId(int member_idx);
 }
