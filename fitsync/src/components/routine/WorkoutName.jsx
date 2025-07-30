@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import CheckIcon from '@mui/icons-material/Check';
+import { useNavigate } from 'react-router-dom';
 
 const WorkoutWrapper = styled.div`
   input {
@@ -73,6 +74,13 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
   const handleWorkOut = () => {
     setChk(workoutRef.current.checked);
   };
+
+  // 상세보기 이동
+  const nav = useNavigate();
+  const goDetail = (e) => {
+    e.preventDefault();
+    nav(`/workout/${data.pt_idx}`);
+  }
 
   useEffect(() => {
     const selectedValue = parseInt(workoutRef.current.value);
@@ -150,8 +158,8 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
         readOnly
       />
       <label htmlFor={`workout${data.pt_idx}`}>
-        <ImgBox>
-          <img src={data.pt_image} alt={data.pt_name} />
+        <ImgBox onClick={goDetail}>
+          <img src={data.pt_image} alt={data.pt_name}/>
         </ImgBox>
         <InfoBox>
           <dl>
