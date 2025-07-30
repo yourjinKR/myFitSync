@@ -45,6 +45,9 @@ const LogDetailModal = ({
     rawDataIdx,
     rawDataMap
 }) => {
+    console.log('지금 니가 보고 있는 로그 : ', log);
+    
+
     // 토글 상태 관리
     const [isBasicInfoExpanded, setIsBasicInfoExpanded] = useState(false);
     const [isUserInfoExpanded, setIsUserInfoExpanded] = useState(false);

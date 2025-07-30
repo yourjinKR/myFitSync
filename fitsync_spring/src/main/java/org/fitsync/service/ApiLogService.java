@@ -18,4 +18,6 @@ public interface ApiLogService {
     void updateExceptionReason(ApiLogVO log);
     
     void updateFeedBack(ApiLogVO apiLogVO);
+    
+    List<ApiLogVO> getByMemberId(int memberIdx); 
 }

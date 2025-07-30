@@ -99,4 +99,47 @@ public class ApiLogServiceImple implements ApiLogService{
 	public void updateFeedBack(ApiLogVO apiLogVO) {
 		apiLogMapper.updateFeedBack(apiLogVO);
 	}
+	
+	@Override
+	public List<ApiLogVO> getByMemberId(int memberIdx) {
+	    List<ApiLogVO> list = apiLogMapper.selectByMemberId(memberIdx);
+
+	    // 1. idx → name 매핑 Map 준비
+	    Map<Integer, String> ptNameMap = getWorkoutNameMap();
+
+	    // 2. Jackson ObjectMapper
+	    ObjectMapper objectMapper = new ObjectMapper();
+
+	    for (ApiLogVO log : list) {
+	        String version = log.getApilog_version();  // ex: "0.2.0"
+	        String json = log.getApilog_response();
+
+	        // 1. 응답이 JSON이 아닌 경우 → 스킵
+	        if (json == null || !json.trim().startsWith("[")) {
+	            continue;
+	        }
+
+	        // 2. 버전별 파싱 분기
+	        try {
+	            if (version != null && version.startsWith("0.2")) {
+	                // pt_idx만 존재 → 매핑 필요
+	                List<AiRoutineDTO> routines = objectMapper.readValue(json, new TypeReference<List<AiRoutineDTO>>() {});
+	                for (AiRoutineDTO routine : routines) {
+	                    for (AiExerciseDTO ex : routine.getExercises()) {
+	                        String name = ptNameMap.get(ex.getPt_idx());
+	                        ex.setPt_name(name != null ? name : "Unknown");
+	                    }
+	                }
+	                log.setApilog_response(objectMapper.writeValueAsString(routines));
+	            }
+	            // 0.1.x는 pt_name 포함된 구조이므로 그대로 유지
+	        } catch (Exception e) {
+	            log.setApilog_status("exception");
+	            log.setApilog_status_reason("response_parsing_failed");
+	            log.setApilog_response(json); // 원본 유지
+	        }
+	    }
+
+	    return list;
+	}
 }

@@ -148,6 +148,11 @@
 	    )
 	    WHERE ROWNUM = 1
 	</select>
+	
+	<!-- 회원별 자신의 로그 가져오기 -->
+	<select id="selectByMemberId" parameterType="int" resultType="org.fitsync.domain.ApiLogVO">
+	    SELECT * FROM apilog WHERE member_idx = #{member_idx} order by apilog_idx desc
+	</select>
 
 
 

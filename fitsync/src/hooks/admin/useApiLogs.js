@@ -34,3 +34,42 @@ export const useApiLogs = () => {
         setApiLogs
     };
 };
+
+/**
+ * 사용자 전용 API 로그 조회 훅
+ * @param {number|null} memberIdx - 사용자 인덱스
+ * @returns {Object} 파싱된 로그 상태와 관련 함수들
+ */
+export const useUserApiLogs = (memberIdx) => {
+    const [apiLogs, setApiLogs] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const fetchUserApiLogs = async () => {
+        if (!memberIdx) return;
+        setLoading(true);
+        try {
+            const response = await axios.get(`/ai/apilog/${memberIdx}`, {
+                withCredentials: true
+            });
+            const parsed = response.data.map(item => AiUtil.parseApiLogData(item));
+            setApiLogs(parsed);
+        } catch (error) {
+            console.error('사용자 API 로그 가져오기 실패:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (memberIdx) {
+            fetchUserApiLogs();
+        }
+    }, [memberIdx]);
+
+    return {
+        apiLogs,
+        loading,
+        fetchUserApiLogs,
+        setApiLogs
+    };
+};

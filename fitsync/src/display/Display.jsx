@@ -45,6 +45,7 @@ import AIWorkoutService from '../components/ai/test/AIWorkoutService';
 import Gym from '../components/admin/Gym';
 import WorkOut from '../components/admin/WorkOut';
 import WorkoutView from '../components/routine/WorkoutView';
+import UserApiLogContainerTest from '../components/ai/test/UserApiLogContainerTest';
 
 
 const DisplayWrapper = styled.div`
@@ -126,6 +127,7 @@ const Display = () => {
           <Route path='/ai/test/input' element={<SlideInputFormTest/>}/>
           <Route path='/ai/test/result' element={<ResponseResultPage resultData={{}}/>}/>
           <Route path='/ai/test/total' element={<AIWorkoutService/>}/>
+          <Route path='/ai/userLog' element={<UserApiLogContainerTest/>}/>
 
           <Route path='/payment' element={<PaymentContainer/>}>
             <Route path='test' element={<KaKaoPayTest/>}/>

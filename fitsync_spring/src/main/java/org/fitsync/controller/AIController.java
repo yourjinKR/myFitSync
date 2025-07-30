@@ -1,5 +1,6 @@
 package org.fitsync.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -7,11 +8,13 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -117,5 +120,26 @@ public class AIController {
 	            .body(new ApiResponseDTO("AI 처리 중 오류 발생: " + e.getMessage(), null));
 	    }
 	}
-
+	
+	@GetMapping(value = "/apilog/{memberIdx}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	public ResponseEntity<?> getApiLogByMemberIdx(@PathVariable int memberIdx, HttpSession session) {
+		int sessionMemberIdx = (int) session.getAttribute("member_idx");
+		
+		try {
+			if (memberIdx != sessionMemberIdx) {
+			    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+			        .body(Map.of("message", "권한이 없습니다."));
+			}
+			
+			List<ApiLogVO> list = apiLogService.getByMemberId(sessionMemberIdx);
+			return ResponseEntity.ok(list);
+			
+		} catch (Exception e) {
+			Map<String, Object> errorBody = new HashMap<>();
+	        errorBody.put("message", "AI 처리 중 오류 발생: " + e.getMessage());
+	        errorBody.put("success", false);
+	        return ResponseEntity.status(500).body(errorBody);
+		}
+	}
+	
 }
