@@ -203,7 +203,6 @@ const Awards = () => {
       );
       const data = response.data;
       if(data.success) {
-        alert(data.msg);
         setPostData(init);
         setModalOpen(false);
         getAwards();
@@ -229,6 +228,7 @@ const Awards = () => {
       setPostData({
         trainer_idx: content.trainer_idx,
         awards_idx: content.awards_idx,
+        awards_name: content.awards_name,
         awards_approval: 'F',
         awards_reason: ''
       });

@@ -624,6 +624,19 @@ const MessageItem = ({
 
   const containerRef = useRef(null);
 
+  // 관리자 매칭 체크 함수
+  const isAdminMatching = () => {
+    if (!roomData || !user) return false;
+    
+    // 관리자(member_idx: 141)가 포함된 매칭인지 확인
+    if (roomData.trainer_idx === 141 || roomData.user_idx === 141) {
+      console.log('🚫 관리자와의 매칭 - 버튼 비활성화');
+      return true;
+    }
+    
+    return false;
+  };
+
   // 단 한 번만 실행되는 매칭 상태 조회 함수
   useEffect(() => {
     // 매칭 요청 메시지가 아니면 스킵
@@ -715,13 +728,13 @@ const MessageItem = ({
   // 매칭 요청 메시지 여부 확인
   const isMatchingRequestMessage = message.message_type === 'matching_request';
 
-  // 매칭 버튼 클릭 가능 여부 (회원만 클릭 가능, 자신이 보낸 매칭 요청은 클릭 불가)
-  const canClickMatchingButton = !isCurrentUser && user?.member_type === 'user';
+  // 매칭 버튼 클릭 가능 여부
+  const canClickMatchingButton = !isCurrentUser && user?.member_type === 'user' && !isAdminMatching();
 
   // 최신 매칭 상태 사용 (DB 조회 결과 우선, 없으면 메시지 속 데이터 사용)
   const latestMatchingComplete = currentMatchingStatus ? currentMatchingStatus.matching_complete : matchingComplete;
 
-  console.log('🎯 매칭 버튼 상태 분석 (수정된 버전):', {
+  console.log('🎯 매칭 버튼 상태 분석:', {
     messageIdx: message.message_idx,
     isMatchingRequestMessage,
     canClickMatchingButton,
@@ -735,7 +748,8 @@ const MessageItem = ({
     isCurrentUser,
     hasCompletedMatchingWithTrainer,
     isMatchingCheckComplete,
-    isMatchingCheckLoading
+    isMatchingCheckLoading,
+    isAdminMatching: isAdminMatching()
   });
 
   // 매칭 요청 수락 핸들러 (브로드캐스트 추가)
@@ -752,6 +766,12 @@ const MessageItem = ({
     }
     
     if (matchingLoading) {
+      return;
+    }
+    
+    // 관리자 매칭 체크
+    if (isAdminMatching()) {
+      alert('관리자와는 매칭을 진행할 수 없습니다.');
       return;
     }
     
@@ -980,7 +1000,7 @@ const MessageItem = ({
 
   const readStatusInfo = getReadStatusInfo();
 
-  // 매칭 상태 렌더링 함수 수정 (실시간 DB 상태 사용)
+  // 매칭 상태 렌더링 함수
   const renderMatchingStatus = () => {
     console.log('🎯 매칭 상태 렌더링:', {
       canClickMatchingButton,
@@ -992,11 +1012,17 @@ const MessageItem = ({
       originalMatchingComplete: matchingComplete,
       latestMatchingComplete: latestMatchingComplete,
       hasCurrentStatus: !!currentMatchingStatus,
-      statusFetched: statusFetchedRef.current
+      statusFetched: statusFetchedRef.current,
+      isAdminMatching: isAdminMatching()
     });
 
     if (canClickMatchingButton) {
       // 회원 계정에서 보는 경우
+      
+      // 관리자와의 매칭인 경우 특별 메시지 표시
+      if (isAdminMatching()) {
+        return <MatchingStatus>관리자와는 매칭이 불가능합니다</MatchingStatus>;
+      }
       
       // 매칭 상태 조회 중일 때 로딩 표시
       if (isMatchingStatusLoading) {

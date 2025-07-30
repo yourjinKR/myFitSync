@@ -271,7 +271,7 @@ const ChatMain = () => {
   // admin 여부 확인 (대소문자 무관)
   const isAdmin = user?.member_type?.toLowerCase() === 'admin';
 
-  // 문의하기 버튼 클릭 핸들러 (관리자와의 채팅방 생성/이동)
+  // 문의하기 버튼 클릭 핸들러
   const handleInquiryClick = async () => {
     if (inquiryLoading) return;
     
@@ -283,29 +283,38 @@ const ChatMain = () => {
       const ADMIN_MEMBER_IDX = 141; // 관리자 계정 member_idx
       const currentUserIdx = user.member_idx;
       
+      // 자기 자신과의 채팅
+      if (currentUserIdx === ADMIN_MEMBER_IDX) {
+        alert('관리자는 자기 자신과 채팅할 수 없습니다.');
+        setInquiryLoading(false);
+        return;
+      }
+      
       // 현재 사용자가 트레이너인지 일반 사용자인지 확인
       const isCurrentUserTrainer = user.member_type === 'trainer';
       
       let trainer_idx, user_idx, room_name;
       
       if (isCurrentUserTrainer) {
-        // 현재 사용자가 트레이너인 경우: 트레이너가 관리자에게 문의
-        trainer_idx = currentUserIdx;
-        user_idx = ADMIN_MEMBER_IDX;
+        // 현재 사용자가 트레이너인 경우: 관리자를 trainer로, 트레이너를 user로 설정
+        trainer_idx = ADMIN_MEMBER_IDX;
+        user_idx = currentUserIdx;
         room_name = `${user.member_name} 트레이너님의 문의`;
       } else {
-        // 현재 사용자가 일반 회원인 경우: 회원이 관리자에게 문의
+        // 현재 사용자가 일반 회원인 경우: 관리자가 trainer, 회원이 user  
         trainer_idx = ADMIN_MEMBER_IDX;
         user_idx = currentUserIdx;
         room_name = `${user.member_name} 회원님의 문의`;
       }
       
-      console.log('📋 채팅방 생성 파라미터:', {
+      console.log('📋 채팅방 생성 파라미터 (수정됨):', {
         trainer_idx,
         user_idx,
         room_name,
         isCurrentUserTrainer,
-        currentUserType: user.member_type
+        currentUserType: user.member_type,
+        currentUserIdx,
+        adminIdx: ADMIN_MEMBER_IDX
       });
       
       // 채팅방 생성 또는 기존 방 조회
@@ -314,18 +323,31 @@ const ChatMain = () => {
       if (roomResponse && roomResponse.room_idx) {
         console.log('✅ 관리자와의 채팅방 생성/조회 성공:', roomResponse);
         
-        // 관리자 정보 구성 (채팅방에서 사용할 정보)
+        // 관리자 정보 구성
         const adminInfo = {
           member_idx: ADMIN_MEMBER_IDX,
-          member_name: '운영자',
-          member_image: null, // 관리자 프로필 이미지가 있다면 설정
+          member_name: '관리자', // DB의 실제 member_name
+          member_image: 'http://k.kakaocdn.net/dn/6eglY/btsGfxXiLDV/qQ5G9PH1AaaAYoRUCrvSA1/img_640x640.jpg', // DB의 실제 member_image
           member_type: 'admin'
         };
+        
+        // roomData 구성 수정
+        const enhancedRoomData = {
+          ...roomResponse,
+          // 관리자는 항상 trainer 정보에 들어감
+          trainer_name: adminInfo.member_name,
+          trainer_image: adminInfo.member_image,
+          // 현재 사용자는 항상 user 정보에 들어감 (트레이너든 회원이든)
+          user_name: user.member_name,
+          user_image: user.member_image
+        };
+        
+        console.log('🔧 향상된 roomData:', enhancedRoomData);
         
         // 채팅방으로 이동
         navigate(`/chat/${roomResponse.room_idx}`, {
           state: { 
-            roomData: roomResponse,
+            roomData: enhancedRoomData,
             adminInfo: adminInfo
           }
         });

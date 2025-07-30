@@ -207,6 +207,25 @@ const ChatRoomHeader = ({
   // 트레이너 여부 확인
   const isTrainer = user?.member_type === 'trainer';
 
+  // 관리자 매칭 버튼 비활성화 조건
+  const isAdminChat = () => {
+    // 상대방이 관리자인지 확인
+    if (!roomData || !user) return false;
+    
+    const currentMemberIdx = user.member_idx;
+    
+    // 관리자(member_idx: 141)가 채팅방에 포함되어 있는지 확인
+    if (roomData.trainer_idx === 141 || roomData.user_idx === 141) {
+      console.log('🚫 관리자와의 채팅 - 매칭 버튼 비활성화');
+      return true;
+    }
+    
+    return false;
+  };
+
+  // 매칭하기 버튼 표시 조건 수정
+  const shouldShowMatchingButton = isTrainer && !isAdminChat();
+
   // 상대방 정보 가져오기 함수
   const getOtherPersonInfo = () => {
     if (!roomData || !user) {
@@ -245,8 +264,6 @@ const ChatRoomHeader = ({
         alert('상대방 정보를 찾을 수 없습니다.');
         return;
       }
-
-      console.log('👤 상대방 정보:', otherPerson);
 
       // 백엔드에서 매칭 생성
       const result = await chatApi.createMatching(otherPerson.member_idx, matchingTotal);
@@ -437,7 +454,7 @@ const ChatRoomHeader = ({
               <RoomTitle>{roomDisplayName}</RoomTitle>
               
               {/* 매칭하기 버튼 */}
-              {isTrainer && (
+              {shouldShowMatchingButton && (
                 <MatchingButton 
                   onClick={() => setShowMatchingModal(true)} 
                   disabled={isMatchingLoading}
