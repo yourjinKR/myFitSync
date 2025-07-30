@@ -91,4 +91,13 @@ public class MatchingServiceImple implements MatchingService {
         return count > 0;
     }
     
+    @Override
+    public boolean hasCompletedMatching(int trainerIdx, int memberIdx) {
+        return mapper.countEligibleMatchingWithoutReview(trainerIdx, memberIdx) > 0;
+    }
+    
+    @Override
+    public MatchingVO findCompletedMatchingByMemberIdx(int memberIdx) {
+        return mapper.selectCompletedMatchingByMemberIdx(memberIdx);
+    }
 }

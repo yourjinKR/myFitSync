@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.ibatis.annotations.Param;
 import org.fitsync.domain.PtVO;
 import org.fitsync.domain.RoutineListVO;
 import org.fitsync.domain.RoutineMemberDTO;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -52,10 +54,15 @@ public class RoutineController {
 	}
 	// 루틴 리스트
 	@GetMapping("/getList")
-	public ResponseEntity<?> getRoutineList(HttpSession session){
+	public ResponseEntity<?> getRoutineList(@RequestParam int targetIdx, HttpSession session){
 		Map<String, Object> result = new HashMap<>();
 		List<RoutineListVO> list = null;
-		list = service.getRoutineList((int) session.getAttribute("member_idx"));
+	    System.out.println("targetIdx" +  targetIdx);
+		if (targetIdx == 0) {
+			targetIdx = (int) session.getAttribute("member_idx");
+	    }
+
+	    list = service.getRoutineList(targetIdx);
 		if(list != null && list.size() > 0) {
 			result.put("success", true);
 			result.put("vo", list);

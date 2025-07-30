@@ -22,6 +22,7 @@ import org.fitsync.service.LessonService;
 import org.fitsync.service.MatchingService;
 import org.fitsync.service.MemberService;
 import org.fitsync.service.RecordService;
+import org.fitsync.service.ReviewService;
 import org.fitsync.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,8 @@ public class TrainerController {
     private CloudinaryService cloudinaryService;
     @Autowired
     private AwardsService awardsService;
+    @Autowired
+    private ReviewService reviewService;
     @Autowired
     private GymServiceImple gymService;
 
@@ -329,6 +332,7 @@ public class TrainerController {
         return ResponseEntity.ok(awards);
     }
     
+    // 프로필 공개/비공개 설정
     @PutMapping("{memberIdx}/visibility")
     public ResponseEntity<?> updateVisibility(
             @PathVariable("memberIdx") int memberIdx,
@@ -356,4 +360,11 @@ public class TrainerController {
         return null;
     }
     
+    
+    // 리뷰목록 가져오기
+    @GetMapping("/reviews/{trainerIdx}")
+    public ResponseEntity<?> getReviewsByTrainer(@PathVariable int trainerIdx) {
+        List<ReviewVO> reviews = reviewService.getReviewsByTrainer(trainerIdx);
+        return ResponseEntity.ok(reviews);
+    }
 }

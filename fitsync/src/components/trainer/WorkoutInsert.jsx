@@ -170,7 +170,7 @@ const handleEditSubmit = async () => {
   }
 };
   const handleGoToRoutineAdd = () => {
-    navigate('/routine/add', {
+    navigate('/routine/view', {
       state: {
         memberName,
         memberIdx,
@@ -179,6 +179,8 @@ const handleEditSubmit = async () => {
         stime,
         etime,
         memo,
+        viewer: 'trainer',
+        targetMember: memberIdx
       },
     });
     onClose();
@@ -262,7 +264,7 @@ const handleEditSubmit = async () => {
           ) : (
             <>
               <button className="edit" onClick={() => setIsEditMode(true)}>수정하기</button>
-              <button className="primary" onClick={handleGoToRoutineAdd}>운동 추가하러 가기</button>
+              <button className="primary" onClick={handleGoToRoutineAdd}>운동 일지 작성</button>
             </>
           )}
         </ButtonGroup>

@@ -21,5 +21,8 @@ public interface MatchingService {
     public boolean acceptMatching(int matching_idx, int user_idx);
     // 특정 트레이너-회원간 완료된 매칭 존재 여부 확인
     public boolean hasCompletedMatchingBetween(int trainer_idx, int user_idx);
-	
+	// 리뷰 작성 여부 확인
+    public boolean hasCompletedMatching(int trainerIdx, int memberIdx);
+    //
+    public MatchingVO findCompletedMatchingByMemberIdx(int memberIdx);
 }

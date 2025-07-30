@@ -6,6 +6,7 @@ import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.PtVO;
 import org.fitsync.domain.RecordSetVO;
 import org.fitsync.domain.RecordVO;
+import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.ScheduleVO;
 import org.fitsync.service.BodyService;
 import org.fitsync.service.MatchingService;
@@ -13,6 +14,7 @@ import org.fitsync.service.MemberService;
 import org.fitsync.service.PtService;
 import org.fitsync.service.RecordService;
 import org.fitsync.service.RecordSetService;
+import org.fitsync.service.ReviewService;
 import org.fitsync.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,8 @@ public class UserController {
     private BodyService bodyService;
     @Autowired
     private MemberService memberService;
+    @Autowired
+    private ReviewService reviewService;
 
     // 운동 기록 날짜 리스트
     @GetMapping("/{memberIdx}/records/dates")
@@ -202,5 +206,43 @@ public class UserController {
 
         return ResponseEntity.ok(user);
     }
+    
+    // 리뷰 작성 가능여부 확인
+    @GetMapping("/check-review-eligibility")
+    public ResponseEntity<?> checkReviewEligibility(
+        @RequestParam int trainerIdx,
+        @RequestParam int memberIdx
+    ) {
+        boolean eligible = matchingService.hasCompletedMatching(trainerIdx, memberIdx);
+        return ResponseEntity.ok(eligible);
+    }
+    
+    // 리뷰 등록
+    @PostMapping("/reviewinsert")
+    public ResponseEntity<?> insertReview(@RequestBody ReviewVO reviewVO) {
+        try {
+            // reviewVO에는 member_idx가 있음
+            int memberIdx = reviewVO.getMember_idx();
+
+            // member_idx로 매칭 정보 조회 (매칭 완료 상태인 것)
+            MatchingVO matching = matchingService.findCompletedMatchingByMemberIdx(memberIdx);
+            if (matching == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("완료된 매칭 정보가 없습니다.");
+            }
+
+            // 매칭 idx를 reviewVO에 넣고
+            reviewVO.setMatching_idx(matching.getMatching_idx());
+
+            // 리뷰 공개 상태 기본값 설정
+            reviewVO.setReview_hidden("0");
+
+            reviewService.insertReview(reviewVO);
+            return ResponseEntity.ok("리뷰 등록 성공");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("리뷰 등록 실패: " + e.getMessage());
+        }
+    }
+
+
     
 }

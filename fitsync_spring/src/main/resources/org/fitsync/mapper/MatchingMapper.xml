@@ -110,5 +110,26 @@
         AND user_idx = #{user_idx}
         AND matching_complete = 1
     </select>
-		
+    
+	  	<!-- 2. 리뷰 작성 가능 여부 확인 -->
+  	<select id="countEligibleMatchingWithoutReview" resultType="int">
+	    SELECT COUNT(*)
+	    FROM matching m
+	    WHERE m.trainer_idx = #{trainerIdx}
+	      AND m.user_idx = #{memberIdx}
+	      AND m.matching_complete = 2
+	      AND NOT EXISTS (
+	        SELECT 1
+	        FROM review r
+	        WHERE r.matching_idx = m.matching_idx
+	      )
+  	</select>
+  	
+  	<select id="selectCompletedMatchingByMemberIdx" parameterType="int" resultType="org.fitsync.domain.MatchingVO">
+		  SELECT *
+		  FROM matching
+		  WHERE user_idx = #{memberIdx}
+		    AND matching_complete = 2
+		    AND ROWNUM = 1
+	</select>
 </mapper>

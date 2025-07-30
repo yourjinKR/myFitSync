@@ -30,13 +30,16 @@ const ReviewWrapper = styled.div`
   }
 `;
 
-const Review = ({ content, score, height }) => {
+const Review = ({ content, score, height, title, memberName}) => {
+
+  
   return (
     <ReviewWrapper height={height}>
       <div className="review-top">
-        <h3>000 회원님</h3>
+        <h3>{memberName} 회원님</h3>
         <ReviewScore score={score} />
       </div>
+      <div>{title}</div>
       <p>{content}</p>
     </ReviewWrapper>
   );

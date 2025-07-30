@@ -22,5 +22,10 @@ public interface MatchingMapper {
     public int updateMatchingComplete(@Param("matching_idx") int matching_idx);
     // 특정 트레이너-회원간 완료된 매칭 개수 조회
     public int countCompletedMatchingBetween(@Param("trainer_idx") int trainer_idx, @Param("user_idx") int user_idx);
+    // 리뷰 작성 가능여부 확인
+    public int countEligibleMatchingWithoutReview(@Param("trainerIdx") int trainerIdx, @Param("memberIdx") int memberIdx);
+    //
+    public MatchingVO selectCompletedMatchingByMemberIdx(@Param("memberIdx") int memberIdx);
     
+   
 }

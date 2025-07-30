@@ -13,6 +13,46 @@
 		WHERE MATCHING_IDX = #{matching_idx}
 	</select>
 	
+  	<!-- 1. 리뷰 목록 조회 -->
+  	<select id="selectReviewsByTrainer" resultType="org.fitsync.domain.ReviewVO">
+	  SELECT
+	    r.review_star,
+	    r.review_title,
+	    r.review_content,
+	    mem.member_name
+	  FROM
+	    review r
+	  JOIN
+	    matching m ON r.matching_idx = m.matching_idx
+	  JOIN
+	    member mem ON m.user_idx = mem.member_idx
+	  WHERE
+	    m.trainer_idx = #{trainerIdx}
+	    AND r.review_hidden = 'N'
+	  ORDER BY
+	    r.review_star DESC
+  	</select>
+  	
+  	<insert id="insertReview">
+	    INSERT INTO review (
+	        REVIEW_STAR,
+	        REVIEW_TITLE,
+	        REVIEW_CONTENT,
+	        MATCHING_IDX,
+	        MEMBER_IDX,
+	        REVIEW_HIDDEN
+	    )
+	    VALUES (
+	        #{review_star},
+	        #{review_title},
+	        #{review_content},
+	        #{matching_idx},
+	        #{member_idx},
+	        'N'
+	    )
+	</insert>
+
+	
 	<update id="reviewHidden" parameterType="int">
 		UPDATE REVIEW 
 		SET REVIEW_HIDDEN = 'Y'
