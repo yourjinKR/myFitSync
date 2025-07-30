@@ -33,6 +33,13 @@ const WorkoutView = () => {
     fetchWorkout();
   }, [ptId]);
 
+  // 운동 바뀔때 스크롤 초기화
+  useEffect(() => {
+    if (workout) {
+      window.scrollTo({ top: 0, behavior: 'auto' }); // 리렌더링 후 위치 이동
+    }
+  }, [workout]);
+
   if (error) return <Wrapper>운동 정보를 불러오는 데 실패했습니다.</Wrapper>;
   if (!workout) return <Wrapper>불러오는 중...</Wrapper>;
 
@@ -67,7 +74,9 @@ const WorkoutView = () => {
       {recommend && (
         <RecommendSection>
           <RecommendTitle>이런 운동은 어떠세요?</RecommendTitle>
-          <RecommendCard onClick={() => navigate(`/workout/${recommend.pt_idx}`)}>
+          <RecommendCard onClick={() => {
+            navigate(`/workout/${recommend.pt_idx}`);
+          }}>
             <img src={recommend.pt_image_png} alt={recommend.pt_name} />
             <div>
               <h4>{recommend.pt_name}</h4>

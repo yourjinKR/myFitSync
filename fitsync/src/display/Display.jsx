@@ -119,7 +119,7 @@ const Display = () => {
           <Route path='/BarbellLoading' element={<BarbellLoading/>}/>
           <Route path='/ChatLoading' element={<ChatLoading/>}/>
           <Route path='/Timer' element={<Timer/>}/>
-          <Route path='/workout/:ptId' element={<WorkoutView/>}/>
+          <Route path='/workout/:ptId' element={<WorkoutView key={location.pathname}/>}/>
 
           <Route path='/ai' element={<AiServiceContainer/>}>
           </Route>
