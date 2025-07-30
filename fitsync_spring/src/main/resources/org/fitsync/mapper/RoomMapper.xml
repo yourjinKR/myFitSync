@@ -55,12 +55,14 @@
             r.last_message,
             r.room_status,
             r.room_name,
-            -- 트레이너 정보
             t.member_name as trainer_name,
             t.member_image as trainer_image,
-            -- 회원 정보
+            t.member_email as trainer_email,
+            t.member_type as trainer_type,
             u.member_name as user_name,
-            u.member_image as user_image
+            u.member_image as user_image,
+            u.member_email as user_email,
+            u.member_type as user_type
         FROM room r
         LEFT JOIN member t ON r.trainer_idx = t.member_idx
         LEFT JOIN member u ON r.user_idx = u.member_idx

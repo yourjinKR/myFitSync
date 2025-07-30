@@ -34,7 +34,7 @@ const MessageContainer = styled.div`
   gap: ${props => props.$isConsecutive ? '0px' : '8px'};
 `;
 
-// 프로필 이미지
+// 성별별 프로필 이미지
 const ProfileImage = styled.div`
   width: 36px;
   height: 36px;
@@ -42,8 +42,23 @@ const ProfileImage = styled.div`
   overflow: hidden;
   flex-shrink: 0;
   margin-top: 0;
+  position: relative;
   
   opacity: ${props => props.$isConsecutive ? 0 : 1};
+  
+  /* 성별별 테두리 색상 */
+  border: 2px solid ${props => {
+    if (props.$gender === '남성') return '#87CEEB'; // 하늘색
+    if (props.$gender === '여성') return '#FFB6C1'; // 분홍색  
+    return 'transparent'; // 성별 정보 없으면 테두리 없음
+  }};
+  
+  /* 테두리가 있을 때 약간의 그림자 효과 */
+  box-shadow: ${props => {
+    if (props.$gender === '남성') return '0 0 8px rgba(135, 206, 235, 0.3)';
+    if (props.$gender === '여성') return '0 0 8px rgba(255, 182, 193, 0.3)';
+    return 'none';
+  }};
   
   img {
     width: 100%;
@@ -573,6 +588,7 @@ const MessageItem = ({
   attachments = null,
   senderName = null,
   senderImage = null,
+  senderGender = null,
   showTime = true,
   isConsecutive = false,
   onImageLoad = null,
@@ -733,24 +749,6 @@ const MessageItem = ({
 
   // 최신 매칭 상태 사용 (DB 조회 결과 우선, 없으면 메시지 속 데이터 사용)
   const latestMatchingComplete = currentMatchingStatus ? currentMatchingStatus.matching_complete : matchingComplete;
-
-  console.log('🎯 매칭 버튼 상태 분석:', {
-    messageIdx: message.message_idx,
-    isMatchingRequestMessage,
-    canClickMatchingButton,
-    matchingIdx,
-    originalMatchingComplete: matchingComplete,
-    latestMatchingComplete: latestMatchingComplete,
-    hasCurrentStatus: !!currentMatchingStatus,
-    isMatchingStatusLoading,
-    statusFetched: statusFetchedRef.current,
-    userMemberType: user?.member_type,
-    isCurrentUser,
-    hasCompletedMatchingWithTrainer,
-    isMatchingCheckComplete,
-    isMatchingCheckLoading,
-    isAdminMatching: isAdminMatching()
-  });
 
   // 매칭 요청 수락 핸들러 (브로드캐스트 추가)
   const handleMatchingAccept = async () => {
@@ -963,11 +961,14 @@ const MessageItem = ({
                          senderImage.startsWith('http');
     
     if (!senderName) {
-      return <ProfileImage className="invisible" $isConsecutive={true} />;
+      return <ProfileImage className="invisible" $isConsecutive={true} $gender={null} />;
     }
     
     return (
-      <ProfileImage $isConsecutive={isConsecutive}>
+      <ProfileImage 
+        $isConsecutive={isConsecutive}
+        $gender={senderGender}
+      >
         {hasValidImage ? (
           <img 
             src={senderImage} 

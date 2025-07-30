@@ -10,6 +10,7 @@ import MessageInput from './MessageInput';
 import ChatLoading from '../../components/ChatLoading';
 import ChatRoomHeader from './ChatRoomHeader';
 import BarbellLoading from '../BarbellLoading';
+import { maskEmail } from '../../utils/EmailMasking';
 
 const Container = styled.div`
   position: fixed;
@@ -139,8 +140,10 @@ const ChatRoom = () => {
           user_idx: null, // 실제로는 채팅방 생성 시 설정됨
           trainer_name: user.member_name,
           trainer_image: user.member_image,
+          trainer_gender: user.member_gender,
           user_name: '회원',
-          user_image: null
+          user_image: null,
+          user_gender: null
         };
       } else {
         // 현재 사용자가 일반 회원인 경우
@@ -150,8 +153,10 @@ const ChatRoom = () => {
           user_idx: user.member_idx,
           trainer_name: trainerInfo.member_name,
           trainer_image: trainerInfo.member_image,
+          trainer_gender: trainerInfo.member_gender,
           user_name: user.member_name,
-          user_image: user.member_image
+          user_image: user.member_image,
+          user_gender: user.member_gender
         };
       }
     }
@@ -165,8 +170,10 @@ const ChatRoom = () => {
       user_idx: isCurrentUserTrainer ? null : user.member_idx,
       trainer_name: isCurrentUserTrainer ? user.member_name : '트레이너',
       trainer_image: isCurrentUserTrainer ? user.member_image : null,
+      trainer_gender: isCurrentUserTrainer ? user.member_gender : null,
       user_name: isCurrentUserTrainer ? '회원' : user.member_name,
-      user_image: isCurrentUserTrainer ? null : user.member_image
+      user_image: isCurrentUserTrainer ? null : user.member_image,
+      user_gender: isCurrentUserTrainer ? null : user.member_gender
     };
   }, [user, roomId, location.state]);
 
@@ -465,15 +472,6 @@ const ChatRoom = () => {
       const imageMessages = messageList.filter(msg => 
         msg.message_type === 'image' && msg.attach_idx && msg.attach_idx > 0
       );
-      
-      console.log('📷 이미지 메시지 분석:', {
-        totalMessages: messageList.length,
-        imageMessages: imageMessages.length,
-        imageMessageIds: imageMessages.map(msg => ({ 
-          message_idx: msg.message_idx, 
-          attach_idx: msg.attach_idx 
-        }))
-      });
 
       setTotalImageCount(imageMessages.length);
       setImageLoadingCount(imageMessages.length);
@@ -483,13 +481,6 @@ const ChatRoom = () => {
           msg.sender_idx !== memberIdx && !msg.message_readdate
         );
         setInitialUnreadMessages(unreadMessages);
-
-        console.log('📊 메시지 분석 결과:', {
-          totalMessages: messageList.length,
-          unreadMessages: unreadMessages.length,
-          imageMessages: imageMessages.length,
-          currentUser: memberIdx
-        });
 
         if (unreadMessages.length === 0) {
           console.log('✅ 읽지 않은 메시지 없음 - 맨 아래 스크롤 예정');
@@ -549,13 +540,20 @@ const ChatRoom = () => {
       if (!memberIdx) return;
 
       // roomData 설정
-      if (location.state?.roomData) {
-        console.log('🏠 location.state에서 roomData 설정:', location.state.roomData);
-        setRoomData(location.state.roomData);
+      if (location.state?.roomData) {      
+        // 기존 roomData에 성별 정보가 없다면 user 정보에서 보완
+        const enhancedRoomData = {
+          ...location.state.roomData,
+          // 성별 정보 보완
+          trainer_gender: location.state.roomData.trainer_gender || 
+                          (location.state.roomData.trainer_idx === user.member_idx ? user.member_gender : null),
+          user_gender: location.state.roomData.user_gender || 
+                       (location.state.roomData.user_idx === user.member_idx ? user.member_gender : null)
+        };
+        
+        setRoomData(enhancedRoomData);
       } else {
-        console.warn('⚠️ location.state에 roomData가 없음 - 임시 데이터 생성');
         const tempRoomData = createTemporaryRoomData();
-        console.log('🏠 임시 roomData 생성:', tempRoomData);
         setRoomData(tempRoomData);
       }
 
@@ -826,12 +824,6 @@ const ChatRoom = () => {
           container.scrollTop = targetScrollTop;
         }
         
-        console.log('✅ 맨 아래로 스크롤:', {
-          scrollHeight,
-          clientHeight,
-          targetScrollTop,
-          finalScrollTop: container.scrollTop
-        });
       };
       
       scrollToBottomPosition();
@@ -1100,18 +1092,47 @@ const ChatRoom = () => {
     });
   };
 
-  // 채팅방 표시 이름 생성
+  // 채팅방 표시 이름 생성 함수 - 이메일 마스킹 적용
   const getRoomDisplayName = () => {
     if (roomData && currentMemberIdx) {
+      
       if (roomData.trainer_idx === currentMemberIdx) {
+        // 내가 트레이너인 경우 -> 회원 정보 표시
         const userName = roomData.user_name || '회원';
-        return `${userName}님과의 상담`;
+        const userEmail = roomData.user_email || '';
+        
+        console.log('✅ 트레이너 입장 - 회원 정보 표시 (마스킹 전):', { userName, userEmail });
+        
+        if (userEmail) {
+          // 이메일 마스킹 적용
+          const maskedEmail = maskEmail(userEmail);
+          return `${userName}(${maskedEmail})`;
+        } else {
+          return `${userName}님과의 상담`;
+        }
       } else {
+        // 내가 회원인 경우 -> 트레이너 정보 표시
         const trainerName = roomData.trainer_name || '트레이너';
-        return `${trainerName}님과의 상담`;
+        const trainerEmail = roomData.trainer_email || '';
+        
+        console.log('✅ 회원 입장 - 트레이너 정보 표시 (마스킹 전):', { trainerName, trainerEmail });
+        
+        // 관리자인 경우 특별 처리
+        if (roomData.trainer_idx === 141) { // 관리자 member_idx
+          return '관리자 문의';
+        }
+        
+        if (trainerEmail) {
+          // 이메일 마스킹 적용
+          const maskedEmail = maskEmail(trainerEmail);
+          return `${trainerName}(${maskedEmail})`;
+        } else {
+          return `${trainerName}님과의 상담`;
+        }
       }
     }
 
+    // fallback 로직
     if (roomData?.room_name) {
       const nameMatch = roomData.room_name.match(/^(.+)님과의 상담$/);
       if (nameMatch) {
@@ -1126,10 +1147,18 @@ const ChatRoom = () => {
 
     if (location.state?.trainerInfo?.member_name) {
       const trainerName = location.state.trainerInfo.member_name;
+      const trainerEmail = location.state.trainerInfo.member_email;
+      
       if (roomData?.trainer_idx === currentMemberIdx) {
         return `회원님과의 상담`;
       } else {
-        return `${trainerName}님과의 상담`;
+        if (trainerEmail) {
+          // 이메일 마스킹 적용
+          const maskedEmail = maskEmail(trainerEmail);
+          return `${trainerName}(${maskedEmail})`;
+        } else {
+          return `${trainerName}님과의 상담`;
+        }
       }
     }
 

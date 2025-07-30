@@ -120,24 +120,8 @@ const MessageList = ({
   const getReplyPreviewText = (parentMsg, allAttachments) => {
     if (!parentMsg) return '';
     
-    console.log('🎯 MessageList 답장 미리보기 텍스트 생성:', {
-      messageType: parentMsg.message_type,
-      messageIdx: parentMsg.message_idx,
-      messageContent: parentMsg.message_content,
-      allAttachments: allAttachments,
-      hasAttachments: !!allAttachments,
-      attachmentForMessage: allAttachments[parentMsg.message_idx]
-    });
-    
     if (parentMsg.message_type === 'image') {
       const attachment = allAttachments && allAttachments[parentMsg.message_idx];
-      
-      console.log('🎯 MessageList 이미지 답장 미리보기 - 첨부파일 검색:', {
-        messageIdx: parentMsg.message_idx,
-        attachment: attachment,
-        hasFilename: !!(attachment && attachment.original_filename),
-        originalFilename: attachment?.original_filename
-      });
       
       if (attachment && attachment.original_filename) {
         return `📷 ${attachment.original_filename}`;
@@ -205,13 +189,6 @@ const MessageList = ({
     
     const shouldShow = currentMessage.message_idx === fixedOldestUnreadMessageIdx;
     
-    console.log('📍 읽지 않은 메시지 구분선 체크 (초기 로드 완료 후):', {
-      currentMessageIdx: currentMessage.message_idx,
-      fixedOldestUnreadMessageIdx: fixedOldestUnreadMessageIdx,
-      initialLoadComplete: initialLoadComplete,
-      shouldShow: shouldShow
-    });
-    
     return shouldShow;
   };
 
@@ -275,29 +252,34 @@ const MessageList = ({
     return result;
   };
 
+  // 상대방 정보 가져오기 함수
   const getOtherPersonInfo = (message, isConsecutive) => {
-    if (!roomData) return { name: '상대방', image: null };
+    if (!roomData) return { name: '상대방', image: null, gender: null };
     
     if (message.sender_idx !== currentMemberIdx) {
       // 연속 메시지인 경우 이름과 이미지를 null로 반환
       if (isConsecutive) {
-        return { name: null, image: null };
+        return { name: null, image: null, gender: null };
       }
       
       if (roomData.trainer_idx === currentMemberIdx) {
+        // 현재 사용자가 트레이너인 경우 -> 회원 정보 반환
         return {
           name: roomData.user_name || '회원',
-          image: roomData.user_image
+          image: roomData.user_image,
+          gender: roomData.user_gender || null
         };
       } else {
+        // 현재 사용자가 회원인 경우 -> 트레이너 정보 반환
         return {
           name: roomData.trainer_name || '트레이너',
-          image: roomData.trainer_image
+          image: roomData.trainer_image,
+          gender: roomData.trainer_gender || null
         };
       }
     }
     
-    return { name: null, image: null };
+    return { name: null, image: null, gender: null };
   };
 
   const handleImageLoad = (messageIdx) => {
@@ -318,7 +300,6 @@ const MessageList = ({
         
         // 답장 대상 메시지 찾기
         const parentMessage = getParentMessage(message.parent_idx);
-
         
         return (
           <React.Fragment key={message.message_idx}>
@@ -342,6 +323,7 @@ const MessageList = ({
               attachments={attachments[message.message_idx] || null}
               senderName={otherPersonInfo.name}
               senderImage={otherPersonInfo.image}
+              senderGender={otherPersonInfo.gender}
               showTime={isLastMessage}
               isConsecutive={isConsecutive}
               onImageLoad={handleImageLoad}
