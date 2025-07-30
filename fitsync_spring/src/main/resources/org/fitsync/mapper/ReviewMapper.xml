@@ -12,4 +12,10 @@
 		FROM REVIEW 
 		WHERE MATCHING_IDX = #{matching_idx}
 	</select>
+	
+	<update id="reviewHidden" parameterType="int">
+		UPDATE REVIEW 
+		SET REVIEW_HIDDEN = 'Y'
+		WHERE MATCHING_IDX = #{matching_idx}
+	</update>
 </mapper>

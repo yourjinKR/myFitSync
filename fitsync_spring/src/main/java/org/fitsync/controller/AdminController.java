@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -109,9 +110,15 @@ public class AdminController {
 	
 	// 신고 제재 업데이트
 	@PutMapping("/report/{report_idx}/{member_idx}")
-	public ResponseEntity<?> updateReportBlock(@PathVariable int report_idx, @PathVariable int member_idx, HttpSession session){
+	public ResponseEntity<?> updateReportBlock(@PathVariable int report_idx, @RequestBody Map<String, Integer> body, @PathVariable int member_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
-		boolean update = rservice.updateReport(report_idx, member_idx);
+		int report_data_idx = body.get("report_data_idx") != null ? (int) body.get("report_data_idx") : -1 ;
+		boolean update = false;
+		if(report_data_idx == -1) {
+			update = rservice.updateReport(report_idx, member_idx);
+		}else {			
+			update = rservice.updateReport(report_idx, member_idx, report_data_idx);
+		}
 		if(update) {
 			result.put("success", true);
 			result.put("msg", "제재되었습니다");

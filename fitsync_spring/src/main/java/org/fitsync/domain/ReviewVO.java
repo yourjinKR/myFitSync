@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ReviewVO {
 	private int review_idx, matching_idx, review_star, member_idx;
 	private String review_title, review_content;
+	private char review_hidden;
 }

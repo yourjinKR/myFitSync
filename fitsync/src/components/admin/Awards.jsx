@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Modal from './Modal';
 import { set } from 'date-fns';
@@ -83,6 +83,46 @@ const ButtonBox = styled.div`
   }
 `;
 
+const WrapperTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    font-size: 1.6rem;
+    background: var(--primary-blue);
+    color: var(--text-white);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  input {
+    background: var(--bg-tertiary);
+    min-width: 250px;
+    font-size: 1.4rem;
+    padding: 10px;
+  }
+
+  select {
+    background: var(--bg-tertiary);
+    font-size: 1.4rem;
+    padding: 10px;
+    margin-left: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+
+    option {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 1.4rem;
+    }
+  }
+`;
+
 const checkImage = (url) => {
   return new Promise((resolve) => {
     const img = new Image();
@@ -133,20 +173,22 @@ const Awards = () => {
     awards_approval: '',
     awards_reason: ''
   }
-  const [awardData, setAwardData] = useState([]);
+  const [awardData, setAwardData] = useState([]);        // 화면에 보여줄 데이터
+  const [awardDataOrigin, setAwardDataOrigin] = useState([]); // 전체 원본 데이터
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
   const [postData, setPostData] = useState(init);
   const [modalType, setModalType] = useState(""); // 추가
+  const searchRef = useRef(null);
 
 
   const getAwards = async () => {
     try {
-      const response = await axios.get('/admin/awards'
-        ,{withCredentials: true});
+      const response = await axios.get('/admin/awards', {withCredentials: true});
       const data = response.data;
       if(data.success) {
         setAwardData(data.vo);
+        setAwardDataOrigin(data.vo); // 원본도 저장
       }
     } catch (error) {
       console.error('Error fetching awards:', error);
@@ -206,6 +248,17 @@ const Awards = () => {
     }
   }
 
+  // 검색 기능
+  const handleSearch = () => {
+    const searchTerm = searchRef.current.value;
+    const filteredData = awardDataOrigin.filter(item => {
+      return (item.member.member_name && item.member.member_name.includes(searchTerm)) ||
+        (item.awards_name && item.awards_name.includes(searchTerm))
+    });
+    setAwardData(filteredData);
+    searchRef.current.blur(); // 검색 후 입력창 포커스 해제
+  };
+
 
   useEffect(() => {
     getAwards();
@@ -238,6 +291,53 @@ const Awards = () => {
 
   return (
     <AwardsWrapper>
+      <WrapperTop> 
+        <div>
+          <select name="" id=""
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                setAwardData(awardDataOrigin); // 전체
+              } else {
+                const filteredData = awardDataOrigin.filter(item => String(item.awards_approval) === String(value));
+                setAwardData(filteredData);
+              }
+            }}
+          >
+            <option value="">전체</option>
+            <option value="Y">승인완료</option>
+            <option value="N">승인전</option>
+            <option value="F">반려</option>
+          </select>
+          <select name="" id=""
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                getAwards(); // 전체 선택 시 모든 데이터를 다시 불러옴
+              } else {
+                const filteredData = awardData.filter(item => item.awards_category === value);
+                setAwardData(filteredData);
+              }
+            }}
+          >
+            <option value="">카테고리</option>
+            <option value="자격증">자격증</option>
+            <option value="수상">수상</option>
+            <option value="학위">학위</option>
+          </select>
+        </div>
+        <div>
+          <input
+            ref={searchRef}
+            onKeyUp={e => {
+              if (e.key === 'Enter') handleSearch();
+            }}
+            type="text"
+            name="search"
+          />
+          <button onClick={handleSearch}>검색</button>
+        </div>
+      </WrapperTop>
       <table>
         <thead>
           <tr>
@@ -253,7 +353,7 @@ const Awards = () => {
       <table>
         <tbody>
           {
-            awardData ? awardData.map((item) => (
+            awardData.length > 0 ? awardData.map((item) => (
               <tr key={item.awards_idx}>
                 <td>{item.awards_idx}</td>
                 <td>{item.member.member_name}</td>

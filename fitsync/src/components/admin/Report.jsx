@@ -668,11 +668,11 @@ const Report = () => {
       if (type === 'total') {
         return totalData.filter(item => item.reported?.member_idx === targetMemberIdx).length;
       } else if (type === 'message') {
-        return reportData.message.filter(report => report.reported.member_idx === targetMemberIdx).length;
+        return reportData.message.filter(report => report.reported?.member_idx === targetMemberIdx).length;
       } else if (type === 'review') {
-        return reportData.review.filter(report => report.reported.member_idx === targetMemberIdx).length;
+        return reportData.review.filter(report => report.reported?.member_idx === targetMemberIdx).length;
       } else if (type === 'member') {
-        return reportData.member.filter(report => report.reported.member_idx === targetMemberIdx).length;
+        return reportData.member.filter(report => report.reported?.member_idx === targetMemberIdx).length;
       } else {
         return totalData.filter(item => item.report_sanction === targetMemberIdx).length;
       }
@@ -715,12 +715,12 @@ const Report = () => {
                               className={`ta-c ${activeTooltip === `member-reported-${index}` ? 'clicked' : ''}`}
                               onClick={(e) => handleTooltipClick(e, `member-reported-${index}`)}
                             >
-                              {user.reported?.member_name || 'N/A'}
+                              {user.reported?.member_name || '(알수없음)'}
                               <UserInfo
                                 data-tooltip
                                 className={activeTooltip === `member-reported-${index}` ? 'show' : ''}
                               >
-                                <p>📧 {user.reported?.member_email || 'N/A'}</p>
+                                <p>📧 {user.reported?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
                                   <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
@@ -738,12 +738,12 @@ const Report = () => {
                               className={`ta-c ${activeTooltip === `member-reporter-${index}` ? 'clicked' : ''}`}
                               onClick={(e) => handleTooltipClick(e, `member-reporter-${index}`)}
                             >
-                              {user.reporter?.member_name || 'N/A'}
+                              {user.reporter?.member_name || '(알수없음)'}
                               <UserInfo
                                 data-tooltip
                                 className={activeTooltip === `member-reporter-${index}` ? 'show' : ''}
                               >
-                                <p>📧 {user.reporter?.member_email || 'N/A'}</p>
+                                <p>📧 {user.reporter?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
                                   <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx, 'total')}</dt>
@@ -758,7 +758,13 @@ const Report = () => {
                                 {user.report_hidden === 0 ?
                                   <>
                                     <button onClick={() => handleUpdateReportChk(user.report_idx)}>처리전</button>
-                                    <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>제재</button>
+                                    <button onClick={
+                                      () => handleReportCTA(
+                                        user.report_idx, 
+                                        user.reporter?.member_idx, 
+                                        user.reported?.member_idx
+                                      )}
+                                    >제재</button>
                                   </> :
                                   <>
                                     <button disabled={true}>처리완료</button>
@@ -816,12 +822,12 @@ const Report = () => {
                               className={`ta-c ${activeTooltip === `message-reported-${index}` ? 'clicked' : ''}`}
                               onClick={(e) => handleTooltipClick(e, `message-reported-${index}`)}
                             >
-                              {user.reported?.member_name || 'N/A'}
+                              {user.reported?.member_name || '(알수없음)'}
                               <UserInfo
                                 data-tooltip
                                 className={activeTooltip === `message-reported-${index}` ? 'show' : ''}
                               >
-                                <p>📧 {user.reported?.member_email || 'N/A'}</p>
+                                <p>📧 {user.reported?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
                                   <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
@@ -838,11 +844,11 @@ const Report = () => {
                               {
                                 user.message?.attach ? (
                                   <button onClick={() => handleDetailModal(user.message.attach.cloudinary_url, "message", "img")}>
-                                    {user.message.message_content}
+                                    {user.message?.message_content}
                                   </button>
                                 ) :
                                   <button onClick={() => handleDetailModal(user, "message", "chat")}>
-                                    {user.message.message_content}
+                                    {user.message?.message_content}
                                   </button>
                               }
                             </td>
@@ -851,12 +857,12 @@ const Report = () => {
                               className={`ta-c ${activeTooltip === `message-reporter-${index}` ? 'clicked' : ''}`}
                               onClick={(e) => handleTooltipClick(e, `message-reporter-${index}`)}
                             >
-                              {user.reporter?.member_name || 'N/A'}
+                              {user.reporter?.member_name || '(알수없음)'}
                               <UserInfo
                                 data-tooltip
                                 className={activeTooltip === `message-reporter-${index}` ? 'show' : ''}
                               >
-                                <p>📧 {user.reporter?.member_email || 'N/A'}</p>
+                                <p>📧 {user.reporter?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
                                   <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx, 'total')}</dt>
@@ -931,12 +937,12 @@ const Report = () => {
                               className={`ta-c ${activeTooltip === `review-reported-${index}` ? 'clicked' : ''}`}
                               onClick={(e) => handleTooltipClick(e, `review-reported-${index}`)}
                             >
-                              {user.reported?.member_name || 'N/A'}
+                              {user.reported?.member_name || '(알수없음)'}
                               <UserInfo
                                 data-tooltip
                                 className={activeTooltip === `review-reported-${index}` ? 'show' : ''}
                               >
-                                <p>📧 {user.reported?.member_email || 'N/A'}</p>
+                                <p>📧 {user.reported?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
                                   <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
@@ -959,12 +965,12 @@ const Report = () => {
                               className={`ta-c ${activeTooltip === `review-reporter-${index}` ? 'clicked' : ''}`}
                               onClick={(e) => handleTooltipClick(e, `review-reporter-${index}`)}
                             >
-                              {user.reporter?.member_name || 'N/A'}
+                              {user.reporter?.member_name || '(알수없음)'}
                               <UserInfo
                                 data-tooltip
                                 className={activeTooltip === `review-reporter-${index}` ? 'show' : ''}
                               >
-                                <p>📧 {user.reporter?.member_email || 'N/A'}</p>
+                                <p>📧 {user.reporter?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reporter?.member_idx, 'block')}</dt>
                                   <dt>누적 신고 :&ensp;{getReportCount(user.reporter?.member_idx, 'total')}</dt>
@@ -983,7 +989,13 @@ const Report = () => {
                                   {user.report_hidden === 0 ? '처리전' : '처리완료'}
                                 </button>
                                 {user.report_hidden === 0 ? (
-                                  <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>
+                                  <button onClick={
+                                    () => handleReportCTA(
+                                      user.report_idx, 
+                                      user.reporter?.member_idx, 
+                                      user.reported?.member_idx,
+                                      user.review?.matching_idx
+                                  )}>
                                     제재
                                   </button>
                                 ) : null}
@@ -1022,17 +1034,21 @@ const Report = () => {
   };
 
   // 제재 컨트롤
-  const handleReportCTA = (report_idx, reporter, reported) => {
+  const handleReportCTA = (report_idx, reporter, reported, report_data_idx) => {
     setUserTarget({
       report_idx: report_idx,
       reporter: reporter,
-      reported: reported
+      reported: reported,
+      report_data_idx: report_data_idx || ''
     });
     handleDetailModal('', "isBlocked", "")
   }
-  const handleUpdateReport = async (target) => {
+  const handleUpdateReport = async (target, type) => {
     try {
-      const response = await axios.put(`/admin/report/${userTarget.report_idx}/${target}`, {
+
+      const response = await axios.put(`/admin/report/${userTarget.report_idx}/${target}`, 
+        { 
+          report_data_idx: type === 'reported' ? userTarget.report_data_idx : -1,
       }, { withCredentials: true });
       if (response.data.success) {
         setModalOpen(false);
@@ -1190,7 +1206,7 @@ const Report = () => {
             <ModalBox>
               <h3>제재 대상 선택</h3>
               <div>
-                <button onClick={() => handleUpdateReport(userTarget.reported)}>피신고자</button>
+                <button onClick={() => handleUpdateReport(userTarget.reported, "reported")}>피신고자</button>
                 <button onClick={() => handleUpdateReport(userTarget.reporter)}>신고자</button>
               </div>
             </ModalBox>) :

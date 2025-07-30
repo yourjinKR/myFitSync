@@ -43,11 +43,11 @@ public class ReportServiceImple implements ReportService {
 		for (ReportVO vo : list) {
 			if(vo.getReport_category().toLowerCase().equals("message")) {
 				MessageVO mvo = messageMapper.getMessage(vo.getIdx_num());
-				MemberVO memvo = memberMapper.selectTrainerByIdx(mvo.getSender_idx());
-				if(memvo != null) {
-					vo.setReported(memvo);					
-				}
 				if(mvo != null) {
+					MemberVO memvo = memberMapper.selectTrainerByIdx(mvo.getSender_idx());
+					if(memvo != null) {
+						vo.setReported(memvo);					
+					}
 					if(mvo.getAttach_idx() != null) {
 						ChatAttachVO attach = attachMapper.getAttach(mvo.getAttach_idx());
 						mvo.setAttach(attach);
@@ -116,5 +116,17 @@ public class ReportServiceImple implements ReportService {
 		vo.setReport_sanction(member_idx);
 		vo.setReport_idx(report_idx);
 		return mapper.updateReport(vo) > 0;
+	}
+	
+	@Override
+	public boolean updateReport(int report_idx, int member_idx, int report_data_idx) {
+		ReportVO vo = new ReportVO();
+		vo.setReport_sanction(member_idx);
+		vo.setReport_idx(report_idx);
+		if(mapper.updateReport(vo) > 0) {
+			return reviewMapper.reviewHidden(report_data_idx) > 0;
+		}else {		
+			return false;
+		}
 	}
 }
