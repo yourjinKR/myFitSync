@@ -104,4 +104,9 @@ public class PtServiceImple implements PtService {
 		
 	    return mapper.insertWorkOut(vo) > 0;
 	}
+
+	@Override
+	public PtVO getOneRandomByCategory(PtVO vo) {
+		return mapper.selectOneRandomByCategory(vo);
+	}
 }

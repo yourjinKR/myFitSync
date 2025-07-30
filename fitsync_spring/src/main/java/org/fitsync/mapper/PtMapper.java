@@ -21,4 +21,6 @@ public interface PtMapper {
 	public int hideWorkOut(int pt_idx);
 	
 	public int insertWorkOut(PtVO vo);
+
+	public PtVO selectOneRandomByCategory(PtVO vo);
 }

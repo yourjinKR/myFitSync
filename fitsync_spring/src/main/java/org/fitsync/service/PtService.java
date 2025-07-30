@@ -18,4 +18,6 @@ public interface PtService {
     public boolean hideWorkOut(int pt_idx);
     
     public boolean insertWorkOut(PtVO vo, List<MultipartFile> newfile, List<String> descriptions);
+
+    public PtVO getOneRandomByCategory(PtVO vo);
 }

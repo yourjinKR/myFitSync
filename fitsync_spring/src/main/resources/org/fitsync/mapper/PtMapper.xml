@@ -59,4 +59,16 @@
 			0
 		)
 	</insert>
+
+	<!-- 동일 카테고리의 운동 1개 랜덤 추천 -->
+	<select id="selectOneRandomByCategory" resultType="org.fitsync.domain.PtVO" parameterType="org.fitsync.domain.PtVO">
+		SELECT * FROM (
+			SELECT * 
+			FROM pt 
+			WHERE pt_category = #{pt_category}
+			AND pt_idx != #{pt_idx}
+			ORDER BY DBMS_RANDOM.VALUE
+		)
+		WHERE ROWNUM = 1
+	</select>
 </mapper>

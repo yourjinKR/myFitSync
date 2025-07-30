@@ -191,10 +191,16 @@ public class RoutineController {
 
 	// 운동 상세보기 조회
     @GetMapping("/pt/{ptId}")
-    public ResponseEntity<PtVO> getPtById(@PathVariable("ptId") int ptId) {
+    public ResponseEntity<Map<String, Object>> getPtById(@PathVariable("ptId") int ptId) {
         PtVO pt = ptservice.getPtById(ptId);
+		Map<String, Object> result = new HashMap<>();
+
         if (pt != null) {
-            return ResponseEntity.ok(pt);
+			PtVO randomPt = ptservice.getOneRandomByCategory(pt);
+			result.put("pt", pt);
+			result.put("randomPt", randomPt);
+
+            return ResponseEntity.ok(result);
         } else {
             return ResponseEntity.notFound().build();
         }
