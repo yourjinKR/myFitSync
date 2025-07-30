@@ -46,4 +46,9 @@ public class GymServiceImple implements GymService {
     public boolean deleteGym(int gym_idx) {
         return gymMapper.deleteGym(gym_idx) > 0;
     }
+    
+    @Override
+    public GymVO getGymByMemberId(int member_idx) {
+    	return gymMapper.selectGymByMemberId(member_idx);
+    }
 }

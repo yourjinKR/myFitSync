@@ -4,6 +4,7 @@ import TrainerIntroduce from './TrainerIntroduce';
 import TrainerPriceList from './TrainerPriceList';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import TrainerMapContainer from './TrainerMapContainer';
 
 // Styled Components
 const Section = styled.section`
@@ -259,7 +260,13 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         isEdit={isEdit}
         onLessonsChange={onLessonsChange}
         onChange={onChange}
-      />
+        />
+
+      <SectionTitle>위치</SectionTitle>
+      <TrainerMapContainer 
+        gymInfo={trainer.gymInfo}
+        isEdit={isEdit}
+        onChange={onChange}/>
     </>
   );
 };

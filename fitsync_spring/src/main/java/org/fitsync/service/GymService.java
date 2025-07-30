@@ -23,4 +23,6 @@ public interface GymService {
 
     // 체육관 삭제
     boolean deleteGym(int gym_idx);
+    
+    GymVO getGymByMemberId (int member_idx);
 }

@@ -8,6 +8,7 @@ import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.AwardsVO;
 import org.fitsync.domain.ChatAttachVO;
+import org.fitsync.domain.GymVO;
 import org.fitsync.domain.LessonVO;
 import org.fitsync.domain.MatchingVO;
 import org.fitsync.domain.MemberVO;
@@ -16,6 +17,7 @@ import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
 import org.fitsync.service.AwardsService;
 import org.fitsync.service.CloudinaryService;
+import org.fitsync.service.GymServiceImple;
 import org.fitsync.service.LessonService;
 import org.fitsync.service.MatchingService;
 import org.fitsync.service.MemberService;
@@ -56,6 +58,8 @@ public class TrainerController {
     private CloudinaryService cloudinaryService;
     @Autowired
     private AwardsService awardsService;
+    @Autowired
+    private GymServiceImple gymService;
 
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
@@ -68,11 +72,13 @@ public class TrainerController {
 
         List<AwardsVO> awards = memberService.getAwardsByMemberIdx(trainerIdx);
         List<ReviewVO> reviews = memberService.getReviewsByMemberIdx(trainerIdx);
+        GymVO gymInfo = gymService.getGymById(member.getGym_idx());
 
         TrainerProfileDTO profile = new TrainerProfileDTO();
         profile.setMember(member);
         profile.setAwards(awards);
         profile.setReviews(reviews);
+        profile.setGymInfo(gymInfo);
 
         return ResponseEntity.ok(profile);
     }
@@ -337,4 +343,17 @@ public class TrainerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류 발생: " + e.getMessage());
         }
     }
+    // 특정 트레이너의 체육관 정보 조회
+    @GetMapping("/gym/{trainerIdx}")
+    public ResponseEntity<GymVO> getGym(@PathVariable int trainerIdx) {
+        GymVO gym = gymService.getGymByMemberId(trainerIdx);
+        return ResponseEntity.ok(gym);
+    }
+    
+    // 트레이너 체육관 정보 등록
+    @PostMapping("/gym")
+    public ResponseEntity<GymVO> postGym(@RequestBody Map<String, Object> body) {
+        return null;
+    }
+    
 }

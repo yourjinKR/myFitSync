@@ -23,17 +23,27 @@
 	    SELECT inner.*, ROWNUM rn FROM (
 	      SELECT * FROM gym
 	      <where>
-			<choose>
-			  <when test="keywordType == 'name' and keyword != null and keyword != ''">
-			    AND gym_name LIKE '%' || #{keyword} || '%'
-			  </when>
-			  <when test="keywordType == 'address' and keyword != null and keyword != ''">
-			    AND gym_address LIKE '%' || #{keyword} || '%'
-			  </when>
-			  <when test="keywordType == 'idx' and keyword != null and keyword != ''">
-			    AND gym_idx = TO_NUMBER(#{keyword})
-			  </when>
-			</choose>
+	        <choose>
+	          <!-- 특정 컬럼 검색 -->
+	          <when test="keywordType == 'name' and keyword != null and keyword != ''">
+	            REPLACE(gym_name, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
+	          </when>
+	          <when test="keywordType == 'address' and keyword != null and keyword != ''">
+	            REPLACE(gym_address, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
+	          </when>
+	          <when test="keywordType == 'idx' and keyword != null and keyword != ''">
+	            TO_CHAR(gym_idx) = REPLACE(#{keyword}, ' ', '')
+	          </when>
+	
+	          <!-- keywordType이 없고 keyword만 있을 경우 전체 조건 검색 -->
+	          <when test="(keywordType == null or keywordType == '') and keyword != null and keyword != ''">
+	            (
+	              REPLACE(gym_name, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
+	              OR REPLACE(gym_address, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
+	              OR TO_CHAR(gym_idx) = REPLACE(#{keyword}, ' ', '')
+	            )
+	          </when>
+	        </choose>
 	      </where>
 	      ORDER BY gym_idx DESC
 	    ) inner
@@ -41,6 +51,8 @@
 	  )
 	  WHERE rn &gt;= #{startRow}
 	</select>
+
+
 	
 	<!-- 검색조건에 맞는 체육관 갯수 가져오기 -->
 	<select id="countAllGyms" parameterType="org.fitsync.domain.SearchCriteria" resultType="int">
@@ -49,14 +61,23 @@
 	  <where>
 	    <choose>
 	      <when test="keywordType == 'name' and keyword != null and keyword != ''">
-	        AND gym_name LIKE '%' || #{keyword} || '%'
+	        REPLACE(gym_name, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
 	      </when>
 	      <when test="keywordType == 'address' and keyword != null and keyword != ''">
-	        AND gym_address LIKE '%' || #{keyword} || '%'
+	        REPLACE(gym_address, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
 	      </when>
 	      <when test="keywordType == 'idx' and keyword != null and keyword != ''">
-	        AND gym_idx = TO_NUMBER(#{keyword})
+	        TO_CHAR(gym_idx) = REPLACE(#{keyword}, ' ', '')
 	      </when>
+	      <otherwise>
+	        <if test="keyword != null and keyword != ''">
+	          (
+	            REPLACE(gym_name, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
+	            OR REPLACE(gym_address, ' ', '') LIKE '%' || REPLACE(#{keyword}, ' ', '') || '%'
+	            OR TO_CHAR(gym_idx) = REPLACE(#{keyword}, ' ', '')
+	          )
+	        </if>
+	      </otherwise>
 	    </choose>
 	  </where>
 	</select>
@@ -84,5 +105,12 @@
     DELETE FROM gym
     WHERE gym_idx = #{gym_idx}
   </delete>
+  
+  <!-- 멤버 ID로 체육관 조회  -->
+  <select id="selectGymByMemberId" parameterType="int" resultType="org.fitsync.domain.GymVO">
+    SELECT *
+    FROM gym
+    WHERE member_idx = #{member_idx}
+  </select>
 
 </mapper>

@@ -12,12 +12,13 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrainerProfileDTO {
-    private int member_idx, member_price;
+    private int member_idx, member_price, gym_idx;
     private String member_name, member_image, member_info, member_info_image, member_time, member_intro, member_email;
 
     // 연관 VO들
     private List<AwardsVO> awards;
     private List<ReviewVO> reviews;
+    private GymVO gymInfo;
     
     public void setMember(MemberVO vo) {
         this.member_idx = vo.getMember_idx();
@@ -28,5 +29,6 @@ public class TrainerProfileDTO {
         this.member_time = vo.getMember_time();
         this.member_intro = vo.getMember_intro();
         this.member_email = vo.getMember_email();
+        this.gym_idx = vo.getGym_idx();
         }
 }

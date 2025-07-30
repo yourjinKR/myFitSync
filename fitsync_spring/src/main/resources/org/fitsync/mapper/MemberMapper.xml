@@ -113,6 +113,7 @@
 	    <if test="member_intro != null">member_intro = #{member_intro},</if>
 	    <if test="member_info != null">member_info = #{member_info},</if>
 	    <if test="member_info_image != null">member_info_image = #{member_info_image},</if>
+	    <if test="gym_idx != null">gym_idx = #{gym_idx},</if>
 	  </set>
 	  WHERE member_idx = #{member_idx}
 	</update>

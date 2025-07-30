@@ -145,8 +145,13 @@ const TrainerDetailView = () => {
           reviewList: data.reviews || [],
           intro: data.member_intro || '',
           specialties: data.specialties || [],
-          profile_image: data.member_image
+          profile_image: data.member_image,
+          gym_idx : data.gym_idx,
+          gymInfo : data.gymInfo
         };
+
+        console.log(trainerData);
+        
         
         // 레슨 데이터도 함께 불러오기
         const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
@@ -180,6 +185,7 @@ const TrainerDetailView = () => {
         member_intro: editedTrainer.intro || '',
         member_info: editedTrainer.description || '',
         member_info_image: editedTrainer.images?.map(img => img.id).join(',') || '',
+        gym_idx: editedTrainer.gymInfo?.gym_idx || editedTrainer.gym_idx || null,
       };
       try {
         await axios.put(`/trainer/update/${trainerIdx}`, payload, {

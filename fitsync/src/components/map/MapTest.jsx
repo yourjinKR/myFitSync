@@ -8,22 +8,15 @@ export const MapContainer = styled.div`
   margin-bottom: 10px;
 `;
 
-const MapTest = ({ position }) => {
-  // 기본값: 서울시청
-  const defaultPosition = {
-    lat: 37.5665,
-    lng: 126.9780,
-  };
-
-  const center = position || defaultPosition;
-
+const MapTest = ({ position ={lat : 37.5665, lng: 126.9780,} }) => {
   return (
     <Map
-      center={center}
+      center={position}
       style={{ width: "100%", height: "100%" }}
       level={3}
+      draggable={false}
     >
-      <MapMarker position={center}/>
+      <MapMarker position={position}/>
     </Map>
   );
 };
