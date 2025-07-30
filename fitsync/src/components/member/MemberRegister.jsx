@@ -36,15 +36,49 @@ const ButtonBox = styled.div`
   gap: 10px;
 `;
 
-// 00:00 ~ 23:00까지 1시간 단위로 옵션 생성
-const timeOptions = [];
-for (let h = 0; h < 24; h++) {
-  const hh = h.toString().padStart(2, '0');
-  timeOptions.push(`${hh}:00`);
-}
+
+const GenderSelectWrapper = styled.div`
+  display: flex;
+  gap: 15px;
+  width: 100%; /* 전체 폭 사용 */
+  margin-bottom: 8px;
+`;
+
+const GenderButton = styled.button`
+  flex: 1 1 0; /* 두 버튼이 50%씩 */
+  height: 45px;
+  border-radius: 10px;
+ 
+  border: 2px solid
+    ${({ selected, $invalid }) =>
+      $invalid ? "#ff4d4f" : selected ? "#7D93FF" : "#e3e7f1"};
+  background: ${({ selected }) => (selected ? "#eaf0ff" : "#fff")};
+  color: var(--text-black);
+  font-size: 1.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+  min-width: 0;
+  padding: 0;
+
+  &:hover {
+    border-color: #7D93FF;
+    background: #f4f7ff;
+  }
+`;
+
+// 시간 옵션 배열 예시
+const timeOptions = [
+  "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+  "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+  "18:00", "19:00", "20:00", "21:00", "22:00"
+];
 
 const init = {
   member_type: "user",
+  member_gender: '', // 추가
+  member_birth: '',  // 추가
   body_height: '',
   body_weight: '',
   member_purpose: '',
@@ -66,6 +100,20 @@ const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const validateFn = (info) => {
   const newInvalid = {};
 
+  // 성별, 생년월일 필수 추가 (8자리 숫자)
+  if (!info.member_gender) {
+    newInvalid.member_gender = true;
+  }
+  if (
+    !info.member_birth ||
+    !/^\d{8}$/.test(info.member_birth) ||
+    Number(info.member_birth.slice(4, 6)) < 1 ||
+    Number(info.member_birth.slice(4, 6)) > 12 ||
+    Number(info.member_birth.slice(6, 8)) < 1 ||
+    Number(info.member_birth.slice(6, 8)) > 31
+  ) {
+    newInvalid.member_birth = true;
+  }
   // 필수 입력값 유효성 검사
   if (!info.body_height || !numberPattern.test(info.body_height) || info.body_height < 0 || info.body_height > 300) {
     newInvalid.body_height = true;
@@ -178,6 +226,7 @@ const MemberRegister = () => {
 
   const postInfo = async () => {
     
+    console.log("🚀  :  info:", info)
     const response = await axios.post('/member/register', info);
     if (response.data.success) {
       dispatch(setUser(response.data.user));
@@ -191,42 +240,87 @@ const MemberRegister = () => {
   // 1번 슬라이드(키, 몸무게, 지역)
   const handleNextStep1 = () => {
     const invalid1 = {};
-    if (!info.body_height || !numberPattern.test(info.body_height) || info.body_height < 0 || info.body_height > 300) {
-      invalid1.body_height = true;
-    }
-    if (!info.body_weight || !numberPattern.test(info.body_weight) || info.body_weight < 0 || info.body_weight > 300) {
-      invalid1.body_weight = true;
-    }
-    if (!info.sido1 || info.sido1 === "시/도 선택") {
-      invalid1.sido1 = true;
-    }
-    if (!info.gugun1 || info.gugun1 === "군/구 선택") {
-      invalid1.gugun1 = true;
-    }
-    setInvalid(prev => ({ ...prev, ...invalid1 })); // 추가: invalid 상태 업데이트
-    if (Object.keys(invalid1).length > 0) {
-      alert('키, 몸무게, 지역(시/도, 군/구)을 모두 올바르게 입력해주세요.');
+
+    // 모든 항목에 대해 invalid 체크
+    if (!info.member_gender) invalid1.member_gender = true;
+    if (
+      !info.member_birth ||
+      !/^\d{8}$/.test(info.member_birth) ||
+      Number(info.member_birth.slice(4, 6)) < 1 ||
+      Number(info.member_birth.slice(4, 6)) > 12 ||
+      Number(info.member_birth.slice(6, 8)) < 1 ||
+      Number(info.member_birth.slice(6, 8)) > 31
+    ) invalid1.member_birth = true;
+    if (
+      !info.body_height ||
+      isNaN(info.body_height) ||
+      info.body_height < 0 ||
+      info.body_height > 300
+    ) invalid1.body_height = true;
+    if (
+      !info.body_weight ||
+      isNaN(info.body_weight) ||
+      info.body_weight < 0 ||
+      info.body_weight > 300
+    ) invalid1.body_weight = true;
+    if (!info.sido1 || info.sido1 === "시/도 선택") invalid1.sido1 = true;
+    if (!info.gugun1 || info.gugun1 === "군/구 선택") invalid1.gugun1 = true;
+
+    setInvalid(prev => ({ ...prev, ...invalid1 }));
+
+    // 첫 번째로 잘못된 항목만 alert
+    if (invalid1.member_gender) {
+      alert('성별을 선택해주세요.');
       return;
     }
+    if (invalid1.member_birth) {
+      alert('생년월일을 8자리로 올바르게 입력해주세요.');
+      return;
+    }
+    if (invalid1.body_height) {
+      alert('키를 올바르게 입력해주세요.');
+      return;
+    }
+    if (invalid1.body_weight) {
+      alert('몸무게를 올바르게 입력해주세요.');
+      return;
+    }
+    if (invalid1.sido1) {
+      alert('시/도를 선택해주세요.');
+      return;
+    }
+    if (invalid1.gugun1) {
+      alert('군/구를 선택해주세요.');
+      return;
+    }
+
+    // 모두 통과하면 다음 슬라이드로
     swiper.slideNext();
   };
 
   // 2번 슬라이드(운동목적, 불편사항, 시간대)
   const handleNextStep2 = () => {
     const invalid2 = {};
-    if (!info.member_purpose) {
-      invalid2.member_purpose = true;
+
+    if (!info.member_purpose) invalid2.member_purpose = true;
+    // 불편사항(member_disease)은 더 이상 필수 아님!
+    if (!info.member_time_start) invalid2.member_time_start = true;
+    if (!info.member_time_end) invalid2.member_time_end = true;
+
+    setInvalid(prev => ({ ...prev, ...invalid2 }));
+
+    if (invalid2.member_purpose) {
+      alert('운동 목적을 선택해주세요.');
+      return;
     }
-    if (!info.member_disease) {
-      invalid2.member_disease = true;
+    if (invalid2.member_time_start) {
+      alert('운동 시작 시간을 선택해주세요.');
+      return;
     }
-    if (!info.member_time_start) {
-      invalid2.member_time_start = true;
+    if (invalid2.member_time_end) {
+      alert('운동 종료 시간을 선택해주세요.');
+      return;
     }
-    if (!info.member_time_end) {
-      invalid2.member_time_end = true;
-    }
-    setInvalid(prev => ({ ...prev, ...invalid2 })); // 추가: invalid 상태 업데이트
     if (
       info.member_time_start &&
       info.member_time_end &&
@@ -235,10 +329,7 @@ const MemberRegister = () => {
       alert('운동 시작 시간은 종료 시간보다 이전이어야 합니다.');
       return;
     }
-    if (Object.keys(invalid2).length > 0) {
-      alert('운동 목적, 불편사항, 운동 시간대를 모두 입력해주세요.');
-      return;
-    }
+
     swiper.slideNext();
   };
 
@@ -255,6 +346,43 @@ const MemberRegister = () => {
         onSwiper={setSwiper}
       >
         <SwiperSlide>
+          <FormGroup>
+            <Label>성별 <span>(필수)</span></Label>
+            <GenderSelectWrapper>
+              <GenderButton
+                type="button"
+                selected={info.member_gender === "남성"}
+                $invalid={invalid.member_gender}
+                onClick={() => handleChange({ target: { name: "member_gender", value: "남성" } })}
+              >
+                남성
+              </GenderButton>
+              <GenderButton
+                type="button"
+                selected={info.member_gender === "여성"}
+                $invalid={invalid.member_gender}
+                onClick={() => handleChange({ target: { name: "member_gender", value: "여성" } })}
+              >
+                여성
+              </GenderButton>
+            </GenderSelectWrapper>
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor='member_birth'>생년월일 <span>(필수, 8자리)</span></Label>
+            <Input
+              type="text"
+              name="member_birth"
+              id="member_birth"
+              value={info.member_birth}
+              onChange={handleChange}
+              ref={el => (inputRefs.current.member_birth = el)}
+              $invalid={invalid.member_birth}
+              placeholder="예: 19990101"
+              maxLength={8}
+              inputMode="numeric"
+              pattern="\d*"
+            />
+          </FormGroup>
           <FormGroup>
             <Label htmlFor='body_height'>키 <span>(필수)</span></Label>
             <Input
@@ -289,10 +417,10 @@ const MemberRegister = () => {
               inputMode="decimal"
             />
           </FormGroup>
-          <formGroup>
+          <FormGroup>
             <Label htmlFor='sido1'>지역 <span>(필수)</span></Label>
             <AreaDropDown handleChange={handleChange} invalid={invalid} inputRefs={inputRefs} info={info}/>
-          </formGroup>
+          </FormGroup>
           <ButtonSubmit onClick={handleNextStep1}>다음</ButtonSubmit>
         </SwiperSlide>
         <SwiperSlide>
@@ -315,8 +443,47 @@ const MemberRegister = () => {
               <option value="바디 프로필">바디 프로필</option>
             </Select>
           </FormGroup>
+              <FormGroup>
+            <Label htmlFor='member_time_start'>운동 시작 시간 <span>(필수)</span></Label>
+            <TimeInputWrapper>
+              <TimeSelect
+                name="member_time_start"
+                id="member_time_start"
+                value={info.member_time_start}
+                onChange={handleChange}
+                ref={el => (inputRefs.current.member_time_start = el)}
+                $invalid={invalid.member_time_start}
+              >
+                <option value="">시작 시간</option>
+                {timeOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </TimeSelect>
+              <span>~</span>
+              <Select
+                name="member_time_end"
+                id="member_time_end"
+                value={info.member_time_end}
+                onChange={handleChange}
+                $invalid={invalid.member_time_end}
+                ref={el => (inputRefs.current.member_time_end = el)}
+              >
+                <option value="">종료 시간</option>
+                {timeOptions
+                  .filter(
+                    (t) =>
+                      !info.member_time_start || t > info.member_time_start // 시작시간 이후만
+                  )
+                  .map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+              </Select>
+            </TimeInputWrapper>
+          </FormGroup>
           <FormGroup>
-            <Label htmlFor='member_disease'>불편상항 <span>(필수)</span></Label>
+            <Label htmlFor='member_disease'>불편상항 <span>(선택)</span></Label>
             <Select 
               onChange={handleChange} 
               name="member_disease"
@@ -339,38 +506,7 @@ const MemberRegister = () => {
               <option value="고혈압">고혈압</option>
             </Select>
           </FormGroup>
-          <FormGroup>
-            <Label htmlFor='member_time_start'>운동 시간대 <span>(필수, 24시간제)</span></Label>
-            <TimeInputWrapper>
-              <TimeSelect
-                name="member_time_start"
-                id="member_time_start"
-                value={info.member_time_start}
-                onChange={handleChange}
-                ref={el => (inputRefs.current.member_time_start = el)}
-                $invalid={invalid.member_time_start}
-              >
-                <option value="">시작 시간</option>
-                {timeOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </TimeSelect>
-              <span>~</span>
-              <TimeSelect
-                name="member_time_end"
-                id="member_time_end"
-                value={info.member_time_end}
-                onChange={handleChange}
-                ref={el => (inputRefs.current.member_time_end = el)}
-                $invalid={invalid.member_time_end}
-              >
-                <option value="">종료 시간</option>
-                {timeOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </TimeSelect>
-            </TimeInputWrapper>
-          </FormGroup>
+      
           <ButtonBox>
             <ButtonSubmit onClick={() => swiper.slidePrev()} $invalid={"var(--primary-gray)"}>이전</ButtonSubmit>
             <ButtonSubmit onClick={handleNextStep2}>다음</ButtonSubmit>
@@ -444,7 +580,11 @@ const MemberRegister = () => {
               inputMode="decimal"
             />
           </FormGroup>
-          <ButtonSubmit onClick={handleSubmit}>추가정보등록</ButtonSubmit>
+          <ButtonBox>
+            <ButtonSubmit onClick={() => swiper.slidePrev()} $invalid={"var(--primary-gray)"}>이전</ButtonSubmit>
+            
+            <ButtonSubmit onClick={handleSubmit}>추가정보등록</ButtonSubmit>
+          </ButtonBox>
         </SwiperSlide>
       </Swiper>
 
