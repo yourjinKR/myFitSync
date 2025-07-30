@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ChatApi from '../../utils/ChatApi';
 import ChatLoading from '../../components/ChatLoading';
+import axios from 'axios';
+import { maskEmail } from '../../utils/EmailMasking';
 
 const Container = styled.div`
   padding: 20px;
@@ -203,6 +205,36 @@ const ChatMain = () => {
   const [unreadCounts, setUnreadCounts] = useState({}); // 읽지 않은 메시지 개수 저장
   const [lastMessages, setLastMessages] = useState({}); // 각 방의 마지막 메시지
   const [inquiryLoading, setInquiryLoading] = useState(false); // 문의하기 버튼 로딩 상태
+  const [currentMemberIdx, setCurrentMemberIdx] = useState(null);
+
+  // 채팅용 member_idx 조회 함수
+  const getMemberIdxForChat = async () => {
+    try {
+      console.log('🔍 채팅용 member_idx 조회 시작...');
+      const response = await axios.get('/api/chat/member-info', {
+        withCredentials: true
+      });
+
+      if (response.data.success) {
+        const memberIdx = response.data.member_idx;
+        console.log('✅ 채팅용 member_idx 조회 성공:', memberIdx);
+        setCurrentMemberIdx(memberIdx);
+        return memberIdx;
+      } else {
+        console.error('❌ 채팅용 member_idx 조회 실패:', response.data.message);
+        if (response.data.message.includes('로그인')) {
+          navigate('/login');
+        }
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ 채팅용 member_idx 조회 중 오류:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
+      return null;
+    }
+  };
 
   // 컴포넌트 마운트시 초기화
   useEffect(() => {
@@ -212,7 +244,15 @@ const ChatMain = () => {
       return;
     }
 
-    loadRooms();
+    // member_idx를 먼저 조회한 후 채팅방 목록 로드
+    const initializeChat = async () => {
+      const memberIdx = await getMemberIdxForChat();
+      if (memberIdx) {
+        await loadRooms();
+      }
+    };
+
+    initializeChat();
   }, [user, navigate]);
 
   // 채팅방 목록 조회
@@ -249,7 +289,8 @@ const ChatMain = () => {
       console.log('✅ 채팅방 목록 로드 완료:', {
         rooms: roomList.length,
         unreadCounts: Object.keys(unreadData).length,
-        lastMessages: Object.keys(lastMessageData).length
+        lastMessages: Object.keys(lastMessageData).length,
+        currentMemberIdx: currentMemberIdx
       });
       
     } catch (error) {
@@ -271,7 +312,7 @@ const ChatMain = () => {
   // admin 여부 확인 (대소문자 무관)
   const isAdmin = user?.member_type?.toLowerCase() === 'admin';
 
-  // 문의하기 버튼 클릭 핸들러
+  // 문의하기 버튼 클릭 핸들러 수정
   const handleInquiryClick = async () => {
     if (inquiryLoading) return;
     
@@ -281,10 +322,16 @@ const ChatMain = () => {
       console.log('🎧 문의하기 버튼 클릭 - 관리자와의 채팅방 생성/이동');
       
       const ADMIN_MEMBER_IDX = 141; // 관리자 계정 member_idx
-      const currentUserIdx = user.member_idx;
       
-      // 자기 자신과의 채팅
-      if (currentUserIdx === ADMIN_MEMBER_IDX) {
+      // currentMemberIdx 사용
+      if (!currentMemberIdx) {
+        alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        setInquiryLoading(false);
+        return;
+      }
+      
+      // 자기 자신과의 채팅 방지
+      if (currentMemberIdx === ADMIN_MEMBER_IDX) {
         alert('관리자는 자기 자신과 채팅할 수 없습니다.');
         setInquiryLoading(false);
         return;
@@ -298,12 +345,12 @@ const ChatMain = () => {
       if (isCurrentUserTrainer) {
         // 현재 사용자가 트레이너인 경우: 관리자를 trainer로, 트레이너를 user로 설정
         trainer_idx = ADMIN_MEMBER_IDX;
-        user_idx = currentUserIdx;
+        user_idx = currentMemberIdx;
         room_name = `${user.member_name} 트레이너님의 문의`;
       } else {
         // 현재 사용자가 일반 회원인 경우: 관리자가 trainer, 회원이 user  
         trainer_idx = ADMIN_MEMBER_IDX;
-        user_idx = currentUserIdx;
+        user_idx = currentMemberIdx;
         room_name = `${user.member_name} 회원님의 문의`;
       }
       
@@ -313,7 +360,7 @@ const ChatMain = () => {
         room_name,
         isCurrentUserTrainer,
         currentUserType: user.member_type,
-        currentUserIdx,
+        currentMemberIdx,
         adminIdx: ADMIN_MEMBER_IDX
       });
       
@@ -331,7 +378,7 @@ const ChatMain = () => {
           member_type: 'admin'
         };
         
-        // roomData 구성 수정
+        // roomData 구성
         const enhancedRoomData = {
           ...roomResponse,
           // 관리자는 항상 trainer 정보에 들어감
@@ -413,39 +460,154 @@ const ChatMain = () => {
 
   };
 
-  // 채팅방 표시 이름 생성
+  // 채팅방 표시 이름 생성 함수
   const getRoomDisplayName = (room) => {
-    // 현재 로그인한 사용자의 member_idx 가져오기
-    const currentMemberIdx = user.member_idx;
+    // currentMemberIdx 상태 사용
+    if (!currentMemberIdx) {
+      console.warn('⚠️ currentMemberIdx가 아직 로드되지 않음');
+      return '로딩 중...';
+    }
     
-    // 백엔드에서 가져온 실제 이름 사용
+    // 관리자 계정 특별 처리 (admin 타입 대응)
+    if (isAdmin) {
+      console.log('👨‍💼 관리자 계정 - 채팅방 제목 특별 처리');
+      
+      // 관리자가 trainer 위치에 있는 경우 -> user 정보 표시
+      if (room.trainer_idx === currentMemberIdx) {
+        const otherPersonName = room.user_name || '회원';
+        const otherPersonEmail = room.user_email || '';
+        
+        console.log('✅ 관리자가 trainer 위치 - user 정보 표시:', { otherPersonName, otherPersonEmail });
+        
+        if (otherPersonEmail) {
+          // 이메일 마스킹 적용
+          const maskedEmail = maskEmail(otherPersonEmail);
+          return `${otherPersonName}(${maskedEmail})`;
+        } else {
+          return otherPersonName;
+        }
+      } 
+      // 관리자가 user 위치에 있는 경우 -> trainer 정보 표시
+      else if (room.user_idx === currentMemberIdx) {
+        const otherPersonName = room.trainer_name || '트레이너';
+        const otherPersonEmail = room.trainer_email || '';
+        
+        console.log('✅ 관리자가 user 위치 - trainer 정보 표시:', { otherPersonName, otherPersonEmail });
+        
+        if (otherPersonEmail) {
+          // 이메일 마스킹 적용
+          const maskedEmail = maskEmail(otherPersonEmail);
+          return `${otherPersonName}(${maskedEmail})`;
+        } else {
+          return otherPersonName;
+        }
+      }
+      // 관리자가 채팅방에 포함되지 않은 경우 (예상치 못한 상황)
+      else {
+        console.warn('⚠️ 관리자가 채팅방에 포함되지 않음:', room);
+        return '알 수 없는 채팅방';
+      }
+    }
+    
+    // 일반 사용자 (trainer/user) 처리
+    let otherPersonName = '';
+    let otherPersonEmail = '';
+    let isAdminChat = false;
+    
     if (room.trainer_idx === currentMemberIdx) {
-      // 내가 트레이너인 경우 → 회원 이름 표시
-      const userName = room.user_name || '회원';
-      return `${userName} 회원님과 상담`;
+      // 내가 트레이너인 경우 → 회원 정보 표시
+      otherPersonName = room.user_name || '회원';
+      otherPersonEmail = room.user_email || '';
+      // 관리자 체크 (user가 관리자인 경우)
+      isAdminChat = room.user_idx === 141;
     } else {
-      // 내가 일반 사용자인 경우 → 트레이너 이름 표시
-      const trainerName = room.trainer_name || '트레이너';
-      return `${trainerName} 트레이너와 상담`;
+      // 내가 회원인 경우 → 트레이너 정보 표시  
+      otherPersonName = room.trainer_name || '트레이너';
+      otherPersonEmail = room.trainer_email || '';
+      // 관리자 체크 (trainer가 관리자인 경우)
+      isAdminChat = room.trainer_idx === 141;
+    }
+    
+    console.log('🔍 일반 사용자 처리 결과 (이메일 마스킹 전):', {
+      otherPersonName,
+      otherPersonEmail,
+      isAdminChat
+    });
+    
+    // 관리자인 경우 특별 제목 (일반 사용자가 볼 때)
+    if (isAdminChat) {
+      return '관리자 문의';
+    }
+    
+    // 일반 사용자인 경우: 반드시 이름(이메일) 형식으로 표시
+    if (otherPersonEmail) {
+      // 이메일 마스킹 적용
+      const maskedEmail = maskEmail(otherPersonEmail);
+      console.log('✅ 이메일 마스킹 적용:', {
+        원본: otherPersonEmail,
+        마스킹결과: maskedEmail
+      });
+      return `${otherPersonName}(${maskedEmail})`;
+    } else {
+      // 이메일 정보가 없더라도 이름은 표시
+      return otherPersonName;
     }
   };
 
   // 상대방 프로필 이미지 및 이름 가져오기
   const getOtherPersonInfo = (room) => {
-    const currentMemberIdx = user.member_idx;
+    // currentMemberIdx 상태 사용
+    if (!currentMemberIdx) {
+      console.log('⚠️ currentMemberIdx 아직 로드되지 않음 - 기본값 반환');
+      return { name: '로딩 중...', image: null };
+    }
     
+    // 관리자 계정 특별 처리 (admin 타입 대응)
+    if (isAdmin) {
+      console.log('👨‍💼 관리자 계정 - 상대방 정보 특별 처리');
+      
+      // 관리자가 trainer 위치에 있는 경우 -> user 정보 반환
+      if (room.trainer_idx === currentMemberIdx) {
+        const otherPersonInfo = {
+          name: room.user_name || '회원',
+          image: room.user_image
+        };
+        console.log('✅ 관리자가 trainer 위치 - user 정보 반환:', otherPersonInfo);
+        return otherPersonInfo;
+      }
+      // 관리자가 user 위치에 있는 경우 -> trainer 정보 반환  
+      else if (room.user_idx === currentMemberIdx) {
+        const otherPersonInfo = {
+          name: room.trainer_name || '트레이너',
+          image: room.trainer_image
+        };
+        console.log('✅ 관리자가 user 위치 - trainer 정보 반환:', otherPersonInfo);
+        return otherPersonInfo;
+      }
+      // 예상치 못한 경우
+      else {
+        console.warn('⚠️ 관리자가 채팅방에 포함되지 않음 - 기본값 반환');
+        return { name: '알 수 없음', image: null };
+      }
+    }
+    
+    // 일반 사용자 처리
     if (room.trainer_idx === currentMemberIdx) {
       // 내가 트레이너인 경우 → 회원 정보 반환
-      return {
+      const otherPersonInfo = {
         name: room.user_name || '회원',
-        image: room.user_image // 백엔드에서 user_image 필드 추가 필요
+        image: room.user_image
       };
+      console.log('✅ 일반 트레이너 - user 정보 반환:', otherPersonInfo);
+      return otherPersonInfo;
     } else {
       // 내가 일반 사용자인 경우 → 트레이너 정보 반환
-      return {
+      const otherPersonInfo = {
         name: room.trainer_name || '트레이너',
-        image: room.trainer_image // 백엔드에서 trainer_image 필드 추가 필요
+        image: room.trainer_image
       };
+      console.log('✅ 일반 회원 - trainer 정보 반환:', otherPersonInfo);
+      return otherPersonInfo;
     }
   };
 
@@ -478,12 +640,14 @@ const ChatMain = () => {
   const renderAvatar = (room) => {
     const otherPerson = getOtherPersonInfo(room);
     
+    console.log('🔍 아바타 렌더링 - 상대방 정보:', otherPerson);
+    
     const hasValidImage = otherPerson.image && 
                          typeof otherPerson.image === 'string' && 
                          otherPerson.image.trim() !== '' &&
                          otherPerson.image.startsWith('http');
     
-    console.log('이미지 유효성 검사:', hasValidImage);
+    console.log('이미지 유효성 검사:', hasValidImage, '이미지 URL:', otherPerson.image);
     
     if (hasValidImage) {
       // 프로필 이미지가 있는 경우

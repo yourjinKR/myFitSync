@@ -47,7 +47,7 @@ const sharedInputStyles = css`
 export const Input = styled.input`
   ${sharedInputStyles}
   &::placeholder {
-    color: var(--text-placeholder);
+    color: var(--text-tertiary);
     font-size: 1.8rem;
   }
 `;
