@@ -45,10 +45,10 @@ public class AwardsServiceImple implements AwardsService {
 		if(vo.getAwards_reason() != null && !vo.getAwards_reason().equals("")) {
 			List<RoomVO> list = roomMapper.getRoomList(vo.getTrainer_idx());
 			boolean adminRoom = list.stream()
-				    .anyMatch(room -> room.getTrainer_idx() == 0);
+				    .anyMatch(room -> room.getTrainer_idx() == 141);
 			if(!adminRoom) {	
 				RoomVO rvo = new RoomVO();
-				rvo.setTrainer_idx(0);
+				rvo.setTrainer_idx(141);
 				rvo.setUser_idx(vo.getTrainer_idx());
 				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 				rvo.setRoom_regdate(timestamp);
@@ -60,10 +60,10 @@ public class AwardsServiceImple implements AwardsService {
 				list = roomMapper.getRoomList(vo.getTrainer_idx());
 			}
 			for (RoomVO rvo : list) {
-				if(rvo.getTrainer_idx() == 0) {
+				if(rvo.getTrainer_idx() == 141) {
 					MessageVO mvo = new MessageVO();
 					mvo.setRoom_idx(rvo.getRoom_idx());
-					mvo.setSender_idx(0);
+					mvo.setSender_idx(141);
 					mvo.setReceiver_idx(vo.getTrainer_idx());
 					mvo.setMessage_content(
 						"반려된 요청 : "+ vo.getAwards_name() + "\n" +
@@ -73,9 +73,7 @@ public class AwardsServiceImple implements AwardsService {
 					mvo.setMessage_senddate(timestamp);
 					mvo.setMessage_delete("N");
 					if(messageMapper.insertMessage(mvo) > 0) {
-						List<MessageVO> msgList = messageMapper.getMessageList(rvo.getRoom_idx());
-						MessageVO lastMessage = msgList.get(msgList.size() - 1);
-						roomMapper.updateLastMessage(rvo.getRoom_idx(), lastMessage.getMessage_idx());
+						roomMapper.updateLastMessage(rvo.getRoom_idx(), mvo.getMessage_idx());
 					}
 				}
 			}
