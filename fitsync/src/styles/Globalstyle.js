@@ -21,6 +21,9 @@ const GlobalStyle = createGlobalStyle`
     --primary-blue-hover: #357ABD; /* 호버 블루 */
     --primary-blue-light: #6BA3E8; /* 라이트 블루 */
     --primary-blue-dark: #2C5F8A;  /* 다크 블루 */
+
+     /* 회색 계열 */
+    --primary-gray : #888888;
     
     /* 상태 컬러 */
     --success: #2e8b57;

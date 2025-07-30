@@ -18,7 +18,7 @@ window.area16 = ["구/군 선택", "서귀포시", "제주시", ];
 
 
 export function selectBOX() {
-  // 시/도/군/구 selectBOX 생성함수
+  
 
   // Get the 'sido1' select element
   const sidoSelect = document.getElementById("sido1");

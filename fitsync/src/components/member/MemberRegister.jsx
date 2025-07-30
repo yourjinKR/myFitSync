@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, use } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { FormGroup, Label, Input, TimeSelect, TimeInputWrapper, ButtonSubmit, Select } from '../../styles/FormStyles';
@@ -7,12 +7,33 @@ import { useFormValidation } from '../../hooks/useFormValidation';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../action/userAction';
 import AreaDropDown from '../../hooks/AreaDropDown';
+import { Swiper, SwiperSlide, useSwiper } from 'swiper/react';
+import { Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
 const MemberRegisterWrapper = styled.div`
-  margin: 0 auto;
-  padding: 15px;
-  background: #fff;
-  border-radius: 16px;
+  width: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  height: 100%;
+
+  label { 
+    font-size: 2.2rem;
+    color: var(--text-white);
+  }
+
+  .swiper-slide {
+    padding: 20px;
+  }
+`;
+
+const ButtonBox = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 10px;
 `;
 
 // 00:00 ~ 23:00까지 1시간 단위로 옵션 생성
@@ -27,6 +48,7 @@ const init = {
   body_height: '',
   body_weight: '',
   member_purpose: '',
+  member_activity_area : '',
   member_disease: '',
   member_time_start: '',
   member_time_end: '',
@@ -54,7 +76,15 @@ const validateFn = (info) => {
   if (!info.member_purpose || !textPattern.test(info.member_purpose)) {
     newInvalid.member_purpose = true;
   }
-  if (!info.member_disease || !textPattern.test(info.member_disease)) {
+
+  if (!info.sido1 || info.sido1 === "시/도 선택") {
+    newInvalid.sido1 = true;
+  }
+  if (!info.gugun1 || info.gugun1 === "군/구 선택") {
+    newInvalid.gugun1 = true;
+  }
+
+  if (!info.member_disease || info.member_disease === "") {
     newInvalid.member_disease = true;
   }
   if (!info.member_time_start || !timePattern.test(info.member_time_start)) {
@@ -92,10 +122,14 @@ const validateFn = (info) => {
 };
 
 const MemberRegister = () => {
-  const { info, invalid, inputRefs, handleChange, validate, setInfo } = useFormValidation(init, validateFn);
+  const { info, invalid, inputRefs, handleChange, validate, setInfo, setInvalid } = useFormValidation(init, validateFn);
+  
   const nav = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.user);
+  const [swiper, setSwiper] = useState(null);
+
+
   useEffect(()=>{
     setInfo({
       ...info,
@@ -114,7 +148,7 @@ const MemberRegister = () => {
         body_skeletal_muscle: '골격근량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_bmi: 'BMI는 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_fat: '체지방량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
-        body_fat_percentage: '체지방률은 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
+        body_fat_percentage: '체지방률은 0 이상 100 이하의 숫자(소수점 1자리까지)로 입력해주세요.'
       };
 
       // 운동 시간대 논리 오류(시작 >= 종료)는 가장 먼저 체크
@@ -154,187 +188,266 @@ const MemberRegister = () => {
     }
   }
 
+  // 1번 슬라이드(키, 몸무게, 지역)
+  const handleNextStep1 = () => {
+    const invalid1 = {};
+    if (!info.body_height || !numberPattern.test(info.body_height) || info.body_height < 0 || info.body_height > 300) {
+      invalid1.body_height = true;
+    }
+    if (!info.body_weight || !numberPattern.test(info.body_weight) || info.body_weight < 0 || info.body_weight > 300) {
+      invalid1.body_weight = true;
+    }
+    if (!info.sido1 || info.sido1 === "시/도 선택") {
+      invalid1.sido1 = true;
+    }
+    if (!info.gugun1 || info.gugun1 === "군/구 선택") {
+      invalid1.gugun1 = true;
+    }
+    setInvalid(prev => ({ ...prev, ...invalid1 })); // 추가: invalid 상태 업데이트
+    if (Object.keys(invalid1).length > 0) {
+      alert('키, 몸무게, 지역(시/도, 군/구)을 모두 올바르게 입력해주세요.');
+      return;
+    }
+    swiper.slideNext();
+  };
+
+  // 2번 슬라이드(운동목적, 불편사항, 시간대)
+  const handleNextStep2 = () => {
+    const invalid2 = {};
+    if (!info.member_purpose) {
+      invalid2.member_purpose = true;
+    }
+    if (!info.member_disease) {
+      invalid2.member_disease = true;
+    }
+    if (!info.member_time_start) {
+      invalid2.member_time_start = true;
+    }
+    if (!info.member_time_end) {
+      invalid2.member_time_end = true;
+    }
+    setInvalid(prev => ({ ...prev, ...invalid2 })); // 추가: invalid 상태 업데이트
+    if (
+      info.member_time_start &&
+      info.member_time_end &&
+      info.member_time_start >= info.member_time_end
+    ) {
+      alert('운동 시작 시간은 종료 시간보다 이전이어야 합니다.');
+      return;
+    }
+    if (Object.keys(invalid2).length > 0) {
+      alert('운동 목적, 불편사항, 운동 시간대를 모두 입력해주세요.');
+      return;
+    }
+    swiper.slideNext();
+  };
+
   return (
     <MemberRegisterWrapper>
-      {/* <AreaDropDown/> */}
-      <FormGroup>
-        <Label htmlFor='body_height'>키 <span>(필수)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChange}
-          value={info.body_height}
-          name="body_height"
-          id="body_height"
-          placeholder="cm"
-          ref={el => (inputRefs.current.body_height = el)}
-          $invalid={invalid.body_height}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      
-      <FormGroup>
-        <Label htmlFor='body_weight'>몸무게 <span>(필수)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChange}
-          value={info.body_weight}
-          name="body_weight"
-          id="body_weight"
-          placeholder="kg"
-          ref={el => (inputRefs.current.body_weight = el)}
-          $invalid={invalid.body_weight}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_purpose'>운동목적 <span>(필수)</span></Label>
-        <Select
-          onChange={handleChange}
-          value={info.member_purpose}
-          name="member_purpose"
-          id="member_purpose"
-          ref={el => (inputRefs.current.member_purpose = el)}
-          $invalid={invalid.member_purpose}
-        >
-          <option value="">선택</option>
-          <option value="체중 관리">체중 관리</option>
-          <option value="근육 증가">근육 증가</option>
-          <option value="체형 교정">체형 교정</option>
-          <option value="체력 증진">체력 증진</option>
-          <option value="재활">재활</option>
-          <option value="바디 프로필">바디 프로필</option>
-        </Select>
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_disease'>불편상항 <span>(필수)</span></Label>
-        <Select 
-          onChange={handleChange} 
-          name="member_disease"
-          id="member_disease"
-          ref={el => (inputRefs.current.member_disease = el)}
-          $invalid={invalid.member_disease}
-        >
-          <option value="없음">없음</option>
-          <option value="손목">손목</option>
-          <option value="팔꿈치">팔꿈치</option>
-          <option value="어깨">어깨</option>
-          <option value="목">목</option>
-          <option value="허리">허리</option>
-          <option value="골반">골반</option>
-          <option value="발목">발목</option>
-          <option value="무릎">무릎</option>
-          <option value="심장">심장</option>
-          <option value="기저질환">기저질환</option>
-          <option value="저혈압">저혈압</option>
-          <option value="고혈압">고혈압</option>
-        </Select>
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='member_time_start'>운동 시간대 <span>(필수, 24시간제)</span></Label>
-        <TimeInputWrapper>
-          <TimeSelect
-            name="member_time_start"
-            id="member_time_start"
-            value={info.member_time_start}
-            onChange={handleChange}
-            ref={el => (inputRefs.current.member_time_start = el)}
-            $invalid={invalid.member_time_start}
-          >
-            <option value="">시작 시간</option>
-            {timeOptions.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </TimeSelect>
-          <span>~</span>
-          <TimeSelect
-            name="member_time_end"
-            id="member_time_end"
-            value={info.member_time_end}
-            onChange={handleChange}
-            ref={el => (inputRefs.current.member_time_end = el)}
-            $invalid={invalid.member_time_end}
-          >
-            <option value="">종료 시간</option>
-            {timeOptions.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </TimeSelect>
-        </TimeInputWrapper>
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='body_skeletal_muscle'>골격근량 <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChange}
-          value={info.body_skeletal_muscle}
-          name="body_skeletal_muscle"
-          id="body_skeletal_muscle"
-          placeholder="kg"
-          ref={el => (inputRefs.current.body_skeletal_muscle = el)}
-          $invalid={invalid.body_skeletal_muscle}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='body_bmi'>BMI <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="100"
-          onChange={handleChange}
-          value={info.body_bmi}
-          name="body_bmi"
-          id="body_bmi"
-          ref={el => (inputRefs.current.body_bmi = el)}
-          $invalid={invalid.body_bmi}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='body_fat'>체지방량 <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="300"
-          onChange={handleChange}
-          value={info.body_fat}
-          name="body_fat"
-          id="body_fat"
-          placeholder="kg"
-          ref={el => (inputRefs.current.body_fat = el)}
-          $invalid={invalid.body_fat}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label htmlFor='body_fat_percentage'>체지방률 <span>(선택)</span></Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          max="100"
-          onChange={handleChange}
-          value={info.body_fat_percentage}
-          name="body_fat_percentage"
-          id="body_fat_percentage"
-          placeholder="%"
-          ref={el => (inputRefs.current.body_fat_percentage = el)}
-          $invalid={invalid.body_fat_percentage}
-          inputMode="decimal"
-        />
-      </FormGroup>
-      <ButtonSubmit onClick={handleSubmit}>추가정보등록</ButtonSubmit>
+      <Swiper
+        spaceBetween={30}
+        pagination={{
+          type: 'progressbar',
+        }}
+        modules={[Pagination]}
+        className="mySwiper"
+        allowTouchMove={false} 
+        onSwiper={setSwiper}
+      >
+        <SwiperSlide>
+          <FormGroup>
+            <Label htmlFor='body_height'>키 <span>(필수)</span></Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="300"
+              onChange={handleChange}
+              value={info.body_height}
+              name="body_height"
+              id="body_height"
+              placeholder="cm"
+              ref={el => (inputRefs.current.body_height = el)}
+              $invalid={invalid.body_height}
+              inputMode="decimal"
+            />
+          </FormGroup>   
+          <FormGroup>
+            <Label htmlFor='body_weight'>몸무게 <span>(필수)</span></Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="300"
+              onChange={handleChange}
+              value={info.body_weight}
+              name="body_weight"
+              id="body_weight"
+              placeholder="kg"
+              ref={el => (inputRefs.current.body_weight = el)}
+              $invalid={invalid.body_weight}
+              inputMode="decimal"
+            />
+          </FormGroup>
+          <formGroup>
+            <Label htmlFor='sido1'>지역 <span>(필수)</span></Label>
+            <AreaDropDown handleChange={handleChange} invalid={invalid} inputRefs={inputRefs} info={info}/>
+          </formGroup>
+          <ButtonSubmit onClick={handleNextStep1}>다음</ButtonSubmit>
+        </SwiperSlide>
+        <SwiperSlide>
+          <FormGroup>
+            <Label htmlFor='member_purpose'>운동목적 <span>(필수)</span></Label>
+            <Select
+              onChange={handleChange}
+              value={info.member_purpose}
+              name="member_purpose"
+              id="member_purpose"
+              ref={el => (inputRefs.current.member_purpose = el)}
+              $invalid={invalid.member_purpose}
+            >
+              <option value="">선택</option>
+              <option value="체중 관리">체중 관리</option>
+              <option value="근육 증가">근육 증가</option>
+              <option value="체형 교정">체형 교정</option>
+              <option value="체력 증진">체력 증진</option>
+              <option value="재활">재활</option>
+              <option value="바디 프로필">바디 프로필</option>
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor='member_disease'>불편상항 <span>(필수)</span></Label>
+            <Select 
+              onChange={handleChange} 
+              name="member_disease"
+              id="member_disease"
+              ref={el => (inputRefs.current.member_disease = el)}
+              $invalid={invalid.member_disease}
+            >
+              <option value="없음">없음</option>
+              <option value="손목">손목</option>
+              <option value="팔꿈치">팔꿈치</option>
+              <option value="어깨">어깨</option>
+              <option value="목">목</option>
+              <option value="허리">허리</option>
+              <option value="골반">골반</option>
+              <option value="발목">발목</option>
+              <option value="무릎">무릎</option>
+              <option value="심장">심장</option>
+              <option value="기저질환">기저질환</option>
+              <option value="저혈압">저혈압</option>
+              <option value="고혈압">고혈압</option>
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor='member_time_start'>운동 시간대 <span>(필수, 24시간제)</span></Label>
+            <TimeInputWrapper>
+              <TimeSelect
+                name="member_time_start"
+                id="member_time_start"
+                value={info.member_time_start}
+                onChange={handleChange}
+                ref={el => (inputRefs.current.member_time_start = el)}
+                $invalid={invalid.member_time_start}
+              >
+                <option value="">시작 시간</option>
+                {timeOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </TimeSelect>
+              <span>~</span>
+              <TimeSelect
+                name="member_time_end"
+                id="member_time_end"
+                value={info.member_time_end}
+                onChange={handleChange}
+                ref={el => (inputRefs.current.member_time_end = el)}
+                $invalid={invalid.member_time_end}
+              >
+                <option value="">종료 시간</option>
+                {timeOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </TimeSelect>
+            </TimeInputWrapper>
+          </FormGroup>
+          <ButtonBox>
+            <ButtonSubmit onClick={() => swiper.slidePrev()} $invalid={"var(--primary-gray)"}>이전</ButtonSubmit>
+            <ButtonSubmit onClick={handleNextStep2}>다음</ButtonSubmit>
+          </ButtonBox>
+        </SwiperSlide>
+        <SwiperSlide>
+          <FormGroup>
+            <Label htmlFor='body_skeletal_muscle'>골격근량 <span>(선택)</span></Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="300"
+              onChange={handleChange}
+              value={info.body_skeletal_muscle}
+              name="body_skeletal_muscle"
+              id="body_skeletal_muscle"
+              placeholder="kg"
+              ref={el => (inputRefs.current.body_skeletal_muscle = el)}
+              $invalid={invalid.body_skeletal_muscle}
+              inputMode="decimal"
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor='body_bmi'>BMI <span>(선택)</span></Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              onChange={handleChange}
+              value={info.body_bmi}
+              name="body_bmi"
+              id="body_bmi"
+              ref={el => (inputRefs.current.body_bmi = el)}
+              $invalid={invalid.body_bmi}
+              inputMode="decimal"
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor='body_fat'>체지방량 <span>(선택)</span></Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="300"
+              onChange={handleChange}
+              value={info.body_fat}
+              name="body_fat"
+              id="body_fat"
+              placeholder="kg"
+              ref={el => (inputRefs.current.body_fat = el)}
+              $invalid={invalid.body_fat}
+              inputMode="decimal"
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor='body_fat_percentage'>체지방률 <span>(선택)</span></Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              onChange={handleChange}
+              value={info.body_fat_percentage}
+              name="body_fat_percentage"
+              id="body_fat_percentage"
+              placeholder="%"
+              ref={el => (inputRefs.current.body_fat_percentage = el)}
+              $invalid={invalid.body_fat_percentage}
+              inputMode="decimal"
+            />
+          </FormGroup>
+          <ButtonSubmit onClick={handleSubmit}>추가정보등록</ButtonSubmit>
+        </SwiperSlide>
+      </Swiper>
+
     </MemberRegisterWrapper>
   );
 };
