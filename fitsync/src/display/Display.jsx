@@ -44,6 +44,7 @@ import ResponseResultPage from '../components/ai/test/ResponseResultPage';
 import AIWorkoutService from '../components/ai/test/AIWorkoutService';
 import Gym from '../components/admin/Gym';
 import WorkOut from '../components/admin/WorkOut';
+import WorkoutView from '../components/routine/WorkoutView';
 
 
 const DisplayWrapper = styled.div`
@@ -118,6 +119,7 @@ const Display = () => {
           <Route path='/BarbellLoading' element={<BarbellLoading/>}/>
           <Route path='/ChatLoading' element={<ChatLoading/>}/>
           <Route path='/Timer' element={<Timer/>}/>
+          <Route path='/workout/:ptId' element={<WorkoutView/>}/>
 
           <Route path='/ai' element={<AiServiceContainer/>}>
           </Route>

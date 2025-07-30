@@ -189,5 +189,14 @@ public class RoutineController {
 		return ResponseEntity.ok(result);
 	}
 
-	
+	// 운동 상세보기 조회
+    @GetMapping("/pt/{ptId}")
+    public ResponseEntity<PtVO> getPtById(@PathVariable("ptId") int ptId) {
+        PtVO pt = ptservice.getPtById(ptId);
+        if (pt != null) {
+            return ResponseEntity.ok(pt);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
