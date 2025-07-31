@@ -121,6 +121,7 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData }) => {
     if(setHeightData && routineRef.current) {
       setHeightData(routineRef.current ? routineRef.current.offsetHeight : 0);
     }
+    console.log("🚀  :  data:", data)
   }, [data]);
 
   // 카테고리 텍스트 생성 (중복 제거)
@@ -136,7 +137,7 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData }) => {
           {
             type !== null && type === 'custom' ? 
             <>{data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name} )` : ''}</> :
-            <>{data.routine_name}</>
+            <>{data.routine_name} {data.writer_idx !== data.member_idx  ? data.writer_idx === 0 ? '🤖' : '💪' : '' }</>
           }
         </h3>
         <button onClick={handleRoutineDelete}>
