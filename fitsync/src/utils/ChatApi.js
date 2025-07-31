@@ -7,7 +7,9 @@ axios.defaults.withCredentials = true;
 const matchingStatusCache = new Map();
 const CACHE_EXPIRY_TIME = 30000; // 30초
 
+// 채팅 API통신 담당모듈
 const chatApi = {
+  
   // 채팅방 생성 또는 조회
   registerRoom: async (trainer_idx, user_idx, room_name) => {
     const response = await axios.post('/api/chat/room', {
@@ -89,7 +91,7 @@ const chatApi = {
     return response.data;
   },
 
-  // 매칭 수락 (완료 처리)
+  // 매칭 수락 완료
   acceptMatching: async (matching_idx) => {
     // 수락 시 해당 매칭의 캐시 무효화
     matchingStatusCache.delete(matching_idx);
@@ -117,17 +119,14 @@ const chatApi = {
     if (!forceRefresh && matchingStatusCache.has(cacheKey)) {
       const cachedData = matchingStatusCache.get(cacheKey);
       if (now - cachedData.timestamp < CACHE_EXPIRY_TIME) {
-        console.log('✅ 매칭 상태 캐시 사용:', matching_idx);
         return cachedData.data;
       } else {
         // 캐시 만료시 삭제
         matchingStatusCache.delete(cacheKey);
-        console.log('🗑️ 매칭 상태 캐시 만료:', matching_idx);
       }
     }
 
     try {
-      console.log('🔍 매칭 상태 API 호출:', matching_idx);
       const response = await axios.get(`/api/chat/matching/${matching_idx}/status`, {
         withCredentials: true
       });
@@ -139,8 +138,6 @@ const chatApi = {
           timestamp: now
         });
         
-        console.log('✅ 매칭 상태 캐시 저장:', matching_idx);
-        
         // 캐시 크기 관리 (최대 50개)
         if (matchingStatusCache.size > 50) {
           const firstKey = matchingStatusCache.keys().next().value;
@@ -150,7 +147,6 @@ const chatApi = {
 
       return response.data;
     } catch (error) {
-      console.error('❌ 매칭 상태 조회 실패:', matching_idx, error);
       throw error;
     }
   },
@@ -158,44 +154,37 @@ const chatApi = {
   // 복합 할인 매칭 가격 계산 API
   calculateMatchingPrice: async (matching_total) => {
     try {
-      console.log('💰 복합 할인 가격 계산 API 호출:', matching_total + '회');
       const response = await axios.get(`/api/chat/matching/price/${matching_total}`, {
         withCredentials: true
       });
       
       if (response.data.success) {
-        if (response.data.price === -1) {
-          console.log('⚠️ 복합 할인 가격 계산 성공 - 가격미정 (lesson 데이터 없음)');
-        } else {
-          console.log('✅ 복합 할인 가격 계산 성공:', response.data.price.toLocaleString() + '원');
-          console.log('📊 평균 단가:', Math.round(response.data.price / matching_total).toLocaleString() + '원/회');
-        }
         return response.data;
       } else {
-        console.error('❌ 복합 할인 가격 계산 실패:', response.data.message);
         throw new Error(response.data.message);
       }
     } catch (error) {
-      console.error('❌ 복합 할인 가격 계산 API 오류:', error);
       throw error;
     }
   },
 
-  // 캐시 관리 유틸리티 함수들
+  
+
+  // 매칭 상태 캐시 전체 삭제
   clearMatchingStatusCache: () => {
     matchingStatusCache.clear();
-    console.log('🗑️ 매칭 상태 캐시 전체 삭제');
   },
 
+  // 특정 매칭의 캐시 무효화
   invalidateMatchingStatusCache: (matching_idx) => {
     if (matchingStatusCache.has(matching_idx)) {
       matchingStatusCache.delete(matching_idx);
-      console.log('🗑️ 매칭 상태 캐시 무효화:', matching_idx);
       return true;
     }
     return false;
   },
 
+  // 캐시 정보 조회 (디버깅용)
   getCacheInfo: () => {
     const cacheEntries = Array.from(matchingStatusCache.entries()).map(([key, value]) => ({
       matching_idx: key,
@@ -223,10 +212,6 @@ setInterval(() => {
   }
   
   expiredKeys.forEach(key => matchingStatusCache.delete(key));
-  
-  if (expiredKeys.length > 0) {
-    console.log('🧹 만료된 매칭 상태 캐시 정리:', expiredKeys.length + '개');
-  }
 }, 10 * 60 * 1000); // 10분
 
 export default chatApi;

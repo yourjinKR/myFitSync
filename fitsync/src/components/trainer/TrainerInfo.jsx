@@ -63,12 +63,8 @@ const TrainerInfo = ({idx, trainerData}) => {
       const trainer_idx = trainerData.member_idx; // 실제 트레이너 ID 우선 사용
       const room_name = `${trainerData.member_name}님과의 상담`;
 
-      console.log('채팅방 생성 요청:', { trainer_idx, room_name });
-
       // 채팅방 생성/조회 API 호출
       const roomData = await ChatApi.registerRoom(trainer_idx, null, room_name);
-
-      console.log('채팅방 생성/조회 성공:', roomData);
 
       // 채팅방으로 이동 (state를 통해 추가 정보 전달)
       navigate(`/chat/${roomData.room_idx}`, {
@@ -79,7 +75,6 @@ const TrainerInfo = ({idx, trainerData}) => {
       });
 
     } catch (error) {
-      console.error('채팅방 생성 실패:', error);
       
       // 에러 메시지를 사용자에게 친화적으로 표시
       if (error.response?.status === 401) {
