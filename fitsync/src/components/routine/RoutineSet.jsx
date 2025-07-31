@@ -85,12 +85,8 @@ const RoutineTitleInputBox = React.memo(({ value, onChange }) => {
 
 const RoutineSet = () => {
   const nav = useNavigate();
-  const location = useLocation();
   const { routineData, setRoutineData } = useOutletContext();
 
-  const targetMemberIdx = location.state?.targetMember;
-  console.log(targetMemberIdx);
-  
   useEffect(() => {
     if (routineData.routines.length === 0) {
       nav("/routine/add");

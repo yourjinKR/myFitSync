@@ -82,6 +82,28 @@ public class RoutineController {
 	    return ResponseEntity.ok(result);
 	}
 	
+	// 트레이너 -> 유저 루틴 조회
+	@GetMapping("/trainer/{routine_list_idx}/{member_idx}")
+	public ResponseEntity<?> getRoutineDetailForTrainer(@PathVariable int routine_list_idx, @PathVariable int member_idx) {
+	    Map<String, Object> result = new HashMap<>();
+
+	    RoutineMemberDTO rmdto = new RoutineMemberDTO();
+	    rmdto.setRoutine_list_idx(routine_list_idx);
+	    rmdto.setMember_idx(member_idx); // 해당 회원의 루틴 조회
+
+	    RoutineListVO rvo = service.getRoutine(rmdto);
+	    if (rvo != null) {
+	        result.put("success", true);
+	        result.put("vo", rvo);
+	        result.put("msg", "루틴 호출에 성공하였습니다.");
+	    } else {
+	        result.put("success", false);
+	        result.put("msg", "루틴 호출에 실패하였습니다.");
+	    }
+	    return ResponseEntity.ok(result);
+	}
+
+	
 	// 루틴 운동 VIEW
 	@GetMapping("/{routine_list_idx}")
 	public ResponseEntity<?> getRoutineDetail(@PathVariable int routine_list_idx, HttpSession session){

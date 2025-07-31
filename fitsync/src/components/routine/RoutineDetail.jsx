@@ -361,6 +361,8 @@ const RoutineDetail = () => {
     setModalPtId(null);
   };
 
+  const targetIdx = location.state?.targetMember;
+  console.log(targetIdx);
 
   // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
   const omitCheckedAndSaveDate = (obj) => {
@@ -498,47 +500,65 @@ const RoutineDetail = () => {
   }, [data, init]); // init도 의존성에 추가
   
   // 데이터 로드 시 고유 ID 생성
-  useEffect(() => {
-    if (routineData === null) return;
-    
-    if (routine_list_idx !== 'custom' && JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit))) {
-      const handleRoutineData = async () => {
-        try {
-          const response = await axios.get(`/routine/${routine_list_idx}`, {
-            withCredentials: true
-          });
-          const result = response.data;
-          if (result.success) {
-            // 각 세트에 고유 ID 추가
+useEffect(() => {
+  if (!targetIdx) return;  // targetIdx가 있을 때만 호출
 
-            const dataWithIds = {
-              ...result.vo,
-              routines: result.vo.routines.map(routine => ({
+  const isSameRoutine = JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
+  if (routine_list_idx !== 'custom' && !isSameRoutine) {
+    setData(routineData);
+    setIsLoading(false);
+    return;
+  }
+
+  const fetchRoutine = async () => {
+    try {
+      const url = targetIdx
+        ? `/routine/trainer/${routine_list_idx}/${targetIdx}`
+        : `/routine/${routine_list_idx}`;
+      const response = await axios.get(url, { withCredentials: true });
+      const result = response.data;
+
+      if (result.success) {
+        // 상태 변경은 이전 상태와 비교해서 필요한 경우에만!
+        setData(prevData => {
+          const newData = result.vo;
+          // JSON.stringify 비교, 또는 lodash.isEqual 같은 함수 활용 가능
+          if (JSON.stringify(prevData) !== JSON.stringify(newData)) {
+            return {
+              ...newData,
+              routines: newData.routines.map(routine => ({
                 ...routine,
-                sets: routine.sets.map((set, index) => ({
+                sets: routine.sets.map((set, idx) => ({
                   ...set,
-                  id: set.id || `${routine.pt_idx}-${index}-${Date.now()}`
+                  id: set.id || `${routine.pt_idx}-${idx}-${Date.now()}`
                 }))
               }))
             };
-            setData(dataWithIds);
-            setInit(dataWithIds);
-            setRoutineData(dataWithIds);
-          } else {
-            alert(result.message);
           }
-        } catch (e) {
-          alert("루틴 정보를 불러오지 못했습니다.");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      handleRoutineData();
-    } else {
-      setData(routineData);
+          return prevData;  // 변경 없으면 그대로 유지
+        });
+        setInit(result.vo);
+        setRoutineData(result.vo);
+      } else {
+        alert(result.msg);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("루틴 정보를 불러오지 못했습니다.");
+    } finally {
       setIsLoading(false);
     }
-  }, [routine_list_idx]);
+  };
+
+  fetchRoutine();
+
+}, [targetIdx, routine_list_idx]);
+
+
+
+
+
+
 
   // 세트 값 변경 공통 함수
   const handleSetValueChange = (routinePtIdx, index, field, value) => {

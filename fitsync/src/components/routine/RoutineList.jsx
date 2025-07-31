@@ -152,7 +152,7 @@ const handleRoutineResponse = async () => {
           >
             {
               routinelist.map((routine, idx) => (
-                <Routine setHeightData={setHeightData} key={routine.routine_list_idx || idx} data={routine} onDelete={handleRoutineResponse} />
+                <Routine setHeightData={setHeightData} key={routine.routine_list_idx || idx} data={routine} onDelete={handleRoutineResponse} targetIdx={targetIdx} />
               ))
             }
           </ReactSortable>
