@@ -356,8 +356,11 @@ const handleRoutineResponse = async () => {
   
   // 운동 기록
   const handleRoutineRecord = async () => {
-    let postData = newData;
+    let postData = {...newData};
 
+    if (routine_list_idx === "custom") {
+    postData.member_idx = targetIdx; // 여기에 target_idx는 해당 유저의 member_idx
+    }
     if(postData.routines.length === 0) {
       alert("완료된 운동이 없습니다.");
       const saveCheck = tempData.find(item => item.saveDate === newData.saveDate)?.save;
@@ -551,7 +554,9 @@ const handleRoutineResponse = async () => {
   }
 
   const handleAddWorkOut = () => {
-    nav("/routine/add?prev=/routine/detail/" + routine_list_idx);
+    nav("/routine/add?prev=/routine/detail/" + routine_list_idx,{
+      state: {targetMember: targetIdx,}
+    });
   }
 
   const handleChkRef = (e) => {

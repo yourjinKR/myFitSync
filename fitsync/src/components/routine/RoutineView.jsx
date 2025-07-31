@@ -78,7 +78,10 @@ const RoutineView = () => {
   const nav = useNavigate();
   const handleAddRoutine = (type) => {
     if (type === "custom") {
-      nav('/routine/detail/custom');
+      nav('/routine/detail/custom',{
+        state: { targetMember: targetMemberIdx }
+      });
+      
     } else {
       nav('/routine/add',{
         state: { targetMember: targetMemberIdx }

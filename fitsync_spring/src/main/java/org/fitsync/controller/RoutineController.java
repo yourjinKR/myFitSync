@@ -184,21 +184,33 @@ public class RoutineController {
 	// 루틴 기록
 	@PostMapping("/record")
 	public ResponseEntity<?> insertRecord(@RequestBody Map<String, Object> body, HttpSession session) {
-		
-		Map<String, Object> result = new HashMap<>();
-		int member_idx = (int)(session.getAttribute("member_idx"));
-		String recordResult = rcservice.insertRecord(body, member_idx);
-		if(recordResult.equals("success")) {
-			result.put("success", true);
-			result.put("msg", "정상 등록되었습니다.");		
-		}else {
-			result.put("success", false);
-			result.put("msg", recordResult);		
-		} 
-		
-		return ResponseEntity.ok(result);
-		
+	    Map<String, Object> result = new HashMap<>();
+
+	    int member_idx = (int) session.getAttribute("member_idx");
+
+	    // 프론트에서 보낸 member_idx가 존재한다면 그걸 우선 사용
+	    if (body.get("member_idx") != null && !body.get("member_idx").toString().isBlank()) {
+	        try {
+	            member_idx = Integer.parseInt(body.get("member_idx").toString());
+	        } catch (NumberFormatException e) {
+	            result.put("success", false);
+	            result.put("msg", "유효하지 않은 사용자 정보입니다.");
+	            return ResponseEntity.badRequest().body(result);
+	        }
+	    }
+
+	    String recordResult = rcservice.insertRecord(body, member_idx);
+	    if (recordResult.equals("success")) {
+	        result.put("success", true);
+	        result.put("msg", "정상 등록되었습니다.");
+	    } else {
+	        result.put("success", false);
+	        result.put("msg", recordResult);
+	    }
+
+	    return ResponseEntity.ok(result);
 	}
+
 	
 	// 루틴 정렬
 	@PutMapping("/sort")
