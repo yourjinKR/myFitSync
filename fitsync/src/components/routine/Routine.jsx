@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import dateFormat from '../../utils/dateFormat';
 const {getDateDiffText} = dateFormat;
@@ -70,9 +70,12 @@ const CategoryText = styled.div`
   font-weight: bold;
 `;
 
-const Routine = ({ data, onDelete, type, setTempData, setHeightData }) => {
+const Routine = ({ data, onDelete, type, setTempData, setHeightData, targetIdx : propTargetIdx  }) => {
   const nav = useNavigate();
   const routineRef = useRef(null);
+
+  const location = useLocation();
+  const targetIdx = propTargetIdx ?? location.state?.targetMember;
 
   // 클릭 이벤트에서 제외할 태그들
   const excludedTags = ['path', 'svg', 'button', 'BUTTON'];
@@ -85,10 +88,13 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData }) => {
     }
 
     if (!excludedTags.includes(e.target.tagName)) {
-      nav(`/routine/detail/${data.routine_list_idx}`);
+      nav(`/routine/detail/${data.routine_list_idx}`,{
+        state: { targetMember: targetIdx }
+      });
     }
   };
-
+  
+  
   const handleRoutineDelete = async (e) => {
     e.stopPropagation(); // 이벤트 버블링 방지
     
