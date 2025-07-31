@@ -73,7 +73,6 @@ const RoutineView = () => {
   const { state } = location;
   const isTrainerView = state?.viewer === 'trainer';
   const targetMemberIdx = state?.targetMember;
-  console.log(isTrainerView, targetMemberIdx);
   
   
   const nav = useNavigate();
@@ -81,7 +80,9 @@ const RoutineView = () => {
     if (type === "custom") {
       nav('/routine/detail/custom');
     } else {
-      nav('/routine/add');
+      nav('/routine/add',{
+        state: { targetMember: targetMemberIdx }
+      });
     }
   }
 

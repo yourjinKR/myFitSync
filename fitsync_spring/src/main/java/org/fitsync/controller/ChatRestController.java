@@ -11,6 +11,7 @@ import org.fitsync.domain.MatchingVO;
 import org.fitsync.domain.MessageVO;
 import org.fitsync.domain.RoomVO;
 import org.fitsync.service.ChatService;
+import org.fitsync.service.LessonService;
 import org.fitsync.service.MatchingService;
 import org.fitsync.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,9 @@ public class ChatRestController {
     
     @Autowired
     private MatchingService matchingService;
+    
+    @Autowired
+    private LessonService lessonService;
     
     // 채팅용 member_idx 조회 API (세션스토리지 전용)
     @GetMapping("/member-info")
@@ -505,6 +509,48 @@ public class ChatRestController {
             e.printStackTrace();
             result.put("success", false);
             result.put("message", "매칭 상태 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+    
+    // 복합 할인 매칭 가격 계산 API
+    @GetMapping("/matching/price/{matching_total}")
+    public ResponseEntity<Map<String, Object>> calculateMatchingPrice(
+            @PathVariable int matching_total,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            Integer member_idx = (Integer) session.getAttribute("member_idx");
+            if (member_idx == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(result);
+            }
+            
+            System.out.println("복합 할인 가격 계산 요청 - member_idx: " + member_idx + ", matching_total: " + matching_total);
+            
+            // 복합 할인 가격 계산
+            int calculatedPrice = lessonService.calculateMatchingPrice(member_idx, matching_total);
+            
+            result.put("success", true);
+            result.put("price", calculatedPrice);
+            result.put("matching_total", matching_total);
+            
+            if (calculatedPrice == -1) {
+                System.out.println("✅ 매칭 가격 계산 완료 - 가격미정 (lesson 데이터 없음)");
+            } else {
+                System.out.println("✅ 복합 할인 가격 계산 완료 - 가격: " + calculatedPrice + "원");
+            }
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            System.err.println("복합 할인 가격 계산 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "가격 계산 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(result);
         }
     }
