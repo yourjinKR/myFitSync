@@ -33,6 +33,7 @@ import {
     ExerciseDetail
 } from '../../../styles/chartStyle';
 import versionUtils from '../../../utils/utilFunc';
+import AiUtil from '../../../utils/AiUtils';
 
 // 로그 상세 모달 컴포넌트
 const LogDetailModal = ({
@@ -47,6 +48,19 @@ const LogDetailModal = ({
     memberType
 }) => {
     console.log('지금 니가 보고 있는 로그 : ', log);
+
+    // 루틴 추천 결과 저장하기
+    const handleSaveResult = async (e) => {
+        console.log('click');
+        
+        const result = {content : log.parsed_response, logIdx : log.apilog_idx}
+        try {
+            const response = await AiUtil.saveResult(result, rawDataIdx, rawDataMap);
+            alert('저장이 완료됐습니다!');
+        } catch (error) {
+            alert('결과물을 저장하지 못했습니다 ! ')
+        }
+    }
     
 
     // 토글 상태 관리
@@ -683,6 +697,7 @@ const LogDetailModal = ({
                                                 <MuscleGroupTag key={index}>{muscle}</MuscleGroupTag>
                                             ))}
                                         </MuscleGroupList>
+                                        <button onClick={() => handleSaveResult()}>다운로드</button>
                                     </MuscleGroupContainer>
                                 )}
 
