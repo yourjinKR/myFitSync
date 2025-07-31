@@ -81,6 +81,8 @@ public class AIController {
 	@PostMapping(value = "/createRoutine", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ApiResponseDTO> createRoutine(@RequestBody Map<String, String> request, HttpSession session) {
 		Object memberIdx = session.getAttribute("member_idx");
+		System.out.println("request : " + request);
+		System.out.println("session : " +session);
 		
 	    try {
 	    	if (memberIdx == null) {
@@ -97,7 +99,7 @@ public class AIController {
 	        // 잔여 토큰 확인
 	        Map<String, Object> subStatus = payService.checkSubscriptionStatus((int) memberIdx);
 	        
-	        System.out.println(subStatus);
+	        System.out.println("subStatus : " + subStatus);
 	        
 	        boolean isSub = (boolean)subStatus.get("isSubscriber");
 	        boolean isLog = (boolean)subStatus.get("isLog");

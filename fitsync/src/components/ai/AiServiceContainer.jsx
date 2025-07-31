@@ -126,7 +126,7 @@ const AiServiceContainer = () => {
     const fetchMemberData = async () => {
         try {
             const memberResponse = await getMemberTotalData();
-            const subscriptionResponse = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx);
+            const subscriptionResponse = await PaymentUtil.checkSubscriptionStatus(user.member_idx);
             setMemberData(memberResponse);
             setSubscriptionData(subscriptionResponse.data);
 

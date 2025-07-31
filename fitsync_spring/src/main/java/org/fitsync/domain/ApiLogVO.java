@@ -25,4 +25,5 @@ public class ApiLogVO {
     private String apilog_feedback; // LIKE, DISLIKE 
     private String apilog_feedback_reason; // exercise_type, timeout... (DISLIKE일때만 수집)
     private String apilog_status_reason; // invalid_exercise: 엉덩이 킥백 머신
+    private String apilog_user_action; // 예: "saved-immediate", "ignored", "saved-after"
 }

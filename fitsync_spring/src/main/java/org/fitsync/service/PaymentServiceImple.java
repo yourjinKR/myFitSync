@@ -1757,6 +1757,7 @@ public class PaymentServiceImple implements PaymentService {
 //				result.put("inputToken", inputTokens);
 //				result.put("outputToken", outputTokens);
 				result.put("totalCost", totalCost);
+				result.put("isLog", true);
 
 				
 			} else {
