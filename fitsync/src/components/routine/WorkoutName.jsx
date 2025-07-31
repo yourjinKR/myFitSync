@@ -99,7 +99,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
           routines: [
             ...routineData.routines,
             {
-              pt : {pt_idx: selectedValue, pt_name: selectedName, pt_category: selectedCategory},
+              pt : {pt_idx: selectedValue, pt_name: selectedName, pt_category: selectedCategory, pt_image: data.pt_image},
               pt_idx: selectedValue,
               routine_idx : null,
               routine_list_idx : routineData.routine_list_idx,
@@ -159,7 +159,7 @@ const WorkoutName = ({ data, routineData, setRoutineData }) => {
       />
       <label htmlFor={`workout${data.pt_idx}`}>
         <ImgBox onClick={goDetail}>
-          <img src={data.pt_image} alt={data.pt_name}/>
+          <img src={data.pt_image.split(",").filter((item) => item.includes(".png"))} alt={data.pt_name}/>
         </ImgBox>
         <InfoBox>
           <dl>

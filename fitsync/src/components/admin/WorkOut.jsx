@@ -152,10 +152,11 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
   return (
     <>
       <label htmlFor={`file_image_${idx}`}>
+        
         {postData.pt_image[idx] && typeof postData.pt_image[idx] !== "string" ? (
           <img src={URL.createObjectURL(postData.pt_image[idx])} alt={`운동 이미지${idx + 1}`} />
         ) : (
-          <img src={postData.pt_image[idx]} alt={`운동 이미지${idx + 1}`} />
+          <img src={idx === 0 ? postData.pt_image.find((img) => img.includes(".gif")) : postData.pt_image.find((img) => img.includes(".png"))} alt={`운동 이미지${idx + 1}`} />
         )}
       </label>
       <input
@@ -170,21 +171,12 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
 };
 
 const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, modalType }) => {
-  // 내부 상태로 복사
-  const [localData, setLocalData] = useState(postData);
-
-  // postData가 바뀔 때 localData도 동기화
-  useEffect(() => {
-    setLocalData(postData);
-  }, [postData]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setLocalData(prev => ({ ...prev, [name]: value }));
+    setPostData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
-    setPostData(localData); // 부모로 값 올리기
     onSubmit();
   };
 
@@ -200,7 +192,7 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
                 type="text"
                 name="pt_name"
                 id="pt_name"
-                value={localData.pt_name}
+                value={postData.pt_name}
                 onChange={handleChange}
               />
             </td>
@@ -211,7 +203,7 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
               <select
                 name="pt_category"
                 id="pt_category"
-                value={localData.pt_category}
+                value={postData.pt_category}
                 onChange={handleChange}
               >
                 <option value="가슴">가슴</option>
@@ -231,7 +223,7 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
               <textarea
                 name="pt_content"
                 id="pt_content"
-                value={localData.pt_content || ''}
+                value={postData.pt_content || ''}
                 onChange={handleChange}
               ></textarea>
             </td>
@@ -239,13 +231,13 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
           <tr>
             <th className='ta-c'>이미지<br/>(gif)</th>
             <td>
-              <ChangeImg postData={localData} setPostData={setLocalData} idx={0} />
+              <ChangeImg postData={postData} setPostData={setPostData} idx={0} />
             </td>
           </tr>
           <tr>
             <th className='ta-c'>이미지<br/>(png)</th>
             <td>
-              <ChangeImg postData={localData} setPostData={setLocalData} idx={1} />
+              <ChangeImg postData={postData} setPostData={setPostData} idx={1} />
             </td>
           </tr>
         </tbody>

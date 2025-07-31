@@ -57,7 +57,7 @@ const ListHeader = styled.div`
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-light);
   div {
-    flex: 4;
+    flex: 2;
     font-size: 1.6rem;
     font-weight: 600;
     text-align: center;
@@ -65,7 +65,7 @@ const ListHeader = styled.div`
     color: var(--text-primary);
   }
   div:first-child {
-    flex: 2;
+    flex: 1;
   }
 `;
 const ListBody = styled.div`
@@ -78,7 +78,6 @@ const ListBody = styled.div`
     width: 100%;
     display: flex;
     align-items: center;
-    padding: 8px 0;
     border-bottom: 1px solid var(--border-light);
   }
   .swipeable-list-item__content > div {
@@ -87,16 +86,24 @@ const ListBody = styled.div`
     font-size: 1.6rem;
     color: var(--text-primary);
     font-weight: 500;
+    height: 100%;
+    min-height: 30px;
+    padding: 12px 8px;
   }
+  .swipeable-list-item__content > div:first-child {
+    flex: 1;
+  }
+    
   .swipeable-list-item__content > input {
-    flex: 4;
+    flex: 2;
     width: 100%;
-    padding: 8px 12px;
+    padding: 12px 8px;
     text-align: center;
     font-size: 1.6rem;
     background: transparent;
     color: var(--text-primary);
     border: none;
+    height: 48px;
     outline: none;
     &:focus {
       background: var(--bg-primary);
@@ -233,7 +240,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
   return (
     <WorkoutSetWrapper>
       <SetTop>
-        <img src="" alt="" />
+        <img src={data.pt.pt_image.split(",").filter((item) => item.includes(".png"))} alt={data.pt_name}/>
         <h4>{data.pt.pt_name}</h4>
       </SetTop>
       <MemoInput
@@ -247,7 +254,6 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
         <div>번호</div>
         <div>KG</div>
         <div>횟수</div>
-        <div></div>
       </ListHeader>
       <ListBody>
         <SwipeableList actionDelay={0}>

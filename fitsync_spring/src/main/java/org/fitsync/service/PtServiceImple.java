@@ -64,8 +64,8 @@ public class PtServiceImple implements PtService {
 			}
 		}
 		vo.setPt_image(str);
-		
-	    return mapper.updateWorkOut(vo) > 0;
+		int result = mapper.updateWorkOut(vo);
+	    return result > 0;
 	}
 	
 	// 운동 숨기기
