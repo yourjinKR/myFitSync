@@ -7,7 +7,7 @@ import { useFormValidation } from '../../hooks/useFormValidation';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../action/userAction';
 import AreaDropDown from '../../hooks/AreaDropDown';
-import { Swiper, SwiperSlide, useSwiper } from 'swiper/react';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';

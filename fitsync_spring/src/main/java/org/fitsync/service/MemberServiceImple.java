@@ -58,20 +58,20 @@ public class MemberServiceImple implements MemberService {
 		mvo.setMember_name(body.get("member_name"));
 		mvo.setMember_image(body.get("member_image"));
 		mvo.setMember_gender(body.get("member_gender"));
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		java.util.Date utilDate = null;
-		try {
-			utilDate = sdf.parse(body.get("member_birth"));
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
-		mvo.setMember_birth(sqlDate);
 		mvo.setMember_activity_area(body.get("member_activity_area"));
 		mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
+		mvo.setMember_purpose(body.get("member_purpose"));
 
 		if(body.get("member_type").equals("user")) {
-			mvo.setMember_purpose(body.get("member_purpose"));
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			java.util.Date utilDate = null;
+			try {
+				utilDate = sdf.parse(body.get("member_birth"));
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+			mvo.setMember_birth(sqlDate);
 			mvo.setMember_disease(body.get("member_disease"));
 			result = mapper.insertMemberInfo(mvo);
 			
@@ -89,8 +89,6 @@ public class MemberServiceImple implements MemberService {
 			return result == 2 ? true : false;
 		}else {
 			mvo.setMember_day(body.get("member_day"));
-			mvo.setMember_activity_area(body.get("member_activity_area"));
-			mvo.setMember_info(body.get("member_info"));
 			result = mapper.insertTrainerInfo(mvo);
 			return result == 1 ? true : false;
 		}

@@ -56,7 +56,8 @@
 			MEMBER_TIME,
 			MEMBER_DAY,
 			MEMBER_ACTIVITY_AREA,
-			MEMBER_INFO
+			MEMBER_GENDER,
+			MEMBER_PURPOSE
 		) VALUES(
 			MEMBER_SEQ.nextval,
 			#{member_email},
@@ -66,7 +67,8 @@
 			#{member_time},
 			#{member_day},
 			#{member_activity_area},
-			#{member_info}
+			#{member_gender},
+			#{member_purpose}
 		)
 	</insert>
 
