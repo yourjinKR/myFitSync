@@ -28,7 +28,10 @@
 			MEMBER_TYPE,
 			MEMBER_PURPOSE,
 			MEMBER_DISEASE,
-			MEMBER_TIME
+			MEMBER_TIME,
+			MEMBER_GENDER,
+			MEMBER_BIRTH,
+			MEMBER_ACTIVITY_AREA
 		) VALUES(
 			MEMBER_SEQ.nextval,
 			#{member_email},
@@ -37,7 +40,10 @@
 			#{member_type},
 			#{member_purpose},
 			#{member_disease},
-			#{member_time}
+			#{member_time},
+			#{member_gender},
+			#{member_birth},
+			#{member_activity_area}
 		)
 	</insert>
 	<insert id="insertTrainerInfo" parameterType="org.fitsync.domain.MemberVO">

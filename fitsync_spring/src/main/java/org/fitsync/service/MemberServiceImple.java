@@ -67,6 +67,7 @@ public class MemberServiceImple implements MemberService {
 		}
 		java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
 		mvo.setMember_birth(sqlDate);
+		mvo.setMember_activity_area(body.get("member_activity_area"));
 		mvo.setMember_time(body.get("member_time_start")+"~"+body.get("member_time_end"));
 
 		if(body.get("member_type").equals("user")) {

@@ -225,9 +225,13 @@ const MemberRegister = () => {
   };
 
   const postInfo = async () => {
-    
-    console.log("🚀  :  info:", info)
-    const response = await axios.post('/member/register', info);
+    // 시/도 + 군/구 합치기
+    const sendInfo = {
+      ...info,
+      member_activity_area: `${info.sido1 || ''} ${info.gugun1 || ''}`.trim()
+    };
+
+    const response = await axios.post('/member/register', sendInfo);
     if (response.data.success) {
       dispatch(setUser(response.data.user));
       alert('회원 정보가 등록되었습니다.');
