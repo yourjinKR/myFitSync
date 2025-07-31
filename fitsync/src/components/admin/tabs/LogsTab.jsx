@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 // 로그 탭 컴포넌트 (간단한 버전)
-const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading, stats }) => {
+const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading, stats, memberType }) => {
     // props 안전성을 위한 기본값 설정
     const logs = filteredLogs || [];
 

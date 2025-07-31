@@ -36,6 +36,7 @@ const UserApiLogContainerTest = () => {
                 selectedLog={selectedLog}
                 isLoading={loading}
                 stats={null} // 사용자 페이지에선 통계 생략 가능
+                memberType={member_type}
             />
 
             {selectedLog && (

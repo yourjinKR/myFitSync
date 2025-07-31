@@ -10,6 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
 import dateFormat from '../../utils/dateFormat';
+import WorkoutView from './WorkoutView';
 const { formatDate, getTimeDifference } = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
@@ -341,6 +342,24 @@ const RoutineDetail = () => {
   const param = new URLSearchParams(location.search);
   const targetDate = param.get('date');
   const nav = useNavigate();
+  const [modalPtId, setModalPtId] = useState(null); // 모달에 띄울 ptId
+
+  // 모달 핸들러
+
+  const handleOpenWorkoutModal = (e) => {
+    console.log('클릭');
+    
+    console.log(e.target.dataset);
+    const {idx} = e.target.dataset;
+    
+    console.log(idx);
+    
+    setModalPtId(idx);
+  };
+
+  const handleCloseWorkoutModal = () => {
+    setModalPtId(null);
+  };
 
 
   // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
@@ -722,7 +741,7 @@ const RoutineDetail = () => {
             <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
               <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
               <SetTop>
-                <img src={routine.imageUrl} alt={routine.pt.pt_name} onClick={() => nav(`/workout/${routine.pt.pt_idx}`)}/>
+                <img src={routine.imageUrl} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal}/>
                 <h4>{routine.pt.pt_name}</h4>
               </SetTop>
               <MemoInput
@@ -809,6 +828,13 @@ const RoutineDetail = () => {
       {
         isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : <></>
       }
+
+      {modalPtId !== null && (
+        <WorkoutView
+          ptId={modalPtId}
+          isModal={true}
+          onClose={handleCloseWorkoutModal}
+        />)}
     </WorkoutSetWrapper>
   );
 };

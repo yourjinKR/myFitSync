@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-const WorkoutView = () => {
-  const { ptId } = useParams();
+const WorkoutView = ({ ptId: propPtId, isModal = false, onClose }) => {
+  const routePtId = useParams().ptId;
   const navigate = useNavigate();
+  const ptId = propPtId || routePtId;
 
   const [workout, setWorkout] = useState(null);
   const [recommend, setRecommend] = useState(null);
@@ -33,23 +34,25 @@ const WorkoutView = () => {
     fetchWorkout();
   }, [ptId]);
 
-  // 운동 바뀔때 스크롤 초기화
+  // 스크롤 초기화는 페이지 전용일 때만
   useEffect(() => {
-    if (workout) {
-      window.scrollTo({ top: 0, behavior: 'auto' }); // 리렌더링 후 위치 이동
+    if (workout && !isModal) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [workout]);
+  }, [workout, isModal]);
 
   if (error) return <Wrapper>운동 정보를 불러오는 데 실패했습니다.</Wrapper>;
-  if (!workout) return <Wrapper></Wrapper>;
+  if (!workout) return <Wrapper />;
 
   const contentSteps = workout.pt_content?.split('|').map(step => step.trim()) || [];
 
-  return (
+  const Content = (
     <Wrapper>
       {workout.pt_hidden === 1 && (
         <HiddenBox>이 운동은 현재 비공개 상태입니다.</HiddenBox>
       )}
+
+      {isModal && <CloseButton onClick={onClose}>×</CloseButton>}
 
       <Title>{workout.pt_name}</Title>
       <Category>{workout.pt_category}</Category>
@@ -71,7 +74,7 @@ const WorkoutView = () => {
         <Writer>작성자: {workout.pt_writer}</Writer>
       )}
 
-      {recommend && (
+      {!isModal && recommend && (
         <RecommendSection>
           <RecommendTitle>이런 운동은 어떠세요?</RecommendTitle>
           <RecommendCard onClick={() => {
@@ -87,6 +90,14 @@ const WorkoutView = () => {
       )}
     </Wrapper>
   );
+
+  return isModal ? (
+    <FullscreenOverlay onClick={onClose}>
+      <FullscreenContent onClick={(e) => e.stopPropagation()}>
+        {Content}
+      </FullscreenContent>
+    </FullscreenOverlay>
+  ) : Content;
 };
 
 export default WorkoutView;
@@ -208,4 +219,49 @@ const RecommendCard = styled.div`
       color: var(--text-secondary);
     }
   }
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 2.4rem;
+  color: var(--text-secondary);
+  z-index: 10;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  @media (max-width: 768px) {
+    top: 12px;
+    right: 16px;
+    font-size: 2rem;
+  }
+`;
+
+const FullscreenOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  max-width: 750px;
+  height: 100vh;
+  margin: 0 auto;
+  background-color: var(--bg-primary);
+  z-index: 3000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 750px) {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+`;
+
+const FullscreenContent = styled.div`
+  flex: 1;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 `;
