@@ -13,6 +13,7 @@ import { checkAllExerciseNames } from '../../utils/KorUtil';
 import { PaymentUtil } from '../../utils/PaymentUtil';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import useRequireLogin from '../../hooks/useRequireLogin';
 
 const ServiceContainer = styled.div`
     max-width: 1000px;
@@ -109,7 +110,9 @@ const ProgressLabel = styled.div`
 `;
 
 const AiServiceContainer = () => {
-    const user = useSelector(state => state.user);
+    useRequireLogin();
+
+    const user = useSelector(state => state.user.user);
     const [currentStep, setCurrentStep] = useState(1); // 1: 입력, 2: 로딩, 3: 결과, 4: 완료
     const [memberData, setMemberData] = useState(null);
     const [aiResult, setAiResult] = useState(null);
@@ -122,12 +125,6 @@ const AiServiceContainer = () => {
 
     const fetchMemberData = async () => {
         try {
-            if (!user.user.isLogin) {
-                alert("로그인이 필요한 서비스입니다!");
-                nav(-1);
-                return;
-            }
-
             const memberResponse = await getMemberTotalData();
             const subscriptionResponse = await PaymentUtil.checkSubscriptionStatus(user.user.member_idx);
             setMemberData(memberResponse);

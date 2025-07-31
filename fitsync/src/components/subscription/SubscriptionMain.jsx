@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { faqData, initFaqData, PaymentUtil } from '../../utils/PaymentUtil';
 import { useSelector } from 'react-redux';
+import useRequireLogin from '../../hooks/useRequireLogin';
 
 const Container = styled.div`
   /* 컨테이너에서 이미 패딩과 배경이 설정되므로 여기서는 제거 */
@@ -1134,6 +1135,8 @@ const FAQAnswerContent = styled.div`
 `;
 
 const SubscriptionMain = () => {
+  useRequireLogin();
+
   const navigate = useNavigate();
   const [subscriptionData, setSubscriptionData] = useState(null);
   const [recentOrder, setRecentOrder] = useState({});

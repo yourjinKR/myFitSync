@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { PaymentUtil } from '../../utils/PaymentUtil';
+import useRequireLogin from '../../hooks/useRequireLogin';
 
 // 스타일 컴포넌트들
 const Container = styled.div`
@@ -273,6 +274,8 @@ const ErrorMessage = styled.div`
 `;
 
 const SubscriptionPaymentHistory = () => {
+  useRequireLogin();
+
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

@@ -5,6 +5,7 @@ import AddPaymentMethodModal from './AddPaymentMethodModal';
 import PaymentConfirmModal from './PaymentConfirmModal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import useRequireLogin from '../../hooks/useRequireLogin';
 
 // 스타일 컴포넌트들
 const Container = styled.div`
@@ -516,6 +517,8 @@ const DialogButton = styled.button`
 `;
 
 const SubscriptionPaymentMethods = () => {
+  useRequireLogin();
+
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
