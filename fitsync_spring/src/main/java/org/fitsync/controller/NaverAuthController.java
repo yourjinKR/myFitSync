@@ -126,16 +126,22 @@ public class NaverAuthController {
                         .header(HttpHeaders.SET_COOKIE, cookieValue)
                         .body(result);
             } else {
+                // 신규 회원도 JWT 발급
+                String jwt = jwtUtil.generateToken(-1); // 신규 회원은 임시값(-1) 또는 email 등으로 처리
+                String cookieValue = "accessToken=" + jwt + "; HttpOnly; Path=/; Max-Age=" + (7 * 24 * 60 * 60) + "; SameSite=Lax";
+
                 user.put("member_name", userInfo.get("name"));
                 user.put("member_email", userInfo.get("email"));
-                user.put("member_image", userInfo.get("profile_image")); // ← 수정
+                user.put("member_image", userInfo.get("profile_image"));
                 user.put("provider", "naver");
                 user.put("isLogin", false);
 
                 result.put("success", true);
                 result.put("user", user);
 
-                return ResponseEntity.ok(result);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.SET_COOKIE, cookieValue)
+                        .body(result);
             }
         } catch (Exception e) {
             result.put("success", false);
