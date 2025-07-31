@@ -212,8 +212,6 @@ const ChatRoomHeader = ({
     // 상대방이 관리자인지 확인
     if (!roomData || !user) return false;
     
-    const currentMemberIdx = user.member_idx;
-    
     // 관리자(member_idx: 141)가 채팅방에 포함되어 있는지 확인
     if (roomData.trainer_idx === 141 || roomData.user_idx === 141) {
       console.log('🚫 관리자와의 채팅 - 매칭 버튼 비활성화');
@@ -253,7 +251,6 @@ const ChatRoomHeader = ({
 
   // 매칭 요청 처리 함수 개선 (DB 저장 방식)
   const handleMatchingRequest = async (matchingTotal) => {
-    console.log('🎯 매칭 요청 시작 (DB 저장 방식):', { matchingTotal });
     
     setIsMatchingLoading(true);
       
@@ -267,8 +264,6 @@ const ChatRoomHeader = ({
 
       // 백엔드에서 매칭 생성
       const result = await chatApi.createMatching(otherPerson.member_idx, matchingTotal);
-      
-      console.log('📥 매칭 생성 결과:', result);
         
       if (result.success) {
         // 매칭 데이터를 깔끔하게 구성
@@ -283,12 +278,6 @@ const ChatRoomHeader = ({
         
         // 표시용 메시지 내용 (매칭 데이터 분리)
         const displayMessage = `PT ${matchingTotal}회 매칭 요청`;
-        
-        console.log('📤 전송할 데이터 (DB 저장 방식):', {
-          displayMessage,
-          matchingData,
-          messageType: 'matching_request'
-        });
           
         // 메시지 전송 (매칭 데이터는 별도 Map으로)
         if (onSendMessage) {
@@ -408,6 +397,7 @@ const ChatRoomHeader = ({
   const handleKeyDown = useCallback((e) => {
     if (!isSearchMode) return;
 
+    // eslint-disable-next-line default-case
     switch (e.key) {
       case 'Escape':
         toggleSearchMode();

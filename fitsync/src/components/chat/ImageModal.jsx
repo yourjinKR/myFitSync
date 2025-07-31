@@ -280,7 +280,6 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
       setScale(1);
       setPosition({ x: 0, y: 0 });
       setIsDragging(false);
-      console.log('🖼️ 이미지 모달 열림 (고정 크기):', originalFilename);
     }
   }, [isOpen, originalFilename]);
 
@@ -292,7 +291,6 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
     const newScale = Math.max(0.1, Math.min(5, scale + delta)); // 최소 10%, 최대 500%로 제한
     
     setScale(newScale);
-    console.log('🔍 확대/축소:', `${Math.round(newScale * 100)}%`);
     
     // 확대/축소 시 이미지가 중앙에서 벗어나지 않도록 위치 조정
     if (newScale === 1) {
@@ -308,7 +306,6 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
         x: e.clientX - position.x,
         y: e.clientY - position.y
       });
-      console.log('🖱️ 드래그 시작 (고정 모달)');
     }
   }, [scale, position]);
 
@@ -324,7 +321,6 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
-      console.log('🖱️ 드래그 종료 (고정 모달)');
     }
   }, [isDragging]);
 
@@ -344,7 +340,6 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
   // 원본 파일명으로 다운로드 기능 (핵심 기능)
   const handleDownload = useCallback(async () => {
     try {
-      console.log('📥 다운로드 시작 (고정 모달):', originalFilename);
       
       // 1. Cloudinary URL에서 이미지 데이터 가져오기
       const response = await fetch(imageUrl);

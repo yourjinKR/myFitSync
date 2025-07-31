@@ -286,13 +286,6 @@ const ChatMain = () => {
       setUnreadCounts(unreadData);
       setLastMessages(lastMessageData);
       
-      console.log('✅ 채팅방 목록 로드 완료:', {
-        rooms: roomList.length,
-        unreadCounts: Object.keys(unreadData).length,
-        lastMessages: Object.keys(lastMessageData).length,
-        currentMemberIdx: currentMemberIdx
-      });
-      
     } catch (error) {
       console.error('채팅방 목록 로드 실패:', error);
       
@@ -353,16 +346,6 @@ const ChatMain = () => {
         user_idx = currentMemberIdx;
         room_name = `${user.member_name} 회원님의 문의`;
       }
-      
-      console.log('📋 채팅방 생성 파라미터 (수정됨):', {
-        trainer_idx,
-        user_idx,
-        room_name,
-        isCurrentUserTrainer,
-        currentUserType: user.member_type,
-        currentMemberIdx,
-        adminIdx: ADMIN_MEMBER_IDX
-      });
       
       // 채팅방 생성 또는 기존 방 조회
       const roomResponse = await ChatApi.registerRoom(trainer_idx, user_idx, room_name);
@@ -528,12 +511,6 @@ const ChatMain = () => {
       isAdminChat = room.trainer_idx === 141;
     }
     
-    console.log('🔍 일반 사용자 처리 결과 (이메일 마스킹 전):', {
-      otherPersonName,
-      otherPersonEmail,
-      isAdminChat
-    });
-    
     // 관리자인 경우 특별 제목 (일반 사용자가 볼 때)
     if (isAdminChat) {
       return '관리자 문의';
@@ -543,10 +520,6 @@ const ChatMain = () => {
     if (otherPersonEmail) {
       // 이메일 마스킹 적용
       const maskedEmail = maskEmail(otherPersonEmail);
-      console.log('✅ 이메일 마스킹 적용:', {
-        원본: otherPersonEmail,
-        마스킹결과: maskedEmail
-      });
       return `${otherPersonName}(${maskedEmail})`;
     } else {
       // 이메일 정보가 없더라도 이름은 표시
@@ -558,13 +531,11 @@ const ChatMain = () => {
   const getOtherPersonInfo = (room) => {
     // currentMemberIdx 상태 사용
     if (!currentMemberIdx) {
-      console.log('⚠️ currentMemberIdx 아직 로드되지 않음 - 기본값 반환');
       return { name: '로딩 중...', image: null };
     }
     
     // 관리자 계정 특별 처리 (admin 타입 대응)
     if (isAdmin) {
-      console.log('👨‍💼 관리자 계정 - 상대방 정보 특별 처리');
       
       // 관리자가 trainer 위치에 있는 경우 -> user 정보 반환
       if (room.trainer_idx === currentMemberIdx) {
@@ -572,7 +543,6 @@ const ChatMain = () => {
           name: room.user_name || '회원',
           image: room.user_image
         };
-        console.log('✅ 관리자가 trainer 위치 - user 정보 반환:', otherPersonInfo);
         return otherPersonInfo;
       }
       // 관리자가 user 위치에 있는 경우 -> trainer 정보 반환  
@@ -581,7 +551,6 @@ const ChatMain = () => {
           name: room.trainer_name || '트레이너',
           image: room.trainer_image
         };
-        console.log('✅ 관리자가 user 위치 - trainer 정보 반환:', otherPersonInfo);
         return otherPersonInfo;
       }
       // 예상치 못한 경우
@@ -598,7 +567,6 @@ const ChatMain = () => {
         name: room.user_name || '회원',
         image: room.user_image
       };
-      console.log('✅ 일반 트레이너 - user 정보 반환:', otherPersonInfo);
       return otherPersonInfo;
     } else {
       // 내가 일반 사용자인 경우 → 트레이너 정보 반환
@@ -606,7 +574,6 @@ const ChatMain = () => {
         name: room.trainer_name || '트레이너',
         image: room.trainer_image
       };
-      console.log('✅ 일반 회원 - trainer 정보 반환:', otherPersonInfo);
       return otherPersonInfo;
     }
   };
@@ -640,18 +607,13 @@ const ChatMain = () => {
   const renderAvatar = (room) => {
     const otherPerson = getOtherPersonInfo(room);
     
-    console.log('🔍 아바타 렌더링 - 상대방 정보:', otherPerson);
-    
     const hasValidImage = otherPerson.image && 
                          typeof otherPerson.image === 'string' && 
                          otherPerson.image.trim() !== '' &&
                          otherPerson.image.startsWith('http');
     
-    console.log('이미지 유효성 검사:', hasValidImage, '이미지 URL:', otherPerson.image);
-    
     if (hasValidImage) {
       // 프로필 이미지가 있는 경우
-      console.log('✅ 프로필 이미지 렌더링:', otherPerson.image);
       return (
         <Avatar>
           <img 
@@ -672,7 +634,6 @@ const ChatMain = () => {
       );
     } else {
       // 프로필 이미지가 없거나 유효하지 않은 경우 초성 표시
-      console.log('❌ 프로필 이미지 없음/무효, 초성 표시:', otherPerson.name.charAt(0));
       return (
         <Avatar className="default-avatar">
           {otherPerson.name.charAt(0).toUpperCase()}

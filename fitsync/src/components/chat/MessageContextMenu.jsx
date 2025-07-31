@@ -13,7 +13,7 @@ const fadeIn = keyframes`
   }
 `;
 
-// 🔥 핵심 해결책: Portal 기반으로 body에 직접 렌더링
+// Portal 기반으로 body에 직접 렌더링
 const MenuContainer = styled.div`
   position: fixed;
   z-index: 10000;
@@ -31,11 +31,11 @@ const MenuContainer = styled.div`
   max-height: 300px;
   overflow-y: auto;
   
-  /* 🔥 MessageItem에서 계산된 뷰포트 좌표 직접 사용 */
+  /* MessageItem에서 계산된 뷰포트 좌표 직접 사용 */
   left: ${props => props.$x || 0}px;
   top: ${props => props.$y || 0}px;
   
-  /* 🔥 뷰포트 경계 방어 로직 */
+  /* 뷰포트 경계 방어 로직 */
   transform: ${props => {
     const x = props.$x || 0;
     const y = props.$y || 0;
@@ -209,17 +209,15 @@ const ReportButton = styled.button`
   }
 `;
 
-// 🔥 Portal 기반 컨텍스트 메뉴 컴포넌트
+// Portal 기반 컨텍스트 메뉴 컴포넌트
 const ContextMenuPortal = ({ isVisible, x, y, children }) => {
   if (!isVisible) return null;
-
-  console.log('🌐 Portal 렌더링:', { x, y, isVisible });
 
   return createPortal(
     <MenuContainer $x={x} $y={y}>
       {children}
     </MenuContainer>,
-    document.body // 🔥 body에 직접 렌더링으로 컨테이너 제약 완전 회피
+    document.body // body에 직접 렌더링으로 컨테이너 제약 완전 회피
   );
 };
 
@@ -238,7 +236,7 @@ const MessageContextMenu = ({
   const [reportContent, setReportContent] = useState('');
   const menuRef = useRef(null);
 
-  // 🔥 위치 검증 및 안전장치
+  // 위치 검증 및 안전장치
   const validateAndClampPosition = (rawPosition) => {
     if (!rawPosition || typeof rawPosition.x !== 'number' || typeof rawPosition.y !== 'number') {
       console.warn('⚠️ 잘못된 위치 데이터 - 기본값 사용:', rawPosition);
@@ -256,19 +254,13 @@ const MessageContextMenu = ({
     
     x = Math.max(padding, Math.min(x, maxX));
     y = Math.max(padding, Math.min(y, maxY));
-
-    console.log('✅ Portal 위치 검증 완료:', {
-      원본: rawPosition,
-      보정후: { x, y },
-      뷰포트: { width: window.innerWidth, height: window.innerHeight }
-    });
     
     return { x, y };
   };
 
   const validatedPosition = isVisible ? validateAndClampPosition(position) : { x: 0, y: 0 };
 
-  // 🔥 외부 클릭 감지 (Portal 환경에 최적화)
+  // 외부 클릭 감지 (Portal 환경에 최적화)
   useEffect(() => {
     if (!isVisible) return;
 
@@ -279,18 +271,16 @@ const MessageContextMenu = ({
       }
       
       // 외부 클릭 시 메뉴 닫기
-      console.log('🖱️ Portal 외부 클릭 감지 - 메뉴 닫기');
       onClose();
     };
 
     const handleGlobalTouch = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
-        console.log('👆 Portal 외부 터치 감지 - 메뉴 닫기');
         onClose();
       }
     };
 
-    // 🔥 캡처 단계에서 이벤트 감지 (Portal 특성상 중요)
+    // 캡처 단계에서 이벤트 감지 (Portal 특성상 중요)
     document.addEventListener('mousedown', handleGlobalClick, true);
     document.addEventListener('touchstart', handleGlobalTouch, true);
 
@@ -319,12 +309,11 @@ const MessageContextMenu = ({
     return () => document.removeEventListener('keydown', handleEscKey);
   }, [isVisible, showReportModal, onClose]);
 
-  // 🔥 스크롤 시 메뉴 닫기 (Portal 환경 고려)
+  // 스크롤 시 메뉴 닫기 (Portal 환경 고려)
   useEffect(() => {
     if (!isVisible) return;
 
     const handleGlobalScroll = () => {
-      console.log('📜 Portal 환경 스크롤 감지 - 메뉴 닫기');
       onClose();
     };
 
@@ -388,7 +377,6 @@ const MessageContextMenu = ({
 
   // 답장 핸들러
   const handleReply = () => {
-    console.log('💬 답장 선택:', message.message_idx);
     onReply && onReply(message);
     onClose();
   };
@@ -399,7 +387,6 @@ const MessageContextMenu = ({
     
     const confirmDelete = window.confirm('이 메시지를 삭제하시겠습니까?');
     if (confirmDelete) {
-      console.log('🗑️ 메시지 삭제:', message.message_idx);
       onDelete && onDelete(message);
       onClose();
     }
@@ -407,7 +394,6 @@ const MessageContextMenu = ({
 
   // 신고 모달 열기
   const handleReportClick = () => {
-    console.log('🚨 신고 모달 열기:', message.message_idx);
     setShowReportModal(true);
   };
 
@@ -417,11 +403,6 @@ const MessageContextMenu = ({
       alert('신고 사유를 입력해주세요.');
       return;
     }
-    
-    console.log('🚨 신고 제출:', {
-      messageIdx: message.message_idx,
-      content: reportContent.trim()
-    });
     
     onReport && onReport(message, reportContent.trim());
     setShowReportModal(false);
@@ -437,7 +418,7 @@ const MessageContextMenu = ({
 
   return (
     <>
-      {/* 🔥 Portal 기반 컨텍스트 메뉴 */}
+      {/* Portal 기반 컨텍스트 메뉴 */}
       <ContextMenuPortal 
         isVisible={isVisible} 
         x={validatedPosition.x} 
@@ -483,7 +464,7 @@ const MessageContextMenu = ({
         </div>
       </ContextMenuPortal>
 
-      {/* 🔥 신고 모달 (Portal 기반) */}
+      {/* 신고 모달 (Portal 기반) */}
       {showReportModal && createPortal(
         <ReportModalOverlay onClick={handleReportCancel}>
           <ReportModalContent onClick={(e) => e.stopPropagation()}>

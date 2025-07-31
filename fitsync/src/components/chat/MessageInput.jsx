@@ -248,25 +248,9 @@ const MessageInput = ({
   const getReplyPreviewText = () => {
     if (!replyToMessage) return '';
     
-    console.log('🎯 답장 미리보기 텍스트 생성:', {
-      messageType: replyToMessage.message_type,
-      messageIdx: replyToMessage.message_idx,
-      messageContent: replyToMessage.message_content,
-      attachments: attachments,
-      hasAttachments: !!attachments,
-      attachmentForMessage: attachments[replyToMessage.message_idx]
-    });
-    
     if (replyToMessage.message_type === 'image') {
       // 전체 attachments에서 해당 메시지의 첨부파일 찾기
       const attachment = attachments && attachments[replyToMessage.message_idx];
-      
-      console.log('🎯 이미지 답장 미리보기 - 첨부파일 검색:', {
-        messageIdx: replyToMessage.message_idx,
-        attachment: attachment,
-        hasFilename: !!(attachment && attachment.original_filename),
-        originalFilename: attachment?.original_filename
-      });
       
       // 첨부파일 정보가 있고 파일명이 있으면 파일명 표시
       if (attachment && attachment.original_filename) {
@@ -325,13 +309,6 @@ const MessageInput = ({
           const isLastFile = index === filesToSend.length - 1;
           
           const messageContent = (hasText && isLastFile) ? hasText : '[이미지]';
-          
-          console.log(`순차 업로드 ${index + 1}/${filesToSend.length}:`, {
-            fileName: file.name,
-            messageContent: messageContent,
-            isLastFile: isLastFile,
-            parentIdx: replyToMessage?.message_idx
-          });
           
           await onSendMessage(
             messageContent, 

@@ -129,12 +129,6 @@ public class ChatServiceImple implements ChatService {
 		log.info("getMessage..." + message_idx);
 		MessageVO message = messageMapper.getMessage(message_idx);
 		
-		// 🔥 매칭 데이터 로그 출력
-		if (message != null && message.hasMatchingData()) {
-			log.info("✅ 조회된 메시지의 매칭 데이터: " + message.getMatching_data());
-			log.info("✅ 매칭 IDX: " + message.getMatchingIdx());
-		}
-		
 		return message;
 	}
 

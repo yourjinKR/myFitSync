@@ -254,31 +254,53 @@ const MessageList = ({
 
   // 상대방 정보 가져오기 함수
   const getOtherPersonInfo = (message, isConsecutive) => {
-    if (!roomData) return { name: '상대방', image: null, gender: null };
+
+    if (!roomData) {
+      console.warn('⚠️ roomData가 없음 - 기본값 반환');
+      return { name: '상대방', image: null, gender: null };
+    }
     
     if (message.sender_idx !== currentMemberIdx) {
-      // 연속 메시지인 경우 이름과 이미지를 null로 반환
+      // 연속 메시지에서도 정보를 정확하게 전달
       if (isConsecutive) {
-        return { name: null, image: null, gender: null };
+        let consecutiveGender = null;
+        
+        if (roomData.trainer_idx === currentMemberIdx) {
+          // 현재 사용자가 트레이너 -> 상대방(발신자)은 회원
+          consecutiveGender = roomData.user_gender;
+        } else {
+          // 현재 사용자가 회원 -> 상대방(발신자)은 트레이너
+          consecutiveGender = roomData.trainer_gender;
+        }
+        
+        return { 
+          name: null, 
+          image: null, 
+          gender: consecutiveGender
+        };
       }
       
+      // 일반 메시지에서 정보 정확하게 전달
       if (roomData.trainer_idx === currentMemberIdx) {
         // 현재 사용자가 트레이너인 경우 -> 회원 정보 반환
-        return {
+        const otherPersonInfo = {
           name: roomData.user_name || '회원',
           image: roomData.user_image,
           gender: roomData.user_gender || null
         };
+        return otherPersonInfo;
       } else {
         // 현재 사용자가 회원인 경우 -> 트레이너 정보 반환
-        return {
+        const otherPersonInfo = {
           name: roomData.trainer_name || '트레이너',
           image: roomData.trainer_image,
           gender: roomData.trainer_gender || null
         };
+        return otherPersonInfo;
       }
     }
     
+    // 내가 보낸 메시지인 경우 null 반환
     return { name: null, image: null, gender: null };
   };
 

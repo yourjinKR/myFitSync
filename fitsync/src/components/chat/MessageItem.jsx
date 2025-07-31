@@ -34,7 +34,6 @@ const MessageContainer = styled.div`
   gap: ${props => props.$isConsecutive ? '0px' : '8px'};
 `;
 
-// 성별별 프로필 이미지
 const ProfileImage = styled.div`
   width: 36px;
   height: 36px;
@@ -46,19 +45,17 @@ const ProfileImage = styled.div`
   
   opacity: ${props => props.$isConsecutive ? 0 : 1};
   
-  /* 성별별 테두리 색상 */
-  border: 2px solid ${props => {
-    if (props.$gender === '남성') return '#87CEEB'; // 하늘색
-    if (props.$gender === '여성') return '#FFB6C1'; // 분홍색  
-    return 'transparent'; // 성별 정보 없으면 테두리 없음
+  border: ${props => {
+    if (props.$gender === '남성') {
+      return '2px solid #4A90E2';
+    }
+    if (props.$gender === '여성') {
+      return '2px solid #FF69B4';
+    }
+    return '1px solid var(--border-light)';
   }};
   
-  /* 테두리가 있을 때 약간의 그림자 효과 */
-  box-shadow: ${props => {
-    if (props.$gender === '남성') return '0 0 8px rgba(135, 206, 235, 0.3)';
-    if (props.$gender === '여성') return '0 0 8px rgba(255, 182, 193, 0.3)';
-    return 'none';
-  }};
+  transition: all 0.3s ease;
   
   img {
     width: 100%;
@@ -67,7 +64,15 @@ const ProfileImage = styled.div`
   }
   
   &.default-avatar {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    background: ${props => {
+      if (props.$gender === '남성') {
+        return 'linear-gradient(135deg, #4A90E2 0%, #357ABD 100%)';
+      }
+      if (props.$gender === '여성') {
+        return 'linear-gradient(135deg, #FF69B4 0%, #FF1493 100%)';
+      }
+      return 'linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%)';
+    }};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -692,14 +697,6 @@ const MessageItem = ({
         if (response.success && response.matching) {
           const latestMatchingData = response.matching;
           setCurrentMatchingStatus(latestMatchingData);
-          
-          console.log('✅ 매칭 상태 조회 성공:', {
-            matchingIdx: latestMatchingData.matching_idx,
-            matchingComplete: latestMatchingData.matching_complete,
-            matchingRemain: latestMatchingData.matching_remain,
-            originalComplete: matchingComplete,
-            isUpdated: latestMatchingData.matching_complete !== matchingComplete
-          });
         } else {
           console.warn('⚠️ 매칭 상태 조회 실패:', response.message);
           setCurrentMatchingStatus(null);
@@ -752,11 +749,6 @@ const MessageItem = ({
 
   // 매칭 요청 수락 핸들러 (브로드캐스트 추가)
   const handleMatchingAccept = async () => {
-    console.log('🎯 매칭 수락 클릭:', {
-      matchingIdx,
-      matchingData,
-      parsedMatchingData
-    });
 
     if (!matchingIdx) {
       alert('매칭 정보를 찾을 수 없습니다. 메시지가 손상되었을 수 있습니다.');
@@ -803,8 +795,6 @@ const MessageItem = ({
             status_type: 'accepted',
             matching_idx: matchingIdx
           };
-          
-          console.log('🎯 매칭 수락 브로드캐스트 전송:', statusData);
           broadcastMatchingStatus(statusData);
         }
         
@@ -973,7 +963,11 @@ const MessageItem = ({
           <img 
             src={senderImage} 
             alt={`${senderName} 프로필`}
+            onLoad={() => {
+              console.log('✅ 프로필 이미지 로드 성공:', senderImage);
+            }}
             onError={(e) => {
+              console.log('❌ 프로필 이미지 로드 실패:', senderImage);
               e.target.style.display = 'none';
               e.target.parentElement.classList.add('default-avatar');
               e.target.parentElement.textContent = senderName?.charAt(0).toUpperCase() || '?';
