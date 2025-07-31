@@ -121,7 +121,6 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData }) => {
     if(setHeightData && routineRef.current) {
       setHeightData(routineRef.current ? routineRef.current.offsetHeight : 0);
     }
-    console.log("🚀  :  data:", data)
   }, [data]);
 
   // 카테고리 텍스트 생성 (중복 제거)
