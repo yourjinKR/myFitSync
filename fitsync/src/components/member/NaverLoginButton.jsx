@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../action/userAction';
+import { useNavigate } from 'react-router-dom';
 
 // Styled Components
 const LoginButton = styled.button`
@@ -62,6 +65,8 @@ const Container = styled.div`
 const NaverLoginButton = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState('checking');
+  const dispatch = useDispatch();
+  const nav = useNavigate();
 
   useEffect(() => {
     checkLoginStatus();
@@ -85,25 +90,53 @@ const NaverLoginButton = () => {
     }
   };
 
-  // 네이버 로그인 버튼 클릭 시 호출, 로그인 URL을 받아 리다이렉트
+  // 네이버 로그인 버튼 클릭 시
   const handleNaverLogin = async () => {
     setIsLoading(true);
-    
     try {
-      const response = await axios.get('/auth/naver/login');
-      
-      if (response.data.success) {
+      const response = await axios.get('/auth/naver/url');
+      if (response.data.loginUrl) {
         window.location.href = response.data.loginUrl;
       } else {
         alert('로그인 URL 생성에 실패했습니다.');
       }
     } catch (error) {
-      console.error('네이버 로그인 실패:', error);
       alert('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // 콜백 파라미터 처리
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    if (code && state) {
+      // 네이버 콜백 처리
+      axios.get(`/auth/naver/callback?code=${code}&state=${state}`, { withCredentials: true })
+        .then(res => {
+          if (res.data.success) {
+            dispatch(setUser(res.data.user));
+            setLoginStatus('loggedIn');
+            // 회원가입이 필요한 경우 분기
+            if (!res.data.user.isLogin) {
+              nav('/register');
+            } else {
+              nav('/');
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else {
+            alert(res.data.message || '로그인 실패');
+            setLoginStatus('loggedOut');
+          }
+        })
+        .catch(() => {
+          alert('로그인 처리 중 오류');
+          setLoginStatus('loggedOut');
+        });
+    }
+  }, [dispatch, nav]);
 
   // 로그아웃 버튼 클릭 시 호출, 서버에 로그아웃 요청
   const handleLogout = async () => {
