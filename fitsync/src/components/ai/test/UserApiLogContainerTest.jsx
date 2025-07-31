@@ -7,10 +7,10 @@ import { useWorkoutNames } from "../../../hooks/admin/useWorkoutNames"; // 필�
 import { useUserApiLogs } from "../../../hooks/admin/useApiLogs";
 
 const UserApiLogContainerTest = () => {
-    const memberIdx = useSelector(state => state.user?.user?.member_idx);
+    const {member_type ,member_idx} = useSelector(state => state.user?.user);
 
     // 사용자 로그 데이터 가져오기 (파싱 포함)
-    const { apiLogs, loading } = useUserApiLogs(memberIdx);
+    const { apiLogs, loading } = useUserApiLogs(member_idx);
 
     // 상세 보기 모달 상태
     const [selectedLog, setSelectedLog] = useState(null);
@@ -52,6 +52,7 @@ const UserApiLogContainerTest = () => {
                         total: apiLogs.length,
                         isFiltered: false
                     }}
+                    memberType={member_type}
                 />
             )}
         </div>

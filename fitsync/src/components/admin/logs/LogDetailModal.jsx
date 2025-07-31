@@ -43,7 +43,8 @@ const LogDetailModal = ({
     navigationInfo,
     rawData,
     rawDataIdx,
-    rawDataMap
+    rawDataMap,
+    memberType
 }) => {
     console.log('지금 니가 보고 있는 로그 : ', log);
     
@@ -640,7 +641,7 @@ const LogDetailModal = ({
                     {/* 운동 결과 섹션 */}
                     {workoutResult && (
                         <Section>
-                            <SectionTitle>🏋️‍♀️ AI 응답 시각화</SectionTitle>
+                            <SectionTitle>🏋️‍♀️ AI 루틴 추천 결과</SectionTitle>
                             <WorkoutResultContainer>
                                 {/* 루틴 요약 정보 */}
                                 <ResultSummary>
@@ -794,7 +795,7 @@ const LogDetailModal = ({
 
 
                     {/* 사용자 입력 */}
-                    {log.apilog_prompt && (
+                    {log.apilog_prompt && memberType === 'admin' && (
                         <Section>
                             <ToggleSection>
                                 <ToggleSectionTitle 
@@ -814,7 +815,7 @@ const LogDetailModal = ({
                     )}
 
                     {/* AI 응답 */}
-                    {log.apilog_response && (
+                    {log.apilog_response && memberType === 'admin' && (
                         <Section>
                             <ToggleSection>
                                 <ToggleSectionTitle 
@@ -863,86 +864,88 @@ const LogDetailModal = ({
                     )}
 
                     {/* 디버그 정보 - 개발용 */}
-                    <Section>
-                        <SectionTitle>🔍 디버그 정보</SectionTitle>
-                        <InfoGrid>
-                            <InfoItem>
-                                <InfoLabel>userInfo 파싱 결과</InfoLabel>
-                                <InfoValue>{userInfo ? '성공' : '실패'}</InfoValue>
-                            </InfoItem>
-                            <InfoItem>
-                                <InfoLabel>workoutResult 파싱 결과</InfoLabel>
-                                <InfoValue>{workoutResult ? '성공' : '실패'}</InfoValue>
-                            </InfoItem>
-                            {/* <InfoItem>
-                                <InfoLabel>similarExercises 매칭 결과</InfoLabel>
-                                <InfoValue>{similarExercises ? `${similarExercises.filter(ex => ex.matchType === 'similar').length}개` : '없음'}</InfoValue>
-                            </InfoItem> */}
-                            {/* 매칭 유형별 카운트 */}
-                            {similarExercises && similarExercises.length > 0 && (
+                    {memberType === 'admin' && (
+                        <Section>
+                            <SectionTitle>🔍 디버그 정보</SectionTitle>
+                            <InfoGrid>
                                 <InfoItem>
-                                    <InfoLabel>운동명 매칭 유형별 분석</InfoLabel>
-                                    <InfoValue>
-                                        정확: {similarExercises.filter(ex => ex.matchType === 'exact').length}개, 
-                                        유사: {similarExercises.filter(ex => ex.matchType === 'similar').length}개, 
-                                        실패: {similarExercises.filter(ex => ex.matchType === 'none').length}개
-                                    </InfoValue>
+                                    <InfoLabel>userInfo 파싱 결과</InfoLabel>
+                                    <InfoValue>{userInfo ? '성공' : '실패'}</InfoValue>
                                 </InfoItem>
-                            )}
-                            {/* AItest.jsx 방식의 추가 디버그 정보 */}
-                            {workoutResult && (
-                                <>
+                                <InfoItem>
+                                    <InfoLabel>workoutResult 파싱 결과</InfoLabel>
+                                    <InfoValue>{workoutResult ? '성공' : '실패'}</InfoValue>
+                                </InfoItem>
+                                {/* <InfoItem>
+                                    <InfoLabel>similarExercises 매칭 결과</InfoLabel>
+                                    <InfoValue>{similarExercises ? `${similarExercises.filter(ex => ex.matchType === 'similar').length}개` : '없음'}</InfoValue>
+                                </InfoItem> */}
+                                {/* 매칭 유형별 카운트 */}
+                                {similarExercises && similarExercises.length > 0 && (
                                     <InfoItem>
-                                        <InfoLabel>운동명 유효성 검사</InfoLabel>
+                                        <InfoLabel>운동명 매칭 유형별 분석</InfoLabel>
                                         <InfoValue>
-                                            {workoutResult.invalidExerciseCount !== undefined ?
-                                                `${workoutResult.validationRatio}% (${workoutResult.totalExercises - workoutResult.invalidExerciseCount}/${workoutResult.totalExercises})` :
-                                                '검사 안함'
+                                            정확: {similarExercises.filter(ex => ex.matchType === 'exact').length}개, 
+                                            유사: {similarExercises.filter(ex => ex.matchType === 'similar').length}개, 
+                                            실패: {similarExercises.filter(ex => ex.matchType === 'none').length}개
+                                        </InfoValue>
+                                    </InfoItem>
+                                )}
+                                {/* AItest.jsx 방식의 추가 디버그 정보 */}
+                                {workoutResult && (
+                                    <>
+                                        <InfoItem>
+                                            <InfoLabel>운동명 유효성 검사</InfoLabel>
+                                            <InfoValue>
+                                                {workoutResult.invalidExerciseCount !== undefined ?
+                                                    `${workoutResult.validationRatio}% (${workoutResult.totalExercises - workoutResult.invalidExerciseCount}/${workoutResult.totalExercises})` :
+                                                    '검사 안함'
+                                                }
+                                            </InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>근육군 분석</InfoLabel>
+                                            <InfoValue>{workoutResult.muscleGroups?.length ? `${workoutResult.muscleGroups.join(', ')}` : '없음'}</InfoValue>
+                                        </InfoItem>
+                                    </>
+                                )}
+                                {/* 새로운 로그 구조 정보 */}
+                                {log.parsed_userMassage && (
+                                    <InfoItem>
+                                        <InfoLabel>분할 루틴 정보</InfoLabel>
+                                        <InfoValue>
+                                            {log.parsed_userMassage.split ? 
+                                                `${log.parsed_userMassage.split}분할 (${log.parsed_userMassage.isSplit ? '적용' : '미적용'})` : 
+                                                '없음'
                                             }
                                         </InfoValue>
                                     </InfoItem>
+                                )}
+                                {log.parsed_userMassage?.disease && (
                                     <InfoItem>
-                                        <InfoLabel>근육군 분석</InfoLabel>
-                                        <InfoValue>{workoutResult.muscleGroups?.length ? `${workoutResult.muscleGroups.join(', ')}` : '없음'}</InfoValue>
+                                        <InfoLabel>질병/부상 정보</InfoLabel>
+                                        <InfoValue>{log.parsed_userMassage.disease}</InfoValue>
                                     </InfoItem>
-                                </>
-                            )}
-                            {/* 새로운 로그 구조 정보 */}
-                            {log.parsed_userMassage && (
-                                <InfoItem>
-                                    <InfoLabel>분할 루틴 정보</InfoLabel>
+                                )}
+                                <InfoItem style={{ gridColumn: '1 / -1' }}>
+                                    <InfoLabel>로그 필드들</InfoLabel>
                                     <InfoValue>
-                                        {log.parsed_userMassage.split ? 
-                                            `${log.parsed_userMassage.split}분할 (${log.parsed_userMassage.isSplit ? '적용' : '미적용'})` : 
-                                            '없음'
-                                        }
+                                        <pre>{JSON.stringify({
+                                            hasUserInput: !!log.parsed_userMassage,
+                                            hasResponse: !!log.apilog_response,
+                                            hasParsedResponse: !!log.parsed_response,
+                                            hasParsedUserMessage: !!log.parsed_userMassage,
+                                            hasFeedback: !!log.apilog_feedback,
+                                            userId: log.user_id,
+                                            totalTime: log.apilog_total_time ? `${log.apilog_total_time}s` : 'N/A',
+                                            split: log.parsed_userMassage?.split || 'N/A',
+                                            isSplit: log.parsed_userMassage?.isSplit || false
+                                        }, null, 2)}</pre>
                                     </InfoValue>
                                 </InfoItem>
-                            )}
-                            {log.parsed_userMassage?.disease && (
-                                <InfoItem>
-                                    <InfoLabel>질병/부상 정보</InfoLabel>
-                                    <InfoValue>{log.parsed_userMassage.disease}</InfoValue>
-                                </InfoItem>
-                            )}
-                            <InfoItem style={{ gridColumn: '1 / -1' }}>
-                                <InfoLabel>로그 필드들</InfoLabel>
-                                <InfoValue>
-                                    <pre>{JSON.stringify({
-                                        hasUserInput: !!log.parsed_userMassage,
-                                        hasResponse: !!log.apilog_response,
-                                        hasParsedResponse: !!log.parsed_response,
-                                        hasParsedUserMessage: !!log.parsed_userMassage,
-                                        hasFeedback: !!log.apilog_feedback,
-                                        userId: log.user_id,
-                                        totalTime: log.apilog_total_time ? `${log.apilog_total_time}s` : 'N/A',
-                                        split: log.parsed_userMassage?.split || 'N/A',
-                                        isSplit: log.parsed_userMassage?.isSplit || false
-                                    }, null, 2)}</pre>
-                                </InfoValue>
-                            </InfoItem>
-                        </InfoGrid>
-                    </Section>
+                            </InfoGrid>
+                        </Section>
+                    )}
                 </ModalBody>
             </ModalContainer>
         </ModalOverlay>

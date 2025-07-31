@@ -96,8 +96,6 @@ const Wrapper = styled.div`
   max-width: 900px;
   margin: 0 auto;
   padding: 40px 20px;
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
 `;
 
 const Title = styled.h1`
@@ -113,12 +111,28 @@ const Category = styled.p`
 
 const ImageSection = styled.div`
   margin-bottom: 30px;
+  position: relative;
+  width: 100%;
+  max-width: 502px;
+  aspect-ratio: 1 / 1; /* 정사각형 */
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: auto;
+
   img {
-    max-width: 100%;
-    height: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
     border-radius: 8px;
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-light);
+  }
+
+  @media (max-width: 540px) {
+    max-width: 90vw;
   }
 `;
 
@@ -172,14 +186,10 @@ const RecommendCard = styled.div`
   gap: 20px;
   align-items: center;
   padding: 16px;
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s ease;
-
-  &:hover {
-    background-color: var(--bg-secondary);
-  }
 
   img {
     width: 120px;

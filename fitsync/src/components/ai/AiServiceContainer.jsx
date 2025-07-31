@@ -322,7 +322,7 @@ const AiServiceContainer = () => {
                     available={
                         subscriptionData
                             ? (
-                                (subscriptionData.totalCost < 3 && subscriptionData.isSubscriber) ||
+                                (subscriptionData.totalCost < 5 && subscriptionData.isSubscriber) ||
                                 (!subscriptionData.isSubscriber && !subscriptionData.isLog)
                             )
                             : false
