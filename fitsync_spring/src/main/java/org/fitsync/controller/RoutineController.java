@@ -108,25 +108,45 @@ public class RoutineController {
 	// 루틴 등록
 	@PostMapping("/add")
 	public ResponseEntity<?> insertRoutine(
-			@RequestBody Map<String, Object> body,
-			HttpSession session) {
+	        @RequestBody Map<String, Object> body,
+	        HttpSession session) {
 
-		Map<String, Object> result = new HashMap<>();
-		Object sessionIdx = session.getAttribute("member_idx");
-		if (sessionIdx == null) {
-			result.put("success", false);
-			result.put("msg", "인증 정보가 없습니다.");
-			return ResponseEntity.status(401).body(result);
-		}
+	    Map<String, Object> result = new HashMap<>();
+	    Object sessionIdx = session.getAttribute("member_idx");
+	    System.out.println("writer_idx = " + sessionIdx);
+	    if (sessionIdx == null) {
+	        result.put("success", false);
+	        result.put("msg", "인증 정보가 없습니다.");
+	        return ResponseEntity.status(401).body(result);
+	    }
 
-		int memberIdx = Integer.parseInt(sessionIdx.toString());
-		
-		service.insertRoutine(body, (int) sessionIdx);
-		result.put("success", true);
-		result.put("msg", "루틴이 등록되었습니다.");
-		return ResponseEntity.ok(result);
+	    int sessionMemberIdx = Integer.parseInt(sessionIdx.toString());
+
+	    int targetMemberIdx;
+	    Object memberIdxObj = body.get("member_idx");
+
+	    if (memberIdxObj != null && !memberIdxObj.toString().isEmpty()) {
+	        try {
+	            System.out.println("try 호출 됨" + memberIdxObj + "ㅁㄴㅇ" + sessionMemberIdx);
+	        	targetMemberIdx = Integer.parseInt(memberIdxObj.toString());
+	        } catch (NumberFormatException e) {
+	            result.put("success", false);
+	            result.put("msg", "잘못된 회원 번호 형식입니다.");
+	            return ResponseEntity.status(400).body(result);
+	        }
+	    } else {
+	    	targetMemberIdx = sessionMemberIdx;
+	    }
+	    
+	    body.put("writer_idx", sessionMemberIdx);
+	    
+	    service.insertRoutine(body, targetMemberIdx);
+
+	    result.put("success", true);
+	    result.put("msg", "루틴이 등록되었습니다.");
+	    return ResponseEntity.ok(result);
 	}
-	
+
 	// 루틴 삭제
 	@DeleteMapping("/delete/{routine_list_idx}")
 	public ResponseEntity<?> deleteRoutine(@PathVariable int routine_list_idx, HttpSession session) {

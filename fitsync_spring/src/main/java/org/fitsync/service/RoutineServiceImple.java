@@ -70,74 +70,84 @@ public class RoutineServiceImple implements RoutineService {
 	public boolean insertRoutine(Map<String, Object> body, int member_idx) {
 	    int result = 0;
 	    try {
+	        int targetMemberIdx = member_idx;
+	        if (body.get("member_idx") != null && !body.get("member_idx").toString().isBlank()) {
+	            targetMemberIdx = Integer.parseInt(body.get("member_idx").toString());
+	        }
+
+	        int writerIdx = body.get("writer_idx") != null && !body.get("writer_idx").toString().isBlank()
+	        	    ? Integer.parseInt(body.get("writer_idx").toString())
+	        	    : member_idx;
+
 	        // RoutineListVO 등록
-	        RoutineListVO rlvo = new RoutineListVO();
-	        rlvo.setRoutine_name(body.get("routine_name") != null && body.get("routine_name") != "" ? (String) body.get("routine_name") : " ");
-	        rlvo.setWriter_idx(body.get("writer_idx") != null && body.get("writer_idx") != "" ? (int) body.get("writer_idx") : member_idx);
-	        rlvo.setMember_idx(body.get("member_idx") != null && body.get("member_idx") != "" ? (int) body.get("member_idx") : member_idx);
+	       RoutineListVO rlvo = new RoutineListVO();
+	       	rlvo.setRoutine_name(body.get("routine_name") != null && !body.get("routine_name").toString().isBlank()
+	        ? body.get("routine_name").toString() : " ");
+	       	rlvo.setWriter_idx(writerIdx);
+	       	rlvo.setMember_idx(targetMemberIdx);
 	        result += rlmapper.insert(rlvo);
-	        
-	        int routine_list_idx = rlmapper.getIdx(member_idx);
+
+	        int routine_list_idx = rlmapper.getIdx(targetMemberIdx);
 
 	        if (result != 1) {
 	            throw new RuntimeException("RoutineList insert failed");
 	        }
+
 	        List<Map<String, Object>> routines = (List<Map<String, Object>>) body.get("routines");
-	        
 	        int routineResult = 0;
+
 	        for (Map<String, Object> data : routines) {
-	            // RoutineVO 등록
 	            RoutineVO rvo = new RoutineVO();
 	            rvo.setPt_idx((int) data.get("pt_idx"));
 	            rvo.setRoutine_list_idx(routine_list_idx);
-	            rvo.setRoutine_memo(data.get("routine_memo") != null && !data.get("routine_memo").equals("") ? (String) data.get("routine_memo") : "");
-	            
-	            routineResult += rmapper.insert(rvo); // 루틴 운동 등록
+	            rvo.setRoutine_memo(data.get("routine_memo") != null && !data.get("routine_memo").equals("")
+	                    ? data.get("routine_memo").toString() : "");
+	            routineResult += rmapper.insert(rvo);
+
 	            int routine_idx = rmapper.getIdx(routine_list_idx);
 	            List<Map<String, Object>> sets = (List<Map<String, Object>>) data.get("sets");
+
 	            if (sets.size() > 0) {
 	                RoutineSetVO rsvo = new RoutineSetVO();
 	                int setResult = 0;
+
 	                for (Map<String, Object> set : sets) {
-	                	rsvo.setRoutine_idx(routine_idx);
-	                	Object setVolumeObj = set.get("set_volume");
-	                	rsvo.setSet_volume(safeIntParse(setVolumeObj));
-	                	Object setCountObj = set.get("set_count");
-	                	rsvo.setSet_count(safeIntParse(setCountObj));	  
-	                	rsvo.setRoutine_list_idx(routine_list_idx);
-	                	
-	                	setResult += rsmapper.insert(rsvo); // 세트 등록
-					}
-	                // 세트 등록 실패 시 롤백
+	                    rsvo.setRoutine_idx(routine_idx);
+	                    rsvo.setSet_volume(safeIntParse(set.get("set_volume")));
+	                    rsvo.setSet_count(safeIntParse(set.get("set_count")));
+	                    rsvo.setRoutine_list_idx(routine_list_idx);
+	                    setResult += rsmapper.insert(rsvo);
+	                }
+
 	                if (setResult != sets.size()) {
 	                    throw new RuntimeException("Set insert failed for routine_idx: " + routine_idx);
 	                }
 	            }
 	        }
-	        
-	        RoutineArrVO str = rlmapper.sortGet(member_idx);
+
+	        RoutineArrVO str = rlmapper.sortGet(targetMemberIdx);
 	        RoutineArrVO arrvo = new RoutineArrVO();
-	        if(str != null) {
-	        	arrvo.setMember_idx(member_idx);
-	        	arrvo.setRoutine_arr(str.getRoutine_arr() +","+ Integer.toString(routine_list_idx));
-	        	rlmapper.sortUpdate(arrvo);
-	        }else {
-	        	arrvo.setMember_idx(member_idx);
-	        	arrvo.setRoutine_arr(Integer.toString(routine_list_idx));
-	        	rlmapper.insertSort(arrvo);
+	        if (str != null) {
+	            arrvo.setMember_idx(targetMemberIdx);
+	            arrvo.setRoutine_arr(str.getRoutine_arr() + "," + routine_list_idx);
+	            rlmapper.sortUpdate(arrvo);
+	        } else {
+	            arrvo.setMember_idx(targetMemberIdx);
+	            arrvo.setRoutine_arr(Integer.toString(routine_list_idx));
+	            rlmapper.insertSort(arrvo);
 	        }
 
-	        
-	        // 루틴 등록 실패 시 롤백
 	        if (routineResult != routines.size()) {
 	            throw new RuntimeException("Routine insert failed for some routines");
 	        }
 	    } catch (Exception e) {
-	        throw e; // 예외를 다시 던져 트랜잭션 롤백을 강제
+	        throw e;
 	    }
 
 	    return result == 3;
 	}
+
+
 	
 	@Override
 	public boolean deleteRoutine(RoutineMemberDTO rmdto) {

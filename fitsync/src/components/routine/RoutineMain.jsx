@@ -205,7 +205,10 @@ const RoutineMain = () => {
   const prev = query.get("prev");
   const targetDate = query.get("date");
   
+  const targetIdx = location.state?.targetMember;
+  console.log(targetIdx);
 
+  
   // 헤더 변경 여부
   const changeHeader = 
   location.pathname !== `/routine/detail/${routine_list_idx}` && 
@@ -288,16 +291,22 @@ const RoutineMain = () => {
   },[tempData]);
 
   // 루틴 추가
-  const handleRoutineResponse = async () => {
-    if(!routineData.routine_name || routineData.routine_name === "") {
-      alert("루틴명을 작성해주세요.");
-      return;
-    }
-    
+const handleRoutineResponse = async () => {
+  if(!routineData.routine_name || routineData.routine_name === "") {
+    alert("루틴명을 작성해주세요.");
+    return;
+  }
+
+    const routineDataWithTarget = {
+      ...routineData,
+      ...(targetIdx ? { member_idx: targetIdx } : {}),
+    };
+    console.log('targetIdx:', targetIdx);
+    console.log('routineDataWithTarget:', routineDataWithTarget);
     try {
       const response = await axios.post(
         "/routine/add",
-        routineData,
+        routineDataWithTarget,
         { withCredentials: true }
       );
       const result = response.data;
@@ -313,7 +322,7 @@ const RoutineMain = () => {
     } catch (error) {
       console.error("루틴 등록 오류:", error);
     }
-  }
+  };
   
   const handleDataSubmit = () => {
     handleRoutineResponse();
@@ -513,17 +522,24 @@ const RoutineMain = () => {
   }
 
 
-  useEffect(() => {
-    if (pendingNav) {
-      const path = prev !== null ? prev : 
-          location.pathname === '/routine/set' ?
-          '/routine/add?prev=/routine/set' :
-          "/routine/set";
-      nav(path);
-      setPendingNav(false);
-    }
-    // eslint-disable-next-line
-  }, [pendingNav, nav]);
+    useEffect(() => {
+      if (pendingNav) {
+        const path = prev !== null
+          ? prev
+          : location.pathname === '/routine/set'
+            ? '/routine/add?prev=/routine/set'
+            : '/routine/set';
+
+        nav(path, {
+          state: {
+            targetMember: targetIdx,
+          },
+        });
+
+        setPendingNav(false);
+      }
+      // eslint-disable-next-line
+    }, [pendingNav, nav]);
 
   // 루틴 운동 등록
   const handleButton = () => {
