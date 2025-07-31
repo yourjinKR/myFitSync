@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import RoutineList from './RoutineList';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import Routine from './Routine';
 
@@ -68,7 +68,14 @@ const MoreCTA = styled.button`
 const RoutineView = () => {
   const { tempData, setTempData } = useOutletContext();
   const [isView, setIsView] = useState(2); // 최대 노출 개수
-
+  
+  const location = useLocation();
+  const { state } = location;
+  const isTrainerView = state?.viewer === 'trainer';
+  const targetMemberIdx = state?.targetMember;
+  console.log(isTrainerView, targetMemberIdx);
+  
+  
   const nav = useNavigate();
   const handleAddRoutine = (type) => {
     if (type === "custom") {
@@ -108,7 +115,10 @@ const RoutineView = () => {
         <div className='section-top'>
           <h3>내 루틴</h3>
         </div>
-        <RoutineList handleAddRoutine={handleAddRoutine}/>
+        <RoutineList
+          handleAddRoutine={handleAddRoutine}
+          targetMemberIdx={isTrainerView ? targetMemberIdx : null}
+        />
       </>
 
     </RoutineWrapper>

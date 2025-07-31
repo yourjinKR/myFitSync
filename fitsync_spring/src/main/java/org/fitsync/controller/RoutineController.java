@@ -52,17 +52,12 @@ public class RoutineController {
 			return ResponseEntity.ok(result);
 		}
 	}
-	// 루틴 리스트
+	// 내 루틴 리스트 조회용 
 	@GetMapping("/getList")
-	public ResponseEntity<?> getRoutineList(@RequestParam int targetIdx, HttpSession session){
+	public ResponseEntity<?> getRoutineList(HttpSession session){
 		Map<String, Object> result = new HashMap<>();
 		List<RoutineListVO> list = null;
-	    System.out.println("targetIdx" +  targetIdx);
-		if (targetIdx == 0) {
-			targetIdx = (int) session.getAttribute("member_idx");
-	    }
-
-	    list = service.getRoutineList(targetIdx);
+		list = service.getRoutineList((int) session.getAttribute("member_idx"));
 		if(list != null && list.size() > 0) {
 			result.put("success", true);
 			result.put("vo", list);
@@ -71,6 +66,20 @@ public class RoutineController {
 		}
 		return ResponseEntity.ok(result); 
 		
+	}
+	// 트레이너 -> 내 회원 루틴 리스트 조회용
+	@GetMapping("/getList/{memberIdx}")
+	public ResponseEntity<?> getRoutineListByTrainer(@PathVariable("memberIdx") int memberIdx) {
+	    Map<String, Object> result = new HashMap<>();
+	    List<RoutineListVO> list = service.getRoutineList(memberIdx);
+
+	    if (list != null && !list.isEmpty()) {
+	        result.put("success", true);
+	        result.put("vo", list);
+	    } else {
+	        result.put("success", false);
+	    }
+	    return ResponseEntity.ok(result);
 	}
 	
 	// 루틴 운동 VIEW

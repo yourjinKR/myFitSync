@@ -67,27 +67,40 @@ const RoutineAddCTA = styled.button.withConfig({
   }
 `;
 
-const RoutineList = ({ handleAddRoutine }) => {
+const RoutineList = ({ handleAddRoutine, targetMemberIdx  }) => {
   const [initList, setInitList] = useState([]);
   const [routinelist, setRoutinelist] = useState([]);
   const [sort, setSort] = useState([]);
   const [heightData, setHeightData] = useState(0);
+  const targetIdx = targetMemberIdx || null;
 
+  
   // API에서 데이터 받아오는 함수
-  const handleRoutineResponse = async () => {
-    const response = await axios.get("/routine/getList", { withCredentials: true });
+const handleRoutineResponse = async () => {
+  try {
+    const response = await axios.get(
+      targetIdx ? `/routine/getList/${targetIdx}` : `/routine/getList`,
+      { withCredentials: true }
+    );
     const data = response.data;
     const vo = data.vo;
 
-    if (vo !== undefined && vo.length !== 0) {
-      vo.map((item, idx) => {
-        item.routine_list_idx = sort[idx] || item.routine_list_idx; // sort 배열에 있는 순서대로 idx를 설정
+    if (vo && vo.length !== 0) {
+      const sorted = vo.map((item, idx) => {
+        item.routine_list_idx = sort[idx] || item.routine_list_idx;
         return item;
-      })
+      });
+
+      setInitList(sorted);
+      setRoutinelist(sorted);
+    } else {
+      setInitList([]);
+      setRoutinelist([]);
     }
-    setInitList(vo);
-    setRoutinelist(vo);
-  };
+  } catch (err) {
+    console.error("루틴 리스트 불러오기 실패:", err);
+  }
+};
 
   // 정렬된 순서를 서버에 업데이트하는 함수
   const handleSortUpdate = async (newSort) => {
