@@ -106,7 +106,7 @@ public class AIController {
 	        	if (isLog) return ResponseEntity.badRequest().body(new ApiResponseDTO("미구독 유저입니다.", null));
 	        	System.out.println("최초 1회 요청 서비스 실행함");
 	        }
-	        else if (isSub && (double)subStatus.get("totalCost") > 3) {
+	        else if (isSub && (double)subStatus.get("totalCost") > 5) {
 	        	return ResponseEntity.badRequest()
 		                .body(new ApiResponseDTO("사용량이 초과되어 서비스를 사용할 수 없습니다.", null));
 	        } 

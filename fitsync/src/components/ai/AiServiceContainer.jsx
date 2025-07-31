@@ -174,7 +174,7 @@ const AiServiceContainer = () => {
     const handleGenerateRoutine = async (inputData) => {
         console.log(subscriptionData.totalCost);
         
-        if (subscriptionData.totalCost > 3) {
+        if (subscriptionData.totalCost > 5) {
             alert('사용량이 초과되어 사용할 수 없음');
             return;
         }

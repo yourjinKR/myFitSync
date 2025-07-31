@@ -1288,7 +1288,7 @@ const SubscriptionMain = () => {
               <ProgressLabel>사용량</ProgressLabel>
                 <ProgressDays>
                   {subscriptionData?.totalCost >= 0
-                    ? `${Math.min(100, ((subscriptionData.totalCost / 3) * 100)).toFixed(2)}% 사용`
+                    ? `${Math.min(100, ((subscriptionData.totalCost / 5) * 100)).toFixed(2)}% 사용`
                     : '사용량 계산 중'}
                 </ProgressDays>
             </ProgressHeader>
@@ -1297,7 +1297,7 @@ const SubscriptionMain = () => {
               <ProgressBarFill 
                 $percentage={
                   subscriptionData.totalCost > 0 
-                    ? Math.min(100, Math.min(100, (subscriptionData.totalCost / 3) * 100)) 
+                    ? Math.min(100, Math.min(100, (subscriptionData.totalCost / 5) * 100)) 
                     : 0
                 }
               />

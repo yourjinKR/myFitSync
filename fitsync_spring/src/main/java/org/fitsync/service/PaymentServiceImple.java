@@ -11,6 +11,7 @@ import org.fitsync.mapper.ApiLogMapper;
 import org.fitsync.mapper.PaymentMethodMapper;
 import org.fitsync.mapper.PaymentOrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,9 @@ public class PaymentServiceImple implements PaymentService {
 
 	@Autowired
 	private ApiLogMapper apiLogMapper;
+	
+	@Value("${payment.subscribe.cost}")
+    private int subscribeCost;
 	
 	/**
 	 * DB 연결 및 매퍼 상태 테스트
@@ -342,7 +346,7 @@ public class PaymentServiceImple implements PaymentService {
 			order.setOrder_type("DIRECT");
 			order.setOrder_status("READY");
 			order.setOrder_name("FitSync Premium");
-			order.setOrder_price(3000);
+			order.setOrder_price(subscribeCost);
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
 			
@@ -378,7 +382,7 @@ public class PaymentServiceImple implements PaymentService {
 
 			// 3. PortOne API 호출
 			HttpResponse<String> response = portOneApiClient.payWithBillingKey(
-				paymentId, billingKey, channelKey, "fitsync 구독", 3000
+				paymentId, billingKey, channelKey, "fitsync 구독", subscribeCost
 			);
 	    		
 	    	// 4. 응답 처리 및 주문 상태 업데이트
@@ -545,7 +549,7 @@ public class PaymentServiceImple implements PaymentService {
 			// 3. PortOne API 호출 먼저 실행
 			log.info("=== PortOne API 호출 시작 ===");
 			HttpResponse<String> response = portOneApiClient.createPaymentSchedule(
-				paymentId, billingKey, channelKey, "FitSync Premium", 3000, apiTimeToPay
+				paymentId, billingKey, channelKey, "FitSync Premium", subscribeCost, apiTimeToPay
 			);
 			
 			// 4. API 응답 처리
@@ -676,7 +680,7 @@ public class PaymentServiceImple implements PaymentService {
 		order.setOrder_type("SCHEDULE");
 		order.setOrder_status("READY"); // 초기 상태
 		order.setOrder_name("FitSync Premium");
-		order.setOrder_price(3000);
+		order.setOrder_price(subscribeCost);
 		order.setOrder_currency("KRW");
 		order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
 		order.setOrder_provider(method.getMethod_provider());
@@ -1491,7 +1495,7 @@ public class PaymentServiceImple implements PaymentService {
 					", ChannelKey: " + channelKey + ", ScheduleTime: " + scheduleDateTime);
 			
 			HttpResponse<String> createResponse = portOneApiClient.createPaymentSchedule(
-				newPaymentId, billingKey, channelKey, "FitSync Premium", 3000, scheduleDateTime
+				newPaymentId, billingKey, channelKey, "FitSync Premium", subscribeCost, scheduleDateTime
 			);
 			
 			if (!portOneApiClient.isSuccessResponse(createResponse)) {

@@ -42,7 +42,7 @@ public class KakaoPayService {
         requestBody.put("partner_user_id", "구독자 테스트");
         requestBody.put("item_name", "구독권");
         requestBody.put("quantity", 1);
-        requestBody.put("total_amount", 3000);
+        requestBody.put("total_amount", 5000);
         requestBody.put("vat_amount", 0);
         requestBody.put("tax_free_amount", 0);
         requestBody.put("approval_url", "http://localhost:3000/payment/kakao");
