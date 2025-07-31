@@ -386,45 +386,39 @@ export const useWebSocket = () => {
     }
   }, [client, connected, isMessageProcessed]);
 
-  // 읽음 처리 로직 개선
+  // 개별 읽음 처리 로직
   const markAsReadTimeoutRef = useRef(null);
   const markAsRead = useCallback((message_idx, room_idx) => {
-    console.log('👁️ 읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
+    console.log('👁️ 개별 읽음 처리 시도:', { message_idx, room_idx }, '연결 상태:', connected);
     
     const sessionMemberIdx = sessionStorage.getItem('chat_member_idx');
     const memberIdx = sessionMemberIdx ? parseInt(sessionMemberIdx) : null;
     
     if (client && connected && memberIdx && !isConnectingRef.current) {
-      // 연속된 읽음 처리 요청을 묶어서 처리
-      if (markAsReadTimeoutRef.current) {
-        clearTimeout(markAsReadTimeoutRef.current);
-      }
       
-      markAsReadTimeoutRef.current = setTimeout(() => {
-        // 타입 안전성 보장
-        const readData = {
-          message_idx: parseInt(message_idx),
-          room_idx: parseInt(room_idx),
-          receiver_idx: memberIdx,
-          timestamp: Date.now()
-        };
-        
-        console.log('📖 최종 읽음 처리 데이터 (타입 안전):', readData);
-        
-        try {
-          client.publish({
-            destination: '/app/chat.read',
-            body: JSON.stringify(readData)
-          });
-          console.log('✅ 읽음 처리 완료');
-        } catch (error) {
-          console.error('❌ 읽음 처리 실패:', error);
-        }
-      }, 300); // 300ms 디바운싱
+      // 타입 안전성 보장
+      const readData = {
+        message_idx: parseInt(message_idx),
+        room_idx: parseInt(room_idx),
+        receiver_idx: memberIdx,
+        timestamp: Date.now()
+      };
+      
+      console.log('📖 개별 읽음 처리 데이터 (즉시 전송):', readData);
+      
+      try {
+        client.publish({
+          destination: '/app/chat.read',
+          body: JSON.stringify(readData)
+        });
+        console.log('✅ 개별 읽음 처리 완료 (message_idx:', message_idx, ')');
+      } catch (error) {
+        console.error('❌ 개별 읽음 처리 실패:', error);
+      }
       
     } else {
       console.warn('⚠️ WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
-      console.warn('읽음 처리 상태:', { client: !!client, connected, memberIdx, isConnecting: isConnectingRef.current });
+      console.warn('개별 읽음 처리 상태:', { client: !!client, connected, memberIdx, isConnecting: isConnectingRef.current });
     }
   }, [client, connected]);
 

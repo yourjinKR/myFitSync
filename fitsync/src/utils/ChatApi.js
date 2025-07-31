@@ -155,6 +155,32 @@ const chatApi = {
     }
   },
 
+  // 복합 할인 매칭 가격 계산 API
+  calculateMatchingPrice: async (matching_total) => {
+    try {
+      console.log('💰 복합 할인 가격 계산 API 호출:', matching_total + '회');
+      const response = await axios.get(`/api/chat/matching/price/${matching_total}`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        if (response.data.price === -1) {
+          console.log('⚠️ 복합 할인 가격 계산 성공 - 가격미정 (lesson 데이터 없음)');
+        } else {
+          console.log('✅ 복합 할인 가격 계산 성공:', response.data.price.toLocaleString() + '원');
+          console.log('📊 평균 단가:', Math.round(response.data.price / matching_total).toLocaleString() + '원/회');
+        }
+        return response.data;
+      } else {
+        console.error('❌ 복합 할인 가격 계산 실패:', response.data.message);
+        throw new Error(response.data.message);
+      }
+    } catch (error) {
+      console.error('❌ 복합 할인 가격 계산 API 오류:', error);
+      throw error;
+    }
+  },
+
   // 캐시 관리 유틸리티 함수들
   clearMatchingStatusCache: () => {
     matchingStatusCache.clear();

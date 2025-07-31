@@ -192,7 +192,7 @@ const MessageList = ({
     return shouldShow;
   };
 
-  // 연속 메시지 판단 로직
+  // 연속 메시지 판단 로직 (화면 표시용)
   const isConsecutiveMessage = (currentMessage, previousMessage) => {
     if (!previousMessage) return false;
     
@@ -317,6 +317,8 @@ const MessageList = ({
         const previousMessage = messages[index - 1];
         const nextMessage = messages[index + 1];
         const isConsecutive = isConsecutiveMessage(message, previousMessage);
+        
+        // 화면 표시용 그룹 판단 (읽음 상태 표시 여부 결정)
         const isLastMessage = isLastInGroup(message, nextMessage);
         const otherPersonInfo = getOtherPersonInfo(message, isConsecutive);
         

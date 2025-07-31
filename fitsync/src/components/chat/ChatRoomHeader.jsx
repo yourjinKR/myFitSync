@@ -249,7 +249,7 @@ const ChatRoomHeader = ({
     }
   };
 
-  // 매칭 요청 처리 함수 개선 (DB 저장 방식)
+  // 복합 할인 매칭 요청 처리 함수
   const handleMatchingRequest = async (matchingTotal) => {
     
     setIsMatchingLoading(true);
@@ -260,6 +260,43 @@ const ChatRoomHeader = ({
       if (!otherPerson) {
         alert('상대방 정보를 찾을 수 없습니다.');
         return;
+      }
+
+      // 복합 할인 가격 계산 API 호출
+      let calculatedPrice = 0;
+      let priceText = '';
+      
+      try {
+        console.log('💰 복합 할인 가격 계산 시작 - PT 횟수:', matchingTotal + '회');
+        const priceResult = await chatApi.calculateMatchingPrice(matchingTotal);
+        
+        if (priceResult.success) {
+          calculatedPrice = priceResult.price;
+          
+          if (calculatedPrice === -1) {
+            // lesson 데이터가 없는 경우
+            priceText = ' 가격미정';
+            console.log('⚠️ 복합 할인 가격 계산 성공 - 가격미정 (lesson 데이터 없음)');
+          } else if (calculatedPrice > 0) {
+            // 정상적으로 가격이 계산된 경우 (복합 할인 적용)
+            priceText = ` 가격 ${calculatedPrice.toLocaleString()}원`;
+            console.log('✅ 복합 할인 가격 계산 성공:', calculatedPrice.toLocaleString() + '원');
+            
+            // 평균 단가 계산 및 로그
+            const averagePrice = Math.round(calculatedPrice / matchingTotal);
+            console.log('📊 복합 할인 적용 평균 단가:', averagePrice.toLocaleString() + '원/회');
+          } else {
+            // 예상치 못한 경우 (0원)
+            priceText = ' 가격미정';
+            console.log('⚠️ 복합 할인 가격 계산 결과 0원 - 가격미정으로 처리');
+          }
+        } else {
+          console.log('⚠️ 복합 할인 가격 계산 API 실패 - 가격미정으로 처리');
+          priceText = ' 가격미정';
+        }
+      } catch (priceError) {
+        console.error('❌ 복합 할인 가격 계산 실패:', priceError);
+        priceText = ' 가격미정'; // 가격 계산 실패 시 가격미정으로 처리
       }
 
       // 백엔드에서 매칭 생성
@@ -276,20 +313,22 @@ const ChatRoomHeader = ({
           matching_complete: result.matching.matching_complete
         };
         
-        // 표시용 메시지 내용 (매칭 데이터 분리)
-        const displayMessage = `PT ${matchingTotal}회 매칭 요청`;
+        // 복합 할인 가격 포함된 표시용 메시지 내용
+        const displayMessage = `PT ${matchingTotal}회 / ${priceText}`;
           
+        console.log('📝 최종 복합 할인 매칭 메시지:', displayMessage);
+        
         // 메시지 전송 (매칭 데이터는 별도 Map으로)
         if (onSendMessage) {
           await onSendMessage(
-            displayMessage,           // 표시용 메시지 내용
+            displayMessage,           // 복합 할인 가격 포함된 표시용 메시지 내용
             'matching_request',       // 메시지 타입
             null,                     // 파일 없음
             null,                     // 답장 없음
             matchingData              // 매칭 데이터 (Map 형태로 전달)
           );
           
-          console.log('✅ 매칭 요청 메시지 전송 완료 (DB 저장 방식)');
+          console.log('✅ 복합 할인 가격 포함 매칭 요청 메시지 전송 완료');
         }
           
         setShowMatchingModal(false);
@@ -300,7 +339,7 @@ const ChatRoomHeader = ({
       }
         
     } catch (error) {
-      console.error('❌ 매칭 요청 중 오류:', error);
+      console.error('❌ 복합 할인 매칭 요청 중 오류:', error);
       alert('매칭 요청 중 오류가 발생했습니다.');
     } finally {
       setIsMatchingLoading(false);
@@ -443,13 +482,13 @@ const ChatRoomHeader = ({
               {/* 채팅방 이름 */}
               <RoomTitle>{roomDisplayName}</RoomTitle>
               
-              {/* 매칭하기 버튼 */}
+              {/* 매칭요청 버튼 */}
               {shouldShowMatchingButton && (
                 <MatchingButton 
                   onClick={() => setShowMatchingModal(true)} 
                   disabled={isMatchingLoading}
                 >
-                  매칭하기
+                  매칭요청
                 </MatchingButton>
               )}
             </>

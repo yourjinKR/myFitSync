@@ -657,19 +657,28 @@ const ChatRoom = () => {
     }, 500);
   };
 
-  // 초기 읽음 처리
+  // 읽음 처리 함수
   const performInitialReadMark = () => {
     if (connected && currentMemberIdx && messages.length > 0 && !initialReadDone.current) {
       initialReadDone.current = true;
-      console.log('📖 초기 읽음 처리 시작');
+      console.log('📖 개별 읽음 처리 시작 - 모든 읽지 않은 메시지에 대해 개별 처리');
 
-      messages.forEach(msg => {
-        if (msg.receiver_idx === currentMemberIdx && !msg.message_readdate) {
+      // 읽지 않은 메시지들을 모두 찾아서 개별적으로 읽음 처리
+      const unreadMessages = messages.filter(msg => 
+        msg.receiver_idx === currentMemberIdx && !msg.message_readdate
+      );
+
+      console.log(`📖 개별 읽음 처리 대상: ${unreadMessages.length}개 메시지`);
+
+      // 각 메시지에 대해 개별적으로 읽음 처리 (WebSocket 호출)
+      unreadMessages.forEach((msg, index) => {
+        setTimeout(() => {
+          console.log(`📖 개별 읽음 처리 (${index + 1}/${unreadMessages.length}): message_idx=${msg.message_idx}`);
           markAsRead(msg.message_idx, parseInt(roomId, 10));
-        }
+        }, index * 50); // 50ms 간격으로 순차 처리하여 서버 부하 방지
       });
       
-      console.log('✅ 초기 읽음 처리 완료');
+      console.log('✅ 개별 읽음 처리 요청 완료');
     }
   };
 
@@ -726,8 +735,10 @@ const ChatRoom = () => {
             setTimeout(() => tryLoadAttachment(), 300);
           }
 
+          // 실시간 메시지 개별 읽음 처리
           if (newMessage.receiver_idx === currentMemberIdx) {
             setTimeout(() => {
+              console.log('📖 실시간 메시지 개별 읽음 처리:', newMessage.message_idx);
               markAsRead(newMessage.message_idx, parseInt(roomId));
             }, 100);
           }
