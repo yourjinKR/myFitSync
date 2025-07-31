@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useOutletContext, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
 import { CheckInput, Checklabel } from '../../styles/commonStyle';
@@ -340,6 +340,7 @@ const RoutineDetail = () => {
   const location = useLocation();
   const param = new URLSearchParams(location.search);
   const targetDate = param.get('date');
+  const nav = useNavigate();
 
 
   // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
@@ -721,7 +722,7 @@ const RoutineDetail = () => {
             <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
               <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
               <SetTop>
-                <img src={routine.imageUrl} alt={routine.pt.pt_name} />
+                <img src={routine.imageUrl} alt={routine.pt.pt_name} onClick={() => nav(`/workout/${routine.pt.pt_idx}`)}/>
                 <h4>{routine.pt.pt_name}</h4>
               </SetTop>
               <MemoInput

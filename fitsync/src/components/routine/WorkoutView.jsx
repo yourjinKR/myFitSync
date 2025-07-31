@@ -41,7 +41,7 @@ const WorkoutView = () => {
   }, [workout]);
 
   if (error) return <Wrapper>운동 정보를 불러오는 데 실패했습니다.</Wrapper>;
-  if (!workout) return <Wrapper>불러오는 중...</Wrapper>;
+  if (!workout) return <Wrapper></Wrapper>;
 
   const contentSteps = workout.pt_content?.split('|').map(step => step.trim()) || [];
 
