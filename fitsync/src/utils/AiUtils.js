@@ -76,7 +76,7 @@ const AiUtil = {
         }
     },
 
-    /** 로그 업데이트 */
+    /** 로그 예외 업데이트 */
     async updateLogException (log) {
         if (log.apilog_status_reason === null || log.apilog_status_reason === '') {
             log.apilog_status = 'success';
@@ -85,8 +85,18 @@ const AiUtil = {
         }
         console.log('업데이트할 로그:', log);
         try {
-            await axios.patch('/admin/updateExceptionReason', log)
+            await axios.patch('/admin/api/exception', log)
                 .then((res) => console.log('API 로그 업데이트 결과:', res.data));
+        } catch (error) {
+            console.error('API 로그 업데이트 실패:', error);
+        }
+    },
+
+    /** 로그 사용자 행동 분석 업데이트 */
+    async updateLogUserAction (log) {
+        try {
+            const response = await axios.patch('/admin/api/action', log);
+            console.log("사용자 행동 업데이트 : ", response);
         } catch (error) {
             console.error('API 로그 업데이트 실패:', error);
         }

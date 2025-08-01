@@ -110,6 +110,13 @@
 	    </set>
 	    WHERE apilog_idx = #{apilog_idx}
 	</update>
+	
+	<!-- 사용자 행동 분석 -->
+	<update id="updateUserAction" parameterType="org.fitsync.domain.ApiLogVO">
+	    UPDATE apilog
+	    SET apilog_user_action = #{apilog_user_action}
+	    WHERE apilog_idx = #{apilog_idx}
+	</update>
 
 	<!-- 구독 기간 중 AI 요청 사용량 -->
 	<select id="selectTokenUsageDuringLatestPaidOrder" parameterType="int" resultType="map">

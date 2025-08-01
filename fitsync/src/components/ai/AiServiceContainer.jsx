@@ -14,6 +14,7 @@ import { PaymentUtil } from '../../utils/PaymentUtil';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import useRequireLogin from '../../hooks/useRequireLogin';
+import { SAVED_NOW } from '../../reducers/type';
 
 const ServiceContainer = styled.div`
     max-width: 1000px;
@@ -229,6 +230,8 @@ const AiServiceContainer = () => {
         try {
             const changedNameAiResult = checkAllExerciseNames(aiResult, rawDataMap);
             console.log('변경된 AI 결과:', changedNameAiResult);
+
+            const response = await AiUtil.updateLogUserAction({apilog_idx : aiResult.logIdx, apilog_user_action : SAVED_NOW});
             
             await AiUtil.saveResult(changedNameAiResult, rawDataIdx, rawDataMap);
             
@@ -240,7 +243,7 @@ const AiServiceContainer = () => {
         }
     };
 
-    // 피드백 처리
+    /** 피드백 업데이트 */ 
     const handleFeedback = async (type, reason = null) => {
         try {
             const log = {
@@ -252,7 +255,7 @@ const AiServiceContainer = () => {
             console.log(log);
             
             // 피드백 API 호출 (실제 엔드포인트에 맞게 수정 필요)
-            await axios.patch('/admin/updateFeedBack', log, { withCredentials: true });
+            await axios.patch('/admin/api/feedback', log, { withCredentials: true });
             
             console.log('피드백 전송:', type, reason);
             setShowFeedbackModal(false);

@@ -101,6 +101,11 @@ public class ApiLogServiceImple implements ApiLogService{
 	}
 	
 	@Override
+	public int updateUserAction(ApiLogVO apiLogVO) {
+		return apiLogMapper.updateUserAction(apiLogVO);
+	}
+	
+	@Override
 	public List<ApiLogVO> getByMemberId(int memberIdx) {
 	    List<ApiLogVO> list = apiLogMapper.selectByMemberId(memberIdx);
 

@@ -72,7 +72,7 @@ public class AdminController {
     }
     
     
-	@PatchMapping(value = "/updateExceptionReason", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@PatchMapping(value = "/api/exception", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<String> updateExceptionReason(@RequestBody ApiLogVO log) {
 	    try {
 	    	apiLogService.updateExceptionReason(log);
@@ -82,7 +82,7 @@ public class AdminController {
 	    }
 	}
 	
-	@PatchMapping(value = "/updateFeedBack", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@PatchMapping(value = "/api/feedback", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<String> updateFeedBack(@RequestBody ApiLogVO log) {
 	    try {
 	    	apiLogService.updateFeedBack(log);
@@ -90,6 +90,16 @@ public class AdminController {
 	    } catch (Exception e) {
 	        return ResponseEntity.status(500).body("업데이트 실패: " + e.getMessage());
 	    }
+	}
+	
+	@PatchMapping(value = "/api/action", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	public ResponseEntity<String> updateUserAction(@RequestBody ApiLogVO log) {
+		try {
+			apiLogService.updateUserAction(log);
+			return ResponseEntity.ok("피드백 업데이트 완료");
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("업데이트 실패: " + e.getMessage());
+		}
 	}
 
 	

@@ -787,7 +787,10 @@ const HealthConditionSlide = ({ formData, setFormData }) => {
 const GoalsSlide = ({ formData, setFormData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    
+        setFormData(prev => ({ ...prev, [name]: name === 'split' ? Number(value) : value }));
+        console.log(formData);
+        
     };
 
     return (

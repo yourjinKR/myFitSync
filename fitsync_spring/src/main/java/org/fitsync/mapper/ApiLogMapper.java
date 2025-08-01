@@ -19,10 +19,12 @@ public interface ApiLogMapper {
     void updateExceptionReason(ApiLogVO apiLogVO);
     // 피드백 서버
     void updateFeedBack(ApiLogVO apiLogVO);
+    // 사용자 행동 분석
+    int updateUserAction(ApiLogVO apiLogVO);
     // 사용자 월별 토큰 사용량
     Map<String, Object> selectTokenUsageDuringLatestPaidOrder(int memberIdx);
     // 사용자별 AI 사용 여부 확인 (최초 1회 제공을 위해)
     ApiLogVO selectFirstRoutineLog(int memberIdx);
     // 회원별 api log
-    List<ApiLogVO> selectByMemberId(int memberIdx); 
+    List<ApiLogVO> selectByMemberId(int memberIdx);
 }

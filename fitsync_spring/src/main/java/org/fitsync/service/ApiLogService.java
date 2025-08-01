@@ -19,5 +19,7 @@ public interface ApiLogService {
     
     void updateFeedBack(ApiLogVO apiLogVO);
     
+    int updateUserAction(ApiLogVO apiLogVO);
+    
     List<ApiLogVO> getByMemberId(int memberIdx); 
 }

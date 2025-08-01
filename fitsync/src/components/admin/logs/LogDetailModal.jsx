@@ -35,6 +35,7 @@ import {
 import versionUtils from '../../../utils/utilFunc';
 import AiUtil from '../../../utils/AiUtils';
 import { FaDownload } from 'react-icons/fa';
+import { SAVED_AFTER } from '../../../reducers/type';
 
 // 로그 상세 모달 컴포넌트
 const LogDetailModal = ({
@@ -56,7 +57,8 @@ const LogDetailModal = ({
         
         const result = {content : log.parsed_response, logIdx : log.apilog_idx}
         try {
-            const response = await AiUtil.saveResult(result, rawDataIdx, rawDataMap);
+            const response1 = await AiUtil.saveResult(result, rawDataIdx, rawDataMap);
+            const response2 = await AiUtil.updateLogUserAction({apilog_idx : log.apilog_idx, apilog_user_action : SAVED_AFTER});
             alert('저장이 완료됐습니다!');
         } catch (error) {
             alert('결과물을 저장하지 못했습니다 ! ')
