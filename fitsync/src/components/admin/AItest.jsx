@@ -10,7 +10,6 @@ import {
     ExerciseGrid, ExerciseItem, ExerciseIcon, ExerciseContent, ExerciseName, ExerciseDetails,
     SimilarExercise, InvalidExerciseBadge, ErrorContainer, Section, SectionTitle
 } from '../../styles/chartStyle';
-import userMock from '../../mock/userMock';
 import versionUtils, { calculateAge } from '../../utils/utilFunc';
 import { normalizeAndDisassemble, getSimilarNamesByMap } from '../../utils/KorUtil';
 import { getMemberTotalData } from '../../utils/memberUtils';
@@ -656,7 +655,7 @@ const AItest = () => {
                         <MetaInfoItem>
                             <MetaInfoLabel>👤 사용자</MetaInfoLabel>
                             <MetaInfoValue>
-                                {memberData?.member?.member_name || userMock[memberIndex]?.member?.member_name || 'Unknown'}
+                                {memberData?.member?.member_name || 'Unknown'}
                             </MetaInfoValue>
                         </MetaInfoItem>
                     </MetaInfoGrid>
