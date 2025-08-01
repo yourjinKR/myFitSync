@@ -46,6 +46,7 @@ import Gym from '../components/admin/Gym';
 import WorkOut from '../components/admin/WorkOut';
 import WorkoutView from '../components/routine/WorkoutView';
 import UserApiLogContainerTest from '../components/ai/test/UserApiLogContainerTest';
+import axios from 'axios';
 
 
 const DisplayWrapper = styled.div`
@@ -58,8 +59,8 @@ const DisplayWrapper = styled.div`
   background: var(--bg-primary); /* CSS 변수 사용 */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 `;
-  
-  const DisplayInnner = styled.div`
+
+const DisplayInnner = styled.div`
   position: relative;
   overflow: auto;
   height: ${props => props.$isAdmin ? '100%' : 'calc( 100vh - 150px )'};
@@ -85,75 +86,86 @@ const Display = () => {
     }
   };
 
-  const isShow = 
+  const isShow =
     !location.pathname.includes("/routine/detail") &&
-    location.pathname !== '/routine/add' && 
+    location.pathname !== '/routine/add' &&
     location.pathname !== '/routine/set' &&
     location.pathname !== '/test123';
 
   const isAdmin = location.pathname.startsWith('/admin');
 
+  setInterval(() => {
+    axios.get('/auth/check', { withCredentials: true }).then(res => {
+      if (!res.data.isLogin) {
+        alert('로그인이 만료되었습니다!');
+      }
+    })
+    .catch(error => {
+      alert('인증 확인 중 오류가 발생했습니다.');
+    });
+  }, 30 * 60 * 1000); // 30분마다
+
   return (
     <DisplayWrapper $isAdmin={isAdmin}>
-      {isShow && <Header setIsOpen={setIsOpen}/>}
-      {isOpen ? <SideNav setIsOpen={setIsOpen}/> : <></>}
-      
+      {isShow && <Header setIsOpen={setIsOpen} />}
+      {isOpen ? <SideNav setIsOpen={setIsOpen} /> : <></>}
+
       <DisplayInnner $isShow={isShow} $isAdmin={isAdmin}>
         <Routes>
-          <Route path='/' element={<Main/>}/>
-          <Route path='/login' element={<Login/>}/>
-          <Route path='/Register' element={<Register/>}/>
-          <Route path="/body/input" element={<BodyInputForm/>} />
-          <Route path='/trainer/:trainerIdx' element={<TrainerMain/>}/>
-          <Route path='/trainer/view/:trainerIdx' element={<TrainerDetailView/>} />
-          <Route path='/trainer/search' element={<TrainerSearch/>}/>
-          <Route path='/routine' element={<RoutineMain/>}>
-            <Route path='view' element={<RoutineView />}/>
-            <Route path='add' element={<RoutineAdd />}/>
-            <Route path='set' element={<RoutineSet />}/>
-            <Route path='detail/:routine_list_idx' element={<RoutineDetail />}/>
+          <Route path='/' element={<Main />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/Register' element={<Register />} />
+          <Route path="/body/input" element={<BodyInputForm />} />
+          <Route path='/trainer/:trainerIdx' element={<TrainerMain />} />
+          <Route path='/trainer/view/:trainerIdx' element={<TrainerDetailView />} />
+          <Route path='/trainer/search' element={<TrainerSearch />} />
+          <Route path='/routine' element={<RoutineMain />}>
+            <Route path='view' element={<RoutineView />} />
+            <Route path='add' element={<RoutineAdd />} />
+            <Route path='set' element={<RoutineSet />} />
+            <Route path='detail/:routine_list_idx' element={<RoutineDetail />} />
           </Route>
-          <Route path='/mypage' element={<MyPage/>}/>
-          <Route path='/chat' element={<ChatMain/>}/>
-          <Route path='/chat/:roomId' element={<ChatRoom/>}/>
-          <Route path='/loading' element={<IsLoading/>}/>
-          <Route path='/BarbellLoading' element={<BarbellLoading/>}/>
-          <Route path='/ChatLoading' element={<ChatLoading/>}/>
-          <Route path='/Timer' element={<Timer/>}/>
-          <Route path='/workout/:ptId' element={<WorkoutView key={location.pathname}/>}/>
+          <Route path='/mypage' element={<MyPage />} />
+          <Route path='/chat' element={<ChatMain />} />
+          <Route path='/chat/:roomId' element={<ChatRoom />} />
+          <Route path='/loading' element={<IsLoading />} />
+          <Route path='/BarbellLoading' element={<BarbellLoading />} />
+          <Route path='/ChatLoading' element={<ChatLoading />} />
+          <Route path='/Timer' element={<Timer />} />
+          <Route path='/workout/:ptId' element={<WorkoutView key={location.pathname} />} />
 
-          <Route path='/ai' element={<AiServiceContainer/>}>
+          <Route path='/ai' element={<AiServiceContainer />}>
           </Route>
-          <Route path='/ai/test/input' element={<SlideInputFormTest/>}/>
-          <Route path='/ai/test/result' element={<ResponseResultPage resultData={{}}/>}/>
-          <Route path='/ai/test/total' element={<AIWorkoutService/>}/>
-          <Route path='/ai/userLog' element={<UserApiLogContainerTest/>}/>
+          <Route path='/ai/test/input' element={<SlideInputFormTest />} />
+          <Route path='/ai/test/result' element={<ResponseResultPage resultData={{}} />} />
+          <Route path='/ai/test/total' element={<AIWorkoutService />} />
+          <Route path='/ai/userLog' element={<UserApiLogContainerTest />} />
 
-          <Route path='/payment' element={<PaymentContainer/>}>
-            <Route path='test' element={<KaKaoPayTest/>}/>
-            <Route path='methods' element={<PaymentMethodList/>}/>
-            <Route path='register' element={<PaymentMethodRegister/>}/>
-            <Route path='history' element={<PaymentHistory/>}/>
-          </Route>
-
-          <Route path='/subscription' element={<SubscriptionContainer/>}>
-            <Route index element={<SubscriptionMain/>}/>
-            <Route path='methods' element={<SubscriptionPaymentMethods/>}/>
-            <Route path='history' element={<SubscriptionPaymentHistory/>}/>
+          <Route path='/payment' element={<PaymentContainer />}>
+            <Route path='test' element={<KaKaoPayTest />} />
+            <Route path='methods' element={<PaymentMethodList />} />
+            <Route path='register' element={<PaymentMethodRegister />} />
+            <Route path='history' element={<PaymentHistory />} />
           </Route>
 
-          <Route path='/admin' element={<AdminMain/>}>
-            <Route path='workout' element={<WorkOut/>}/>
-            <Route path='report' element={<Report/>}/>
-            <Route path='awards' element={<Awards/>}/>
-            <Route path='ai' element={<AItest/>}/>
-            <Route path='api' element={<AdminApiContainer/>}/>
-            <Route path='gym' element={<Gym/>}/>
+          <Route path='/subscription' element={<SubscriptionContainer />}>
+            <Route index element={<SubscriptionMain />} />
+            <Route path='methods' element={<SubscriptionPaymentMethods />} />
+            <Route path='history' element={<SubscriptionPaymentHistory />} />
+          </Route>
+
+          <Route path='/admin' element={<AdminMain />}>
+            <Route path='workout' element={<WorkOut />} />
+            <Route path='report' element={<Report />} />
+            <Route path='awards' element={<Awards />} />
+            <Route path='ai' element={<AItest />} />
+            <Route path='api' element={<AdminApiContainer />} />
+            <Route path='gym' element={<Gym />} />
           </Route>
 
         </Routes>
       </DisplayInnner>
-      {isShow && !isAdmin && <Nav/>}
+      {isShow && !isAdmin && <Nav />}
     </DisplayWrapper>
   );
 };

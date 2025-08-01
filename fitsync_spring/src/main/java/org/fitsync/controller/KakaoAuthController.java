@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.fitsync.domain.MemberVO;
+import org.fitsync.domain.ReportVO;
 import org.fitsync.service.MemberServiceImple;
+import org.fitsync.service.ReportServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +40,8 @@ public class KakaoAuthController {
 	@Autowired
 	private MemberServiceImple service;
 	@Autowired
+	private ReportServiceImple reportService;
+	@Autowired
 	private JwtUtil jwtUtil;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
@@ -64,8 +68,16 @@ public class KakaoAuthController {
 
 			MemberVO vo = service.getFindUser(email);
 			if (vo != null) {
-				// JWT 생성
-				String jwt = jwtUtil.generateToken(vo.getMember_idx());
+				// 제재 정보 확인
+            	ReportVO rvo = reportService.getBlockData(vo.getMember_idx());
+            	
+                // JWT 생성 (member_idx만 저장)
+            	String jwt = jwtUtil.generateToken(
+                    vo.getMember_idx(),
+                    rvo.getReport_time(),
+                    rvo.getBlock_count(),
+                    vo.getMember_email()
+                );
 
 				// 세션에 member_idx 저장
 				session.setAttribute("member_idx", vo.getMember_idx());
@@ -141,7 +153,16 @@ public class KakaoAuthController {
 
 	        MemberVO vo = service.getFindUser(email);
 	        if (vo != null) {
-	            String jwt = jwtUtil.generateToken(vo.getMember_idx());
+	        	// 제재 정보 확인
+            	ReportVO rvo = reportService.getBlockData(vo.getMember_idx());
+            	
+                // JWT 생성 (member_idx만 저장)
+            	String jwt = jwtUtil.generateToken(
+                    vo.getMember_idx(),
+                    rvo.getReport_time(),
+                    rvo.getBlock_count(),
+                    vo.getMember_email()
+                );
 	            session.setAttribute("member_idx", vo.getMember_idx());
 
 	            String cookieValue = "accessToken=" + jwt + "; HttpOnly; Path=/; Max-Age=" + (7 * 24 * 60 * 60) + "; SameSite=Lax";

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import axios from 'axios'; // axios 추가
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../action/userAction';
@@ -14,9 +14,9 @@ const KakaoButton = styled.button`
   background-color: #fee500;
   color: #000000;
   border: 2px solid #fee500;
-  border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 16px;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 1.6rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -24,17 +24,19 @@ const KakaoButton = styled.button`
   justify-content: center;
   gap: 12px;
   transition: all 0.2s ease;
-  min-height: 48px;
+  height: 56px;
   width: 100%;
-  
-  &:hover {
-    background-color: #fdd835;
-    border-color: #fdd835;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -42,6 +44,9 @@ const KakaoIcon = styled.svg`
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  path {
+    color : var(--text-black);
+  }
 `;
 
 const Spinner = styled.div`
@@ -56,10 +61,12 @@ const Spinner = styled.div`
 
 const ButtonText = styled.span`
   font-weight: 500;
+  font-size: 1.6rem;
+  color: var(--text-black);
 `;
 
-const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
-  const [loading, setLoading] = useState(false);
+const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure, setLoading }) => {
+  const [loading, setLocalLoading] = useState(false);
 
   const nav = useNavigate();
   const dispatch = useDispatch();
@@ -75,10 +82,10 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
     // eslint-disable-next-line
   }, []);
 
-  // 카카오 로그인 버튼 클릭
   const handleKakaoLogin = async () => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
+      setLoading && setLoading(true); // 추가
 
       const response = await axios.get('/auth/kakao/url');
       const data = response.data;
@@ -91,7 +98,8 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
         if (onLoginFailure) {
           onLoginFailure('로그인 URL을 가져오는데 실패했습니다.');
         }
-        setLoading(false);
+        setLocalLoading(false);
+        setLoading && setLoading(false); // 추가
       }
 
     } catch (err) {
@@ -99,14 +107,15 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
       if (onLoginFailure) {
         onLoginFailure('로그인 처리 중 오류가 발생했습니다.');
       }
-      setLoading(false);
+      setLocalLoading(false);
+      setLoading && setLoading(false); // 추가
     }
   };
 
-  // 카카오 콜백 처리
   const handleKakaoCallback = async (code) => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
+      setLoading && setLoading(true); // 추가
 
       const response = await axios.get(`/auth/kakao/callback?code=${code}`);
       const userData = response.data;
@@ -118,28 +127,15 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure }) => {
           nav('/');
       }
 
-      if (response.status === 200) {
-        // URL에서 code 파라미터 제거
-        window.history.replaceState({}, document.title, window.location.pathname);
-
-        // 로그인 성공 콜백 호출
-        if (onLoginSuccess) {
-          onLoginSuccess(userData);
-        }
-      } else {
-        console.error('로그인 처리 실패:', userData.message);
-        if (onLoginFailure) {
-          onLoginFailure(userData.message || '로그인 처리에 실패했습니다.');
-        }
-      }
+      // 성공 시에는 페이지 이동하므로 setLoading(false) 불필요
 
     } catch (err) {
       console.error('콜백 처리 오류:', err);
       if (onLoginFailure) {
         onLoginFailure('콜백 처리 중 오류가 발생했습니다.');
       }
-    } finally {
-      setLoading(false);
+      setLocalLoading(false);
+      setLoading && setLoading(false); // 추가
     }
   };
 

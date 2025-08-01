@@ -11,7 +11,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 public class AuthTokenFilter implements Filter {
@@ -25,9 +24,17 @@ public class AuthTokenFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        // JWT 검증 코드
+        
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
+        
+        String requestURI = httpRequest.getRequestURI();
+        
+        // 인증이 필요하지 않은 경로들
+        if (isPublicPath(requestURI)) {
+            chain.doFilter(request, response);
+            return;
+        }
         
         String token = null;
         Cookie[] cookies = httpRequest.getCookies();
@@ -39,28 +46,58 @@ public class AuthTokenFilter implements Filter {
                 }
             }
         }
-        System.out.println("token : " + token);
-        System.out.println("jwtUtil : " + jwtUtil);
-        System.out.println("jwtUtil.validate(token) : " + jwtUtil.validate(token));
+
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
-            try {
-                HttpSession session = httpRequest.getSession();
-                Long userIdxLong = jwtUtil.getUserIdx(token); // 토큰에서 사용자 idx 추출
-                int userIdx = userIdxLong.intValue();
-                
-                if(session.getAttribute("member_idx") == null) {
-                	session.setAttribute("member_idx", userIdx);
-                }
-                chain.doFilter(request, response);
-                return;
-            } catch (Exception e) {
-                System.out.println("토큰 처리 중 오류 발생: " + e.getMessage());
-            }
+            // 세션 대신 request attribute 사용 (필요하다면 세션 사용)
+            request.setAttribute("member_idx", jwtUtil.getUserIdx(token).intValue());
+            chain.doFilter(request, response);
+            return;
         }
 
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         httpResponse.setContentType("application/json;charset=UTF-8");
         httpResponse.getWriter().write("{\"success\":false,\"msg\":\"인증 실패\"}");
+    }
+    
+    /**
+     * 인증이 필요하지 않은 공개 경로인지 확인
+     */
+    private boolean isPublicPath(String requestURI) {
+        // 인증이 필요하지 않은 경로들
+        String[] publicPaths = {
+            "/auth",           // 인증 관련 API
+            "/",               // 메인 페이지
+            "/static",         // 정적 리소스
+            "/css",           // CSS 파일
+            "/js",            // JavaScript 파일
+            "/images",        // 이미지 파일
+            "/favicon.ico",   // 파비콘
+            "/robots.txt",    // robots.txt
+            "/manifest.json", // PWA manifest
+            "/public",        // public 폴더
+            "/resources",     // 리소스 폴더
+            "/assets"         // 에셋 폴더
+        };
+        
+        for (String path : publicPaths) {
+            if (requestURI.startsWith(path)) {
+                return true;
+            }
+        }
+        
+        // 확장자로 판단 (정적 파일들)
+        String[] publicExtensions = {
+            ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".ico", 
+            ".svg", ".woff", ".woff2", ".ttf", ".eot", ".map"
+        };
+        
+        for (String ext : publicExtensions) {
+            if (requestURI.endsWith(ext)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     @Override

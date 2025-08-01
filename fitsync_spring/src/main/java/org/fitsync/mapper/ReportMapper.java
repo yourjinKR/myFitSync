@@ -14,4 +14,6 @@ public interface ReportMapper {
     public int checkDuplicateReport(@Param("idx_num") int idx_num, @Param("member_idx") int member_idx, @Param("report_category") String report_category);
 	// 신고 제재 업데이트
  	public int updateReport(ReportVO vo);
+ 	
+ 	public ReportVO getBlockData(int member_idx);
 }

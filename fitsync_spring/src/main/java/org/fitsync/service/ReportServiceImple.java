@@ -129,4 +129,10 @@ public class ReportServiceImple implements ReportService {
 			return false;
 		}
 	}
+	
+	// 제재정보
+	@Override
+	public ReportVO getBlockData(int member_idx) {
+		return mapper.getBlockData(member_idx);
+	}
 }

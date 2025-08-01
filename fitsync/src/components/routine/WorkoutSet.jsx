@@ -97,7 +97,7 @@ const ListBody = styled.div`
   .swipeable-list-item__content > input {
     flex: 2;
     width: 100%;
-    padding: 12px 8px;
+    padding: 12px 8px 12px 20px;
     text-align: center;
     font-size: 1.6rem;
     background: transparent;
@@ -254,6 +254,7 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
         <div>번호</div>
         <div>KG</div>
         <div>횟수</div>
+        <div></div>
       </ListHeader>
       <ListBody>
         <SwipeableList actionDelay={0}>

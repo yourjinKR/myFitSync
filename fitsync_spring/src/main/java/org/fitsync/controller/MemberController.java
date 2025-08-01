@@ -4,16 +4,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Cookie;
 
 import org.fitsync.domain.BodyVO;
 import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MemberVO;
+import org.fitsync.domain.ReportVO;
 import org.fitsync.domain.SearchCriteria;
 import org.fitsync.service.BodyService;
 import org.fitsync.service.BodyServiceImple;
 import org.fitsync.service.CloudinaryService;
 import org.fitsync.service.MemberServiceImple;
+import org.fitsync.service.ReportService;
+import org.fitsync.service.ReportServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -34,7 +39,6 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/member")
 public class MemberController {
 	
@@ -42,6 +46,8 @@ public class MemberController {
 	private MemberServiceImple service;
 	@Autowired
 	private BodyServiceImple bodyService;
+	@Autowired
+	private ReportServiceImple reportService;
 	@Autowired
 	private JwtUtil jwtUtil;
 	
@@ -54,7 +60,17 @@ public class MemberController {
 	        if(service.insertUser(body)) {
 	        	vo = service.getFindUser(body.get("member_email")); // 새로 가입한 사용자 정보 조회
 	        	// JWT 생성
-	        	String jwt = jwtUtil.generateToken(vo.getMember_idx());
+	        	// 제재 정보 확인
+            	ReportVO rvo = reportService.getBlockData(vo.getMember_idx());
+            	
+                // JWT 생성 (member_idx만 저장)
+            	String jwt = jwtUtil.generateToken(
+                    vo.getMember_idx(),
+                    rvo.getReport_time(),
+                    rvo.getBlock_count(),
+                    vo.getMember_email()
+                );
+                
 	        	// HttpOnly 쿠키 생성
 	        	ResponseCookie cookie = ResponseCookie.from("accessToken", jwt)
 	        			.httpOnly(true)
@@ -98,6 +114,24 @@ public class MemberController {
     	 return ResponseEntity.ok()
     	            .header(HttpHeaders.SET_COOKIE, cookie.toString() + "; SameSite=Lax")
     	            .body(Map.of("message", "로그아웃 되었습니다"));
+    }
+
+    @GetMapping("/check")
+    public Map<String, Object> checkLogin(HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        String token = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("accessToken".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        boolean isLogin = token != null && jwtUtil.validate(token);
+        result.put("isLogin", isLogin);
+        return result;
     }
 	
 	// 유저 정보 불러오기 임시

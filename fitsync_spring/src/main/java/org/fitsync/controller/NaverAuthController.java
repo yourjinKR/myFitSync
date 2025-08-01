@@ -1,7 +1,9 @@
 package org.fitsync.controller;
 
 import org.fitsync.domain.MemberVO;
+import org.fitsync.domain.ReportVO;
 import org.fitsync.service.MemberServiceImple;
+import org.fitsync.service.ReportServiceImple;
 import org.fitsync.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,8 @@ public class NaverAuthController {
 
     @Autowired
     private MemberServiceImple service;
+    @Autowired
+    private ReportServiceImple reportService;
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -106,7 +110,17 @@ public class NaverAuthController {
             MemberVO vo = service.getFindUser((String) userInfo.get("email"));
             Map<String, Object> user = new HashMap<>();
             if (vo != null) {
-                String jwt = jwtUtil.generateToken(vo.getMember_idx());
+            	// 제재 정보 확인
+            	ReportVO rvo = reportService.getBlockData(vo.getMember_idx());
+            	
+                // JWT 생성 (member_idx만 저장)
+            	 String jwt = jwtUtil.generateToken(
+                     vo.getMember_idx(),
+                     rvo.getReport_time(),
+                     rvo.getBlock_count(),
+                     vo.getMember_email()
+                 );
+                
                 session.setAttribute("member_idx", vo.getMember_idx());
 
                 String cookieValue = "accessToken=" + jwt + "; HttpOnly; Path=/; Max-Age=" + (7 * 24 * 60 * 60) + "; SameSite=Lax";
@@ -127,7 +141,7 @@ public class NaverAuthController {
                         .body(result);
             } else {
                 // 신규 회원도 JWT 발급
-                String jwt = jwtUtil.generateToken(-1); // 신규 회원은 임시값(-1) 또는 email 등으로 처리
+                String jwt = jwtUtil.generateToken(-1, null, 0, ""); // 신규 회원은 임시값(-1) 또는 email 등으로 처리
                 String cookieValue = "accessToken=" + jwt + "; HttpOnly; Path=/; Max-Age=" + (7 * 24 * 60 * 60) + "; SameSite=Lax";
 
                 user.put("member_name", userInfo.get("name"));

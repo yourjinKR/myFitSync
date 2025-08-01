@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReportVO {
-    private int report_idx, idx_num, report_hidden, member_idx, report_sanction;
+    private int report_idx, idx_num, report_hidden, member_idx, report_sanction, block_count;
     private String report_category, report_content;
     private Date report_time;
 

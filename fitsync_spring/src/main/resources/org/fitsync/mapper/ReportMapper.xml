@@ -75,4 +75,13 @@
 		    REPORT_HIDDEN = 1 
 		WHERE REPORT_IDX = #{report_idx}
 	</update>
+	
+	<!-- 제재정보 -->
+	<select id="getBlockData" parameterType="int" resultType="org.fitsync.domain.ReportVO">
+		SELECT 
+			MAX(REPORT_TIME),
+			COUNT(*) block_count
+		FROM REPORT 
+		WHERE REPORT_SANCTION = #{member_idx}
+	</select>
 </mapper>
