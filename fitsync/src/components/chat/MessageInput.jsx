@@ -223,6 +223,7 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
+// 메시지 입력 컴포넌트
 const MessageInput = ({ 
   onSendMessage, 
   disabled,
@@ -238,52 +239,47 @@ const MessageInput = ({
   const fileInputRef = useRef(null);
   const textAreaRef = useRef(null);
 
+  // 답장 모드일 때 자동 포커스
   useEffect(() => {
     if (replyToMessage && textAreaRef.current) {
       textAreaRef.current.focus();
     }
   }, [replyToMessage]);
 
-  // 답장 미리보기 텍스트
+  // 답장 미리보기 텍스트 생성 - 이미지 메시지의 경우 파일명 또는 기본 텍스트 표시
   const getReplyPreviewText = () => {
     if (!replyToMessage) return '';
     
     if (replyToMessage.message_type === 'image') {
-      // 전체 attachments에서 해당 메시지의 첨부파일 찾기
+      // 첨부파일 정보에서 파일명 추출
       const attachment = attachments && attachments[replyToMessage.message_idx];
       
-      // 첨부파일 정보가 있고 파일명이 있으면 파일명 표시
       if (attachment && attachment.original_filename) {
         return `📷 ${attachment.original_filename}`;
       }
       
-      // 메시지 내용이 '[이미지]'가 아닌 경우 해당 텍스트 사용
+      // 메시지 내용이 유효한 경우 사용
       if (replyToMessage.message_content && 
           replyToMessage.message_content.trim() !== '' && 
           replyToMessage.message_content !== '[이미지]') {
         return replyToMessage.message_content;
       }
       
-      // 기본값
       return '📷 이미지';
     }
     
-    // 텍스트 메시지인 경우
     return replyToMessage.message_content || '';
   };
 
-  // 전송 처리 (기존과 동일)
+  // 메시지 전송 처리
   const handleSend = async () => {
-    if (isUploading) {
-      console.log('⏳ 이미 업로드 진행 중...');
-      return;
-    }
-    
+    if (isUploading) return;
     if (!messageText.trim() && selectedFiles.length === 0) return;
 
     const textToSend = messageText.trim();
     const filesToSend = [...selectedFiles];
     
+    // 입력창 즉시 초기화
     setMessageText('');
     setSelectedFiles([]);
     setPreviewUrls({});
@@ -296,18 +292,18 @@ const MessageInput = ({
       fileInputRef.current.value = '';
     }
 
-    console.log('✅ 입력창 즉시 초기화 완료 - 업로드 시작');
-
+    // 파일 업로드 처리
     if (filesToSend.length > 0) {
       setIsUploading(true);
-      
       const hasText = textToSend;
       
       try {
+        // 다중 파일 순차 업로드
         for (let index = 0; index < filesToSend.length; index++) {
           const file = filesToSend[index];
           const isLastFile = index === filesToSend.length - 1;
           
+          // 마지막 파일에만 텍스트 메시지 첨부
           const messageContent = (hasText && isLastFile) ? hasText : '[이미지]';
           
           await onSendMessage(
@@ -317,20 +313,18 @@ const MessageInput = ({
             replyToMessage?.message_idx
           );
           
+          // 업로드 간격 조절
           if (index < filesToSend.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
-        
-        console.log('✅ 모든 파일 업로드 완료');
       } catch (error) {
-        console.error('❌ 파일 업로드 중 오류:', error);
         alert('파일 업로드 중 오류가 발생했습니다.');
       } finally {
         setIsUploading(false);
       }
     } else {
-      console.log('텍스트 메시지 전송:', textToSend, '답장:', replyToMessage?.message_idx);
+      // 텍스트 메시지만 전송
       try {
         await onSendMessage(
           textToSend, 
@@ -339,7 +333,7 @@ const MessageInput = ({
           replyToMessage?.message_idx
         );
       } catch (error) {
-        console.error('텍스트 메시지 전송 실패:', error);
+        // 전송 실패 시 사용자에게 알림
       }
     }
 
@@ -349,6 +343,7 @@ const MessageInput = ({
     }
   };
 
+  // Enter 키로 전송 (Shift+Enter는 줄바꿈)
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -356,6 +351,7 @@ const MessageInput = ({
     }
   };
 
+  // 텍스트 입력 및 높이 자동 조절
   const handleTextChange = (e) => {
     setMessageText(e.target.value);
     
@@ -364,11 +360,10 @@ const MessageInput = ({
     textArea.style.height = textArea.scrollHeight + 'px';
   };
 
+  // 파일 선택 처리
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-
-    console.log('파일들 선택됨:', files.length, '개');
 
     if (files.length > 10) {
       alert('최대 10개의 파일만 선택할 수 있습니다.');
@@ -379,11 +374,13 @@ const MessageInput = ({
     const newPreviewUrls = {};
 
     files.forEach((file, index) => {
+      // 파일 크기 검증
       if (file.size > 10 * 1024 * 1024) {
         alert(`파일 "${file.name}"의 크기가 10MB를 초과합니다.`);
         return;
       }
 
+      // 이미지 파일 검증
       if (!file.type.startsWith('image/')) {
         alert(`파일 "${file.name}"은 이미지 파일이 아닙니다.`);
         return;
@@ -391,13 +388,13 @@ const MessageInput = ({
 
       validFiles.push(file);
 
+      // 미리보기 생성
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviewUrls(prev => ({
           ...prev,
           [index]: e.target.result
         }));
-        console.log(`미리보기 생성 완료: ${index + 1}/${validFiles.length}`);
       };
       reader.readAsDataURL(file);
     });
@@ -405,22 +402,23 @@ const MessageInput = ({
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
       
+      // 파일 선택 후 텍스트 입력창에 포커스
       setTimeout(() => {
         if (textAreaRef.current) {
           textAreaRef.current.focus();
-          console.log('✅ 파일 선택 후 텍스트 입력창에 포커스');
         }
       }, 100);
     }
   };
 
+  // 선택된 파일 제거
   const removeSelectedFile = (indexToRemove) => {
-    console.log('특정 파일 제거:', indexToRemove);
-    
     setSelectedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
     setPreviewUrls(prev => {
       const newUrls = { ...prev };
       delete newUrls[indexToRemove];
+      
+      // 인덱스 재정렬
       const reorderedUrls = {};
       Object.keys(newUrls).forEach((key, newIndex) => {
         if (parseInt(key) > indexToRemove) {
@@ -432,6 +430,7 @@ const MessageInput = ({
       return reorderedUrls;
     });
     
+    // 모든 파일이 제거되면 input 초기화
     if (selectedFiles.length === 1) {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -439,6 +438,7 @@ const MessageInput = ({
     }
   };
 
+  // 파일 크기 포맷팅
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     
@@ -451,6 +451,7 @@ const MessageInput = ({
 
   return (
     <Container>
+      {/* 답장 미리보기 */}
       {replyToMessage && (
         <ReplyPreviewContainer>
           <ReplyPreviewContent>
@@ -466,6 +467,7 @@ const MessageInput = ({
         </ReplyPreviewContainer>
       )}
 
+      {/* 선택된 파일 미리보기 */}
       {selectedFiles.length > 0 && (
         <MultiFilePreview>
           {selectedFiles.map((file, index) => (
@@ -483,7 +485,9 @@ const MessageInput = ({
         </MultiFilePreview>
       )}
 
+      {/* 메시지 입력 영역 */}
       <InputContainer>
+        {/* 파일 첨부 버튼 */}
         <AttachButton onClick={() => fileInputRef.current?.click()} disabled={disabled || isUploading} title="이미지 첨부">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -500,6 +504,7 @@ const MessageInput = ({
           </svg>
         </AttachButton>
 
+        {/* 숨겨진 파일 입력 */}
         <HiddenFileInput
           ref={fileInputRef}
           type="file"
@@ -508,18 +513,29 @@ const MessageInput = ({
           onChange={handleFileSelect}
         />
 
+        {/* 텍스트 입력 영역 */}
         <TextAreaContainer>
           <MessageTextArea
             ref={textAreaRef}
             value={messageText}
             onChange={handleTextChange}
             onKeyPress={handleKeyPress}
-            placeholder={replyToMessage ? "답장을 입력하세요..." : selectedFiles.length > 0 ? "이미지와 함께 보낼 메시지를 입력하세요..." : "메시지를 입력하세요..."}
+            placeholder={
+              replyToMessage 
+                ? "답장을 입력하세요..." 
+                : selectedFiles.length > 0 
+                  ? "이미지와 함께 보낼 메시지를 입력하세요..." 
+                  : "메시지를 입력하세요..."
+            }
             disabled={disabled}
             rows={1}
           />
           
-          <SendButton onClick={handleSend} disabled={disabled || (!messageText.trim() && selectedFiles.length === 0)} title="전송 (Enter)">
+          <SendButton 
+            onClick={handleSend} 
+            disabled={disabled || (!messageText.trim() && selectedFiles.length === 0)} 
+            title="전송 (Enter)"
+          >
             ➤
           </SendButton>
         </TextAreaContainer>

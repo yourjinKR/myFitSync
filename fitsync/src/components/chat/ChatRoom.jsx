@@ -188,49 +188,87 @@ const ChatRoom = () => {
     return { recentMessages, hasOldMessages: hasOldMessagesFound };
   }, []);
 
-  // roomData 생성 함수 - 성별 정보 포함
-  const createTemporaryRoomData = useCallback(() => {
-    if (!user || !roomId) return null;
+  // 향상된 roomData 생성 함수 - 성별 정보 및 프로필 이미지 보완
+  const createEnhancedRoomData = useCallback(() => {
 
+    if (!user || !roomId) {
+      return null;
+    }
+
+    // 기존 roomData가 있다면 우선 사용 (ChatMain에서 온 경우)
+    if (location.state?.roomData) {
+      let enhancedRoomData = { ...location.state.roomData };
+      
+      // 성별 정보 보완 - 빈 값이거나 null인 경우에만
+      if (!enhancedRoomData.trainer_gender && !enhancedRoomData.user_gender) {
+        
+        // 현재 사용자 정보로 보완
+        if (enhancedRoomData.trainer_idx === user.member_idx) {
+          enhancedRoomData.trainer_gender = user.member_gender;
+        } else if (enhancedRoomData.user_idx === user.member_idx) {
+          enhancedRoomData.user_gender = user.member_gender;
+        }
+        
+        // trainerInfo에서 트레이너 성별 정보 추가
+        if (location.state?.trainerInfo?.member_gender) {
+          if (user.member_type !== 'trainer') {
+            enhancedRoomData.trainer_gender = location.state.trainerInfo.member_gender;
+          }
+        }
+      }
+
+      return enhancedRoomData;
+    }
+
+    // TrainerInfo에서 온 경우 - 완전한 roomData 생성
     const trainerInfo = location.state?.trainerInfo;
     
     if (trainerInfo) {
+      
       const isCurrentUserTrainer = user.member_type === 'trainer';
       
+      let newRoomData;
+      
       if (isCurrentUserTrainer) {
-        const roomData = {
+        // 현재 사용자가 트레이너인 경우 (거의 없는 상황)
+        newRoomData = {
           room_idx: parseInt(roomId),
           trainer_idx: user.member_idx,
-          user_idx: null,
+          user_idx: trainerInfo.member_idx,
           trainer_name: user.member_name,
           trainer_image: user.member_image,
           trainer_gender: user.member_gender,
           trainer_email: user.member_email,
-          user_name: '회원',
-          user_image: null,
-          user_gender: null,
-          user_email: null
+          trainer_type: user.member_type,
+          user_name: trainerInfo.member_name,
+          user_image: trainerInfo.member_image,
+          user_gender: trainerInfo.member_gender,
+          user_email: trainerInfo.member_email,
+          user_type: trainerInfo.member_type
         };
-        return roomData;
       } else {
-        const roomData = {
+        // 현재 사용자가 일반 회원인 경우 (일반적인 상황)
+        newRoomData = {
           room_idx: parseInt(roomId),
           trainer_idx: trainerInfo.member_idx,
           user_idx: user.member_idx,
-          trainer_name: trainerInfo.member_name,
+          trainer_name: trainerInfo.member_name || '트레이너',
           trainer_image: trainerInfo.member_image,
-          trainer_gender: trainerInfo.member_gender,
+          trainer_gender: trainerInfo.member_gender, // 성별 정보 확실히 설정
           trainer_email: trainerInfo.member_email,
-          user_name: user.member_name,
+          trainer_type: trainerInfo.member_type || 'trainer',
+          user_name: user.member_name || '회원',
           user_image: user.member_image,
-          user_gender: user.member_gender,
-          user_email: user.member_email
+          user_gender: user.member_gender, // 현재 사용자 성별 정보도 설정
+          user_email: user.member_email,
+          user_type: user.member_type || 'user'
         };
-        return roomData;
       }
+      
+      return newRoomData;
     }
 
-    // fallback 데이터
+    // fallback 데이터 - 최소한의 기본 정보
     const isCurrentUserTrainer = user.member_type === 'trainer';
     
     const fallbackRoomData = {
@@ -241,10 +279,12 @@ const ChatRoom = () => {
       trainer_image: isCurrentUserTrainer ? user.member_image : null,
       trainer_gender: isCurrentUserTrainer ? user.member_gender : null,
       trainer_email: isCurrentUserTrainer ? user.member_email : null,
+      trainer_type: isCurrentUserTrainer ? user.member_type : 'trainer',
       user_name: isCurrentUserTrainer ? '회원' : user.member_name,
       user_image: isCurrentUserTrainer ? null : user.member_image,
       user_gender: isCurrentUserTrainer ? null : user.member_gender,
-      user_email: isCurrentUserTrainer ? null : user.member_email
+      user_email: isCurrentUserTrainer ? null : user.member_email,
+      user_type: isCurrentUserTrainer ? 'user' : user.member_type
     };
     
     return fallbackRoomData;
@@ -593,7 +633,7 @@ const ChatRoom = () => {
         navigate('/login');
         return;
       }
-
+      
       setIsInitialLoad(true);
       setHasPerformedInitialScroll(false);
       setShouldScrollToBottom(false);
@@ -615,32 +655,9 @@ const ChatRoom = () => {
       const memberIdx = await getMemberIdxForChat();
       if (!memberIdx) return;
 
-      // roomData 설정
-      if (location.state?.roomData) {      
-        let enhancedRoomData = { ...location.state.roomData };
-        
-        // 성별 정보가 DB에서 조회되지 않은 경우에만 보완
-        if (!enhancedRoomData.trainer_gender && !enhancedRoomData.user_gender) {
-          // 현재 사용자 정보로 보완
-          if (enhancedRoomData.trainer_idx === user.member_idx) {
-            enhancedRoomData.trainer_gender = user.member_gender;
-          } else if (enhancedRoomData.user_idx === user.member_idx) {
-            enhancedRoomData.user_gender = user.member_gender;
-          }
-          
-          // location.state에서 trainerInfo가 있다면 성별 정보 추가
-          if (location.state?.trainerInfo?.member_gender) {
-            if (user.member_type !== 'trainer') {
-              enhancedRoomData.trainer_gender = location.state.trainerInfo.member_gender;
-            }
-          }
-        }
-        
-        setRoomData(enhancedRoomData);
-      } else {
-        const tempRoomData = createTemporaryRoomData();
-        setRoomData(tempRoomData);
-      }
+      // 향상된 roomData 설정
+      const enhancedRoomData = createEnhancedRoomData();
+      setRoomData(enhancedRoomData);
 
       // 필터링된 메시지 로드 (초기 로드)
       await loadMessages(memberIdx, false);
@@ -654,7 +671,7 @@ const ChatRoom = () => {
         clearTimeout(scrollAdjustmentTimerRef.current);
       }
     };
-  }, [roomId, user, navigate, location.state, createTemporaryRoomData, filterRecentMessages, roomEnterTime]);
+  }, [roomId, user, navigate, location.state, createEnhancedRoomData, filterRecentMessages, roomEnterTime]);
 
   // roomData가 설정된 후 매칭 상태 확인
   useEffect(() => {
@@ -1104,6 +1121,7 @@ const ChatRoom = () => {
 
   // 채팅방 표시 마스킹된 이름 생성 함수
   const getRoomDisplayName = () => {
+    
     if (roomData && currentMemberIdx) {
       
       if (roomData.trainer_idx === currentMemberIdx) {

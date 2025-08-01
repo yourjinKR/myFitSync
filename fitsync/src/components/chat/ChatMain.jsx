@@ -24,7 +24,6 @@ const Title = styled.h2`
   margin-bottom: 8px;
 `;
 
-// 문의하기 버튼
 const InquiryButton = styled.button`
   position: absolute;
   top: 20px;
@@ -133,21 +132,21 @@ const RoomName = styled.div`
 `;
 
 const UnreadBadge = styled.div`
-  background: #ff4757; /* 빨간색 배지 */
+  background: #ff4757;
   color: white;
-  border-radius: 50%; /* 완전한 원형으로 변경 */
-  font-size: 1.1rem; /* 폰트 크기 약간 축소 */
+  border-radius: 50%;
+  font-size: 1.1rem;
   font-weight: 600;
-  min-width: 22px; /* 최소 너비 조정 */
-  width: 22px; /* 고정 너비 */
-  height: 22px; /* 고정 높이 */
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   animation: pulse 2s infinite;
   line-height: 1;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 시스템 폰트 사용 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -194,41 +193,37 @@ const EmptySubtext = styled.p`
   color: var(--text-tertiary);
 `;
 
-// 채팅 메인 화면 컴포넌트
+// 채팅 메인 화면 컴포넌트 - 채팅방 목록 표시 및 관리자 문의 기능 제공
 const ChatMain = () => {
   const navigate = useNavigate();
-  const { user } = useSelector(state => state.user); // Redux에서 사용자 정보 가져오기
+  const { user } = useSelector(state => state.user);
   
   // 상태 관리
-  const [rooms, setRooms] = useState([]);       // 채팅방 목록
-  const [loading, setLoading] = useState(true); // 로딩 상태
-  const [unreadCounts, setUnreadCounts] = useState({}); // 읽지 않은 메시지 개수 저장
-  const [lastMessages, setLastMessages] = useState({}); // 각 방의 마지막 메시지
-  const [inquiryLoading, setInquiryLoading] = useState(false); // 문의하기 버튼 로딩 상태
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const [lastMessages, setLastMessages] = useState({});
+  const [inquiryLoading, setInquiryLoading] = useState(false);
   const [currentMemberIdx, setCurrentMemberIdx] = useState(null);
 
-  // 채팅용 member_idx 조회 함수
+  // 채팅용 member_idx 조회 함수 - 세션에서 member_idx를 가져와 채팅 기능에 사용
   const getMemberIdxForChat = async () => {
     try {
-      console.log('🔍 채팅용 member_idx 조회 시작...');
       const response = await axios.get('/api/chat/member-info', {
         withCredentials: true
       });
 
       if (response.data.success) {
         const memberIdx = response.data.member_idx;
-        console.log('✅ 채팅용 member_idx 조회 성공:', memberIdx);
         setCurrentMemberIdx(memberIdx);
         return memberIdx;
       } else {
-        console.error('❌ 채팅용 member_idx 조회 실패:', response.data.message);
         if (response.data.message.includes('로그인')) {
           navigate('/login');
         }
         return null;
       }
     } catch (error) {
-      console.error('❌ 채팅용 member_idx 조회 중 오류:', error);
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -255,7 +250,7 @@ const ChatMain = () => {
     initializeChat();
   }, [user, navigate]);
 
-  // 채팅방 목록 조회
+  // 채팅방 목록 조회 - 각 채팅방의 읽지 않은 메시지 개수와 마지막 메시지도 함께 조회
   const loadRooms = async () => {
     try {
       // 백엔드 API 호출
@@ -279,7 +274,6 @@ const ChatMain = () => {
           }
 
         } catch (error) {
-          console.error(`채팅방 ${room.room_idx} 읽지 않은 메시지 조회 실패:`, error);
           unreadData[room.room_idx] = 0;
         }
       }
@@ -287,8 +281,6 @@ const ChatMain = () => {
       setLastMessages(lastMessageData);
       
     } catch (error) {
-      console.error('채팅방 목록 로드 실패:', error);
-      
       // 에러 처리
       if (error.response?.status === 401) {
         alert('로그인이 만료되었습니다.');
@@ -305,15 +297,13 @@ const ChatMain = () => {
   // admin 여부 확인 (대소문자 무관)
   const isAdmin = user?.member_type?.toLowerCase() === 'admin';
 
-  // 문의하기 버튼 클릭 핸들러 수정
+  // 문의하기 버튼 클릭 핸들러 - 관리자와의 채팅방을 생성하거나 기존 방으로 이동
   const handleInquiryClick = async () => {
     if (inquiryLoading) return;
     
     setInquiryLoading(true);
     
     try {
-      console.log('🎧 문의하기 버튼 클릭 - 관리자와의 채팅방 생성/이동');
-      
       const ADMIN_MEMBER_IDX = 141; // 관리자 계정 member_idx
       
       // currentMemberIdx 사용
@@ -351,13 +341,11 @@ const ChatMain = () => {
       const roomResponse = await ChatApi.registerRoom(trainer_idx, user_idx, room_name);
       
       if (roomResponse && roomResponse.room_idx) {
-        console.log('✅ 관리자와의 채팅방 생성/조회 성공:', roomResponse);
-        
         // 관리자 정보 구성
         const adminInfo = {
           member_idx: ADMIN_MEMBER_IDX,
-          member_name: '관리자', // DB의 실제 member_name
-          member_image: 'http://k.kakaocdn.net/dn/6eglY/btsGfxXiLDV/qQ5G9PH1AaaAYoRUCrvSA1/img_640x640.jpg', // DB의 실제 member_image
+          member_name: '관리자',
+          member_image: 'https://res.cloudinary.com/dhupmoprk/image/upload/v1754017325/admin_ol7kl2.png',
           member_type: 'admin'
         };
         
@@ -372,8 +360,6 @@ const ChatMain = () => {
           user_image: user.member_image
         };
         
-        console.log('🔧 향상된 roomData:', enhancedRoomData);
-        
         // 채팅방으로 이동
         navigate(`/chat/${roomResponse.room_idx}`, {
           state: { 
@@ -382,16 +368,11 @@ const ChatMain = () => {
           }
         });
         
-        console.log('🚀 관리자 채팅방으로 이동 완료');
-        
       } else {
-        console.error('❌ 채팅방 생성 응답이 올바르지 않음:', roomResponse);
         alert('문의하기 채팅방 생성에 실패했습니다.');
       }
       
     } catch (error) {
-      console.error('❌ 문의하기 채팅방 생성 중 오류:', error);
-      
       if (error.response?.status === 401) {
         alert('로그인이 만료되었습니다.');
         navigate('/login');
@@ -405,7 +386,7 @@ const ChatMain = () => {
     }
   };
 
-  // 시간 포멧
+  // 시간 포맷팅 함수 - 메시지 전송 시간을 사용자에게 친숙한 형태로 변환
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     
@@ -440,30 +421,23 @@ const ChatMain = () => {
       month: 'short',
       day: 'numeric'
     });
-
   };
 
-  // 채팅방 표시 이름 생성 함수
+  // 채팅방 표시 이름 생성 함수 - 현재 사용자에 따라 상대방 정보를 적절히 표시
   const getRoomDisplayName = (room) => {
     // currentMemberIdx 상태 사용
     if (!currentMemberIdx) {
-      console.warn('⚠️ currentMemberIdx가 아직 로드되지 않음');
       return '로딩 중...';
     }
     
     // 관리자 계정 특별 처리 (admin 타입 대응)
     if (isAdmin) {
-      console.log('👨‍💼 관리자 계정 - 채팅방 제목 특별 처리');
-      
       // 관리자가 trainer 위치에 있는 경우 -> user 정보 표시
       if (room.trainer_idx === currentMemberIdx) {
         const otherPersonName = room.user_name || '회원';
         const otherPersonEmail = room.user_email || '';
         
-        console.log('✅ 관리자가 trainer 위치 - user 정보 표시:', { otherPersonName, otherPersonEmail });
-        
         if (otherPersonEmail) {
-          // 이메일 마스킹 적용
           const maskedEmail = maskEmail(otherPersonEmail);
           return `${otherPersonName}(${maskedEmail})`;
         } else {
@@ -475,10 +449,7 @@ const ChatMain = () => {
         const otherPersonName = room.trainer_name || '트레이너';
         const otherPersonEmail = room.trainer_email || '';
         
-        console.log('✅ 관리자가 user 위치 - trainer 정보 표시:', { otherPersonName, otherPersonEmail });
-        
         if (otherPersonEmail) {
-          // 이메일 마스킹 적용
           const maskedEmail = maskEmail(otherPersonEmail);
           return `${otherPersonName}(${maskedEmail})`;
         } else {
@@ -487,7 +458,6 @@ const ChatMain = () => {
       }
       // 관리자가 채팅방에 포함되지 않은 경우 (예상치 못한 상황)
       else {
-        console.warn('⚠️ 관리자가 채팅방에 포함되지 않음:', room);
         return '알 수 없는 채팅방';
       }
     }
@@ -518,7 +488,6 @@ const ChatMain = () => {
     
     // 일반 사용자인 경우: 반드시 이름(이메일) 형식으로 표시
     if (otherPersonEmail) {
-      // 이메일 마스킹 적용
       const maskedEmail = maskEmail(otherPersonEmail);
       return `${otherPersonName}(${maskedEmail})`;
     } else {
@@ -536,7 +505,6 @@ const ChatMain = () => {
     
     // 관리자 계정 특별 처리 (admin 타입 대응)
     if (isAdmin) {
-      
       // 관리자가 trainer 위치에 있는 경우 -> user 정보 반환
       if (room.trainer_idx === currentMemberIdx) {
         const otherPersonInfo = {
@@ -555,7 +523,6 @@ const ChatMain = () => {
       }
       // 예상치 못한 경우
       else {
-        console.warn('⚠️ 관리자가 채팅방에 포함되지 않음 - 기본값 반환');
         return { name: '알 수 없음', image: null };
       }
     }
@@ -619,11 +586,7 @@ const ChatMain = () => {
           <img 
             src={otherPerson.image} 
             alt={`${otherPerson.name} 프로필`}
-            onLoad={() => {
-              console.log('✅ 이미지 로드 성공:', otherPerson.image);
-            }}
             onError={(e) => {
-              console.log('❌ 이미지 로드 실패:', otherPerson.image);
               // 이미지 로드 실패 시 기본 아바타로 대체
               e.target.style.display = 'none';
               e.target.parentElement.classList.add('default-avatar');
@@ -642,10 +605,10 @@ const ChatMain = () => {
     }
   };
 
-  // 채팅방 정보 클릭
+  // 채팅방 클릭 핸들러
   const handleRoomClick = (room) => {
     navigate(`/chat/${room.room_idx}`, {
-      state: { roomData: room } // 채팅방 정보를 state로 전달
+      state: { roomData: room }
     });
   };
 

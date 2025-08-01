@@ -13,7 +13,7 @@ const fadeIn = keyframes`
   }
 `;
 
-// Portal 기반으로 body에 직접 렌더링
+// Portal 기반 메뉴 컨테이너 - 뷰포트 제약 완전 회피
 const MenuContainer = styled.div`
   position: fixed;
   z-index: 10000;
@@ -31,7 +31,7 @@ const MenuContainer = styled.div`
   max-height: 300px;
   overflow-y: auto;
   
-  /* MessageItem에서 계산된 뷰포트 좌표 직접 사용 */
+  /* 뷰포트 좌표 */
   left: ${props => props.$x || 0}px;
   top: ${props => props.$y || 0}px;
   
@@ -113,6 +113,7 @@ const MenuIcon = styled.span`
   flex-shrink: 0;
 `;
 
+// 신고 모달 스타일
 const ReportModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -209,7 +210,7 @@ const ReportButton = styled.button`
   }
 `;
 
-// Portal 기반 컨텍스트 메뉴 컴포넌트
+// Portal 기반 컨텍스트 메뉴 컴포넌트 - body에 직접 렌더링하여 컨테이너 제약 회피
 const ContextMenuPortal = ({ isVisible, x, y, children }) => {
   if (!isVisible) return null;
 
@@ -217,10 +218,11 @@ const ContextMenuPortal = ({ isVisible, x, y, children }) => {
     <MenuContainer $x={x} $y={y}>
       {children}
     </MenuContainer>,
-    document.body // body에 직접 렌더링으로 컨테이너 제약 완전 회피
+    document.body
   );
 };
 
+// 메시지 컨텍스트 메뉴 컴포넌트
 const MessageContextMenu = ({ 
   isVisible, 
   position, 
@@ -236,10 +238,9 @@ const MessageContextMenu = ({
   const [reportContent, setReportContent] = useState('');
   const menuRef = useRef(null);
 
-  // 위치 검증 및 안전장치
+  // 위치 검증 및 안전장치 - 잘못된 위치 데이터에 대한 fallback 처리
   const validateAndClampPosition = (rawPosition) => {
     if (!rawPosition || typeof rawPosition.x !== 'number' || typeof rawPosition.y !== 'number') {
-      console.warn('⚠️ 잘못된 위치 데이터 - 기본값 사용:', rawPosition);
       return { x: 100, y: 100 };
     }
 
@@ -280,7 +281,7 @@ const MessageContextMenu = ({
       }
     };
 
-    // 캡처 단계에서 이벤트 감지 (Portal 특성상 중요)
+    // 캡처 단계에서 이벤트 감지
     document.addEventListener('mousedown', handleGlobalClick, true);
     document.addEventListener('touchstart', handleGlobalTouch, true);
 
@@ -327,7 +328,7 @@ const MessageContextMenu = ({
     };
   }, [isVisible, onClose]);
 
-  // 복사 가능 여부 확인
+  // 복사 가능 여부 확인 - 이미지 메시지의 경우 텍스트 내용이 있는지 확인
   const canCopy = () => {
     if (!message) return false;
     
@@ -340,12 +341,17 @@ const MessageContextMenu = ({
     return message.message_content && message.message_content.trim() !== '';
   };
 
-  // 삭제 가능 여부 확인
+  /**
+   * 삭제 가능 여부 확인
+   * 자신의 메시지이고, 읽음 후 1분 이내인지 확인
+   */
   const canDelete = () => {
     if (!message || !isCurrentUser) return false;
     
+    // 읽지 않은 메시지는 항상 삭제 가능
     if (!message.message_readdate) return true;
     
+    // 읽은 메시지는 1분 이내에만 삭제 가능
     const readTime = new Date(message.message_readdate);
     const now = new Date();
     const diffInMinutes = (now - readTime) / (1000 * 60);
@@ -353,17 +359,16 @@ const MessageContextMenu = ({
     return diffInMinutes <= 1;
   };
 
-  // 복사 핸들러
+  // 복사 핸들러 - 클립보드 API 우선 사용, fallback으로 execCommand 사용
   const handleCopy = async () => {
     if (!canCopy()) return;
     
     try {
       await navigator.clipboard.writeText(message.message_content);
-      console.log('✅ 메시지 복사 완료:', message.message_content);
       onCopy && onCopy(message);
       onClose();
     } catch (error) {
-      console.error('❌ 복사 실패:', error);
+      // fallback: execCommand 사용
       const textarea = document.createElement('textarea');
       textarea.value = message.message_content;
       document.body.appendChild(textarea);
@@ -425,6 +430,7 @@ const MessageContextMenu = ({
         y={validatedPosition.y}
       >
         <div ref={menuRef}>
+          {/* 복사 버튼 */}
           <MenuButton 
             onClick={handleCopy} 
             disabled={!canCopy()}
@@ -434,11 +440,13 @@ const MessageContextMenu = ({
             복사
           </MenuButton>
 
+          {/* 답장 버튼 */}
           <MenuButton onClick={handleReply}>
             <MenuIcon>↩️</MenuIcon>
             답장
           </MenuButton>
 
+          {/* 삭제 버튼 (자신의 메시지만) */}
           {isCurrentUser && (
             <MenuButton 
               onClick={handleDelete}
@@ -455,6 +463,7 @@ const MessageContextMenu = ({
             </MenuButton>
           )}
 
+          {/* 신고 버튼 (상대방 메시지만) */}
           {!isCurrentUser && (
             <MenuButton onClick={handleReportClick} className="danger">
               <MenuIcon>🚨</MenuIcon>

@@ -112,9 +112,11 @@ const Button = styled.button`
   }
 `;
 
+// 매칭 요청 모달 컴포넌트
 const MatchingModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     const [matchingTotal, setMatchingTotal] = useState('');
 
+    // 매칭 요청 제출 처리 - 입력값 검증 후 부모 컴포넌트로 전달
     const handleSubmit = () => {
         const total = parseInt(matchingTotal);
         if (total && total > 0) {
@@ -123,9 +125,19 @@ const MatchingModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         }
     };
 
+    // 모달 닫기 처리 - 입력값 초기화 후 닫기
     const handleClose = () => {
         setMatchingTotal('');
         onClose();
+    };
+
+    // 키보드 이벤트 처리 - Enter: 제출, ESC: 취소
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !isLoading && matchingTotal && parseInt(matchingTotal) > 0) {
+            handleSubmit();
+        } else if (e.key === 'Escape') {
+            handleClose();
+        }
     };
 
     if (!isOpen) return null;
@@ -144,8 +156,10 @@ const MatchingModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                         max="200"
                         value={matchingTotal}
                         onChange={(e) => setMatchingTotal(e.target.value)}
-                        placeholder="PT 횟수를 입력하세요.(최대200일)"
+                        onKeyDown={handleKeyDown}
+                        placeholder="PT 횟수를 입력하세요 (최대 200회)"
                         autoFocus
+                        disabled={isLoading}
                     />
                 </InputGroup>
 

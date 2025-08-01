@@ -62,7 +62,7 @@ const UnreadText = styled.span`
   border: 1px solid var(--border-light);
 `;
 
-// MessageList 컴포넌트
+// 메시지 목록 컴포넌트
 const MessageList = ({ 
   messages, 
   currentMemberIdx, 
@@ -79,9 +79,9 @@ const MessageList = ({
 }) => {
   
   const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false); // 초기 로드 완료 여부
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // 초기 읽지 않은 메시지 중 가장 오래된 메시지 ID 계산
+  // 초기 읽지 않은 메시지 중 가장 오래된 메시지 ID 계산 - 읽지 않은 메시지 구분선 위치 결정에 사용
   const initialOldestUnreadMessageIdx = useMemo(() => {
     const unreadMessages = messages.filter(msg => 
       msg.sender_idx !== currentMemberIdx && !msg.message_readdate
@@ -95,28 +95,26 @@ const MessageList = ({
       return currentTime < oldestTime ? current : oldest;
     });
     
-    console.log('🔒 초기 가장 오래된 읽지 않은 메시지 ID 고정:', oldestUnreadMessage.message_idx);
     return oldestUnreadMessage.message_idx;
   }, [messages.length, currentMemberIdx]);
 
-  // 초기 로드 시에만 안읽음 구분선 설정
+  // 초기 로드 시에만 읽지 않은 메시지 구분선 위치 고정 - 실시간 메시지가 추가되어도 구분선 위치는 변경되지 않음
   useEffect(() => {
     if (!initialLoadComplete && messages.length > 0) {
       if (initialOldestUnreadMessageIdx && fixedOldestUnreadMessageIdx === null) {
         setFixedOldestUnreadMessageIdx(initialOldestUnreadMessageIdx);
-        console.log('✅ 구분선 위치 고정 (초기 로드):', initialOldestUnreadMessageIdx);
       }
       setInitialLoadComplete(true);
     }
   }, [initialOldestUnreadMessageIdx, fixedOldestUnreadMessageIdx, messages.length, initialLoadComplete]);
 
-  // 답장 대상 메시지 찾기 함수
+  // 답장 대상 메시지 찾기 - parent_idx를 통해 원본 메시지 검색
   const getParentMessage = (parentIdx) => {
     if (!parentIdx) return null;
     return messages.find(msg => msg.message_idx === parentIdx);
   };
 
-  // 답장 미리보기 텍스트 생성
+  // 답장 미리보기 텍스트 생성 - 이미지 메시지의 경우 파일명 또는 기본 텍스트 표시
   const getReplyPreviewText = (parentMsg, allAttachments) => {
     if (!parentMsg) return '';
     
@@ -139,13 +137,12 @@ const MessageList = ({
     return parentMsg.message_content || '';
   };
 
-  // 특정 메시지로 스크롤하는 함수
+  // 특정 메시지로 스크롤하는 함수 - 답장 클릭 시 원본 메시지로 이동
   const handleScrollToMessage = (messageIdx) => {
-    console.log('🎯 MessageList에서 스크롤 요청 받음:', messageIdx);
-    
     if (onScrollToMessage) {
       onScrollToMessage(messageIdx);
     } else {
+      // 직접 스크롤 처리 (fallback)
       const messageElement = document.getElementById(`message-${messageIdx}`);
       if (messageElement) {
         messageElement.scrollIntoView({ 
@@ -153,18 +150,16 @@ const MessageList = ({
           block: 'center' 
         });
         
+        // 하이라이트 효과
         messageElement.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
         setTimeout(() => {
           messageElement.style.backgroundColor = '';
         }, 2000);
-        
-        console.log('✅ 직접 스크롤 완료:', messageIdx);
-      } else {
-        console.warn('❌ 메시지 요소를 찾을 수 없음:', messageIdx);
       }
     }
   };
 
+  // 날짜 포맷팅
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -173,6 +168,7 @@ const MessageList = ({
     });
   };
 
+  // 날짜 구분선 표시 여부 결정 - 이전 메시지와 날짜가 다른 경우 구분선 표시
   const shouldShowDateSeparator = (currentMessage, previousMessage) => {
     if (!previousMessage) return true;
     
@@ -182,17 +178,13 @@ const MessageList = ({
     return currentDate !== previousDate;
   };
 
-  // 안읽음 구분선 표시 조건 수정 - 초기 로드 시에만 표시
+  // 읽지 않은 메시지 구분선 표시 여부 결정 - 초기 로드 시에만 고정된 위치에 표시
   const shouldShowUnreadSeparator = (currentMessage) => {
-    // 초기 로드가 완료되지 않았거나, 고정된 ID가 없으면 표시하지 않음
     if (!initialLoadComplete || !fixedOldestUnreadMessageIdx) return false;
-    
-    const shouldShow = currentMessage.message_idx === fixedOldestUnreadMessageIdx;
-    
-    return shouldShow;
+    return currentMessage.message_idx === fixedOldestUnreadMessageIdx;
   };
 
-  // 연속 메시지 판단 로직 (화면 표시용)
+  // 연속 메시지 판단 로직 - 같은 발신자가 같은 분(minute) 내에 보낸 메시지를 연속으로 처리
   const isConsecutiveMessage = (currentMessage, previousMessage) => {
     if (!previousMessage) return false;
     
@@ -215,14 +207,10 @@ const MessageList = ({
                           previousTime.getHours() * 100 + 
                           previousTime.getMinutes();
     
-    const isSameMinute = currentMinute === previousMinute;
-    
-    const result = isSameSender && isSameMinute;
-    
-    return result;
+    return isSameSender && (currentMinute === previousMinute);
   };
 
-  // 그룹의 마지막 메시지 판단 로직
+  // 메시지 그룹의 마지막인지 판단 - 읽음 상태 표시 여부 결정에 사용
   const isLastInGroup = (currentMessage, nextMessage) => {
     if (!nextMessage) return true;
     
@@ -247,29 +235,23 @@ const MessageList = ({
     
     const isDifferentMinute = currentMinute !== nextMinute;
     
-    const result = isDifferentSender || isDifferentMinute;
-    
-    return result;
+    return isDifferentSender || isDifferentMinute;
   };
 
-  // 상대방 정보 가져오기 함수
+  // 상대방 정보 가져오기 - 프로필 이미지, 이름, 성별 정보 제공
   const getOtherPersonInfo = (message, isConsecutive) => {
-
     if (!roomData) {
-      console.warn('⚠️ roomData가 없음 - 기본값 반환');
       return { name: '상대방', image: null, gender: null };
     }
     
     if (message.sender_idx !== currentMemberIdx) {
-      // 연속 메시지에서도 정보를 정확하게 전달
+      // 연속 메시지에서는 성별 정보만 제공
       if (isConsecutive) {
         let consecutiveGender = null;
         
         if (roomData.trainer_idx === currentMemberIdx) {
-          // 현재 사용자가 트레이너 -> 상대방(발신자)은 회원
           consecutiveGender = roomData.user_gender;
         } else {
-          // 현재 사용자가 회원 -> 상대방(발신자)은 트레이너
           consecutiveGender = roomData.trainer_gender;
         }
         
@@ -280,32 +262,30 @@ const MessageList = ({
         };
       }
       
-      // 일반 메시지에서 정보 정확하게 전달
+      // 일반 메시지에서는 전체 정보 제공
       if (roomData.trainer_idx === currentMemberIdx) {
-        // 현재 사용자가 트레이너인 경우 -> 회원 정보 반환
-        const otherPersonInfo = {
+        // 현재 사용자가 트레이너 -> 회원 정보 반환
+        return {
           name: roomData.user_name || '회원',
           image: roomData.user_image,
           gender: roomData.user_gender || null
         };
-        return otherPersonInfo;
       } else {
-        // 현재 사용자가 회원인 경우 -> 트레이너 정보 반환
-        const otherPersonInfo = {
+        // 현재 사용자가 회원 -> 트레이너 정보 반환
+        return {
           name: roomData.trainer_name || '트레이너',
           image: roomData.trainer_image,
           gender: roomData.trainer_gender || null
         };
-        return otherPersonInfo;
       }
     }
     
-    // 내가 보낸 메시지인 경우 null 반환
+    // 내가 보낸 메시지인 경우
     return { name: null, image: null, gender: null };
   };
 
+  // 이미지 로딩 완료 콜백
   const handleImageLoad = (messageIdx) => {
-    console.log('📷 MessageList: 이미지 로딩 완료 콜백 수신:', messageIdx);
     if (onImageLoad) {
       onImageLoad(messageIdx);
     }
@@ -317,12 +297,8 @@ const MessageList = ({
         const previousMessage = messages[index - 1];
         const nextMessage = messages[index + 1];
         const isConsecutive = isConsecutiveMessage(message, previousMessage);
-        
-        // 화면 표시용 그룹 판단 (읽음 상태 표시 여부 결정)
         const isLastMessage = isLastInGroup(message, nextMessage);
         const otherPersonInfo = getOtherPersonInfo(message, isConsecutive);
-        
-        // 답장 대상 메시지 찾기
         const parentMessage = getParentMessage(message.parent_idx);
         
         return (
@@ -341,6 +317,7 @@ const MessageList = ({
               </UnreadSeparator>
             )}
             
+            {/* 메시지 아이템 */}
             <MessageItem
               message={message}
               isCurrentUser={message.sender_idx === currentMemberIdx}

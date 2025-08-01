@@ -139,7 +139,10 @@
 			member_time,
 			member_activity_area,
 			member_info,
-			member_info_image
+			member_info_image,
+			member_gender,
+			member_intro,
+			member_purpose
 		FROM member 
 		WHERE member_type = 'trainer'
 		AND member_status = 'active'

@@ -16,7 +16,7 @@ const pulse = keyframes`
   50% { opacity: 1; }
 `;
 
-// 연속 메시지 처리를 위한 컨테이너
+// 메시지 컨테이너 - 연속 메시지 처리를 위한 스타일링
 const MessageContainer = styled.div`
   display: flex;
   justify-content: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
@@ -34,6 +34,7 @@ const MessageContainer = styled.div`
   gap: ${props => props.$isConsecutive ? '0px' : '8px'};
 `;
 
+// 프로필 이미지
 const ProfileImage = styled.div`
   width: 36px;
   height: 36px;
@@ -95,7 +96,7 @@ const MessageGroup = styled.div`
   align-items: ${props => props.$isCurrentUser ? 'flex-end' : 'flex-start'};
 `;
 
-// 발신자 이름
+// 발신자 이름 - 연속 메시지에서는 숨김
 const SenderName = styled.div`
   font-size: 1.2rem;
   color: var(--text-secondary);
@@ -106,6 +107,7 @@ const SenderName = styled.div`
   display: ${props => props.$isConsecutive ? 'none' : 'block'};
 `;
 
+// 메시지 말풍선 - 터치 이벤트 및 컨텍스트 메뉴 지원
 const MessageBubble = styled.div`
   padding: 10px 14px;
   border-radius: 18px;
@@ -149,7 +151,7 @@ const MessageText = styled.div`
   hyphens: auto;
 `;
 
-// 매칭 버튼 컨테이너 스타일
+// 매칭 버튼 컨테이너
 const MatchingContainer = styled.div`
   margin-top: 12px;
   display: flex;
@@ -158,7 +160,7 @@ const MatchingContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-// 매칭 요청 버튼 스타일
+// 매칭 요청/수락 버튼
 const MatchingButton = styled.button`
   background: ${props => props.$disabled ? 'var(--border-medium)' : 'var(--primary-blue)'};
   color: ${props => props.$disabled ? 'var(--text-tertiary)' : 'white'};
@@ -189,7 +191,7 @@ const MatchingButton = styled.button`
   }
 `;
 
-// 매칭 상태 표시 스타일
+// 매칭 상태 표시
 const MatchingStatus = styled.div`
   font-size: 1.2rem;
   color: var(--text-secondary);
@@ -200,7 +202,7 @@ const MatchingStatus = styled.div`
   border: 1px solid var(--border-light);
 `;
 
-// ReplyContainer
+// 답장 컨테이너
 const ReplyContainer = styled.div`
   margin-bottom: 8px;
   padding: 6px 8px;
@@ -235,6 +237,7 @@ const ReplyText = styled.div`
   font-style: italic;
 `;
 
+// 이미지 로딩 컨테이너
 const ImageLoadingContainer = styled.div`
   max-width: 200px;
   max-height: 200px;
@@ -349,63 +352,44 @@ const ReadTime = styled.span`
   color: var(--text-tertiary);
 `;
 
-// 매칭 데이터 파싱 함수 - DB 우선 처리
+// 매칭 데이터 파싱 함수 - DB 저장된 JSON 문자열을 우선적으로 파싱
 const parseMatchingDataFromMessage = (message) => {
-  console.log('🔍 매칭 데이터 파싱 시작 (DB 우선):', {
-    messageType: message.message_type,
-    messageIdx: message.message_idx,
-    hasMatchingData: !!message.matching_data,
-    matchingDataLength: message.matching_data?.length,
-    hasMatchingDataMap: !!message.matching_data_map
-  });
-
   if (message.message_type !== 'matching_request') {
-    console.log('❌ 매칭 요청 메시지가 아님');
     return null;
   }
 
-  // DB에서 조회한 matching_data 필드 (JSON 문자열)
+  // DB에서 조회한 matching_data 필드 (JSON 문자열) 우선 처리
   if (message.matching_data && typeof message.matching_data === 'string' && message.matching_data.trim() !== '') {
     try {
-      console.log('✅ DB에서 조회한 매칭 데이터 파싱 시도:', message.matching_data);
       const matchingData = JSON.parse(message.matching_data);
       
       // 필수 필드 검증
       if (matchingData.matching_idx && typeof matchingData.matching_idx === 'number') {
-        console.log('✅ DB 매칭 데이터 파싱 성공:', matchingData);
         return matchingData;
-      } else {
-        console.log('❌ DB 매칭 데이터에 matching_idx가 없음');
       }
     } catch (error) {
-      console.error('❌ DB 매칭 데이터 JSON 파싱 실패:', error);
+      // JSON 파싱 실패 시 다음 방법으로 fallback
     }
   }
 
   // WebSocket으로 수신한 matching_data_map (실시간 메시지용)
   if (message.matching_data_map && typeof message.matching_data_map === 'object' && message.matching_data_map !== null) {
-    console.log('✅ WebSocket 매칭 데이터 Map 사용:', message.matching_data_map);
-    
     if (message.matching_data_map.matching_idx && typeof message.matching_data_map.matching_idx === 'number') {
       return message.matching_data_map;
-    } else {
-      console.log('❌ WebSocket 매칭 데이터에 matching_idx가 없음');
     }
   }
 
-  console.log('❌ 매칭 데이터 파싱 실패 - 모든 소스에서 유효한 데이터를 찾을 수 없음');
   return null;
 };
 
-// 표시용 메시지 내용 정리하는 함수
+// 표시용 메시지 내용 정리 - 매칭 데이터가 포함된 경우 정리된 내용 반환
 const getDisplayMessageContent = (message) => {
   if (message.message_type !== 'matching_request') {
     return message.message_content;
   }
 
-  // message_content를 그대로 표시
+  // DB 저장된 매칭 메시지는 message_content를 그대로 사용
   if (message.matching_data && typeof message.matching_data === 'string') {
-    console.log('✅ DB 저장된 매칭 메시지 - message_content 그대로 사용:', message.message_content);
     return message.message_content;
   }
 
@@ -424,19 +408,17 @@ const getDisplayMessageContent = (message) => {
     for (const pattern of patterns) {
       displayContent = displayContent.replace(pattern, '').trim();
       if (displayContent !== content) {
-        console.log('✅ 표시용 메시지 내용 정리:', displayContent);
         break;
       }
     }
 
     return displayContent || content;
   } catch (error) {
-    console.error('❌ 표시용 메시지 내용 정리 실패:', error);
     return message.message_content;
   }
 };
 
-// useContextMenuPosition 훅
+// 컨텍스트 메뉴 위치 계산 훅 - 뷰포트 경계를 고려한 안전한 위치 계산
 const useContextMenuPosition = () => {
   const calculatePosition = useCallback((event, containerRef) => {
     if (!containerRef.current) {
@@ -499,7 +481,7 @@ const useContextMenuPosition = () => {
   return calculatePosition;
 };
 
-// useUnifiedPointerEvents 훅
+// 통합 포인터 이벤트 훅 - 마우스와 터치 이벤트를 통합하여 처리(롱프레스와 우클릭 지원)
 const useUnifiedPointerEvents = (onContextMenu, containerRef) => {
   const longPressTimer = useRef(null);
   const [isLongPressing, setIsLongPressing] = useState(false);
@@ -507,10 +489,12 @@ const useUnifiedPointerEvents = (onContextMenu, containerRef) => {
   const calculatePosition = useContextMenuPosition();
 
   const handlePointerDown = useCallback((event) => {
+    // 이미지 클릭은 제외
     if (event.target.tagName && event.target.tagName.toLowerCase() === 'img') {
       return;
     }
 
+    // 우클릭 처리
     if (event.button === 2) {
       event.preventDefault();
       const position = calculatePosition(event, containerRef);
@@ -518,6 +502,7 @@ const useUnifiedPointerEvents = (onContextMenu, containerRef) => {
       return;
     }
 
+    // 롱프레스 시작
     if (event.button === 0 || event.pointerType === 'touch' || event.type === 'touchstart') {
       setIsLongPressing(true);
       longPressExecuted.current = false;
@@ -586,7 +571,7 @@ const useUnifiedPointerEvents = (onContextMenu, containerRef) => {
   }
 };
 
-// MessageItem 컴포넌트
+// 메시지 아이템 컴포넌트
 const MessageItem = ({ 
   message, 
   isCurrentUser, 
@@ -626,7 +611,7 @@ const MessageItem = ({
   const matchingTotal = matchingData.matching_total || 0;
   const matchingComplete = matchingData.matching_complete || 0;
 
-  // 실시간 매칭 상태 관리를 단순화
+  // 실시간 매칭 상태 관리
   const [currentMatchingStatus, setCurrentMatchingStatus] = useState(null);
   const [isMatchingStatusLoading, setIsMatchingStatusLoading] = useState(false);
   const statusFetchedRef = useRef(false);
@@ -645,71 +630,56 @@ const MessageItem = ({
 
   const containerRef = useRef(null);
 
-  // 관리자 매칭 체크 함수
+  // 관리자 매칭 체크 함수 - 관리자(member_idx: 141)와의 매칭은 비활성화
   const isAdminMatching = () => {
     if (!roomData || !user) return false;
     
-    // 관리자(member_idx: 141)가 포함된 매칭인지 확인
     if (roomData.trainer_idx === 141 || roomData.user_idx === 141) {
-      console.log('🚫 관리자와의 매칭 - 버튼 비활성화');
       return true;
     }
     
     return false;
   };
 
-  // 단 한 번만 실행되는 매칭 상태 조회 함수
+  // 매칭 상태 조회 - 단 한 번만 실행 - 매칭 요청 메시지의 실시간 상태를 DB에서 조회
   useEffect(() => {
-    // 매칭 요청 메시지가 아니면 스킵
     if (message.message_type !== 'matching_request') {
       return;
     }
 
-    // 유효한 matchingIdx가 없으면 스킵
     if (!matchingIdx || matchingIdx <= 0) {
-      console.log('❌ 유효하지 않은 matching_idx:', matchingIdx);
       return;
     }
 
-    // 이미 조회했으면 스킵
     if (statusFetchedRef.current) {
-      console.log('✅ 이미 매칭 상태를 조회했음 - 스킵');
       return;
     }
 
-    // 로딩 중이면 스킵
     if (isMatchingStatusLoading) {
-      console.log('⏳ 이미 매칭 상태 조회 중 - 스킵');
       return;
     }
 
-    // 단 한 번만 실행되도록 플래그 설정
     statusFetchedRef.current = true;
     
     const fetchMatchingStatus = async () => {
       setIsMatchingStatusLoading(true);
       
       try {
-        console.log('🔍 매칭 상태 조회 시작 (단 한 번만):', matchingIdx);
-        
         const response = await chatApi.getMatchingStatus(matchingIdx);
         
         if (response.success && response.matching) {
           const latestMatchingData = response.matching;
           setCurrentMatchingStatus(latestMatchingData);
         } else {
-          console.warn('⚠️ 매칭 상태 조회 실패:', response.message);
           setCurrentMatchingStatus(null);
         }
       } catch (error) {
-        console.error('❌ 매칭 상태 조회 중 오류:', error);
         setCurrentMatchingStatus(null);
       } finally {
         setIsMatchingStatusLoading(false);
       }
     };
 
-    // 약간의 지연을 두고 실행 (렌더링 완료 후)
     const timeoutId = setTimeout(fetchMatchingStatus, 100);
 
     return () => {
@@ -717,6 +687,7 @@ const MessageItem = ({
     };
   }, [matchingIdx]);
 
+  // 채팅 컨테이너 찾기
   useEffect(() => {
     const findChatContainer = (element) => {
       let current = element;
@@ -744,12 +715,11 @@ const MessageItem = ({
   // 매칭 버튼 클릭 가능 여부
   const canClickMatchingButton = !isCurrentUser && user?.member_type === 'user' && !isAdminMatching();
 
-  // 최신 매칭 상태 사용 (DB 조회 결과 우선, 없으면 메시지 속 데이터 사용)
+  // 최신 매칭 상태 사용 (DB 조회 결과 우선)
   const latestMatchingComplete = currentMatchingStatus ? currentMatchingStatus.matching_complete : matchingComplete;
 
-  // 매칭 요청 수락 핸들러 (브로드캐스트 추가)
+  // 매칭 요청 수락 핸들러 - 매칭 상태를 업데이트하고 브로드캐스트 전송
   const handleMatchingAccept = async () => {
-
     if (!matchingIdx) {
       alert('매칭 정보를 찾을 수 없습니다. 메시지가 손상되었을 수 있습니다.');
       return;
@@ -759,7 +729,6 @@ const MessageItem = ({
       return;
     }
     
-    // 관리자 매칭 체크
     if (isAdminMatching()) {
       alert('관리자와는 매칭을 진행할 수 없습니다.');
       return;
@@ -773,15 +742,12 @@ const MessageItem = ({
     setMatchingLoading(true);
     
     try {
-      console.log('📤 매칭 수락 API 호출:', matchingIdx);
       const result = await chatApi.acceptMatching(matchingIdx);
-      
-      console.log('📥 매칭 수락 결과:', result);
       
       if (result.success) {
         alert('매칭이 성공적으로 수락되었습니다!');
         
-        // 로컬 상태도 즉시 업데이트
+        // 로컬 상태 즉시 업데이트
         setCurrentMatchingStatus(prev => ({
           ...prev,
           matching_complete: 1
@@ -803,13 +769,13 @@ const MessageItem = ({
       }
       
     } catch (error) {
-      console.error('❌ 매칭 수락 중 오류:', error);
       alert('매칭 수락 중 오류가 발생했습니다.');
     } finally {
       setMatchingLoading(false);
     }
   };
 
+  // 통합 포인터 이벤트 처리
   const { eventHandlers, isLongPressing } = useUnifiedPointerEvents(
     (event, position) => {
       setContextMenu({
@@ -909,7 +875,7 @@ const MessageItem = ({
     setLoadingProgress(0);
   }, [message.message_idx]);
 
-  // 로딩 진행률 시뮬레이션
+  // 로딩 진행률 시뮬레이션 - 이미지 업로드 중 사용자 경험 개선
   useEffect(() => {
     if (message.message_type === 'image' && !attachments && imageLoading) {
       const interval = setInterval(() => {
@@ -941,7 +907,7 @@ const MessageItem = ({
     });
   };
 
-  // 프로필 이미지 렌더링
+  // 프로필 이미지 렌더링 - 이미지 로드 실패 시 초성으로 fallback
   const renderProfileImage = () => {
     if (isCurrentUser) return null;
     
@@ -963,11 +929,7 @@ const MessageItem = ({
           <img 
             src={senderImage} 
             alt={`${senderName} 프로필`}
-            onLoad={() => {
-              console.log('✅ 프로필 이미지 로드 성공:', senderImage);
-            }}
             onError={(e) => {
-              console.log('❌ 프로필 이미지 로드 실패:', senderImage);
               e.target.style.display = 'none';
               e.target.parentElement.classList.add('default-avatar');
               e.target.parentElement.textContent = senderName?.charAt(0).toUpperCase() || '?';
@@ -982,7 +944,7 @@ const MessageItem = ({
     );
   };
 
-  // 읽음 상태 정보
+  // 읽음 상태 정보 생성
   const getReadStatusInfo = () => {
     if (!isCurrentUser) return null;
     
@@ -995,31 +957,15 @@ const MessageItem = ({
 
   const readStatusInfo = getReadStatusInfo();
 
-  // 매칭 상태 렌더링 함수
+  // 매칭 상태 렌더링 함수 - 회원/트레이너 구분하여 적절한 UI 표시
   const renderMatchingStatus = () => {
-    console.log('🎯 매칭 상태 렌더링:', {
-      canClickMatchingButton,
-      isMatchingCheckComplete,
-      isMatchingCheckLoading,
-      isMatchingStatusLoading,
-      hasCompletedMatchingWithTrainer,
-      matchingIdx,
-      originalMatchingComplete: matchingComplete,
-      latestMatchingComplete: latestMatchingComplete,
-      hasCurrentStatus: !!currentMatchingStatus,
-      statusFetched: statusFetchedRef.current,
-      isAdminMatching: isAdminMatching()
-    });
-
     if (canClickMatchingButton) {
       // 회원 계정에서 보는 경우
       
-      // 관리자와의 매칭인 경우 특별 메시지 표시
       if (isAdminMatching()) {
         return <MatchingStatus>관리자와는 매칭이 불가능합니다</MatchingStatus>;
       }
       
-      // 매칭 상태 조회 중일 때 로딩 표시
       if (isMatchingStatusLoading) {
         return (
           <MatchingButton disabled={true} $disabled={true}>
@@ -1028,7 +974,6 @@ const MessageItem = ({
         );
       }
       
-      // 일반 로딩 중일 때 로딩 표시
       if (isMatchingCheckLoading) {
         return (
           <MatchingButton disabled={true} $disabled={true}>
@@ -1037,27 +982,21 @@ const MessageItem = ({
         );
       }
       
-      // 실시간 DB 상태 우선 사용하여 매칭 완료 여부 체크
+      // 실시간 DB 상태로 매칭 완료 체크
       if (latestMatchingComplete === 2) {
-        console.log('🏁 매칭 완료됨 (latest matching_complete = 2) - 버튼 비활성화:', matchingIdx);
         return <MatchingStatus>완료된 매칭입니다</MatchingStatus>;
       }
       
-      // 실시간 DB 상태 우선 사용하여 매칭 수락 여부 체크
       if (latestMatchingComplete === 1) {
-        console.log('✅ 매칭 이미 수락됨 (latest matching_complete = 1) - 버튼 비활성화:', matchingIdx);
         return <MatchingStatus>이미 수락된 매칭입니다</MatchingStatus>;
       }
       
-      // 이미 완료된 매칭이 있는 경우 (다른 트레이너와의 진행 중인 PT)
       if (hasCompletedMatchingWithTrainer) {
         return <MatchingStatus>이미 진행 중인 PT가 있습니다</MatchingStatus>;
       }
       
-      // 매칭 대기 상태 (latest matching_complete = 0)에서만 버튼 활성화
+      // 매칭 대기 상태에서만 버튼 활성화
       if (matchingIdx && typeof matchingIdx === 'number' && matchingIdx > 0 && latestMatchingComplete === 0) {
-        console.log(`✅ 매칭 수락 버튼 활성화 (latest matching_complete = ${latestMatchingComplete}):`, matchingIdx);
-        
         return (
           <MatchingButton
             onClick={handleMatchingAccept}
@@ -1068,12 +1007,6 @@ const MessageItem = ({
           </MatchingButton>
         );
       } else {
-        console.log('❌ 매칭 정보 파싱 실패 또는 대기 상태가 아님:', {
-          matchingIdx,
-          type: typeof matchingIdx,
-          latestMatchingComplete,
-          parsedMatchingData
-        });
         return (
           <MatchingButton disabled={true} $disabled={true}>
             {latestMatchingComplete > 0 ? '매칭 처리됨' : '매칭 정보 파싱 실패'}
@@ -1131,6 +1064,7 @@ const MessageItem = ({
               </ReplyContainer>
             )}
             
+            {/* 메시지 내용 */}
             {message.message_type === 'image' ? (
               <ImageContainer>
                 {(!attachments || imageLoading) ? (
@@ -1181,6 +1115,7 @@ const MessageItem = ({
       </MessageGroup>
     </MessageContainer>
 
+    {/* 컨텍스트 메뉴 */}
     <MessageContextMenu
       isVisible={contextMenu.isVisible}
       position={contextMenu.position}
@@ -1193,6 +1128,7 @@ const MessageItem = ({
       onReport={handleReport}
     />
 
+    {/* 이미지 모달 */}
     {attachments && (
       <ImageModal
         isOpen={isModalOpen}

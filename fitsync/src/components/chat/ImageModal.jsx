@@ -31,7 +31,7 @@ const ModalContent = styled.div`
   flex-direction: column;
   animation: scaleIn 0.2s ease;
   
-  /* 🎯 고정 크기 설정 - 2번째 이미지 모달 크기와 유사하게 */
+  /* 고정 크기 설정 */
   width: 500px;
   height: 600px;
   
@@ -40,7 +40,7 @@ const ModalContent = styled.div`
     to { transform: scale(1); opacity: 1; }
   }
   
-  /* 모바일에서는 약간 작게 조정 */
+  /* 모바일 반응형 */
   @media (max-width: 768px) {
     width: 90vw;
     height: 70vh;
@@ -48,7 +48,6 @@ const ModalContent = styled.div`
     max-height: 550px;
   }
   
-  /* 아주 작은 화면에서는 더욱 축소 */
   @media (max-width: 480px) {
     width: 95vw;
     height: 65vh;
@@ -64,7 +63,7 @@ const ModalHeader = styled.div`
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-tertiary);
-  flex-shrink: 0; /* 헤더가 축소되지 않도록 */
+  flex-shrink: 0;
 `;
 
 const ModalTitle = styled.h2`
@@ -72,7 +71,6 @@ const ModalTitle = styled.h2`
   color: var(--text-primary);
   margin: 0;
   font-weight: 600;
-  /* 긴 파일명 처리 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -98,7 +96,7 @@ const CloseButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  flex-shrink: 0; /* 버튼이 축소되지 않도록 */
+  flex-shrink: 0;
   
   &:hover {
     color: var(--text-primary);
@@ -122,7 +120,7 @@ const ImageContainer = styled.div`
   background: #000;
   position: relative;
   
-  /* 🎯 고정 높이 설정하여 일관된 크기 유지 */
+  /* 고정 높이 설정하여 일관된 크기 유지 */
   min-height: 400px;
   max-height: 400px;
   
@@ -139,17 +137,14 @@ const ImageContainer = styled.div`
 
 // 이미지 크기 조정: 컨테이너에 맞게 자동 조정되면서 비율 유지
 const StyledImage = styled.img`
-  /* 🎯 컨테이너 크기에 맞춰 자동 조정, 비율은 유지 */
   max-width: 100%;
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain; /* 이미지 비율 유지하면서 컨테이너에 맞춤 */
+  object-fit: contain;
   user-select: none;
   transform-origin: center;
   will-change: transform;
-  
-  /* 작은 이미지의 경우 확대하지 않고 원본 크기 유지 */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 `;
@@ -161,7 +156,7 @@ const ModalControls = styled.div`
   padding: 16px 20px;
   border-top: 1px solid var(--border-light);
   background: var(--bg-tertiary);
-  flex-shrink: 0; /* 컨트롤이 축소되지 않도록 */
+  flex-shrink: 0;
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -242,6 +237,7 @@ const DownloadButton = styled.button`
   }
 `;
 
+// 이미지 모달 컴포넌트
 const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
   // 확대/축소 관련 상태
   const [scale, setScale] = useState(1); // 현재 확대 비율 (1 = 100%)
@@ -262,7 +258,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      // 모달 열릴 때 포커스 트랩 (접근성 개선)
+      // 모달 열릴 때 포커스 트랩
       modalRef.current?.focus();
       // 배경 스크롤 방지
       document.body.style.overflow = 'hidden';
@@ -283,7 +279,7 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
     }
   }, [isOpen, originalFilename]);
 
-  // 마우스 휠로 확대/축소 기능 (핵심 기능)
+  // 마우스 휠로 확대/축소 기능 - 이미지 중심점을 기준으로 확대/축소
   const handleWheel = useCallback((e) => {
     e.preventDefault(); // 기본 스크롤 동작 방지
     
@@ -337,10 +333,9 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // 원본 파일명으로 다운로드 기능 (핵심 기능)
+  // 원본 파일명으로 다운로드 기능 - Cloudinary URL에서 이미지 데이터를 가져와서 다운로드
   const handleDownload = useCallback(async () => {
     try {
-      
       // 1. Cloudinary URL에서 이미지 데이터 가져오기
       const response = await fetch(imageUrl);
       if (!response.ok) {
@@ -365,12 +360,23 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       
-      console.log('✅ 이미지 다운로드 완료 (고정 모달):', originalFilename);
     } catch (error) {
-      console.error('❌ 이미지 다운로드 실패:', error);
       alert('이미지 다운로드에 실패했습니다.');
     }
   }, [imageUrl, originalFilename]);
+
+  // 확대/축소 버튼 핸들러
+  const handleZoomIn = useCallback(() => {
+    setScale(Math.min(5, scale + 0.2));
+  }, [scale]);
+
+  const handleZoomOut = useCallback(() => {
+    const newScale = Math.max(0.1, scale - 0.2);
+    setScale(newScale);
+    if (newScale === 1) {
+      setPosition({ x: 0, y: 0 });
+    }
+  }, [scale]);
 
   if (!isOpen) return null;
 
@@ -420,14 +426,14 @@ const ImageModal = ({ isOpen, imageUrl, originalFilename, onClose }) => {
           </ZoomInfo>
           <ControlButtons>
             <ZoomButton 
-              onClick={() => setScale(Math.max(0.1, scale - 0.2))}
+              onClick={handleZoomOut}
               disabled={scale <= 0.2}
               aria-label="축소"
             >
               -
             </ZoomButton>
             <ZoomButton 
-              onClick={() => setScale(Math.min(5, scale + 0.2))}
+              onClick={handleZoomIn}
               disabled={scale >= 5}
               aria-label="확대"
             >
