@@ -48,8 +48,11 @@ public class AuthTokenFilter implements Filter {
         }
 
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
-            // 세션 대신 request attribute 사용 (필요하다면 세션 사용)
-            request.setAttribute("member_idx", jwtUtil.getUserIdx(token).intValue());
+            Integer memberIdx = jwtUtil.getUserIdx(token).intValue();
+            // request attribute에 저장
+            request.setAttribute("member_idx", memberIdx);
+            // 세션에도 저장
+            httpRequest.getSession().setAttribute("member_idx", memberIdx);
             chain.doFilter(request, response);
             return;
         }
@@ -63,10 +66,16 @@ public class AuthTokenFilter implements Filter {
      * 인증이 필요하지 않은 공개 경로인지 확인
      */
     private boolean isPublicPath(String requestURI) {
-        // 인증이 필요하지 않은 경로들
+        // 정확한 경로 매칭을 위해 루트 경로를 먼저 체크
+        if ("/".equals(requestURI)) {
+            return true; // 메인 페이지만 허용
+        }
+        
+        // 인증이 필요하지 않은 경로들 (로그인, 회원가입, 정적 리소스만)
         String[] publicPaths = {
-            "/auth",           // 인증 관련 API
-            "/",               // 메인 페이지
+            "/auth",           // 인증 관련 API (로그인, 회원가입)
+            "/login",          // 로그인 페이지
+            "/register",       // 회원가입 페이지
             "/static",         // 정적 리소스
             "/css",           // CSS 파일
             "/js",            // JavaScript 파일

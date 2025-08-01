@@ -57,15 +57,31 @@ public class RoutineController {
 	public ResponseEntity<?> getRoutineList(HttpSession session){
 		Map<String, Object> result = new HashMap<>();
 		List<RoutineListVO> list = null;
-		list = service.getRoutineList((int) session.getAttribute("member_idx"));
-		if(list != null && list.size() > 0) {
-			result.put("success", true);
-			result.put("vo", list);
-		}else {
-			result.put("success", false);
-		}
-		return ResponseEntity.ok(result); 
 		
+		Object memberIdxObj = session.getAttribute("member_idx");
+		
+		if (memberIdxObj == null) {
+			result.put("success", false);
+			result.put("msg", "인증 정보가 없습니다. 다시 로그인해주세요.");
+			return ResponseEntity.status(401).body(result);
+		}
+		
+		try {
+			int memberIdx = (Integer) memberIdxObj;
+			list = service.getRoutineList(memberIdx);
+			if(list != null && list.size() > 0) {
+				result.put("success", true);
+				result.put("vo", list);
+			}else {
+				result.put("success", false);
+			}
+		} catch (ClassCastException e) {
+			result.put("success", false);
+			result.put("msg", "세션 정보가 올바르지 않습니다.");
+			return ResponseEntity.status(401).body(result);
+		}
+		
+		return ResponseEntity.ok(result); 
 	}
 	// 트레이너 -> 내 회원 루틴 리스트 조회용
 	@GetMapping("/getList/{memberIdx}")
@@ -109,9 +125,16 @@ public class RoutineController {
 	public ResponseEntity<?> getRoutineDetail(@PathVariable int routine_list_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<>();
 		Object sessionIdx = session.getAttribute("member_idx");
+		
+		if (sessionIdx == null) {
+			result.put("success", false);
+			result.put("msg", "인증 정보가 없습니다. 다시 로그인해주세요.");
+			return ResponseEntity.status(401).body(result);
+		}
+		
 		RoutineMemberDTO rmdto = new RoutineMemberDTO();
 		rmdto.setRoutine_list_idx(routine_list_idx);
-		rmdto.setMember_idx((int) sessionIdx);
+		rmdto.setMember_idx((Integer) sessionIdx);
 		
 		RoutineListVO rvo = null;
 		rvo = service.getRoutine(rmdto);
@@ -173,11 +196,18 @@ public class RoutineController {
 	@DeleteMapping("/delete/{routine_list_idx}")
 	public ResponseEntity<?> deleteRoutine(@PathVariable int routine_list_idx, HttpSession session) {
 		Object sessionIdx = session.getAttribute("member_idx");
+		Map<String, Object> result = new HashMap<>();
+		
+		if (sessionIdx == null) {
+			result.put("success", false);
+			result.put("msg", "인증 정보가 없습니다. 다시 로그인해주세요.");
+			return ResponseEntity.status(401).body(result);
+		}
+		
 		RoutineMemberDTO rmdto = new RoutineMemberDTO();
 		rmdto.setRoutine_list_idx(routine_list_idx);
-		rmdto.setMember_idx((int) sessionIdx);
+		rmdto.setMember_idx((Integer) sessionIdx);
 		
-		Map<String, Object> result = new HashMap<>();
 		if(service.deleteRoutine(rmdto)) {
 			result.put("success", true);
 			result.put("msg", "루틴이 삭제되었습니다.");
@@ -191,7 +221,15 @@ public class RoutineController {
 	@PutMapping("/update/{routine_list_idx}")
 	public ResponseEntity<?> updateRoutine(@PathVariable int routine_list_idx, @RequestBody Map<String, Object> body, HttpSession session) {
 		Map<String, Object> result = new HashMap<>();
-		int member_idx = (int)(session.getAttribute("member_idx"));
+		Object memberIdxObj = session.getAttribute("member_idx");
+		
+		if (memberIdxObj == null) {
+			result.put("success", false);
+			result.put("msg", "인증 정보가 없습니다. 다시 로그인해주세요.");
+			return ResponseEntity.status(401).body(result);
+		}
+		
+		int member_idx = (Integer) memberIdxObj;
 		if(service.updateRoutine(body, member_idx)) {
 			result.put("success", true);
 			result.put("msg", "루틴이 업데이트 되었습니다.");		
@@ -208,7 +246,14 @@ public class RoutineController {
 	public ResponseEntity<?> insertRecord(@RequestBody Map<String, Object> body, HttpSession session) {
 	    Map<String, Object> result = new HashMap<>();
 
-	    int member_idx = (int) session.getAttribute("member_idx");
+	    Object memberIdxObj = session.getAttribute("member_idx");
+	    if (memberIdxObj == null) {
+	        result.put("success", false);
+	        result.put("msg", "인증 정보가 없습니다. 다시 로그인해주세요.");
+	        return ResponseEntity.status(401).body(result);
+	    }
+
+	    int member_idx = (Integer) memberIdxObj;
 
 	    // 프론트에서 보낸 member_idx가 존재한다면 그걸 우선 사용
 	    if (body.get("member_idx") != null && !body.get("member_idx").toString().isBlank()) {
@@ -238,7 +283,15 @@ public class RoutineController {
 	@PutMapping("/sort")
 	public ResponseEntity<?> sortUpdate(@RequestBody List<Integer> body, HttpSession session) {
 		Map<String, Object> result = new HashMap<>();
-		int member_idx = (int)(session.getAttribute("member_idx"));
+		Object memberIdxObj = session.getAttribute("member_idx");
+		
+		if (memberIdxObj == null) {
+			result.put("success", false);
+			result.put("msg", "인증 정보가 없습니다. 다시 로그인해주세요.");
+			return ResponseEntity.status(401).body(result);
+		}
+		
+		int member_idx = (Integer) memberIdxObj;
 
 		boolean updateResult = service.sortUpdate(body, member_idx);
 		if(updateResult) {
