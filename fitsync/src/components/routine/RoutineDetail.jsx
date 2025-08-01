@@ -328,21 +328,21 @@ const TimerCTA = styled.button`
 
 const RoutineDetail = () => {
   const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
+  const { routine_list_idx } = useParams(); // 이 라인을 위로 이동
 
   const [time, setTime] = useState({
     minutes: 0,
     seconds: 0,
   });
   const [data, setData] = useState(init);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(routine_list_idx !== 'custom'); // 이제 올바른 값 사용
   const [isTimerShow, setIsTimerShow] = useState(false);
-  const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
   const location = useLocation();
   const param = new URLSearchParams(location.search);
   const targetDate = param.get('date');
   const nav = useNavigate();
-  const [modalPtId, setModalPtId] = useState(null); // 모달에 띄울 ptId
+  const [modalPtId, setModalPtId] = useState(null);
 
   // 모달 핸들러
 
@@ -503,7 +503,7 @@ const RoutineDetail = () => {
   useEffect(() => {
     const fetchRoutine = async () => {
       try {
-        setIsLoading(true); // 로딩 시작
+        setIsLoading(true);
 
         const url = targetIdx
           ? `/routine/trainer/${routine_list_idx}/${targetIdx}`
@@ -534,33 +534,46 @@ const RoutineDetail = () => {
         console.error(err);
         alert("루틴 정보를 불러오지 못했습니다.");
       } finally {
-        setIsLoading(false); // 항상 로딩 종료
+        setIsLoading(false);
       }
     };
 
-    // 조건 확인 후 API 호출 또는 로딩 종료
+    // custom 루틴인 경우 즉시 처리
     if (routine_list_idx === 'custom') {
-      // custom 루틴인 경우 바로 로딩 종료
+      // custom 루틴일 때는 기본 데이터 구조 설정
+      if (!data || data === null) {
+        const customData = {
+          routine_list_idx: 'custom',
+          routine_name: '자유 운동',
+          routines: [],
+          saveDate: null
+        };
+        setData(customData);
+        setInit(customData);
+      }
       setIsLoading(false);
       return;
     }
 
-    // routineData와 routineInit이 같고 targetIdx가 없는 경우
-    const isSameRoutine = JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
-    if (routine_list_idx !== 'custom' && !isSameRoutine && !targetIdx) {
-      setData(routineData);
-      setIsLoading(false);
-      return;
-    }
-
-    // API 호출이 필요한 경우에만 실행
+    // 일반 루틴 처리
     if (routine_list_idx && routine_list_idx !== 'custom') {
+      // routineData와 routineInit이 같고 targetIdx가 없는 경우
+      const isSameRoutine = routineData && routineInit && 
+        JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
+      
+      if (!isSameRoutine && !targetIdx && routineData) {
+        setData(routineData);
+        setIsLoading(false);
+        return;
+      }
+
+      // API 호출
       fetchRoutine();
     } else {
       setIsLoading(false);
     }
 
-  }, [routine_list_idx, targetIdx]); // 의존성 배열 단순화
+  }, [routine_list_idx, targetIdx]);
 
   // 세트 값 변경 공통 함수
   const handleSetValueChange = (routinePtIdx, index, field, value) => {
@@ -647,7 +660,7 @@ const RoutineDetail = () => {
               {
                 routine_list_idx: 0,
                 routine_idx: r.routine_idx,
-                set_num: r.sets.length + 1,  // 현재 세트 개수 + 1
+                set_num: r.sets.length + 1,
                 set_volume: 0,
                 set_count: 0,
                 id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`,
@@ -714,7 +727,34 @@ const RoutineDetail = () => {
   }
 
   // 로딩 처리
-  if (isLoading || !data) {
+  if (isLoading) {
+    return (
+      <LoadingWrapper>
+        로딩중...
+      </LoadingWrapper>
+    );
+  }
+
+  // custom 루틴이고 data가 없으면 기본 구조 표시
+  if (routine_list_idx === 'custom' && (!data || data.routines === undefined)) {
+    return (
+      <WorkoutSetWrapper>
+        <TimerBox>
+          <TimerCTA onClick={handleTimerToggle}>
+            <AlarmIcon />
+            휴식 타이머
+          </TimerCTA>
+        </TimerBox>
+        <div className="imgBox">
+          <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" alt="" />
+        </div>
+        {isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : null}
+      </WorkoutSetWrapper>
+    );
+  }
+
+  // data가 없으면 로딩 표시
+  if (!data) {
     return (
       <LoadingWrapper>
         로딩중...
@@ -828,7 +868,7 @@ const RoutineDetail = () => {
                                 type="checkbox"
                                 id={`set-check-${routine.pt_idx}-${index}`}
                                 checked={set.checked || checkedSetsRef.current[key] || false}
-                                onChange={handleSetCheck(routine.pt_idx, index)}
+                                onChange={handleSetCheck(routine.pt.idx, index)}
                               />
                               <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
                                 <span className="visually-hidden">세트 완료 체크</span>
@@ -848,15 +888,15 @@ const RoutineDetail = () => {
           ))}
 
       {
-        isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : <></>
+        isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : null
       }
-
-      {modalPtId !== null && (
+      
+      {modalPtId && (
         <WorkoutView
           ptId={modalPtId}
-          isModal={true}
           onClose={handleCloseWorkoutModal}
-        />)}
+        />
+      )}
     </WorkoutSetWrapper>
   );
 };
