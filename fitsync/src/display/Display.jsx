@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Header from '../layout/Header';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Main from '../components/Main';
 import IsLoading from '../components/IsLoading';
 import styled from 'styled-components';
@@ -47,7 +47,8 @@ import WorkOut from '../components/admin/WorkOut';
 import WorkoutView from '../components/routine/WorkoutView';
 import UserApiLogContainerTest from '../components/ai/test/UserApiLogContainerTest';
 import axios from 'axios';
-
+import { useSelector, useDispatch } from 'react-redux';
+import { logoutUser, setUser } from '../action/userAction';
 
 const DisplayWrapper = styled.div`
   ${props => props.$isAdmin ? '' : 'max-width: 750px;'}
@@ -70,12 +71,30 @@ const DisplayInnner = styled.div`
 
 const Display = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.user);
   const [isOpen, setIsOpen] = useState(false);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
     initializeApp();
   }, []);
+
+  useEffect(() => {
+    // 로그인 상태일 때만 인증 확인 타이머 시작
+    if (user.isLogin) {
+      startAuthCheck();
+    } else {
+      stopAuthCheck();
+    }
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => {
+      stopAuthCheck();
+    };
+  }, [user.isLogin]);
 
   const initializeApp = async () => {
     try {
@@ -86,6 +105,59 @@ const Display = () => {
     }
   };
 
+  const startAuthCheck = () => {
+    // 기존 타이머가 있다면 정리
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // 30분마다 인증 확인
+    intervalRef.current = setInterval(async () => {
+      try {
+        const response = await axios.get('/auth/check', { 
+          withCredentials: true,
+          timeout: 10000 // 10초 타임아웃
+        });
+
+        if (!response.data.isLogin) {
+          // 로그인이 만료된 경우
+          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+
+          dispatch(logoutUser());
+
+          // 로그인 페이지로 이동
+          navigate('/login');
+          
+          // 타이머 정지
+          stopAuthCheck();
+        }
+      } catch (error) {
+        console.error('인증 확인 중 오류:', error);
+        
+        // 네트워크 오류나 서버 오류 시에는 경고만 표시
+        if (error.code === 'ECONNABORTED') {
+          console.warn('인증 확인 요청 타임아웃');
+        } else if (error.response?.status === 401) {
+          // 401 오류 시 로그아웃 처리
+          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+          
+          dispatch(logoutUser());
+
+          navigate('/login');
+          stopAuthCheck();
+        }
+        // 다른 오류는 무시 (서버 일시적 장애 등)
+      }
+    }, 30 * 60 * 1000); // 30분마다
+  };
+
+  const stopAuthCheck = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
   const isShow =
     !location.pathname.includes("/routine/detail") &&
     location.pathname !== '/routine/add' &&
@@ -93,17 +165,6 @@ const Display = () => {
     location.pathname !== '/test123';
 
   const isAdmin = location.pathname.startsWith('/admin');
-
-  setInterval(() => {
-    axios.get('/auth/check', { withCredentials: true }).then(res => {
-      if (!res.data.isLogin) {
-        alert('로그인이 만료되었습니다!');
-      }
-    })
-    .catch(error => {
-      alert('인증 확인 중 오류가 발생했습니다.');
-    });
-  }, 30 * 60 * 1000); // 30분마다
 
   return (
     <DisplayWrapper $isAdmin={isAdmin}>
