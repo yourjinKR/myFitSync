@@ -873,7 +873,7 @@ useEffect(() => {
               )}
             </>
           )}
-          {showInsertModal && members.length > 0 && (
+          {showInsertModal  && (
             <ScheduleInsertModal
               onClose={() => setShowInsertModal(false)}
               onInsert={handleInsertSchedule}
