@@ -11,6 +11,6 @@ import java.sql.Date;
 @NoArgsConstructor
 public class MemberVO {
 	private int member_idx, gym_idx, member_hidden;
-	private String member_email, member_name, member_num, member_image, member_status, member_day, member_type, member_purpose, member_time, member_disease, member_activity_area, member_info, member_info_image, member_intro, member_gender;
+	private String member_email, member_name, member_num, member_image, member_status, member_day, member_type, member_purpose, member_time, member_disease, member_activity_area, member_info, member_info_image, member_intro, member_gender, member_social;
 	private Date member_birth;
 }
