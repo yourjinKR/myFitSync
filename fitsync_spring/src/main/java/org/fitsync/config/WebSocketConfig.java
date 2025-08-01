@@ -1,4 +1,4 @@
-package org.fitsync.websocket;
+package org.fitsync.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
