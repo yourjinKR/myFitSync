@@ -328,14 +328,14 @@ const TimerCTA = styled.button`
 
 const RoutineDetail = () => {
   const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
-  const { routine_list_idx } = useParams(); // 이 라인을 위로 이동
+  const { routine_list_idx } = useParams();
 
   const [time, setTime] = useState({
     minutes: 0,
     seconds: 0,
   });
   const [data, setData] = useState(init);
-  const [isLoading, setIsLoading] = useState(routine_list_idx !== 'custom'); // 이제 올바른 값 사용
+  const [isLoading, setIsLoading] = useState(routine_list_idx !== 'custom');
   const [isTimerShow, setIsTimerShow] = useState(false);
   const { setNewData } = useOutletContext();
   const location = useLocation();
@@ -344,16 +344,10 @@ const RoutineDetail = () => {
   const nav = useNavigate();
   const [modalPtId, setModalPtId] = useState(null);
 
-  // 모달 핸들러
+  const checkedSetsRef = useRef({});
 
   const handleOpenWorkoutModal = (e) => {
-    console.log('클릭');
-
-    console.log(e.target.dataset);
     const { idx } = e.target.dataset;
-
-    console.log(idx);
-
     setModalPtId(idx);
   };
 
@@ -362,7 +356,6 @@ const RoutineDetail = () => {
   };
 
   const targetIdx = location.state?.targetMember;
-  console.log(targetIdx);
 
   // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
   const omitCheckedAndSaveDate = (obj) => {
@@ -393,13 +386,137 @@ const RoutineDetail = () => {
     };
   };
 
-  // useEffect - data
+  // 세트 값 변경 핸들러
+  const handleSetValueChange = (routinePtIdx, index, field, value) => {
+    setData(prev => ({
+      ...prev,
+      routines: prev.routines.map(r => {
+        return r.pt_idx === routinePtIdx ? {
+          ...r,
+          sets: r.sets.map((s, i) => {
+            if (i === index) {
+              return { ...s, [field]: value };
+            }
+            return s;
+          })
+        } : r;
+      })
+    }));
+  };
+
+  // 세트 체크 핸들러
+  const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
+    const key = `${routinePtIdx}-${setIndex}`;
+    checkedSetsRef.current[key] = e.target.checked;
+    setData(prev => ({
+      ...prev,
+      routines: prev.routines.map(r =>
+        r.pt_idx === routinePtIdx
+          ? {
+            ...r,
+            sets: r.sets.map((set, idx) =>
+              idx === setIndex ? { ...set, checked: e.target.checked } : set
+            )
+          }
+          : r
+      )
+    }));
+  };
+
+  // 세트 추가 핸들러
+  const handleAddSet = (routinePtIdx) => {
+    setData(prev => ({
+      ...prev,
+      routines: prev.routines.map(r =>
+        r.pt_idx === routinePtIdx
+          ? {
+            ...r,
+            sets: [
+              ...r.sets,
+              {
+                routine_list_idx: 0,
+                routine_idx: r.routine_idx,
+                set_num: r.sets.length + 1,
+                set_volume: 0,
+                set_count: 0,
+                id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`,
+              }
+            ]
+          }
+          : r
+      )
+    }));
+  };
+
+  // 세트 삭제 핸들러
+  const handleDeleteSet = (routinePtIdx, setIndex, routine_idx) => {
+    const target = data.routines.find((item) => item.routine_idx === routine_idx);
+    if (target.sets.length === 1) return alert("최소 하나의 세트는 남겨야 합니다.");
+    setData(prev => ({
+      ...prev,
+      routines: prev.routines.map(r =>
+        r.pt_idx === routinePtIdx
+          ? {
+            ...r,
+            sets: r.sets
+              .filter((set, index) => index !== setIndex)
+              .map((set, index) => ({
+                ...set,
+                set_num: index + 1
+              }))
+          }
+          : r
+      )
+    }));
+  };
+
+  // 루틴 삭제 핸들러
+  const handleRoutineDelete = (idx) => {
+    if (window.confirm("이 루틴을 삭제하시겠습니까?")) {
+      setData(prev => ({
+        ...prev,
+        routines: prev.routines.filter(item => item.pt_idx !== idx)
+      }));
+    }
+  };
+
+  const handleTimerToggle = () => {
+    setIsTimerShow(true);
+  };
+
+  // trailingActions
+  const trailingActions = (routinePtIdx, setIndex, routine_idx) => {
+    const routine = data.routines.find(r => r.pt_idx === routinePtIdx);
+    const hasOnlyOneSet = routine && routine.sets.length <= 1;
+
+    return (
+      <TrailingActions>
+        <SwipeAction
+          destructive={!hasOnlyOneSet}
+          onClick={() => {
+            if (!hasOnlyOneSet) {
+              handleDeleteSet(routinePtIdx, setIndex, routine_idx);
+            } else {
+              alert("최소 하나의 세트는 남겨야 합니다.");
+            }
+          }}
+          style={{
+            background: hasOnlyOneSet ? 'var(--text-tertiary)' : 'var(--error)',
+            opacity: hasOnlyOneSet ? 0.5 : 1
+          }}
+        >
+          {hasOnlyOneSet ? '불가' : '삭제'}
+        </SwipeAction>
+      </TrailingActions>
+    );
+  };
+
+  // useEffect - data 수정
   useEffect(() => {
     if (data === null || init === undefined) {
       return;
     }
 
-    // 비교 전 데이터 구조 확인
     const omitData = omitCheckedAndSaveDate(data);
     const omitInit = omitCheckedAndSaveDate(init);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
@@ -414,92 +531,127 @@ const RoutineDetail = () => {
         ...data,
         update: false,
       });
-    };
+    }
 
-    setRoutineData(data);
+    if (location.pathname.includes('/routine/detail/')) {
+      setRoutineData(data);
+    }
+  }, [data, init, routine_list_idx, location.pathname]); // setData 호출하는 로직 제거
 
-    // 자유 운동 저장
-    if (routine_list_idx !== null && routine_list_idx === 'custom') {
-      const currentDate = data.saveDate === undefined ? formatDate() : data.saveDate;
+  // 자유 운동 저장 로직을 별도 useEffect로 분리 (setData 호출 없이)
+  useEffect(() => {
+    if (!data || routine_list_idx !== 'custom') return;
 
-      if (data.routines.length === 0 && (data.saveDate === null || data.saveDate === undefined || data.saveDate === "")) {
-        setData(prev => ({
-          ...prev,
-          saveDate: currentDate
-        }));
-      }
+    const currentDate = data.saveDate === undefined ? formatDate() : data.saveDate;
 
-      // targetDate 파라미터가 있고 데이터가 비어있을 때 기존 데이터 로드
-      if (targetDate !== null && data.routines.length === 0 && data.saveDate !== "") {
-        const existingData = tempData.find(item => item.saveDate === targetDate);
-        if (existingData) {
-          setData(existingData);
-          return;
-        }
-      }
+    // saveDate 설정이 필요한 경우에만 한 번만 실행
+    if (data.routines.length === 0 && !data.saveDate) {
+      setData(prev => ({
+        ...prev,
+        saveDate: currentDate
+      }));
+      return;
+    }
 
-      // routine_name이 있고 routines가 있을 때만 저장
-      if (data.routines.length !== 0 && data.saveDate !== null && data.saveDate !== "") {
-        if (data.routine_name === null || data.routine_name === undefined || data.routine_name === "") {
-          setTempData(prev => {
-            const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
-
-            if (existingIndex !== -1) {
-              return prev.map((item, index) =>
-                index === existingIndex ? data : item
-              );
-            } else {
-              return [...prev, data];
-            }
-          });
-        }
-      }
-    } else {
-      // 일반 루틴에서 체크된 세트 확인
-      if (data && data.routines) {
-        data.routines.forEach(routine => {
-          const checkedSets = routine.sets.filter(set => set.checked === true);
-          if (checkedSets.length > 0) {
-
-            const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
-            let diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
-            if (data.saveDate === null || data.saveDate === undefined || data.saveDate === "") {
-              const target = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
-              if (diffDate > 0 || target === undefined) {
-                setData(prev => ({
-                  ...prev,
-                  saveDate: formatDate(),
-                }));
-                return;
-              } else {
-                setData(prev => ({
-                  ...prev,
-                  saveDate: findData.saveDate,
-                }));
-                return;
-              }
-            }
-
-            if (tempData !== null) {
-              setTempData(prev => {
-                const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
-
-                if (diffDate < 1 && existingIndex !== -1) {
-                  return prev.map((item, index) =>
-                    index === existingIndex ? data : item
-                  );
-                } else {
-                  return [...prev, data];
-                }
-              });
-            }
-          }
-        });
+    // targetDate가 있고 데이터가 비어있을 때 기존 데이터 로드
+    if (targetDate && data.routines.length === 0 && data.saveDate) {
+      const existingData = tempData.find(item => item.saveDate === targetDate);
+      if (existingData && JSON.stringify(existingData) !== JSON.stringify(data)) {
+        setData(existingData);
+        return;
       }
     }
-  }, [data, init]); // init도 의존성에 추가
 
-  // 데이터 로드 시 고유 ID 생성
+    // tempData에 저장 (setData 호출 없이)
+    if (data.routines.length > 0 && data.saveDate && !data.routine_name) {
+      setTempData(prev => {
+        const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
+        
+        if (existingIndex !== -1) {
+          const existing = prev[existingIndex];
+          // 데이터가 실제로 변경된 경우에만 업데이트
+          if (JSON.stringify(existing) !== JSON.stringify(data)) {
+            return prev.map((item, index) =>
+              index === existingIndex ? data : item
+            );
+          }
+          return prev;
+        } else {
+          return [...prev, data];
+        }
+      });
+    }
+  }, [targetDate, tempData.length]); // data 제거, 필요한 의존성만 추가
+
+  // 일반 루틴의 체크된 세트 처리를 별도 useEffect로 분리
+  useEffect(() => {
+    if (!data || !data.routines || routine_list_idx === 'custom') return;
+
+    let shouldUpdateSaveDate = false;
+    let shouldUpdateTempData = false;
+    let newSaveDate = null;
+
+    data.routines.forEach(routine => {
+      const checkedSets = routine.sets.filter(set => set.checked === true);
+      if (checkedSets.length > 0) {
+        const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
+        const diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
+        
+        if (!data.saveDate) {
+          const target = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
+          if (diffDate > 0 || !target) {
+            shouldUpdateSaveDate = true;
+            newSaveDate = formatDate();
+          } else if (findData) {
+            shouldUpdateSaveDate = true;
+            newSaveDate = findData.saveDate;
+          }
+        } else {
+          shouldUpdateTempData = true;
+        }
+      }
+    });
+
+    // 한 번에 상태 업데이트
+    if (shouldUpdateSaveDate && newSaveDate !== data.saveDate) {
+      setData(prev => ({
+        ...prev,
+        saveDate: newSaveDate,
+      }));
+    }
+
+    if (shouldUpdateTempData && tempData) {
+      const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
+      const diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
+      
+      setTempData(prev => {
+        const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
+
+        if (diffDate < 1 && existingIndex !== -1) {
+          const existing = prev[existingIndex];
+          if (JSON.stringify(existing) !== JSON.stringify(data)) {
+            return prev.map((item, index) =>
+              index === existingIndex ? data : item
+            );
+          }
+        } else {
+          return [...prev, data];
+        }
+        return prev;
+      });
+    }
+  }, [data, tempData]); // 필요한 의존성만 추가
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      if (routine_list_idx !== 'custom' && init) {
+        setRoutineData(init);
+      }
+    };
+  }, []);
+
+  // 데이터 로드 useEffect (중복 제거하고 하나만)
   useEffect(() => {
     const fetchRoutine = async () => {
       try {
@@ -538,9 +690,7 @@ const RoutineDetail = () => {
       }
     };
 
-    // custom 루틴인 경우 즉시 처리
     if (routine_list_idx === 'custom') {
-      // custom 루틴일 때는 기본 데이터 구조 설정
       if (!data || data === null) {
         const customData = {
           routine_list_idx: 'custom',
@@ -555,9 +705,7 @@ const RoutineDetail = () => {
       return;
     }
 
-    // 일반 루틴 처리
     if (routine_list_idx && routine_list_idx !== 'custom') {
-      // routineData와 routineInit이 같고 targetIdx가 없는 경우
       const isSameRoutine = routineData && routineInit && 
         JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
       
@@ -567,7 +715,6 @@ const RoutineDetail = () => {
         return;
       }
 
-      // API 호출
       fetchRoutine();
     } else {
       setIsLoading(false);
@@ -575,156 +722,19 @@ const RoutineDetail = () => {
 
   }, [routine_list_idx, targetIdx]);
 
-  // 세트 값 변경 공통 함수
-  const handleSetValueChange = (routinePtIdx, index, field, value) => {
-
-    setData(prev => {
-      const newData = {
-        ...prev,
-        routines: prev.routines.map(r => {
-          return r.pt_idx === routinePtIdx ? {
-            ...r,
-            sets: r.sets.map((s, i) => {
-              if (i === index) {
-                return { ...s, [field]: value };
-              }
-              return s;
-            })
-          } : r;
-        })
-      };
-      return newData;
-    });
-
-  };
-
-  // 세트 삭제 - setId 대신 setIndex 사용
-  const handleDeleteSet = (routinePtIdx, setIndex, routine_idx) => {
-    const target = data.routines.find((item) => item.routine_idx === routine_idx);
-    if (target.sets.length === 1) return alert("최소 하나의 세트는 남겨야 합니다.");
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r =>
-        r.pt_idx === routinePtIdx
-          ? {
-            ...r,
-            sets: r.sets
-              .filter((set, index) => index !== setIndex)
-              .map((set, index) => ({
-                ...set,
-                set_num: index + 1  // set_num 재계산
-              }))
-          }
-          : r
-      )
-    }));
-  };
-
-  // trailingActions - 세트가 1개일 때는 비활성화
-  const trailingActions = (routinePtIdx, setIndex, routine_idx) => {
-    const routine = data.routines.find(r => r.pt_idx === routinePtIdx);
-    const hasOnlyOneSet = routine && routine.sets.length <= 1;
-
-    return (
-      <TrailingActions>
-        <SwipeAction
-          destructive={!hasOnlyOneSet}
-          onClick={() => {
-            if (!hasOnlyOneSet) {
-              handleDeleteSet(routinePtIdx, setIndex, routine_idx);
-            } else {
-              alert("최소 하나의 세트는 남겨야 합니다.");
-            }
-          }}
-          style={{
-            background: hasOnlyOneSet ? 'var(--text-tertiary)' : 'var(--error)',
-            opacity: hasOnlyOneSet ? 0.5 : 1
-          }}
-        >
-          {hasOnlyOneSet ? '불가' : '삭제'}
-        </SwipeAction>
-      </TrailingActions>
-    );
-  };
-
-  // 세트 추가 함수 (특정 routine에 세트 추가)
-  const handleAddSet = (routinePtIdx) => {
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r =>
-        r.pt_idx === routinePtIdx
-          ? {
-            ...r,
-            sets: [
-              ...r.sets,
-              {
-                routine_list_idx: 0,
-                routine_idx: r.routine_idx,
-                set_num: r.sets.length + 1,
-                set_volume: 0,
-                set_count: 0,
-                id: `${routinePtIdx}-${r.sets.length}-${Date.now()}`,
-              }
-            ]
-          }
-          : r
-      )
-    }));
-  };
-
-  const checkedSetsRef = useRef({});
-
+  // 체크 상태 관리
   useEffect(() => {
-    // data.routines가 바뀔 때마다 체크 상태 초기화
     if (data && data.routines) {
       const newChecked = {};
       data.routines.forEach(routine => {
         routine.sets.forEach((set, idx) => {
           const key = `${routine.pt_idx}-${idx}`;
-          newChecked[key] = checkedSetsRef.current[key] || false;
+          newChecked[key] = checkedSetsRef.current[key] ?? false;
         });
       });
       checkedSetsRef.current = newChecked;
     }
-  }, [data, routineData]);
-
-  useEffect(() => {
-    if (routineData === null) return;
-  }, [routineData]);
-
-  const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
-    const key = `${routinePtIdx}-${setIndex}`;
-    checkedSetsRef.current[key] = e.target.checked;
-    setData(
-      prev => ({
-        ...prev,
-        routines: prev.routines.map(r =>
-          r.pt_idx === routinePtIdx
-            ? {
-              ...r,
-              sets: r.sets.map((set, idx) =>
-                idx === setIndex ? { ...set, checked: e.target.checked } : set
-              )
-            }
-            : r
-        )
-      })
-    );
-  };
-
-  const handleRoutineDelete = (idx) => {
-    if (window.confirm("이 루틴을 삭제하시겠습니까?")) {
-      setData(prev => ({
-        ...prev,
-        routines: prev.routines.filter(item => item.pt_idx !== idx)
-      }));
-    }
-  }
-
-
-  const handleTimerToggle = () => {
-    setIsTimerShow(true);
-  }
+  }, [data?.routines?.length]);
 
   // 로딩 처리
   if (isLoading) {
@@ -735,7 +745,6 @@ const RoutineDetail = () => {
     );
   }
 
-  // custom 루틴이고 data가 없으면 기본 구조 표시
   if (routine_list_idx === 'custom' && (!data || data.routines === undefined)) {
     return (
       <WorkoutSetWrapper>
@@ -753,7 +762,6 @@ const RoutineDetail = () => {
     );
   }
 
-  // data가 없으면 로딩 표시
   if (!data) {
     return (
       <LoadingWrapper>
@@ -761,6 +769,19 @@ const RoutineDetail = () => {
       </LoadingWrapper>
     );
   }
+
+  // 입력 핸들러 함수 추가
+  const handleInputFocus = (e) => {
+    if (e.target.value === '0') {
+      e.target.value = '';
+    }
+  };
+
+  const handleInputBlur = (e, routinePtIdx, index, field) => {
+    if (e.target.value === '') {
+      handleSetValueChange(routinePtIdx, index, field, '0');
+    }
+  };
 
   return (
     <WorkoutSetWrapper>
@@ -792,104 +813,106 @@ const RoutineDetail = () => {
             휴식 타이머
           </TimerCTA>
         }
-
       </TimerBox>
-      {
-        data.routines.length === 0 ?
-          <div className="imgBox">
-            <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" alt="" />
-          </div> :
-          data.routines && data.routines.map((routine) => (
-            <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
-              <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
-              <SetTop>
-                <img src={routine.imageUrl} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal} />
-                <h4>{routine.pt.pt_name}</h4>
-              </SetTop>
-              <MemoInput
-                name="memo"
-                type="text"
-                placeholder="루틴에 대한 메모를 작성해주세요."
-                value={routine.routine_memo || ""}
-                onChange={e => {
-                  const value = e.target.value;
-                  setData(prev => ({
-                    ...prev,
-                    routines: prev.routines.map(r =>
-                      r.pt_idx === routine.pt_idx
-                        ? { ...r, routine_memo: value }
-                        : r
-                    )
-                  }));
-                }}
-              />
-              <ListHeader>
-                <div>번호</div>
-                <div>KG</div>
-                <div>횟수</div>
-                <div>{isEdit ? '삭제' : '완료'}</div>
-              </ListHeader>
-              <ListBody>
-                <SwipeableList actionDelay={0}>
-                  {routine.sets && routine.sets.map((set, index) => {
-                    const key = `${routine.pt_idx}-${index}`;
-                    return (
-                      <SwipeableListItem className={set.checked || checkedSetsRef.current[key] ? 'checked' : ''}
-                        key={`${routine.pt_idx}-${index}-${set.id}`}
-                        trailingActions={trailingActions(routine.pt_idx, index, routine.routine_idx)}
-                      >
-                        <div>{index + 1}</div>
-                        <div>
-                          <input
-                            type="number"
-                            value={set.set_volume || 0}
-                            placeholder="0"
-                            onChange={e => {
-                              handleSetValueChange(routine.pt.idx, index, 'set_volume', e.target.value);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <input
-                            type="number"
-                            value={set.set_count || 0}
-                            placeholder="0"
-                            onChange={e => {
-                              handleSetValueChange(routine.pt.idx, index, 'set_count', e.target.value);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          {isEdit ?
-                            <DeleteIcon onClick={() => handleDeleteSet(routine.pt_idx, index, routine.routine_idx)} />
-                            :
-                            <>
-                              <CheckInput
-                                type="checkbox"
-                                id={`set-check-${routine.pt_idx}-${index}`}
-                                checked={set.checked || checkedSetsRef.current[key] || false}
-                                onChange={handleSetCheck(routine.pt.idx, index)}
-                              />
-                              <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
-                                <span className="visually-hidden">세트 완료 체크</span>
-                              </Checklabel>
-                            </>
-                          }
-                        </div>
-                      </SwipeableListItem>
-                    );
-                  })}
-                </SwipeableList>
-                <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt.idx)}>
-                  세트 추가 +
-                </SetAddCTA>
-              </ListBody>
-            </ExerciseSection>
-          ))}
 
-      {
-        isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : null
-      }
+      {data.routines.length === 0 ?
+        <div className="imgBox">
+          <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" alt="" />
+        </div> :
+        data.routines && data.routines.map((routine) => (
+          <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
+            <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
+            <SetTop>
+              <img src={routine.imageUrl} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal} />
+              <h4>{routine.pt.pt_name}</h4>
+            </SetTop>
+            <MemoInput
+              name="memo"
+              type="text"
+              placeholder="루틴에 대한 메모를 작성해주세요."
+              value={routine.routine_memo || ""}
+              onChange={e => {
+                const value = e.target.value;
+                setData(prev => ({
+                  ...prev,
+                  routines: prev.routines.map(r =>
+                    r.pt_idx === routine.pt_idx
+                      ? { ...r, routine_memo: value }
+                      : r
+                  )
+                }));
+              }}
+            />
+            <ListHeader>
+              <div>번호</div>
+              <div>KG</div>
+              <div>횟수</div>
+              <div>{isEdit ? '삭제' : '완료'}</div>
+            </ListHeader>
+            <ListBody>
+              <SwipeableList actionDelay={0}>
+                {routine.sets && routine.sets.map((set, index) => {
+                  const key = `${routine.pt_idx}-${index}`;
+                  return (
+                    <SwipeableListItem 
+                      className={set.checked || checkedSetsRef.current[key] ? 'checked' : ''}
+                      key={`${routine.pt_idx}-${index}-${set.id}`}
+                      trailingActions={trailingActions(routine.pt_idx, index, routine.routine_idx)}
+                    >
+                      <div>{index + 1}</div>
+                      <div>
+                        <input
+                          type="number"
+                          value={set.set_volume || 0}
+                          placeholder="0"
+                          onFocus={handleInputFocus}
+                          onChange={e => {
+                            handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value);
+                          }}
+                          onBlur={e => handleInputBlur(e, routine.pt_idx, index, 'set_volume')}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          value={set.set_count || 0}
+                          placeholder="0"
+                          onFocus={handleInputFocus}
+                          onChange={e => {
+                            handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value);
+                          }}
+                          onBlur={e => handleInputBlur(e, routine.pt_idx, index, 'set_count')}
+                        />
+                      </div>
+                      <div>
+                        {isEdit ?
+                          <DeleteIcon onClick={() => handleDeleteSet(routine.pt_idx, index, routine.routine_idx)} />
+                          :
+                          <>
+                            <CheckInput
+                              type="checkbox"
+                              id={`set-check-${routine.pt_idx}-${index}`}
+                              checked={set.checked || checkedSetsRef.current[key] || false}
+                              onChange={handleSetCheck(routine.pt_idx, index)}
+                            />
+                            <Checklabel htmlFor={`set-check-${routine.pt_idx}-${index}`}>
+                              <span className="visually-hidden">세트 완료 체크</span>
+                            </Checklabel>
+                          </>
+                        }
+                      </div>
+                    </SwipeableListItem>
+                  );
+                })}
+              </SwipeableList>
+              <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt_idx)}>
+                세트 추가 +
+              </SetAddCTA>
+            </ListBody>
+          </ExerciseSection>
+        ))}
+
+      {isTimerShow ? <Timer time={time} setTime={setTime} setIsTimerShow={setIsTimerShow} /> : null}
       
       {modalPtId && (
         <WorkoutView
