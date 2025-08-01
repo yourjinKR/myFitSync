@@ -138,6 +138,7 @@ public class RoutineController {
 		
 		RoutineListVO rvo = null;
 		rvo = service.getRoutine(rmdto);
+		System.out.println(" rvo : " + rvo);
 		if(rvo != null) {
 			result.put("success", true);
 			result.put("vo", rvo);

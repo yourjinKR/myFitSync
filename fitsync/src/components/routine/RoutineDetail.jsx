@@ -334,7 +334,7 @@ const RoutineDetail = () => {
     seconds: 0,
   });
   const [data, setData] = useState(init);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isTimerShow, setIsTimerShow] = useState(false);
   const { routine_list_idx } = useParams();
   const { setNewData } = useOutletContext();
@@ -348,12 +348,12 @@ const RoutineDetail = () => {
 
   const handleOpenWorkoutModal = (e) => {
     console.log('클릭');
-    
+
     console.log(e.target.dataset);
-    const {idx} = e.target.dataset;
-    
+    const { idx } = e.target.dataset;
+
     console.log(idx);
-    
+
     setModalPtId(idx);
   };
 
@@ -369,9 +369,9 @@ const RoutineDetail = () => {
     if (!obj || !obj.routines) {
       return obj;
     }
-    
+
     const { saveDate, checked, id, update, ...cleanObj } = obj;
-    
+
     return {
       ...cleanObj,
       routines: obj.routines.map(routine => ({
@@ -398,18 +398,18 @@ const RoutineDetail = () => {
     if (data === null || init === undefined) {
       return;
     }
-    
+
     // 비교 전 데이터 구조 확인
     const omitData = omitCheckedAndSaveDate(data);
     const omitInit = omitCheckedAndSaveDate(init);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
-    
-    if(routine_list_idx !== 'custom'){
+
+    if (routine_list_idx !== 'custom') {
       setNewData({
         ...data,
         update: !isEqual,
       });
-    }else{
+    } else {
       setNewData({
         ...data,
         update: false,
@@ -421,7 +421,7 @@ const RoutineDetail = () => {
     // 자유 운동 저장
     if (routine_list_idx !== null && routine_list_idx === 'custom') {
       const currentDate = data.saveDate === undefined ? formatDate() : data.saveDate;
-      
+
       if (data.routines.length === 0 && (data.saveDate === null || data.saveDate === undefined || data.saveDate === "")) {
         setData(prev => ({
           ...prev,
@@ -440,10 +440,10 @@ const RoutineDetail = () => {
 
       // routine_name이 있고 routines가 있을 때만 저장
       if (data.routines.length !== 0 && data.saveDate !== null && data.saveDate !== "") {
-        if(data.routine_name === null || data.routine_name === undefined || data.routine_name === "") {
+        if (data.routine_name === null || data.routine_name === undefined || data.routine_name === "") {
           setTempData(prev => {
             const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
-  
+
             if (existingIndex !== -1) {
               return prev.map((item, index) =>
                 index === existingIndex ? data : item
@@ -460,30 +460,30 @@ const RoutineDetail = () => {
         data.routines.forEach(routine => {
           const checkedSets = routine.sets.filter(set => set.checked === true);
           if (checkedSets.length > 0) {
-            
+
             const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
             let diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
-            if(data.saveDate === null || data.saveDate === undefined || data.saveDate === "") {
+            if (data.saveDate === null || data.saveDate === undefined || data.saveDate === "") {
               const target = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
-              if(diffDate > 0 || target === undefined) {
+              if (diffDate > 0 || target === undefined) {
                 setData(prev => ({
                   ...prev,
-                  saveDate : formatDate(),
+                  saveDate: formatDate(),
                 }));
                 return;
-              }else{
+              } else {
                 setData(prev => ({
                   ...prev,
-                  saveDate : findData.saveDate,
+                  saveDate: findData.saveDate,
                 }));
                 return;
               }
             }
-            
-            if(tempData !== null ){
+
+            if (tempData !== null) {
               setTempData(prev => {
                 const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
-                
+
                 if (diffDate < 1 && existingIndex !== -1) {
                   return prev.map((item, index) =>
                     index === existingIndex ? data : item
@@ -498,67 +498,69 @@ const RoutineDetail = () => {
       }
     }
   }, [data, init]); // init도 의존성에 추가
-  
+
   // 데이터 로드 시 고유 ID 생성
-useEffect(() => {
-  if (!targetIdx) return;  // targetIdx가 있을 때만 호출
+  useEffect(() => {
+    const fetchRoutine = async () => {
+      try {
+        setIsLoading(true); // 로딩 시작
 
-  const isSameRoutine = JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
-  if (routine_list_idx !== 'custom' && !isSameRoutine) {
-    setData(routineData);
-    setIsLoading(false);
-    return;
-  }
+        const url = targetIdx
+          ? `/routine/trainer/${routine_list_idx}/${targetIdx}`
+          : `/routine/${routine_list_idx}`;
 
-  const fetchRoutine = async () => {
-    try {
-      const url = targetIdx
-        ? `/routine/trainer/${routine_list_idx}/${targetIdx}`
-        : `/routine/${routine_list_idx}`;
-      const response = await axios.get(url, { withCredentials: true });
-      const result = response.data;
+        const response = await axios.get(url, { withCredentials: true });
+        const result = response.data;
 
-      if (result.success) {
-        // 상태 변경은 이전 상태와 비교해서 필요한 경우에만!
-        setData(prevData => {
-          const newData = result.vo;
-          // JSON.stringify 비교, 또는 lodash.isEqual 같은 함수 활용 가능
-          if (JSON.stringify(prevData) !== JSON.stringify(newData)) {
-            return {
-              ...newData,
-              routines: newData.routines.map(routine => ({
-                ...routine,
-                sets: routine.sets.map((set, idx) => ({
-                  ...set,
-                  id: set.id || `${routine.pt_idx}-${idx}-${Date.now()}`
-                }))
+        if (result.success) {
+          const newData = {
+            ...result.vo,
+            routines: result.vo.routines.map(routine => ({
+              ...routine,
+              sets: routine.sets.map((set, idx) => ({
+                ...set,
+                id: set.id || `${routine.pt_idx}-${idx}-${Date.now()}`
               }))
-            };
-          }
-          return prevData;  // 변경 없으면 그대로 유지
-        });
-        setInit(result.vo);
-        setRoutineData(result.vo);
-      } else {
-        alert(result.msg);
+            }))
+          };
+
+          setData(newData);
+          setInit(result.vo);
+          setRoutineData(result.vo);
+        } else {
+          alert(result.msg);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("루틴 정보를 불러오지 못했습니다.");
+      } finally {
+        setIsLoading(false); // 항상 로딩 종료
       }
-    } catch (err) {
-      console.error(err);
-      alert("루틴 정보를 불러오지 못했습니다.");
-    } finally {
+    };
+
+    // 조건 확인 후 API 호출 또는 로딩 종료
+    if (routine_list_idx === 'custom') {
+      // custom 루틴인 경우 바로 로딩 종료
+      setIsLoading(false);
+      return;
+    }
+
+    // routineData와 routineInit이 같고 targetIdx가 없는 경우
+    const isSameRoutine = JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
+    if (routine_list_idx !== 'custom' && !isSameRoutine && !targetIdx) {
+      setData(routineData);
+      setIsLoading(false);
+      return;
+    }
+
+    // API 호출이 필요한 경우에만 실행
+    if (routine_list_idx && routine_list_idx !== 'custom') {
+      fetchRoutine();
+    } else {
       setIsLoading(false);
     }
-  };
 
-  fetchRoutine();
-
-}, [targetIdx, routine_list_idx]);
-
-
-
-
-
-
+  }, [routine_list_idx, targetIdx]); // 의존성 배열 단순화
 
   // 세트 값 변경 공통 함수
   const handleSetValueChange = (routinePtIdx, index, field, value) => {
@@ -580,7 +582,7 @@ useEffect(() => {
       };
       return newData;
     });
-    
+
   };
 
   // 세트 삭제 - setId 대신 setIndex 사용
@@ -761,7 +763,7 @@ useEffect(() => {
             <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
               <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
               <SetTop>
-                <img src={routine.imageUrl} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal}/>
+                <img src={routine.imageUrl} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal} />
                 <h4>{routine.pt.pt_name}</h4>
               </SetTop>
               <MemoInput
@@ -803,7 +805,7 @@ useEffect(() => {
                             value={set.set_volume || 0}
                             placeholder="0"
                             onChange={e => {
-                              handleSetValueChange(routine.pt_idx, index, 'set_volume', e.target.value);
+                              handleSetValueChange(routine.pt.idx, index, 'set_volume', e.target.value);
                             }}
                           />
                         </div>
@@ -813,7 +815,7 @@ useEffect(() => {
                             value={set.set_count || 0}
                             placeholder="0"
                             onChange={e => {
-                              handleSetValueChange(routine.pt_idx, index, 'set_count', e.target.value);
+                              handleSetValueChange(routine.pt.idx, index, 'set_count', e.target.value);
                             }}
                           />
                         </div>
@@ -838,7 +840,7 @@ useEffect(() => {
                     );
                   })}
                 </SwipeableList>
-                <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt_idx)}>
+                <SetAddCTA type="button" onClick={() => handleAddSet(routine.pt.idx)}>
                   세트 추가 +
                 </SetAddCTA>
               </ListBody>
