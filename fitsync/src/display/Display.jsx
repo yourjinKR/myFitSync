@@ -25,10 +25,6 @@ import RoutineDetail from '../components/routine/RoutineDetail';
 import BarbellLoading from '../components/BarbellLoading';
 import AiServiceContainer from '../components/ai/AiServiceContainer';
 import ChatLoading from '../components/ChatLoading';
-import PaymentContainer from '../components/payment/PaymentContainer';
-import PaymentMethodList from '../components/payment/PaymentMethodList';
-import PaymentMethodRegister from '../components/payment/PaymentMethodRegister';
-import PaymentHistory from '../components/payment/PaymentHistory';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
 import KaKaoPayTest from '../components/payment/test/KaKaoPayTest';
@@ -202,14 +198,8 @@ const Display = () => {
           <Route path='/ai/test/total' element={<AIWorkoutService />} />
           <Route path='/ai/userLog' element={<UserApiLogContainerTest />} />
 
-          <Route path='/payment' element={<PaymentContainer />}>
-            <Route path='test' element={<KaKaoPayTest />} />
-            <Route path='methods' element={<PaymentMethodList />} />
-            <Route path='register' element={<PaymentMethodRegister />} />
-            <Route path='history' element={<PaymentHistory />} />
-          </Route>
-
           <Route path='/subscription' element={<SubscriptionContainer />}>
+            <Route path='test' element={<KaKaoPayTest />} />
             <Route index element={<SubscriptionMain />} />
             <Route path='methods' element={<SubscriptionPaymentMethods />} />
             <Route path='history' element={<SubscriptionPaymentHistory />} />
