@@ -34,6 +34,7 @@ import {
 } from '../../../styles/chartStyle';
 import versionUtils from '../../../utils/utilFunc';
 import AiUtil from '../../../utils/AiUtils';
+import { FaDownload } from 'react-icons/fa';
 
 // 로그 상세 모달 컴포넌트
 const LogDetailModal = ({
@@ -696,8 +697,8 @@ const LogDetailModal = ({
                                             {workoutResult.muscleGroups.map((muscle, index) => (
                                                 <MuscleGroupTag key={index}>{muscle}</MuscleGroupTag>
                                             ))}
+                                            <DownloadIcon onClick={() => handleSaveResult()}><FaDownload size={15} color='var(--primary-blue)'/></DownloadIcon>
                                         </MuscleGroupList>
-                                        <button onClick={() => handleSaveResult()}>다운로드</button>
                                     </MuscleGroupContainer>
                                 )}
 
@@ -967,30 +968,48 @@ const LogDetailModal = ({
     );
 };
 
-// 스타일 컴포넌트
+const FullScreenModalWrapper = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: var(--bg-primary); /* Display.jsx와 동일하게 적용 */
+  z-index: 1000;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+`;
+
+const FullScreenModalInner = styled.div`
+  max-width: 750px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  color: var(--font-color); // 필요한 경우 글로벌 변수 사용
+`;
+
+
+// 수정된 스타일 컴포넌트
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary); /* 기존 rgba 제거, Display.jsx에 맞춤 */
   z-index: 1000;
-  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
 `;
 
+// 모달 내부 컨테이너
 const ModalContainer = styled.div`
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  max-width: 1000px;
   width: 100%;
-  max-height: 90vh;
+  max-width: 750px; /* Display.jsx와 동일 */
+  background: var(--bg-secondary); /* 기존과 동일 */
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--border-light);
+  box-sizing: border-box;
 `;
 
 const ModalHeader = styled.div`
@@ -1219,6 +1238,13 @@ const CollapsibleContent = styled.div`
   overflow: hidden;
   transition: max-height 0.3s ease;
   padding: ${props => props.expanded ? '20px' : '0 20px'};
+`;
+
+const DownloadIcon = styled.div`
+  margin-left: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 `;
 
 // 운동 결과 관련 스타일

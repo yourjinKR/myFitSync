@@ -73,17 +73,14 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
 // 스타일 컴포넌트
 const TabContainer = styled.div`
   background: var(--bg-primary);
-  border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border-light);
 `;
 
 const TabHeader = styled.div`
   background: var(--bg-secondary);
   padding: 24px;
-  border-radius: 8px 8px 0 0;
   border-bottom: 1px solid var(--border-light);
 `;
 

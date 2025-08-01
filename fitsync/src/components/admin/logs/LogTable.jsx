@@ -193,10 +193,7 @@ const LogTable = ({
 // 스타일 컴포넌트
 const TableContainer = styled.div`
   background: var(--bg-secondary);
-  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-light);
   position: relative;
   min-height: 400px;
 `;
