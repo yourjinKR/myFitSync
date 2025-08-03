@@ -1769,21 +1769,7 @@ public class PaymentServiceImple implements PaymentService {
 				result.put("isLog", isLog);
 			}
 			
-			// 6. 최근 구독 내역 조회 (비구독자도 과거 내역 확인)
-			PaymentOrderVO latestPayment = paymentOrderMapper.selectLatestSubscriptionPayment(memberIdx);
-			if (latestPayment != null) {
-				Map<String, Object> latestInfo = new HashMap<>();
-				latestInfo.put("orderIdx", latestPayment.getOrder_idx());
-				latestInfo.put("orderType", latestPayment.getOrder_type());
-				latestInfo.put("orderStatus", latestPayment.getOrder_status());
-				latestInfo.put("paymentDate", latestPayment.getOrder_paydate());
-				latestInfo.put("scheduleDate", latestPayment.getSchedule_date());
-				latestInfo.put("amount", latestPayment.getOrder_price());
-				
-				result.put("latestSubscriptionInfo", latestInfo);
-			}
-			
-			result.put("checkTimestamp", System.currentTimeMillis());
+			// result.put("checkTimestamp", System.currentTimeMillis());
 			log.info("구독자 상태 확인 완료 - memberIdx: " + memberIdx + ", isSubscriber: " + isSubscriber);
 			
 			return result;
