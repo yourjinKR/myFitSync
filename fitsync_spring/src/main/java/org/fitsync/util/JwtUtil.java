@@ -25,6 +25,7 @@ public class JwtUtil {
 
     // 이메일도 claim에 추가 (원하면)
     public String generateToken(int idx, java.sql.Date date, int count, String email) {
+    	System.out.println("date : " + date);
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationMs);
 
@@ -49,6 +50,11 @@ public class JwtUtil {
     public String getEmail(String token) {
         Claims claims = parseClaims(token);
         return claims.get("email", String.class);
+    }
+    
+    public Date getBlockDate(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("block_date", Date.class);
     }
 
     public boolean validate(String token) {

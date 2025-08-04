@@ -123,11 +123,12 @@ public class AdminController {
 	public ResponseEntity<?> updateReportBlock(@PathVariable int report_idx, @RequestBody Map<String, Integer> body, @PathVariable int member_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
 		int report_data_idx = body.get("report_data_idx") != null ? (int) body.get("report_data_idx") : -1 ;
+		int block_set = (int) body.get("block_set");
 		boolean update = false;
 		if(report_data_idx == -1) {
-			update = rservice.updateReport(report_idx, member_idx);
+			update = rservice.updateReport(report_idx, member_idx, block_set);
 		}else {			
-			update = rservice.updateReport(report_idx, member_idx, report_data_idx);
+			update = rservice.updateReport(report_idx, member_idx, block_set, report_data_idx);
 		}
 		if(update) {
 			result.put("success", true);
@@ -142,7 +143,7 @@ public class AdminController {
 	@PutMapping("/report/hidden/{report_idx}")
 	public ResponseEntity<?> updateReport(@PathVariable int report_idx, HttpSession session){
 		Map<String, Object> result = new HashMap<String, Object>();
-		boolean update = rservice.updateReport(report_idx, -1);
+		boolean update = rservice.updateReport(report_idx, -1, 0);
 		if(update) {
 			result.put("success", true);
 		}else {			

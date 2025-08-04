@@ -1,6 +1,8 @@
 package org.fitsync.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MemberVO;
@@ -111,19 +113,25 @@ public class ReportServiceImple implements ReportService {
 
 	// 신고 제재 업데이트
 	@Override
-	public boolean updateReport(int report_idx, int member_idx) {
+	public boolean updateReport(int report_idx, int member_idx, int block_set) {
 		ReportVO vo = new ReportVO();
 		vo.setReport_sanction(member_idx);
 		vo.setReport_idx(report_idx);
-		return mapper.updateReport(vo) > 0;
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("vo", vo);
+		map.put("block_set", block_set);
+		return mapper.updateReport(map) > 0;
 	}
 	
 	@Override
-	public boolean updateReport(int report_idx, int member_idx, int report_data_idx) {
+	public boolean updateReport(int report_idx, int member_idx, int block_set, int report_data_idx) {
 		ReportVO vo = new ReportVO();
 		vo.setReport_sanction(member_idx);
 		vo.setReport_idx(report_idx);
-		if(mapper.updateReport(vo) > 0) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("vo", vo);
+		map.put("block_set", block_set);
+		if(mapper.updateReport(map) > 0) {
 			return reviewMapper.reviewHidden(report_data_idx) > 0;
 		}else {		
 			return false;

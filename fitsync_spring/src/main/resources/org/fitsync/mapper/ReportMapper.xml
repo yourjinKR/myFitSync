@@ -60,26 +60,21 @@
 	    LEFT JOIN MEMBER M ON RE.MEMBER_IDX = M.MEMBER_IDX
 	</select>
 
-	<update id="updateReport" parameterType="org.fitsync.domain.ReportVO">
-		UPDATE REPORT 
-		SET 
-			<if test="report_sanction > 0">
-			  	REPORT_SANCTION = #{report_sanction},
-			    REPORT_TIME = SYSDATE + (
-			        GREATEST(
-			            (SELECT COUNT(*) FROM REPORT WHERE REPORT_SANCTION = #{report_sanction}),
-			            1
-			        ) * 7
-			    ),
-			</if>
-		    REPORT_HIDDEN = 1 
-		WHERE REPORT_IDX = #{report_idx}
+	<update id="updateReport" parameterType="map">
+	    UPDATE REPORT
+	    SET 
+	        <if test="vo.report_sanction > 0">
+	            REPORT_SANCTION = #{vo.report_sanction},
+	            REPORT_TIME = SYSDATE + #{block_set},
+	        </if>
+	        REPORT_HIDDEN = 1
+	    WHERE REPORT_IDX = #{vo.report_idx}
 	</update>
 	
 	<!-- 제재정보 -->
 	<select id="getBlockData" parameterType="int" resultType="org.fitsync.domain.ReportVO">
 		SELECT 
-			MAX(REPORT_TIME),
+			MAX(REPORT_TIME) report_time,
 			COUNT(*) block_count
 		FROM REPORT 
 		WHERE REPORT_SANCTION = #{member_idx}

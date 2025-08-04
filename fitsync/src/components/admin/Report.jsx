@@ -371,6 +371,29 @@ const ModalBox = styled.div`
     font-weight: bold;
   }
 
+  label {
+    font-size: 1.6rem;
+    color: var(--text-black);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+    p {
+      margin: 0;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    input {
+      padding: 8px;
+      font-size: 1.4rem;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      color: var(--text-black);
+      background: var(--bg-white);
+      width: 100%;
+    }
+  }
+
 `;
 
 const ChatHistory = styled.div`
@@ -1049,6 +1072,7 @@ const Report = () => {
       const response = await axios.put(`/admin/report/${userTarget.report_idx}/${target}`, 
         { 
           report_data_idx: type === 'reported' ? userTarget.report_data_idx : -1,
+          block_set : modalData.block_set || 0,
       }, { withCredentials: true });
       if (response.data.success) {
         setModalOpen(false);
@@ -1203,8 +1227,19 @@ const Report = () => {
       {modalOpen && (
         <DetailModal onClick={() => setModalOpen(false)}>
           {modalData.type === 'isBlocked' ? (
-            <ModalBox>
+            <ModalBox onClick={(e) => e.stopPropagation()}>
               <h3>제재 대상 선택</h3>
+              <label htmlFor="block-set">
+                <p>제재 일 수 : </p>
+                <input 
+                  type="number" 
+                  name="block-set" 
+                  id="block-set"
+                  min={0}
+                  onChange={(e) => setModalData({ ...modalData, block_set: e.target.value })}
+
+                />
+              </label>
               <div>
                 <button onClick={() => handleUpdateReport(userTarget.reported, "reported")}>피신고자</button>
                 <button onClick={() => handleUpdateReport(userTarget.reporter)}>신고자</button>

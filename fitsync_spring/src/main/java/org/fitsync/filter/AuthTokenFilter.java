@@ -2,6 +2,8 @@ package org.fitsync.filter;
 
 import org.fitsync.util.JwtUtil;
 
+import io.jsonwebtoken.Claims;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -12,6 +14,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.Date;
 
 public class AuthTokenFilter implements Filter {
     private JwtUtil jwtUtil;
@@ -48,14 +51,25 @@ public class AuthTokenFilter implements Filter {
         }
 
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
+            // 사용자 정보 추출
             Integer memberIdx = jwtUtil.getUserIdx(token).intValue();
-            // request attribute에 저장
+            
+            java.util.Date blockDate = jwtUtil.getBlockDate(token);
+            if(blockDate != null) {
+            	request.setAttribute("block_date", blockDate);
+            	httpRequest.getSession().setAttribute("block_date", blockDate);            	
+            }
+
+            // request에 저장
             request.setAttribute("member_idx", memberIdx);
+
             // 세션에도 저장
             httpRequest.getSession().setAttribute("member_idx", memberIdx);
+
             chain.doFilter(request, response);
             return;
         }
+
 
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         httpResponse.setContentType("application/json;charset=UTF-8");
