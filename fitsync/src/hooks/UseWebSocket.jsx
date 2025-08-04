@@ -33,14 +33,6 @@ export const useWebSocket = () => {
         const currentHost = window.location.hostname;
         const protocol = window.location.protocol;
         
-        if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-          return `${protocol}//localhost:7070/chat`;
-        }
-        
-        if (currentHost.startsWith('192.168.') || currentHost.startsWith('10.') || currentHost.startsWith('172.')) {
-          return `${protocol}//${currentHost}:7070/chat`;
-        }
-        
         return `${protocol}//${currentHost}:7070/chat`;
       };
       
