@@ -235,6 +235,7 @@ const UserApiLogContainer = () => {
                         <LogItem 
                             key={log.apilog_idx}
                             ref={el => logRefs.current[log.apilog_idx] = el}
+                            expanded={expandedLogId === log.apilog_idx}
                         >
                             <LogHeader 
                                 onClick={() => handleLogClick(log.apilog_idx)}
@@ -529,7 +530,7 @@ const NoResults = styled.div`
 const HighlightText = styled.span`
   color: var(--primary-blue);
   font-weight: 700;
-  font-size : 14px;
+  font-size : inherit;
 `;
 
 const Title = styled.h1`
@@ -617,12 +618,13 @@ const LogList = styled.div`
 const LogItem = styled.div`
   background: var(--bg-secondary);
   border-radius: 12px;
-  border: 1px solid var(--border-light);
+  border: 2px solid ${props => props.expanded ? 'var(--primary-blue)' : 'var(--border-light)'};
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: ${props => props.expanded ? '0 0 0 3px rgba(74, 144, 226, 0.1)' : 'none'};
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: ${props => props.expanded ? '0 0 0 3px rgba(74, 144, 226, 0.1)' : '0 4px 12px rgba(0, 0, 0, 0.15)'};
   }
 
   @media (max-width: 768px) {
