@@ -242,7 +242,7 @@ const UserApiLogContainer = () => {
                             >
                                 <LogInfo>
                                     <LogPreview>
-                                        {getRoutinePreview(log)}
+                                        {getRoutinePreview(log)} <span>#{log.apilog_idx}</span>
                                     </LogPreview>
                                     <LogDate>
                                         {new Date(log.apilog_request_time).toLocaleString('ko-KR')}
