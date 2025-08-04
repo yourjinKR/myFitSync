@@ -135,4 +135,9 @@ public class ReportServiceImple implements ReportService {
 	public ReportVO getBlockData(int member_idx) {
 		return mapper.getBlockData(member_idx);
 	}
+	
+	@Override
+	public void insertReport(ReportVO report) {
+		mapper.insertProfileReport(report);
+	}
 }

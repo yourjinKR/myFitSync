@@ -13,4 +13,6 @@ public interface ReportService {
 	public boolean updateReport(int report_idx, int member_idx, int report_data_idx);
 
 	public ReportVO getBlockData(int member_idx);
+	
+	public void insertReport(ReportVO report);
 }

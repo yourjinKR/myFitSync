@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { MdEdit, MdCheck } from 'react-icons/md';
+import { MdEdit, MdCheck, MdReport } from 'react-icons/md';
 import Switch from '@mui/material/Switch';
 import ProfileImageEditable from '../ProfileImageEditable';
 import axios from 'axios';
@@ -93,6 +93,50 @@ const VisibilityToggle = styled.div`
   margin-left: 10px;
 `;
 
+const ReportButton = styled.button`
+  margin-left: 10px;
+  background: none;
+  border: none;
+  color: #d32f2f;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  svg {
+    margin-right: 4px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const ReportModal = styled.div`
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+  background: white;
+  border: 1px solid #ccc;
+  padding: 20px;
+  z-index: 2000;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+`;
+
+const ModalActions = styled.div`
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+
+  button {
+    padding: 6px 12px;
+    border: none;
+    cursor: pointer;
+  }
+`;
+
+
 /**
  * @param {object} props
  * @param {object} props.trainer - 트레이너 객체 (또는 null)
@@ -106,6 +150,11 @@ const VisibilityToggle = styled.div`
  * @param {function} props.onVisibilityToggle - 공개/비공개 토글 콜백
  */
 
+const reportReasons = {
+  trainer: ['비전문적인 트레이닝', '불친절한 응대', '허위 정보 제공', '기타'],
+  user: ['무분별한 요청', '악의적 리뷰', '비매너 행동', '기타'],
+};
+
 const TrainerProfileHeader = ({
   trainer,
   user,
@@ -115,38 +164,57 @@ const TrainerProfileHeader = ({
   loginUserId,
   mode = 'trainer',
   onImageChange,
-  onVisibilityToggle, // 이건 외부 콜백이 있다면 그대로 두되 내부 요청도 병행
+  onVisibilityToggle,
 }) => {
   const isTrainer = mode === 'trainer';
-  const [localTrainer, setLocalTrainer] = useState(trainer); // 내부에서 상태 관리
-  const [updating, setUpdating] = useState(false); // 중복 요청 방지
+  const [localTrainer, setLocalTrainer] = useState(trainer);
+  const [updating, setUpdating] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   const profileImage = localTrainer?.profile_image || localTrainer?.member_image;
   const name = localTrainer?.name || localTrainer?.member_name || '이름 없음';
   const isMine = loginUserId && (localTrainer?.member_email === loginUserId || user?.member_email === loginUserId);
   const isHidden = localTrainer?.member_hidden === 1;
+  const targetMember = localTrainer || user;
 
   const handleToggleVisibility = async () => {
     if (updating || !localTrainer?.member_idx) return;
-    
     try {
       setUpdating(true);
       const updatedHidden = isHidden ? 0 : 1;
       const res = await axios.put(`/trainer/${localTrainer.member_idx}/visibility`, {
-        member_hidden: updatedHidden === 1
+        member_hidden: updatedHidden === 1,
       });
-
       if (res.status === 200) {
-        // 상태 동기화
         const updatedTrainer = { ...localTrainer, member_hidden: updatedHidden };
         setLocalTrainer(updatedTrainer);
-        if (onVisibilityToggle) onVisibilityToggle(updatedHidden); // 외부 콜백도 호출
+        if (onVisibilityToggle) onVisibilityToggle(updatedHidden);
       }
     } catch (err) {
       console.error('공개/비공개 전환 실패:', err);
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleReportSubmit = async () => {
+    try {
+      await axios.post('/member/report/profile', {
+        report_category: reportReason,
+        report_content: reportReason,
+        report_sanction: targetMember?.member_idx, // ← 신고 대상자 (트레이너 등)
+        report_hidden: 0
+      });
+      alert('신고가 접수되었습니다.');
+      setShowReportModal(false);
+      setReportReason('');
+    } catch (err) {
+      console.error('신고 실패:', err);
+      alert('신고 처리 중 문제가 발생했습니다.');
+    }
+    console.log(targetMember?.member_idx);
+    
   };
 
   return (
@@ -176,6 +244,13 @@ const TrainerProfileHeader = ({
             </VisibilityToggle>
           </>
         )}
+
+        {/* 신고 버튼 - 본인이 아닐 때만 표시 */}
+        {!isMine && (
+          <ReportButton onClick={() => setShowReportModal(true)} title="신고하기">
+            <MdReport /> 신고
+          </ReportButton>
+        )}
       </NameWrapper>
 
       {isTrainer && <ReviewCount>⭐ 후기 {localTrainer?.reviews || 0}개</ReviewCount>}
@@ -203,9 +278,32 @@ const TrainerProfileHeader = ({
           <SummaryItem>💰 1회 {localTrainer?.priceBase?.toLocaleString() || 0}원</SummaryItem>
         </SummaryBox>
       )}
+
+      {/* 신고 모달 */}
+      {showReportModal && (
+        <ReportModal>
+          <h4>신고 사유를 선택하세요</h4>
+          <select
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+          >
+            <option value="">-- 선택 --</option>
+            {reportReasons[mode].map((reason) => (
+              <option key={reason} value={reason}>
+                {reason}
+              </option>
+            ))}
+          </select>
+          <ModalActions>
+            <button onClick={handleReportSubmit} disabled={!reportReason}>
+              제출
+            </button>
+            <button onClick={() => setShowReportModal(false)}>취소</button>
+          </ModalActions>
+        </ReportModal>
+      )}
     </ProfileHeader>
   );
 };
 
 export default TrainerProfileHeader;
-

@@ -177,6 +177,43 @@ public class MemberController {
                                  .body("이미지 업로드 실패: " + e.getMessage());
         }
     }
+    
+    @PostMapping("/report/profile")
+    public ResponseEntity<?> reportUser(@RequestBody Map<String, Object> data, HttpSession session) {
+        Object sessionIdx = session.getAttribute("member_idx");
+        if (sessionIdx == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        int reporterIdx = Integer.parseInt(sessionIdx.toString());
+
+        // 필수 값 체크
+        if (!data.containsKey("report_sanction") || !data.containsKey("report_category") || !data.containsKey("report_content")) {
+            return ResponseEntity.badRequest().body("필수 신고 정보가 누락되었습니다.");
+        }
+
+        Integer targetIdx = null;
+        try {
+            targetIdx = Integer.parseInt(data.get("report_sanction").toString()); // 신고 대상자 member_idx
+            System.out.println(targetIdx);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("신고 대상자 ID가 유효하지 않습니다.");
+        }
+        
+        
+        
+        ReportVO report = new ReportVO();
+        report.setIdx_num(reporterIdx); // 게시물 신고가 아니라면 0 또는 null
+        report.setReport_category((String) data.get("report_category"));
+        report.setReport_content((String) data.get("report_content"));
+        report.setReport_hidden((Integer) data.getOrDefault("report_hidden", 0));
+        report.setMember_idx(reporterIdx);       
+        report.setReport_sanction(targetIdx);   
+
+        reportService.insertReport(report);
+        return ResponseEntity.ok("신고가 접수되었습니다.");
+    }
+
 
 
 }

@@ -84,4 +84,27 @@
 		FROM REPORT 
 		WHERE REPORT_SANCTION = #{member_idx}
 	</select>
+	
+	<insert id="insertProfileReport" parameterType="org.fitsync.domain.ReportVO">
+	    INSERT INTO REPORT (
+	      REPORT_IDX,
+	      IDX_NUM,
+	      REPORT_CATEGORY,
+	      REPORT_CONTENT,
+	      MEMBER_IDX,
+	      REPORT_HIDDEN,
+	      REPORT_TIME,
+	      REPORT_SANCTION
+	    )
+	    VALUES (
+	      REPORT_SEQ.NEXTVAL,
+	      #{idx_num},
+	      #{report_category},
+	      #{report_content},
+	      #{member_idx},
+	      0,
+	      SYSDATE,
+	      #{report_sanction}
+	    )
+	</insert>
 </mapper>

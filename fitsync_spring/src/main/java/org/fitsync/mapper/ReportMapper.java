@@ -16,4 +16,7 @@ public interface ReportMapper {
  	public int updateReport(ReportVO vo);
  	
  	public ReportVO getBlockData(int member_idx);
+ 	
+ 	// 프로필에서 신고 등록
+ 	public void insertProfileReport(ReportVO report);
 }
