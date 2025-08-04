@@ -1,6 +1,7 @@
-import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useSelector } from 'react-redux';
 
 const AdminMainWrapper = styled.div`
     display: flex;
@@ -31,6 +32,25 @@ const AdminContent = styled.div`
     padding:15px 0;
 `;
 const AdminMain = () => {
+    const navigate = useNavigate();
+    const { user } = useSelector((state) => state.user);
+
+    // 관리자 권한 체크
+    useEffect(() => {
+        const memberType = user?.member_type || sessionStorage.getItem("member_type");
+        
+        if (memberType !== "admin") {
+            alert("관리자만 접근할 수 있습니다.");
+            navigate("/"); // 홈으로 리다이렉트
+        }
+    }, [user, navigate]);
+
+    // 관리자가 아니면 아무것도 렌더링하지 않음
+    const memberType = user?.member_type || sessionStorage.getItem("member_type");
+    if (memberType !== "admin") {
+        return null;
+    }
+
     return (
         <AdminMainWrapper>
             <AdminNav>
