@@ -201,7 +201,7 @@ const TrainerProfileHeader = ({
   const handleReportSubmit = async () => {
     try {
       await axios.post('/member/report/profile', {
-        report_category: reportReason,
+        report_category: 'member',
         report_content: reportReason,
         report_sanction: targetMember?.member_idx, // ← 신고 대상자 (트레이너 등)
         report_hidden: 0

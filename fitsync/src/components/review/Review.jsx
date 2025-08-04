@@ -152,7 +152,7 @@ const Review = ({ content, score, height, title, memberName, review_idx }) => {
 
     const reportData = {
       idx_num: review_idx,
-      report_category: '부적절한 리뷰',
+      report_category: 'review',
       report_content: reportReason,
       report_hidden: 0,
       member_idx: member?.member_idx, // 로그인된 사용자 IDX
