@@ -13,26 +13,37 @@ const ReportWrapper = styled.div`
   background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
   ul {
     display: flex;
     gap: 10px;
+    
     li {
       button { 
-        border: 1px solid var(--border-medium);
+        border: 1px solid var(--border-light);
         padding: 10px 25px;
         width: 100%;
-        border-radius: 5px;
+        border-radius: 4px;
         font-size: 1.6rem;
         background: var(--bg-primary);
         color: var(--text-secondary);
         cursor: pointer;
-        transition: all 0.2s;
-    
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: var(--bg-tertiary);
+          border-color: var(--border-medium);
+        }
       }
+      
       button.active {
         background: var(--primary-blue);
-        color: var(--text-white);
+        color: var(--text-primary);
         border-color: var(--primary-blue);
+        
+        &:hover {
+          background: var(--primary-blue-hover);
+        }
       }
     }
   }
@@ -46,11 +57,12 @@ const TabContent = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2.6rem;
+    font-size: 1.8rem;
     min-height: 200px;
     color: var(--text-secondary);
-    border: 2px solid var(--border-medium);
-    border-radius: 5px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    background: var(--bg-primary);
   }
 
   .report-table {
@@ -58,7 +70,7 @@ const TabContent = styled.div`
     border: 1px solid var(--border-light);
     border-radius: 8px;
     overflow: hidden;
-    height:100%;
+    height: 100%;
     
     table {
       width: 100%;
@@ -73,38 +85,52 @@ const TabContent = styled.div`
       }
       
       th {
-        background: var(--bg-secondary);
+        background: var(--primary-blue);
         color: var(--text-primary);
         text-align: center;
         position: sticky;
         top: 0;
         z-index: 10;
+        font-weight: 600;
       }
       
       td {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        
         p {
           font-size: 1.4rem;
+        }
+        
+        button {
+          padding: 4px 8px;
+          font-size: 1.4rem;
+          color: var(--text-primary);
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: var(--primary-blue-hover);
+          }
         }
       }
     }
   }
   
-  /* tbody 스크롤 wrapper */
   .tbody-scroll {
     overflow-y: auto;
     overflow-x: hidden;
-    height:100%;
-    max-height : calc(100% - 50px); /* 헤더 높이 제외 */
-    position: relative; /* 추가 */
+    height: 100%;
+    max-height: calc(100% - 50px);
+    position: relative;
     
     table {
       width: 100%;
       min-width: 750px;
-      position: relative; /* 추가 */
-      td > button {
-        font-size: 1.6rem;
-      }
-      /* colgroup 너비를 CSS로 직접 지정 */
+      position: relative;
+      
       &.member-table {
         td:nth-child(1) { width: 75px; min-width: 75px; max-width: 75px; }
         td:nth-child(2) { width: 100px; min-width: 100px; max-width: 100px; }
@@ -125,21 +151,18 @@ const TabContent = styled.div`
       }
     }
     
-    /* 헤더도 동일한 너비 적용 */
     thead {
       th:nth-child(1) { width: 75px; min-width: 75px; max-width: 75px; }
       th:nth-child(2) { width: 100px; min-width: 100px; max-width: 100px; }
       th:nth-child(3) { width: 100px; min-width: 100px; max-width: 100px; }
     }
     
-    /* member 테이블 헤더 */
     table.member-table ~ thead {
       th:nth-child(4) { width: calc(100% - 575px); min-width: 200px; }
       th:nth-child(5) { width: 100px; min-width: 100px; max-width: 100px; }
       th:nth-child(6) { width: 200px; min-width: 200px; max-width: 200px; }
     }
     
-    /* message/review 테이블 헤더 */
     table.message-table ~ thead, table.review-table ~ thead {
       th:nth-child(4) { width: 200px; min-width: 200px; max-width: 200px; }
       th:nth-child(5) { width: calc(100% - 775px); min-width: 200px; }
@@ -168,9 +191,9 @@ const UserInfo = styled.div`
   min-width: 250px;
   padding: 16px;
   background: var(--bg-white);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-light);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease, visibility 0.2s ease;
@@ -182,7 +205,6 @@ const UserInfo = styled.div`
     pointer-events: auto;
   }
 
-  /* 화살표 추가 */
   &::before {
     content: '';
     position: absolute;
@@ -196,7 +218,6 @@ const UserInfo = styled.div`
     border-bottom: 8px solid var(--bg-white);
   }
 
-  /* 화살표 테두리 */
   &::after {
     content: '';
     position: absolute;
@@ -207,7 +228,7 @@ const UserInfo = styled.div`
     height: 0;
     border-left: 9px solid transparent;
     border-right: 9px solid transparent;
-    border-bottom: 9px solid var(--border-medium);
+    border-bottom: 9px solid var(--border-light);
     z-index: -1;
   }
 
@@ -225,9 +246,9 @@ const UserInfo = styled.div`
     
     dt {
       color: var(--primary-blue) !important;
-      font-size: 1.5rem !important;
-      font-weight: 700;
-      margin-bottom: 8px;
+      font-size: 1.4rem !important;
+      font-weight: 600;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       
@@ -236,50 +257,51 @@ const UserInfo = styled.div`
         margin-right: 6px;
         font-size: 1.4rem;
       }
-   
+      
+      &:first-child::before {
+        content: '⛔';
+      }
     }
-    dt:first-child::before {
-      content: '⛔';
-    }
-   
     
     dd {
       color: var(--text-black) !important;
-      font-size: 1.5rem !important;
+      font-size: 1.4rem !important;
       margin-left: 0;
-      margin-bottom: 6px;
-      padding: 4px 8px;
-      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-      border-radius: 6px;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
       border-left: 3px solid var(--primary-blue);
       display: flex;
-      justify-content: flex-start;
       align-items: center;
 
       strong {
         color: var(--primary-blue);
-        font-weight: 700;
-        font-size: 1.4rem;
+        font-weight: 600;
+        font-size: 1.4rem !important;
       }
       
       &:last-child {
         margin-bottom: 0;
       }
       
-      /* 아이콘 추가 */
+      /* 각 항목별 이모지 추가 */
       &:nth-child(3)::before {
         content: '👤';
         margin-right: 6px;
+        font-size: 1.2rem;
       }
       
       &:nth-child(4)::before {
         content: '💬';
         margin-right: 6px;
+        font-size: 1.2rem;
       }
       
       &:nth-child(5)::before {
         content: '⭐';
         margin-right: 6px;
+        font-size: 1.2rem;
       }
     }
   }
@@ -288,25 +310,51 @@ const UserInfo = styled.div`
 const UserInfoTrigger = styled.td`
   position: relative;
   cursor: pointer;
+  padding: 12px 8px;
+  font-size: 1.6rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.2s ease;
   
-  /* hover 스타일 제거하고 클릭 스타일만 유지 */
   &:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-medium);
   }
   
   &.clicked {
-    background: var(--bg-tertiary);
+    background: var(--primary-blue) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--primary-blue);
+    box-shadow: inset 0 0 0 1px var(--primary-blue);
   }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  /* 텍스트가 잘 보이도록 강제 스타일 */
+  * {
+    color: inherit !important;
+  }
+  
+  /* 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 `;
 
 const ButtonBox = styled.div`
   display: flex;
   justify-content: center;
   gap: 8px;
+  
   button {
     flex: 1;
     max-width: 120px;
-    padding: 6px 12px;
+    padding: 8px 16px;
     font-size: 1.4rem;
     background: var(--bg-primary);
     color: var(--text-secondary);
@@ -314,20 +362,40 @@ const ButtonBox = styled.div`
     border-radius: 4px;
     cursor: pointer;
     text-align: center;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: var(--bg-tertiary);
+    }
+    
+    &:disabled {
+      background: var(--border-light) !important;
+      color: var(--text-secondary) !important;
+      cursor: not-allowed;
+    }
   }
+  
   button:first-child {
-    background: var(--check-green);
-    color: var(--text-white);
+    background: var(--check-green) !important;
+    color: white !important;
+    
+    &:hover {
+      background: var(--success) !important;
+    }
+    
+    &:disabled {
+      background: var(--border-light) !important;
+      color: var(--text-secondary) !important;
+    }
   }
+  
   button:last-child {
-    background: var(--warning);
-    color: var(--text-white);
-  }
-  button:disabled {
-    background: var(--border-light);
-    color: var(--text-secondary);
-    cursor: not-allowed;
+    background: #ff6b35 !important;
+    color: white !important;
+    
+    &:hover {
+      background: var(--start-red) !important;
+    }
   }
 `;
 
@@ -335,40 +403,46 @@ const ModalBox = styled.div`
   background: var(--bg-white);
   padding: 20px;
   border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   ${props => props.$width ? `width: ${props.$width}px;` : 'width: auto;'}
-  
 
-  h3, button {
-    color : var(--text-black);
-    text-align:center;
-  }
-  h3{
+  h3 {
+    color: var(--text-black);
+    text-align: center;
     font-size: 2.4rem;
-    font-weight: bold;
-    margin-bottom: 15px;
+    font-weight: 600;
+    margin-bottom: 20px;
   }
+  
   & > div {
     display: flex;
-    justify-content: space-between;
-    gap: 5px;
+    justify-content: center;
+    gap: 10px;
+    
     button {
-      border-radius: 5px;
-      border: 1px solid var(--border-medium);
-      padding: 5px 20px;
-      font-size: 1.8rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-light);
+      padding: 8px 20px;
+      font-size: 1.6rem;
       width: 120px;
-    }
-    button:hover
-    {
-      border-color: var(--warning);
-      background: var(--warning);
-      color: var(--text-white);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: var(--warning);
+        background: var(--warning);
+        color: var(--text-primary);
+      }
     }
   }
+  
   p {
     color: var(--text-black);
     font-size: 1.6rem;
-    font-weight: bold;
+    font-weight: 600;
+    margin: 10px 0;
   }
 
   label {
@@ -376,61 +450,96 @@ const ModalBox = styled.div`
     color: var(--text-black);
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 15px;
+    
     p {
       margin: 0;
       font-weight: 600;
       white-space: nowrap;
     }
+    
     input {
-      padding: 8px;
+      padding: 8px 12px;
       font-size: 1.4rem;
       border: 1px solid var(--border-light);
       border-radius: 4px;
       color: var(--text-black);
       background: var(--bg-white);
       width: 100%;
+      
+      &::placeholder {
+        color: var(--text-tertiary);
+      }
+      
+      &:focus {
+        outline: none;
+        border-color: var(--primary-blue);
+      }
     }
   }
-
 `;
 
 const ChatHistory = styled.div`
-  background: var(--bg-white);
-  border-radius: 12px;
-  padding: 20px;
-  color: var(--text-black);
-  min-width: 500px;
-  max-width: 600px;
-  max-height: 70vh;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  padding: 30px;
+  color: var(--text-black) !important;
+  min-width: 600px;
+  max-width: 700px;
+  max-height: 80vh;
   overflow-y: auto;
-  display: flex;
+  display: flex !important;
   flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  gap: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1001;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 15px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 
   h3 {
     text-align: center;
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid var(--border-light);
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--primary-blue) !important;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--primary-blue);
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary-blue), transparent);
+    }
   }
 
-  /* 채팅 메시지 컨테이너 */
   .chat-message {
     display: flex;
     flex-direction: column;
-    animation: fadeInUp 0.3s ease-out;
+    margin-bottom: 20px;
+    opacity: 1;
+    transform: translateY(0);
+    animation: slideIn 0.3s ease-out;
   }
 
-  @keyframes fadeInUp {
+  @keyframes slideIn {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
@@ -440,43 +549,53 @@ const ChatHistory = styled.div`
 
   /* 발신자 정보 */
   .sender-info {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--text-black) !important;
+    
+    &::before {
+      content: '👤';
+      font-size: 1.2rem;
+    }
   }
 
   /* 메시지 버블 */
   .message-bubble {
     position: relative;
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 15px 20px;
+    border-radius: 18px;
     font-size: 1.6rem;
-    line-height: 1.4;
+    line-height: 1.5;
     word-wrap: break-word;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.15);
+    }
 
     span {
       font-size: 1.6rem;
-      line-height: 1.4;
-      padding: 0 10px;
+      line-height: 1.5;
+      color: inherit;
+      display: block;
     }
     
-    /* 말풍선 꼬리 */
-    &::before {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-style: solid;
-    }
-    
-    &.highlight span {
-      background: gold;
-      color: var(--text-black);
-      font-weight: bold;
+    &.highlight {
+      border: 2px solid #ffd700;
+      background: linear-gradient(135deg, #fff9c4, #ffeaa7) !important;
+      
+      span {
+        background: none;
+        color: #b8860b !important;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
     }
   }
 
@@ -485,29 +604,30 @@ const ChatHistory = styled.div`
     align-items: flex-start;
 
     .sender-info {
-      color: var(--primary-blue);
+      color: #dc3545 !important;
+      
+      &::before {
+        content: '🚨';
+      }
     }
 
     .message-bubble {
-      background: var(--bg-tertiary);
-      color: var(--text-white);
+      background: linear-gradient(135deg, #fff5f5, #fee2e2);
+      color: #374151 !important;
+      max-width: 75%;
+      border-left: 4px solid #dc3545;
+      border-top-left-radius: 6px;
       
       &::before {
-        border-width: 0 12px 12px 0;
-        border-color: var(--border-light) var(--border-light) #f8f9fa var(--border-light);
-        left: -11px;
-        bottom: 8px;
-      }
-      
-      &::after {
         content: '';
         position: absolute;
-        border-width: 0 13px 13px 0;
-        border-color: transparent var(--border-light) transparent transparent;
-        border-style: solid;
-        left: -12px;
-        bottom: 7px;
-        z-index: -1;
+        left: -8px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-right: 8px solid #fff5f5;
+        border-bottom: 8px solid transparent;
       }
     }
   }
@@ -518,46 +638,49 @@ const ChatHistory = styled.div`
 
     .sender-info {
       justify-content: flex-end;
-      color: var(--primary-blue);
+      color: var(--primary-blue) !important;
+      
+      &::before {
+        content: '📢';
+      }
     }
 
     .message-bubble {
-      background: linear-gradient(135deg, var(--primary-blue), #1e88e5);
-      color: var(--text-white);
+      background: linear-gradient(135deg, var(--primary-blue), #1e40af);
+      color: white !important;
+      max-width: 75%;
+      border-top-right-radius: 6px;
       
       &::before {
-        border-width: 12px 12px 0 0;
-        border-color: var(--primary-blue) transparent transparent transparent;
-        right: -11px;
-        bottom: 8px;
+        content: '';
+        position: absolute;
+        right: -8px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-left: 8px solid var(--primary-blue);
+        border-bottom: 8px solid transparent;
       }
     }
   }
 
-  /* 타임스탬프 스타일 */
-  .timestamp {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    opacity: 0.7;
-  }
-
   /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--border-medium);
-    border-radius: 3px;
+    background: linear-gradient(135deg, var(--primary-blue), #1e40af);
+    border-radius: 4px;
     
     &:hover {
-      background: var(--text-secondary);
+      background: linear-gradient(135deg, #1e40af, var(--primary-blue));
     }
   }
 
@@ -565,22 +688,50 @@ const ChatHistory = styled.div`
   .chat-divider {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin: 25px 0;
+    position: relative;
     
     &::before,
     &::after {
       content: '';
       flex: 1;
-      height: 1px;
-      background: var(--border-light);
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary-blue), transparent);
     }
     
     span {
-      padding: 0 15px;
-      font-size: 2.2rem;
-      font-weight: bold;
-      color: var(--text-black);
-      background: var(--bg-white);
+      padding: 0 20px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-blue) !important;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      position: relative;
+      
+      &::before {
+        content: '💬';
+        margin-right: 8px;
+      }
+    }
+  }
+
+  /* 빈 상태 메시지 스타일링 */
+  & > div[style*="textAlign"] {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    color: #6b7280 !important;
+    font-size: 1.6rem !important;
+    font-weight: 500;
+    border: 2px dashed #d1d5db;
+    
+    &::before {
+      content: '📭';
+      display: block;
+      font-size: 3rem;
+      margin-bottom: 10px;
     }
   }
 `;
@@ -780,7 +931,7 @@ const Report = () => {
                               <ButtonBox>
                                 {user.report_hidden === 0 ?
                                   <>
-                                    <button onClick={() => handleUpdateReportChk(user.report_idx)}>처리전</button>
+                                    <button onClick={() => handleUpdateReportChk(user.report_idx)}>읽음</button>
                                     <button onClick={
                                       () => handleReportCTA(
                                         user.report_idx, 
@@ -901,7 +1052,7 @@ const Report = () => {
                                   disabled={user.report_hidden === 1}
                                   onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : undefined}
                                 >
-                                  {user.report_hidden === 0 ? '처리전' : '처리완료'}
+                                  {user.report_hidden === 0 ? '읽음' : '처리완료'}
                                 </button>
                                 {user.report_hidden === 0 ? (
                                   <button onClick={() => handleReportCTA(user.report_idx, user.reporter?.member_idx, user.reported?.member_idx)}>
@@ -1009,7 +1160,7 @@ const Report = () => {
                                   disabled={user.report_hidden === 1}
                                   onClick={user.report_hidden === 0 ? () => handleUpdateReportChk(user.report_idx) : undefined}
                                 >
-                                  {user.report_hidden === 0 ? '처리전' : '처리완료'}
+                                  {user.report_hidden === 0 ? '읽음' : '처리완료'}
                                 </button>
                                 {user.report_hidden === 0 ? (
                                   <button onClick={
@@ -1042,6 +1193,7 @@ const Report = () => {
   };
 
   const handleDetailModal = (getContent, getType, getContentType) => {
+    console.log('handleDetailModal called with:', { getContent, getType, getContentType });
     setModalData({
       content: getContent,
       type: getType,
@@ -1054,6 +1206,7 @@ const Report = () => {
         reported: getContent.reported || ''
       });
     }
+    setModalOpen(true);
   };
 
   // 제재 컨트롤
@@ -1226,6 +1379,8 @@ const Report = () => {
       </TabContent>
       {modalOpen && (
         <DetailModal onClick={() => setModalOpen(false)}>
+          {console.log('Modal rendering with modalData:', modalData)}
+          {console.log('Modal open state:', modalOpen)}
           {modalData.type === 'isBlocked' ? (
             <ModalBox onClick={(e) => e.stopPropagation()}>
               <h3>제재 대상 선택</h3>
@@ -1255,35 +1410,42 @@ const Report = () => {
                 <p style={{ fontSize: '1.8rem', marginBottom: '10px' }}>{modalData.content.review.review_title}</p>
                 <p style={{ fontSize: '1.4rem', fontWeight: 'normal' }}>{modalData.content.review.review_content}</p>
               </ModalBox>
+            ) : modalData.contentType === 'img' ? (
+              <ModalBox onClick={(e) => e.stopPropagation()}>
+                <h3>신고된 이미지</h3>
+                <img src={modalData.content} alt="Report Detail" style={{ maxWidth: '100%', height: 'auto' }} />
+              </ModalBox>
             ) : (
               <ChatHistory onClick={(e) => e.stopPropagation()}>
-                {modalData.contentType === 'img' ? (
-                  <img src={modalData.content} alt="Report Detail" />
-                ) : (
-                  <>
-                    <div className="chat-divider">
-                      <span>대화 내용</span>
-                    </div>
-                    {modalData.content.history_message.map((item, index) => (
-                      <div 
-                        key={item.message_idx || index} 
-                        className={`chat-message ${
-                          item.sender_idx === userTarget.reported.member_idx 
-                            ? 'reported-message' 
-                            : 'reporter-message'
-                        }`}
-                      >
-                        <div className="sender-info">
-                          {item.sender_idx === userTarget.reported.member_idx 
-                            ? userTarget.reported.member_name 
-                            : userTarget.reporter.member_name}
-                        </div>
-                        <div className={`message-bubble` + (item.message_idx === modalData.content.idx_num ? ' highlight' : '')}>
-                          <span>{item.message_content}</span>
-                        </div>
+                {console.log('ChatHistory rendering with contentType:', modalData.contentType)}
+                {console.log('ChatHistory content:', modalData.content)}
+                <div className="chat-divider">
+                  <span>대화 내용</span>
+                </div>
+                {modalData.content?.history_message && modalData.content.history_message.length > 0 ? (
+                  modalData.content.history_message.map((item, index) => (
+                    <div 
+                      key={item.message_idx || index} 
+                      className={`chat-message ${
+                        item.sender_idx === userTarget.reported?.member_idx 
+                          ? 'reported-message' 
+                          : 'reporter-message'
+                      }`}
+                    >
+                      <div className="sender-info">
+                        {item.sender_idx === userTarget.reported?.member_idx 
+                          ? userTarget.reported?.member_name 
+                          : userTarget.reporter?.member_name}
                       </div>
-                    ))}
-                  </>
+                      <div className={`message-bubble` + (item.message_idx === modalData.content.idx_num ? ' highlight' : '')}>
+                        <span>{item.message_content}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '20px', fontSize: '1.6rem' }}>
+                    채팅 기록이 없습니다.
+                  </div>
                 )}
               </ChatHistory>
             )}

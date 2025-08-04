@@ -3,6 +3,7 @@ package org.fitsync.service;
 import java.util.List;
 
 import org.fitsync.domain.MatchingVO;
+import org.fitsync.domain.MemberVO;
 import org.fitsync.mapper.MatchingMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -85,7 +86,6 @@ public class MatchingServiceImple implements MatchingService {
     
     @Override
     public boolean hasCompletedMatchingBetween(int trainer_idx, int user_idx) {
-        log.info("특정 트레이너-회원간 완료된 매칭 확인: trainer_idx=" + trainer_idx + ", user_idx=" + user_idx);
         
         int count = mapper.countCompletedMatchingBetween(trainer_idx, user_idx);
         return count > 0;
@@ -99,5 +99,10 @@ public class MatchingServiceImple implements MatchingService {
     @Override
     public MatchingVO findCompletedMatchingByMemberIdx(int memberIdx) {
         return mapper.selectCompletedMatchingByMemberIdx(memberIdx);
+    }
+    
+    @Override
+    public MemberVO getMatchedTrainerInfoByUserIdx(int userIdx) {
+        return mapper.selectMatchedTrainerByUserIdx(userIdx);
     }
 }

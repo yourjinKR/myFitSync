@@ -21,4 +21,6 @@ public interface ScheduleMapper {
             @Param("date") String date);
     
     public void updateScheduleChecked(@Param("scheduleIdx") int scheduleIdx);
+    
+    public ScheduleVO selectNextScheduleByUserIdx(@Param("userIdx") int userIdx);
 }

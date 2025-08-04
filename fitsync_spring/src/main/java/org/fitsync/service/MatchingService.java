@@ -3,6 +3,7 @@ package org.fitsync.service;
 import java.util.List;
 
 import org.fitsync.domain.MatchingVO;
+import org.fitsync.domain.MemberVO;
 
 public interface MatchingService {
 	
@@ -25,4 +26,7 @@ public interface MatchingService {
     public boolean hasCompletedMatching(int trainerIdx, int memberIdx);
     //
     public MatchingVO findCompletedMatchingByMemberIdx(int memberIdx);
+    
+    public MemberVO getMatchedTrainerInfoByUserIdx(int userIdx);
+    
 }

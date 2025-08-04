@@ -243,6 +243,21 @@ public class UserController {
         }
     }
 
-
-    
+//    @GetMapping("/{memberIdx}/matched-trainer")
+//    public ResponseEntity<MemberVO> getMatchedTrainer(@PathVariable int memberIdx) {
+//        MemberVO trainer = matchingService.getMatchedTrainerInfoByUserIdx(memberIdx);
+//        if(trainer == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        return ResponseEntity.ok(trainer);
+//    }
+//    
+//    @GetMapping("/{memberIdx}/next-schedule")
+//    public ResponseEntity<ScheduleVO> getNextSchedule(@PathVariable int memberIdx) {
+//        ScheduleVO nextSchedule = scheduleService.getNextScheduleForUser(memberIdx);
+//        if(nextSchedule == null) {
+//            return ResponseEntity.noContent().build();
+//        }
+//        return ResponseEntity.ok(nextSchedule);
+//    }
 }

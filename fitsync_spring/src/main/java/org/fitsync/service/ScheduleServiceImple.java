@@ -49,4 +49,9 @@ public class ScheduleServiceImple implements ScheduleService {
     public void confirmSchedule(int scheduleIdx) {
     	mapper.updateScheduleChecked(scheduleIdx);
     }
+    
+    @Override
+    public ScheduleVO getNextScheduleForUser(int userIdx) {
+        return mapper.selectNextScheduleByUserIdx(userIdx);
+    }
 }

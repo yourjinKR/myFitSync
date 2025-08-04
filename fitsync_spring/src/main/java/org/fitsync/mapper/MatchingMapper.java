@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 import org.fitsync.domain.MatchingVO;
+import org.fitsync.domain.MemberVO;
 
 public interface MatchingMapper {
     
@@ -26,6 +27,8 @@ public interface MatchingMapper {
     public int countEligibleMatchingWithoutReview(@Param("trainerIdx") int trainerIdx, @Param("memberIdx") int memberIdx);
     //
     public MatchingVO selectCompletedMatchingByMemberIdx(@Param("memberIdx") int memberIdx);
+    
+    public MemberVO selectMatchedTrainerByUserIdx(@Param("userIdx") int userIdx);
     
    
 }

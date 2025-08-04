@@ -20,5 +20,7 @@ public interface ScheduleService {
     public List<ScheduleVO> getSchedulesByDate(int memberIdx, String date);
     // PT 확인처리
     public void confirmSchedule(int scheduleIdx);
+    
+    public ScheduleVO getNextScheduleForUser(int userIdx);
 }
 	

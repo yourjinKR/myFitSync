@@ -137,7 +137,6 @@ const Review = ({ content, score, height, title, memberName, review_idx }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const member = useSelector((state) => state.user.user); // 현재 로그인한 사용자 정보
-  console.log("Review 컴포넌트에서 받은 review_idx:", review_idx);
   const openModal = () => {
     setReportReason('');
     setModalVisible(true);
@@ -157,8 +156,6 @@ const Review = ({ content, score, height, title, memberName, review_idx }) => {
       report_hidden: 0,
       member_idx: member?.member_idx, // 로그인된 사용자 IDX
     };
-
-    console.log('서버로 보내는 신고 데이터:', reportData);
 
     try {
       const res = await axios.post('/member/report/review', reportData);
