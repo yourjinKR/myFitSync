@@ -14,7 +14,7 @@ import { PaymentUtil } from '../../utils/PaymentUtil';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import useRequireLogin from '../../hooks/useRequireLogin';
-import { SAVED_NOW } from '../../reducers/type';
+import { IGNORE, SAVED_NOW } from '../../reducers/type';
 
 const ServiceContainer = styled.div`
     max-width: 1000px;
@@ -243,6 +243,21 @@ const AiServiceContainer = () => {
         }
     };
 
+    // 결과 저장하지 않기
+    const handleIgnoreResult = async () => {
+        if (!aiResult || !aiResult.content) {
+            alert('저장할 루틴이 없습니다.');
+            return;
+        }
+        try {
+            const response = await AiUtil.updateLogUserAction({apilog_idx : aiResult.logIdx, apilog_user_action : IGNORE});
+            nav('/routine/view');
+        } catch (error) {
+            console.error('루틴 저장 실패:', error);
+            alert('루틴 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
+
     /** 피드백 업데이트 */ 
     const handleFeedback = async (type, reason = null) => {
         try {
@@ -338,6 +353,7 @@ const AiServiceContainer = () => {
                 <StepResult 
                     result={aiResult}
                     onSave={handleSaveResult}
+                    onIgnore={handleIgnoreResult}
                     onFeedback={() => setShowFeedbackModal(true)}
                     onRetry={() => {
                         setCurrentStep(1);

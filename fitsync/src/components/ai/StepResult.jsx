@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 
 const ResultContainer = styled.div`
@@ -203,23 +204,16 @@ const ActionButton = styled.button`
 const SaveButton = styled(ActionButton)`
     background: var(--check-green);
     color: var(--text-primary);
-    
-    &:hover {
-        background: var(--success);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(46, 139, 87, 0.3);
-    }
+`;
+
+const IgnoreButton = styled(ActionButton)`
+    background: var(--warning);
+    color: var(--text-primary);
 `;
 
 const RetryButton = styled(ActionButton)`
-    background: var(--warning);
+    background: var(--primary-blue);
     color: var(--text-primary);
-    
-    &:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.3);
-    }
 `;
 
 const FeedbackSection = styled.div`
@@ -307,9 +301,10 @@ const EmptyState = styled.div`
     }
 `;
 
-const StepResult = ({ result, onSave, onFeedback, onRetry, onSubmit, feedbackCompleted = false }) => {
+const StepResult = ({ result, onSave, onFeedback, onRetry, onIgnore, onSubmit, feedbackCompleted = false }) => {
     const [feedbackStatus, setFeedbackStatus] = useState(feedbackCompleted ? 'positive' : null);
     const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+    const nav = useNavigate();
 
     // feedbackCompleted prop이 변경될 때 상태 업데이트
     React.useEffect(() => {
@@ -409,8 +404,11 @@ const StepResult = ({ result, onSave, onFeedback, onRetry, onSubmit, feedbackCom
 
             <ActionButtons>
                 <SaveButton onClick={onSave}>
-                    💾 루틴 저장하기
+                    💾 루틴으로 저장하기
                 </SaveButton>
+                <IgnoreButton onClick={onIgnore}>
+                    ❌ 저장하지 않기
+                </IgnoreButton>
                 <RetryButton onClick={onRetry}>
                     🔄 다시 생성하기
                 </RetryButton>

@@ -62,7 +62,14 @@ const LogDetailModal = ({
         const result = {content : log.parsed_response, logIdx : log.apilog_idx}
         try {
             const response1 = await AiUtil.saveResult(result, rawDataIdx, rawDataMap);
-            const response2 = await AiUtil.updateLogUserAction({apilog_idx : log.apilog_idx, apilog_user_action : SAVED_AFTER});
+
+            if (log.apilog_user_action !== 'ignore') {
+                console.log('유저 액션 업데이트 안함.');
+            } else {
+                console.log('유저 액션 업데이트 하겠음');
+                const response2 = await AiUtil.updateLogUserAction({apilog_idx : log.apilog_idx, apilog_user_action : SAVED_AFTER});
+            }
+
             alert('저장이 완료됐습니다!');
         } catch (error) {
             alert('결과물을 저장하지 못했습니다 ! ')
