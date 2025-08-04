@@ -41,10 +41,10 @@ import AIWorkoutService from '../components/ai/test/AIWorkoutService';
 import Gym from '../components/admin/Gym';
 import WorkOut from '../components/admin/WorkOut';
 import WorkoutView from '../components/routine/WorkoutView';
-import UserApiLogContainerTest from '../components/ai/test/UserApiLogContainerTest';
 import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser, setUser } from '../action/userAction';
+import UserApiLogContainer from '../components/ai/UserApiLogContainer';
 
 const DisplayWrapper = styled.div`
   ${props => props.$isAdmin ? '' : 'max-width: 750px;'}
@@ -196,7 +196,7 @@ const Display = () => {
           <Route path='/ai/test/input' element={<SlideInputFormTest />} />
           <Route path='/ai/test/result' element={<ResponseResultPage resultData={{}} />} />
           <Route path='/ai/test/total' element={<AIWorkoutService />} />
-          <Route path='/ai/userLog' element={<UserApiLogContainerTest />} />
+          <Route path='/ai/userLog' element={<UserApiLogContainer />} />
 
           <Route path='/subscription' element={<SubscriptionContainer />}>
             <Route path='test' element={<KaKaoPayTest />} />
