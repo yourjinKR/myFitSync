@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
+import dateFormat from '../../utils/dateFormat';
+const {formatDate} = dateFormat;
 
 const Container = styled.div`
   background-color: var(--bg-secondary);
@@ -229,7 +231,8 @@ const MessageInput = ({
   disabled,
   replyToMessage = null,
   onCancelReply = null,
-  attachments = {}
+  attachments = {},
+  blockDate
 }) => {
   const [messageText, setMessageText] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -525,7 +528,9 @@ const MessageInput = ({
                 ? "답장을 입력하세요..." 
                 : selectedFiles.length > 0 
                   ? "이미지와 함께 보낼 메시지를 입력하세요..." 
-                  : "메시지를 입력하세요..."
+                  : blockDate === null
+                    ? "메시지를 입력하세요..."
+                    : `제재되어 ${formatDate(blockDate - 1, "none")}까지 메시지를 입력할 수 없습니다.`
             }
             disabled={disabled}
             rows={1}

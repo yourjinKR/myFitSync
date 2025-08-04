@@ -138,6 +138,7 @@ const ChatRoom = () => {
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
   const [imageLoadingCount, setImageLoadingCount] = useState(0);
   const [totalImageCount, setTotalImageCount] = useState(0);
+  const [blockDate, setBlockDate] = useState(null);
 
   // 지난 대화 관련 상태
   const [hasOldMessages, setHasOldMessages] = useState(false);
@@ -466,6 +467,7 @@ const ChatRoom = () => {
         const memberIdx = response.data.member_idx.toString();
         sessionStorage.setItem('chat_member_idx', memberIdx);
         setCurrentMemberIdx(parseInt(memberIdx));
+        setBlockDate(response.data.block_date || null);
         return parseInt(memberIdx);
       } else {
         if (response.data.message.includes('로그인')) {
@@ -1257,10 +1259,11 @@ const ChatRoom = () => {
       <InputWrapper>
         <MessageInput
           onSendMessage={handleSendMessage}
-          disabled={!connected}
+          disabled={!connected || blockDate}
           replyToMessage={replyToMessage}
           onCancelReply={handleCancelReply}
           attachments={attachments}
+          blockDate={blockDate}
         />
       </InputWrapper>
     </Container>
