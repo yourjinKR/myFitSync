@@ -14,6 +14,8 @@ public interface PtMapper {
 	// idx와 이름 매핑
 	List<PtVO> getWorkOutNameMap();
 	
+	List<PtVO> getAllWorkOutNameMap();
+	
 	public PtVO selectPtById(int ptIdx);
 	
 	public int updateWorkOut(PtVO vo);

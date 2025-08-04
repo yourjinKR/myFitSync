@@ -17,14 +17,18 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
 
             <TabContent>
                 <LogSummary>
-                    <SummaryItem>
-                        <SummaryLabel>전체 로그</SummaryLabel>
-                        <SummaryValue>{apiLogs?.length || 0}</SummaryValue>
-                    </SummaryItem>
-                    <SummaryItem>
-                        <SummaryLabel>필터된 로그</SummaryLabel>
-                        <SummaryValue>{logs.length}</SummaryValue>
-                    </SummaryItem>
+                    {memberType === 'admin' && (
+                      <>
+                        <SummaryItem>
+                            <SummaryLabel>전체 로그</SummaryLabel>
+                            <SummaryValue>{apiLogs?.length || 0}</SummaryValue>
+                        </SummaryItem>
+                        <SummaryItem>
+                            <SummaryLabel>필터된 로그</SummaryLabel>
+                            <SummaryValue>{logs.length}</SummaryValue>
+                        </SummaryItem>
+                      </>
+                    )}
                     {stats && (
                         <>
                             <SummaryItem>

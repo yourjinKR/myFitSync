@@ -36,10 +36,16 @@ public class ApiLogServiceImple implements ApiLogService{
 		return apiLogMapper.selectApiLogById(apilog_idx);
 	}
 	
-	// idx와 이름 매핑하여 부르기
+	// idx와 이름 매핑하여 부르기 (허용된 운동)
 	public Map<Integer, String> getWorkoutNameMap() {
 	    List<PtVO> ptList = ptMapper.getWorkOutNameMap();
 	    return ptList.stream().collect(Collectors.toMap(PtVO::getPt_idx, PtVO::getPt_name));
+	}
+	
+	// idx와 이름 매핑하여 부르기 (모든 운동)
+	public Map<Integer, String> getAllWorkoutNameMap() {
+		List<PtVO> ptList = ptMapper.getAllWorkOutNameMap();
+		return ptList.stream().collect(Collectors.toMap(PtVO::getPt_idx, PtVO::getPt_name));
 	}
 	
 	@Override
@@ -47,7 +53,7 @@ public class ApiLogServiceImple implements ApiLogService{
 	    List<ApiLogVO> list = apiLogMapper.selectApiList();
 
 	    // 1. idx → name 매핑 Map 준비
-	    Map<Integer, String> ptNameMap = getWorkoutNameMap();
+	    Map<Integer, String> ptNameMap = getAllWorkoutNameMap();
 
 	    // 2. Jackson ObjectMapper
 	    ObjectMapper objectMapper = new ObjectMapper();
@@ -110,7 +116,7 @@ public class ApiLogServiceImple implements ApiLogService{
 	    List<ApiLogVO> list = apiLogMapper.selectByMemberId(memberIdx);
 
 	    // 1. idx → name 매핑 Map 준비
-	    Map<Integer, String> ptNameMap = getWorkoutNameMap();
+	    Map<Integer, String> ptNameMap = getAllWorkoutNameMap();
 
 	    // 2. Jackson ObjectMapper
 	    ObjectMapper objectMapper = new ObjectMapper();

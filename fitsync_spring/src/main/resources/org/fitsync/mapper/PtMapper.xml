@@ -23,6 +23,11 @@
 		WHERE PT_HIDDEN = 0
 	</select>
 	
+	<select id="getAllWorkOutNameMap" resultType="org.fitsync.domain.PtVO">
+	    SELECT PT_IDX, PT_NAME
+	    FROM PT
+	</select>
+	
 	<select id="selectPtById" resultType="org.fitsync.domain.PtVO">
 	  	SELECT * FROM PT WHERE PT_IDX = #{ptId}
 	</select>

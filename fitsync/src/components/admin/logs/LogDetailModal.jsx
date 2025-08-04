@@ -466,63 +466,64 @@ const LogDetailModal = ({
 
                 <ModalBody>
                     {/* 기본 정보 */}
-                    <Section>
-                        <ToggleSection>
-                            <ToggleSectionTitle 
-                                onClick={() => setIsBasicInfoExpanded(!isBasicInfoExpanded)}
-                                expanded={isBasicInfoExpanded}
-                            >
-                                <ToggleIcon expanded={isBasicInfoExpanded}>▶</ToggleIcon>
-                                📋 기본 정보
-                            </ToggleSectionTitle>
-                            <CollapsibleContent expanded={isBasicInfoExpanded}>
-                                <InfoGrid>
-                                    <InfoItem>
-                                        <InfoLabel>요청 시간</InfoLabel>
-                                        <InfoValue>
-                                            {new Date(log.apilog_response_time).toLocaleString('ko-KR')}
-                                        </InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>모델</InfoLabel>
-                                        <InfoValue>{log.apilog_model || '-'}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>서비스 타입</InfoLabel>
-                                        <InfoValue>{log.apilog_service_type || '-'}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>버전</InfoLabel>
-                                        <InfoValue>v{log.apilog_version || '-'}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>응답 속도</InfoLabel>
-                                        <InfoValue>
-                                            {log.apilog_total_time}초
-                                        </InfoValue>
-                                    </InfoItem>
-                                    {log.apilog_total_time && (
+                    {memberType === 'admin' ? (
+                        <Section>
+                            <ToggleSection>
+                                <ToggleSectionTitle 
+                                    onClick={() => setIsBasicInfoExpanded(!isBasicInfoExpanded)}
+                                    expanded={isBasicInfoExpanded}
+                                >
+                                    <ToggleIcon expanded={isBasicInfoExpanded}>▶</ToggleIcon>
+                                    📋 기본 정보
+                                </ToggleSectionTitle>
+                                <CollapsibleContent expanded={isBasicInfoExpanded}>
+                                    <InfoGrid>
                                         <InfoItem>
-                                            <InfoLabel>총 처리 시간</InfoLabel>
-                                            <InfoValue>{log.apilog_total_time.toFixed(3)}초</InfoValue>
+                                            <InfoLabel>요청 시간</InfoLabel>
+                                            <InfoValue>
+                                                {new Date(log.apilog_response_time).toLocaleString('ko-KR')}
+                                            </InfoValue>
                                         </InfoItem>
-                                    )}
-                                    <InfoItem>
-                                        <InfoLabel>입력 토큰</InfoLabel>
-                                        <InfoValue>{log.apilog_input_tokens?.toLocaleString() || '-'}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>출력 토큰</InfoLabel>
-                                        <InfoValue>{log.apilog_output_tokens?.toLocaleString() || '-'}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>사용자 ID</InfoLabel>
-                                        <InfoValue>{log.user_id || '-'}</InfoValue>
-                                    </InfoItem>
-                                </InfoGrid>
-                            </CollapsibleContent>
-                        </ToggleSection>
-                    </Section>
+                                        <InfoItem>
+                                            <InfoLabel>모델</InfoLabel>
+                                            <InfoValue>{log.apilog_model || '-'}</InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>서비스 타입</InfoLabel>
+                                            <InfoValue>{log.apilog_service_type || '-'}</InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>버전</InfoLabel>
+                                            <InfoValue>v{log.apilog_version || '-'}</InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>응답 속도</InfoLabel>
+                                            <InfoValue>
+                                                {log.apilog_total_time}초
+                                            </InfoValue>
+                                        </InfoItem>
+                                        {log.apilog_total_time && (
+                                            <InfoItem>
+                                                <InfoLabel>총 처리 시간</InfoLabel>
+                                                <InfoValue>{log.apilog_total_time.toFixed(3)}초</InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        <InfoItem>
+                                            <InfoLabel>입력 토큰</InfoLabel>
+                                            <InfoValue>{log.apilog_input_tokens?.toLocaleString() || '-'}</InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>출력 토큰</InfoLabel>
+                                            <InfoValue>{log.apilog_output_tokens?.toLocaleString() || '-'}</InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>사용자 ID</InfoLabel>
+                                            <InfoValue>{log.user_id || '-'}</InfoValue>
+                                        </InfoItem>
+                                    </InfoGrid>
+                                </CollapsibleContent>
+                            </ToggleSection>
+                        </Section>) : (<></>)}
 
                     {/* 사용자 정보 및 요청 섹션 */}
                     {userInfo && (
