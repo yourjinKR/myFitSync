@@ -7,6 +7,7 @@ import {
   getDay,
   addDays,
   subDays,
+  endOfWeek,
 } from 'date-fns';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
@@ -41,21 +42,35 @@ const TopBar = styled.div`
 const MonthTitle = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 1.8rem;
-  font-weight: 700;
+  gap: 1.2rem;
+  font-size: 2.2rem; /* 글씨 크기 더 키움 */
+  font-weight: 800;
+  position: relative;
+  min-height: 3.2rem;
+
+  /* 월 이름이 길어도 버튼 위치가 고정되도록 wrapper 추가 */
+  .month-label {
+    min-width: 13ch; /* "September 2025" 등 가장 긴 월+연도 기준, 더 넉넉하게 */
+    text-align: center;
+    flex-shrink: 0;
+    flex-grow: 1;
+    display: inline-block;
+  }
 
   button {
     background: none;
     border: none;
-    font-size: 1.8rem;
+    font-size: 2.2rem; /* 버튼도 더 큼 */
     cursor: pointer;
     padding: 0.4rem;
     color: var(--primary-blue);
     transition: color 0.2s;
-    &:hover {
-      color: var(--primary-blue-hover);
-    }
+    width: 3.2rem;      /* 버튼의 너비와 높이 고정 (더 큼) */
+    height: 3.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 `;
 
@@ -101,29 +116,22 @@ const CalendarHeader = styled.div`
   font-weight: bold;
   padding-top: 1.5rem;
 
+  /* 달력 안쪽 월 넘김 버튼 제거 */
   button {
-    background: none;
-    border: none;
-    font-size: 1.6rem;
-    cursor: pointer;
-    padding: 0.3rem;
-    color: var(--primary-blue);
-    transition: color 0.2s;
-    &:hover {
-      color: var(--primary-blue-hover);
-    }
+    display: none;
   }
 `;
 
 const WeekdaysRow = styled.div`
   display: grid;
-  grid-template-columns: 4rem repeat(7, 1fr);
+  grid-template-columns: repeat(7, 1fr);  // <-- 4rem 제거, 7등분으로!
   font-weight: bold;
   background: var(--bg-tertiary);
   padding: 0.8rem 0;
   text-align: center;
   font-size: 1.2rem;
   color: var(--primary-blue-light);
+  border-bottom: 1px solid var(--border-light);
 `;
 
 const CustomCalendar = styled.div`
@@ -146,10 +154,17 @@ const CustomCalendar = styled.div`
 `;
 
 const DayCellBox = styled.div`
-  background: ${({ isSelected }) => (isSelected ? 'var(--primary-blue)' : 'transparent')};
-  color: ${({ isSelected, isSunday, isSaturday }) =>
+  background: ${({ isSelected, isToday }) =>
+    isSelected
+      ? 'var(--primary-blue)'
+      : isToday
+      ? 'var(--primary-blue-light)'
+      : 'transparent'};
+  color: ${({ isSelected, isSunday, isSaturday, isToday }) =>
     isSelected
       ? 'var(--text-primary)'
+      : isToday
+      ? 'var(--bg-primary)'
       : isSunday
       ? 'var(--warning)'
       : isSaturday
@@ -592,13 +607,15 @@ useEffect(() => {
             {view === 'week' ? (
               <MonthTitle>
                 <button onClick={() => setCurrentWeekStart(subDays(currentWeekStart, 7))}>{'<'}</button>
-                {format(currentWeekStart, 'MMMM yyyy')}
+                <span className="month-label">
+      {`${format(currentWeekStart, 'yyyy.MM.dd')} ~ ${format(endOfWeek(currentWeekStart, { weekStartsOn: 0 }), 'yyyy.MM.dd')}`}
+    </span>
                 <button onClick={() => setCurrentWeekStart(addDays(currentWeekStart, 7))}>{'>'}</button>
               </MonthTitle>
             ) : (
               <MonthTitle>
                 <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>{'<'}</button>
-                {format(currentMonth, 'MMMM yyyy')}
+                <span className="month-label">{format(currentMonth, 'MMMM yyyy')}</span>
                 <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>{'>'}</button>
               </MonthTitle>
             )}
@@ -730,19 +747,14 @@ useEffect(() => {
             <>
               <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
                 <div style={{ flex: 1, minWidth: '350px' }}>
-                  <CalendarHeader>
-                    <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>{'<'}</button>
-                    {format(currentMonth, 'MMMM yyyy')}
-                    <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>{'>'}</button>
-                  </CalendarHeader>
 
-                  <WeekdaysRow>
-                    {days.map((day, idx) => (
-                      <div key={idx}>{day}</div>
-                    ))}
-                  </WeekdaysRow>
+                <WeekdaysRow>
+                  {days.map((day, idx) => (
+                    <div key={idx}>{day}</div>
+                  ))}
+                </WeekdaysRow>
 
-                  <CustomCalendar>
+                <CustomCalendar>
                   {dates.map((day, index) => {
                     const dateStr =
                       day != null
@@ -753,11 +765,14 @@ useEffect(() => {
                     const isSelected = dateStr && selectedDate === dateStr;
                     const dayOfWeek = index % 7;
                     const scheduleColors = dateStr ? getScheduleColorsByDate(dateStr) : [];
+                    const todayStr = format(new Date(), 'yyyy-MM-dd');
+                    const isToday = dateStr === todayStr;
 
                     return (
                       <DayCellBox
                         key={index}
                         isSelected={isSelected}
+                        isToday={isToday}
                         isSunday={dayOfWeek === 0}
                         isSaturday={dayOfWeek === 6}
                         isClickable={!!dateStr}
@@ -797,7 +812,7 @@ useEffect(() => {
                   })}
                 </CustomCalendar>
                 </div>
-
+                
                 <LegendContainer>
                   <Legend>
                     <div>

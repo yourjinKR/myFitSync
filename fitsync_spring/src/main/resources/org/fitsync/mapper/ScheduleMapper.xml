@@ -71,4 +71,17 @@
 	    SET schedule_check = 1
 	    WHERE schedule_idx = #{scheduleIdx}
 	</update>
+
+	<select id="selectNextScheduleByUserIdx" resultType="org.fitsync.domain.ScheduleVO">
+	    SELECT *
+	    FROM (
+	      SELECT *
+	      FROM schedule
+	      WHERE user_idx = #{userIdx}
+	        AND schedule_date >= TRUNC(SYSDATE)
+	      ORDER BY schedule_date ASC, schedule_stime ASC
+	    )
+	    WHERE ROWNUM = 1
+ 	 </select>
+
 </mapper>

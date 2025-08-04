@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { MdEdit, MdCheck, MdReport } from 'react-icons/md';
 import Switch from '@mui/material/Switch';
@@ -168,6 +168,10 @@ const TrainerProfileHeader = ({
 }) => {
   const isTrainer = mode === 'trainer';
   const [localTrainer, setLocalTrainer] = useState(trainer);
+    useEffect(() => {
+    console.log('trainer prop 변경:', trainer);
+    setLocalTrainer(trainer);
+  }, [trainer]);
   const [updating, setUpdating] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -184,7 +188,7 @@ const TrainerProfileHeader = ({
       setUpdating(true);
       const updatedHidden = isHidden ? 0 : 1;
       const res = await axios.put(`/trainer/${localTrainer.member_idx}/visibility`, {
-        member_hidden: updatedHidden === 1,
+        member_hidden: updatedHidden, // 숫자로 보내기
       });
       if (res.status === 200) {
         const updatedTrainer = { ...localTrainer, member_hidden: updatedHidden };
@@ -213,7 +217,6 @@ const TrainerProfileHeader = ({
       console.error('신고 실패:', err);
       alert('신고 처리 중 문제가 발생했습니다.');
     }
-    console.log(targetMember?.member_idx);
     
   };
 

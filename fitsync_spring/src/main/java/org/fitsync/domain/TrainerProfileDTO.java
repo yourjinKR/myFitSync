@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrainerProfileDTO {
-    private int member_idx, member_price, gym_idx;
+    private int member_idx, member_price, gym_idx, member_hidden;
     private String member_name, member_image, member_info, member_info_image, member_time, member_intro, member_email;
 
     // 연관 VO들
@@ -30,5 +30,6 @@ public class TrainerProfileDTO {
         this.member_intro = vo.getMember_intro();
         this.member_email = vo.getMember_email();
         this.gym_idx = vo.getGym_idx();
+        this.member_hidden = vo.getMember_hidden();
         }
 }

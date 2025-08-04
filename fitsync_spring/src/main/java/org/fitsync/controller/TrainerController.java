@@ -68,7 +68,6 @@ public class TrainerController {
     @GetMapping("/profile/{trainerIdx}")
     public ResponseEntity<?> getTrainerProfileById(@PathVariable int trainerIdx) {
         MemberVO member = memberService.getTrainerByIdx(trainerIdx);
-        System.out.println("[DEBUG] trainerIdx: " + trainerIdx + ", member: " + member);
         if (member == null) {
             return ResponseEntity.status(404).body("Trainer not found");
         }
@@ -339,7 +338,26 @@ public class TrainerController {
             @RequestBody Map<String, Object> payload
     ) {
         try {
-            boolean memberHidden = Boolean.parseBoolean(payload.get("member_hidden").toString());
+            Object hiddenObj = payload.get("member_hidden");
+            boolean memberHidden = false;
+
+            if (hiddenObj instanceof Boolean) {
+                memberHidden = (Boolean) hiddenObj;
+            } else if (hiddenObj instanceof Number) {
+                memberHidden = ((Number) hiddenObj).intValue() == 1;
+            } else if (hiddenObj instanceof String) {
+                // "1", "0" 혹은 "true", "false" 문자열 처리
+                String strVal = (String) hiddenObj;
+                if ("1".equals(strVal)) {
+                    memberHidden = true;
+                } else if ("0".equals(strVal)) {
+                    memberHidden = false;
+                } else {
+                    memberHidden = Boolean.parseBoolean(strVal);
+                }
+            }
+
+            System.out.println("member_hidden 값 = " + memberHidden);
             memberService.updateProfileVisibility(memberIdx, memberHidden);
             return ResponseEntity.ok("프로필 공개 여부가 변경되었습니다.");
         } catch (Exception e) {
@@ -347,6 +365,8 @@ public class TrainerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류 발생: " + e.getMessage());
         }
     }
+
+    
     // 특정 트레이너의 체육관 정보 조회
     @GetMapping("/gym/{trainerIdx}")
     public ResponseEntity<GymVO> getGym(@PathVariable int trainerIdx) {

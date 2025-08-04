@@ -147,7 +147,8 @@ const TrainerDetailView = () => {
           specialties: data.specialties || [],
           profile_image: data.member_image,
           gym_idx : data.gym_idx,
-          gymInfo : data.gymInfo
+          gymInfo : data.gymInfo,
+          member_hidden : data.member_hidden
         };
 
         console.log(trainerData);
