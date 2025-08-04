@@ -109,6 +109,7 @@ const WrapperTop = styled.div`
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    height: 40px;
   }
   
   input {
@@ -116,6 +117,24 @@ const WrapperTop = styled.div`
     min-width: 250px;
     font-size: 1.4rem;
     padding: 10px;
+    border-radius: 5px;
+  }
+
+  select {
+    background: var(--bg-tertiary);
+    font-size: 1.4rem;
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    height: 40px;
+
+    option {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 1.4rem;
+    }
   }
 `;
 
@@ -260,24 +279,122 @@ const WorkOut = () => {
     pt_name: '',
     pt_category: '가슴',
     pt_content: '',
-    pt_image: [blank_img, blank_img], // 배열로!
+    pt_image: [blank_img, blank_img],
   }
+  
   const [workoutData, setWorkoutData] = useState(null);
+  const [originalData, setOriginalData] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
   const [postData, setPostData] = useState(init);
-  const [modalType, setModalType] = useState(""); // 추가
+  const [modalType, setModalType] = useState("");
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const searchRef = useRef(null);
+  
+  // 필터 상태 추가
+  const [filters, setFilters] = useState({
+    category: "",
+    status: "",
+    search: ""
+  });
+
+  // useEffect 추가 - 컴포넌트 마운트 시 데이터 로드
+  useEffect(() => {
+    getWorkOutData();
+  }, []);
+
+  // shouldOpenModal 상태가 변경될 때 모달 열기
+  useEffect(() => {
+    if (shouldOpenModal) {
+      setModalOpen(true);
+      setShouldOpenModal(false);
+    }
+  }, [shouldOpenModal]);
+
+  // 필터가 변경될 때마다 데이터 필터링
+  useEffect(() => {
+    if (!originalData) return;
+    
+    let filteredData = [...originalData];
+
+    // 카테고리 필터
+    if (filters.category !== "") {
+      filteredData = filteredData.filter(item => item.pt_category === filters.category);
+    }
+
+    // 상태 필터
+    if (filters.status !== "") {
+      filteredData = filteredData.filter(item => 
+        item.pt_hidden === (filters.status === "활성화" ? 1 : 0)
+      );
+    }
+
+    // 검색 필터
+    if (filters.search !== "") {
+      filteredData = filteredData.filter(item => {
+        return (item.pt_name && item.pt_name.includes(filters.search)) ||
+          (item.pt_category && item.pt_category.includes(filters.search)) ||
+          (item.pt_content && item.pt_content.includes(filters.search));
+      });
+    }
+
+    setWorkoutData(filteredData);
+  }, [filters, originalData]);
 
   const getWorkOutData = async () => {
-    const response = await axios.get('/admin/workout', { withCredentials: true });
-    const data = response.data;
-    if (data.success) {
-      setWorkoutData(data.list);
+    try {
+      const response = await axios.get('/admin/workout', { withCredentials: true });
+      const data = response.data;
+      if (data.success) {
+        setWorkoutData(data.list);
+        setOriginalData(data.list);
+      } else {
+        console.error('데이터 로드 실패:', data.msg);
+        setWorkoutData([]);
+        setOriginalData([]);
+      }
+    } catch (error) {
+      console.error('API 호출 오류:', error);
+      setWorkoutData([]);
+      setOriginalData([]);
     }
   }
 
+  // 필터링 함수들 수정
+  const handleCategoryFilter = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      category: value
+    }));
+  };
+
+  const handleStatusFilter = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      status: value
+    }));
+  };
+
+  const handleSearch = () => {
+    const searchTerm = searchRef.current.value;
+    setFilters(prev => ({
+      ...prev,
+      search: searchTerm
+    }));
+    searchRef.current.blur();
+  };
+
+  // 필터 초기화 함수 추가
+  const resetFilters = () => {
+    setFilters({
+      category: "",
+      status: "",
+      search: ""
+    });
+    searchRef.current.value = "";
+  };
+
+  // 업데이트 및 추가 함수 수정
   const updateWorkOutData = async () => {
     const formData = new FormData();
     formData.append('pt_idx', postData.pt_idx);
@@ -286,24 +403,22 @@ const WorkOut = () => {
     formData.append('pt_content', postData.pt_content);
 
     postData.pt_image.forEach(item => {
-      if (item instanceof File) {  // 파일 객체인 경우
+      if (item instanceof File) {
         formData.append('pt_image', item);
-      } else if (typeof item === 'string') {  // 문자열인 경우
-        formData.append('pt_image_description', item);  // 텍스트는 다른 이름으로 추가
+      } else if (typeof item === 'string') {
+        formData.append('pt_image_description', item);
       }
     });
 
-    // 서버에 PUT 요청
     const response = await axios.put('/admin/workout', formData, {
       withCredentials: true,
     });
     const result = response.data;
     if (result.success) {
-      setWorkoutData(result.list);
       setPostData(init);
       setModalData(null);
       setModalOpen(false);
-      getWorkOutData();
+      getWorkOutData(); // 데이터 새로고침
     } else {
       alert(result.msg || '수정에 실패했습니다.');
     }
@@ -316,23 +431,21 @@ const WorkOut = () => {
     formData.append('pt_content', postData.pt_content);
 
     postData.pt_image.forEach(item => {
-      if (item instanceof File) {  // 파일 객체인 경우
+      if (item instanceof File) {
         formData.append('pt_image', item);
-      } else if (typeof item === 'string') {  // 문자열인 경우
-        formData.append('pt_image_description', item);  // 텍스트는 다른 이름으로 추가
+      } else if (typeof item === 'string') {
+        formData.append('pt_image_description', item);
       }
     });
 
-    // 서버에 POST 요청
     const response = await axios.post('/admin/workout', formData, {
       withCredentials: true,
     });
     const result = response.data;
     if (result.success) {
-      setWorkoutData(result.list);
       setPostData(init);
       setModalOpen(false);
-      getWorkOutData();
+      getWorkOutData(); // 데이터 새로고침
     } else {
       alert(result.msg || '추가에 실패했습니다.');
     }
@@ -365,56 +478,48 @@ const WorkOut = () => {
   };
   
   const hideWorkOutData = async (pt_idx) => {
-    // 서버에 PUT 요청
     const response = await axios.put(`/admin/workout/${pt_idx}`, {
       withCredentials: true,
     });
     const result = response.data;
     if (result.success) {
-      getWorkOutData();
+      getWorkOutData(); // 데이터 새로고침
     } else {
       alert(result.msg || '수정에 실패했습니다.');
     }
   }
 
-  const handleSearch = () => {
-    const searchTerm = searchRef.current.value;
-    const filteredData = workoutData.filter(item => {
-      return (item.pt_name && item.pt_name.includes(searchTerm)) ||
-        (item.pt_category && item.pt_category.includes(searchTerm)) ||
-        (item.pt_content && item.pt_content.includes(searchTerm));
-    });
-    setWorkoutData(filteredData);
-    searchRef.current.blur(); // 검색 후 입력창 포커스 해제
-  };
-  
-
-  useEffect(() => {
-    getWorkOutData();
-  }, []);
-
-  useEffect(() => {
-  }, [workoutData]);
-
-  useEffect(() => {
-    if (!modalOpen) {
-      setModalData(null);
-      setPostData(init);
-    }
-  }, [modalOpen]);
-
-  useEffect(() => {
-    if (shouldOpenModal) {
-      setModalOpen(true);
-      setShouldOpenModal(false);
-    }
-  }, [shouldOpenModal]);
-
   return (
     <WorkOutWrapper>
       <WrapperTop> 
         <button onClick={() => handleModalOpen("add")}>운동 추가</button>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <select 
+            name="category" 
+            id="category"
+            value={filters.category}
+            onChange={e => handleCategoryFilter(e.target.value)}
+          >
+            <option value="">전체</option>
+            <option value="가슴">가슴</option>
+            <option value="등">등</option>
+            <option value="복근">복근</option>
+            <option value="어깨">어깨</option>
+            <option value="유산소">유산소</option>
+            <option value="팔">팔</option>
+            <option value="하체">하체</option>
+            <option value="기타">기타</option>
+          </select>
+          <select 
+            name="status" 
+            id="status"
+            value={filters.status}
+            onChange={e => handleStatusFilter(e.target.value)}
+          >
+            <option value="">전체</option>
+            <option value="활성화">활성화</option>
+            <option value="비활성화">비활성화</option>
+          </select>
           <input
             ref={searchRef}
             onKeyUp={e => {
@@ -422,8 +527,12 @@ const WorkOut = () => {
             }}
             type="text"
             name="search"
+            placeholder="운동명, 카테고리, 설명으로 검색"
           />
           <button onClick={handleSearch}>검색</button>
+          <button onClick={resetFilters} style={{ background: 'var(--warning)' }}>
+            초기화
+          </button>
         </div>
       </WrapperTop>
       <>
@@ -444,7 +553,7 @@ const WorkOut = () => {
           <table>
             <tbody>
               {
-                workoutData ? workoutData.map((item, idx) => (
+                workoutData && workoutData.length > 0 ? workoutData.map((item, idx) => (
                   <tr key={item.pt_idx}>
                     <td>{idx + 1}</td>
                     <td>{item.pt_name}</td>
@@ -465,12 +574,29 @@ const WorkOut = () => {
                   </tr>
                 )) :
                   <tr>
-                    <td colSpan="6">데이터가 없습니다.</td>
+                    <td colSpan="7">데이터가 없습니다.</td>
                   </tr>
               }
             </tbody>
           </table>
         </div>
+        
+        {/* 현재 적용된 필터 표시 */}
+        {(filters.category || filters.status || filters.search) && (
+          <div style={{ 
+            marginTop: '10px', 
+            padding: '10px', 
+            background: 'var(--bg-tertiary)', 
+            borderRadius: '4px',
+            fontSize: '1.4rem'
+          }}>
+            적용된 필터: 
+            {filters.category && <span> 카테고리: {filters.category}</span>}
+            {filters.status && <span> 상태: {filters.status}</span>}
+            {filters.search && <span> 검색: {filters.search}</span>}
+          </div>
+        )}
+        
         <Modal
           modalOpen={modalOpen}
           setModalOpen={setModalOpen}
@@ -481,7 +607,7 @@ const WorkOut = () => {
                 setPostData={setPostData}
                 onClose={() => setModalOpen(false)}
                 onSubmit={modalType === "modify" ? updateWorkOutData : handleWorkOutAdd}
-                modalType={modalType} // 여기서 함수 전달!
+                modalType={modalType}
               />
             ) : modalData
           }
