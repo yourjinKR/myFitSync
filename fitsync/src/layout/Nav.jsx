@@ -11,18 +11,27 @@ const NavWrapper = styled.nav`
   display: flex;
   width: 100%;
   max-width: 750px;
-  max-height: 85px;
+  height: 80px;
   margin: 0 auto;
-  background: #232946;
-  box-shadow: 0 -2px 12px rgba(44, 62, 80, 0.08);
-  position: sticky;
+  background: linear-gradient(135deg, #232946 0%, #1e243a 100%);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1), 
+              0 -1px 0 rgba(238, 187, 195, 0.1);
+  position: fixed;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 999;
-  padding: 0 8px;
-  height: 100%;
+  padding: 0 12px;
+  border-top: 1px solid rgba(238, 187, 195, 0.1);
 
   @media (max-width: 750px) {
-    padding: 0 2px;
+    width: 100vw;
+    height: 85px;
+    padding: 0 16px;
+    left: 0;
+    transform: none;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 `;
 
@@ -32,32 +41,49 @@ const NavButton = styled.button`
   border: none;
   outline: none;
   color: #eebbc3;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 500;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 15px 0;
+  padding: 12px 8px;
+  border-radius: 16px;
+  margin: 0 2px;
+  position: relative;
 
   svg {
-    margin-bottom: 2px;
-    width: 2.5rem;
-    height: 2.5rem;
-    path {
-      font-size: 5rem;
-    }
+    margin-bottom: 4px;
+    width: 24px;
+    height: 24px;
+  }
 
+  @media (max-width: 750px) {
+    font-weight: 600;
+    padding: 12px 6px;
+    
+    svg {
+      width: 26px;
+      height: 26px;
+      margin-bottom: 4px;
+    }
   }
 `;
 
 const Divider = styled.div`
   width: 1px;
-  background: #393e53;
-  margin: 10px 0;
+  background: linear-gradient(to bottom, 
+    transparent 20%, 
+    rgba(238, 187, 195, 0.2) 50%, 
+    transparent 80%
+  );
+  margin: 16px 0;
   align-self: stretch;
-  opacity: 0.7;
+  
+  @media (max-width: 750px) {
+    margin: 12px 0;
+  }
 `;
 
 const Nav = () => {

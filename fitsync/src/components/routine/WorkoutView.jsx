@@ -104,33 +104,48 @@ export default WorkoutView;
 
 
 const Wrapper = styled.div`
+  position : fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  overflow-y: auto;
+  background: var(--bg-primary);
   max-width: 900px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 4rem 2rem;
+  color: var(--text-primary);
 `;
 
 const Title = styled.h1`
   font-size: 3rem;
-  margin-bottom: 10px;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.2;
 `;
 
 const Category = styled.p`
   font-size: 1.6rem;
   color: var(--text-secondary);
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
+  opacity: 0.8;
 `;
 
 const ImageSection = styled.div`
-  margin-bottom: 30px;
+  margin-bottom: 3rem;
   position: relative;
   width: 100%;
   max-width: 502px;
-  aspect-ratio: 1 / 1; /* 정사각형 */
+  aspect-ratio: 1 / 1;
   background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
   overflow: hidden;
   margin-right: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 
   img {
     position: absolute;
@@ -139,7 +154,7 @@ const ImageSection = styled.div`
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   @media (max-width: 540px) {
@@ -148,22 +163,26 @@ const ImageSection = styled.div`
 `;
 
 const Section = styled.section`
-  margin-top: 20px;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 `;
 
 const SectionTitle = styled.h2`
   font-size: 2.2rem;
-  margin-bottom: 15px;
+  margin-bottom: 1.5rem;
   color: var(--primary-blue);
+  font-weight: 700;
 `;
 
 const StepList = styled.ul`
   list-style: decimal;
-  padding-left: 20px;
+  padding-left: 2rem;
+  
   li {
     font-size: 1.6rem;
     line-height: 1.6;
-    margin-bottom: 10px;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
   }
 `;
 
@@ -194,29 +213,35 @@ const RecommendTitle = styled.h3`
 
 const RecommendCard = styled.div`
   display: flex;
-  gap: 20px;
+  gap: 2rem;
   align-items: center;
-  padding: 16px;
+  padding: 2rem;
   background-color: var(--bg-secondary);
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-light);
 
   img {
-    width: 120px;
+    width: 12rem;
     height: auto;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: var(--bg-white);
+    border: 1px solid var(--border-light);
   }
 
   div {
     h4 {
       font-size: 1.8rem;
-      margin-bottom: 6px;
+      margin-bottom: 0.6rem;
+      color: var(--text-primary);
+      font-weight: 700;
     }
+    
     p {
       font-size: 1.4rem;
       color: var(--text-secondary);
+      opacity: 0.8;
     }
   }
 `;
@@ -228,10 +253,6 @@ const CloseButton = styled.button`
   font-size: 2.4rem;
   color: var(--text-secondary);
   z-index: 10;
-
-  &:hover {
-    color: var(--text-primary);
-  }
 
   @media (max-width: 768px) {
     top: 12px;

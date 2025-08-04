@@ -14,41 +14,54 @@ const WorkoutSetWrapper = styled.div`
   border-radius: 12px;
   border: 1px solid var(--border-light);
   overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 `;
 
 const SetTop = styled.div`
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
+  gap: 1.5rem;
+  padding: 2rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
+  
   h4 {
     font-size: 1.8rem;
     color: var(--text-primary);
-    font-weight: 500;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.3;
   }
+  
   img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid var(--border-medium);
+    width: 5rem;
+    height: 5rem;
+    border-radius: 12px;
+    border: 2px solid var(--border-light);
     object-fit: cover;
+    transition: all 0.2s ease;
   }
 `;
 const MemoInput = styled.input`
-  padding: 16px 20px;
+  padding: 1.6rem 2rem;
   font-size: 1.6rem;
   width: 100%;
   background: var(--bg-secondary);
   color: var(--text-secondary);
   border: none;
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+  
   &::placeholder {
     color: var(--text-tertiary);
   }
+  
   &:focus {
     background: var(--bg-primary);
     outline: none;
+    border-bottom-color: var(--primary-blue);
   }
 `;
 const ListHeader = styled.div`
@@ -56,16 +69,22 @@ const ListHeader = styled.div`
   width: 100%;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-light);
+  
   div {
     flex: 2;
     font-size: 1.6rem;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
-    padding: 12px 8px;
+    padding: 1.5rem 0.8rem;
     color: var(--text-primary);
   }
+  
   div:first-child {
     flex: 1;
+  }
+  
+  div:last-child {
+    flex: 0.5;
   }
 `;
 const ListBody = styled.div`
@@ -135,16 +154,17 @@ const ListBody = styled.div`
 const SetAddCTA = styled.button`
   width: 100%;
   font-size: 1.6rem;
-  padding: 16px 0;
+  padding: 1.8rem 0;
   background: var(--primary-blue);
   color: #fff;
   border: none;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 0 0 12px 12px;
   transition: all 0.2s ease;
   cursor: pointer;
   margin: 0;
   box-shadow: none;
+  
   &:active {
     background: var(--primary-blue-hover);
     transform: scale(0.98);

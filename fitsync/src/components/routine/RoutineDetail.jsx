@@ -55,8 +55,8 @@ const ExerciseSection = styled.div`
   }
   
   & > button > svg { 
-    width: 24px;
-    height: 24px;
+    width: 2.6rem;
+    height: 2.6rem;
     background: var(--border-dark);
     border-radius: 50%;
     path { 
@@ -154,9 +154,12 @@ const ListBody = styled.div`
     border-bottom: 1px solid var(--border-light);
 
     svg {
-      width: 24px;
-      height: 24px;
-      color: var(--text-secondary);
+      width: 2.6rem;
+      height: 2.6rem;
+      color: white;
+      background: var(--error);
+      border-radius: 50%;
+      padding: 4px;
     }
   }
 
@@ -271,8 +274,11 @@ const EditCTA = styled.button`
   }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    padding: 4px;
+    color: white;
   }
 
   path {
@@ -307,8 +313,9 @@ const TimerBox = styled.div`
   min-height: 34px;
   
   svg {
-    width: 24px;
-    height: 24px;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
   }
   path {
     color: var(--primary-blue-light);
@@ -326,9 +333,11 @@ const TimerCTA = styled.button`
 `;
 
 
+
 const RoutineDetail = () => {
   const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
   const { routine_list_idx } = useParams();
+
 
   const [time, setTime] = useState({
     minutes: 0,
@@ -341,6 +350,7 @@ const RoutineDetail = () => {
   const location = useLocation();
   const param = new URLSearchParams(location.search);
   const targetDate = param.get('date');
+  
   const nav = useNavigate();
   const [modalPtId, setModalPtId] = useState(null);
 
@@ -555,7 +565,9 @@ const RoutineDetail = () => {
 
     // targetDate가 있고 데이터가 비어있을 때 기존 데이터 로드
     if (targetDate && data.routines.length === 0 && data.saveDate) {
+      
       const existingData = tempData.find(item => item.saveDate === targetDate);
+      
       if (existingData && JSON.stringify(existingData) !== JSON.stringify(data)) {
         setData(existingData);
         return;
@@ -645,11 +657,15 @@ const RoutineDetail = () => {
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      if (routine_list_idx !== 'custom' && init) {
-        setRoutineData(init);
-      }
+      // RoutineDetail에서 나갈 때 routineData만 초기화 (tempData는 보존)
+      setRoutineData({
+        routine_name: '',
+        member_idx: '',
+        routines: [],
+      });
+      // init과 data는 다음 진입 시 새로 설정되므로 초기화하지 않음
     };
-  }, []);
+  }, [setRoutineData]);
 
   // 데이터 로드 useEffect (중복 제거하고 하나만)
   useEffect(() => {
@@ -691,16 +707,61 @@ const RoutineDetail = () => {
     };
 
     if (routine_list_idx === 'custom') {
-      if (!data || data === null) {
-        const customData = {
-          routine_list_idx: 'custom',
-          routine_name: '자유 운동',
+      console.log('빠간기록 진입 - 현재 routineData:', routineData);
+      
+      // 빠간기록에서 운동 추가 후 돌아온 경우가 아닐 때만 초기화
+      const hasRoutines = routineData && routineData.routines && routineData.routines.length > 0;
+      
+      if (!hasRoutines) {
+        console.log('운동이 없어서 routineData 초기화');
+        setRoutineData({
+          routine_name: '',
+          member_idx: '',
           routines: [],
-          saveDate: null
-        };
-        setData(customData);
-        setInit(customData);
+        });
+      } else {
+        console.log('이미 운동이 있어서 routineData 보존');
       }
+      
+      // targetDate가 있으면 해당 날짜의 기존 데이터 찾기
+      if (targetDate && tempData && tempData.length > 0) {
+        console.log('기존 데이터 찾기 시도 - targetDate:', targetDate);
+        const existingData = tempData.find(item => item.saveDate === targetDate);
+        console.log('찾은 기존 데이터:', existingData);
+        
+        if (existingData) {
+          console.log('기존 데이터로 설정');
+          setData(existingData);
+          setInit(existingData);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // 운동이 있는 경우 routineData를 data로 설정
+      if (hasRoutines) {
+        console.log('routineData에서 data로 설정');
+        const customDataFromRoutine = {
+          ...routineData,
+          routine_list_idx: 'custom',
+          routine_name: routineData.routine_name || '자유 운동',
+          saveDate: targetDate || null
+        };
+        setData(customDataFromRoutine);
+        setInit(customDataFromRoutine);
+        setIsLoading(false);
+        return;
+      }
+      
+      // 기존 데이터가 없으면 새로운 커스텀 데이터로 설정
+      const customData = {
+        routine_list_idx: 'custom',
+        routine_name: '자유 운동',
+        routines: [],
+        saveDate: targetDate || null
+      };
+      setData(customData);
+      setInit(customData);
       setIsLoading(false);
       return;
     }
@@ -823,7 +884,7 @@ const RoutineDetail = () => {
           <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
             <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
             <SetTop>
-              <img src={routine.imageUrl} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal} />
+              <img src={routine.pt.pt_image.split(",").filter((item) => item.includes(".png"))} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal} />
               <h4>{routine.pt.pt_name}</h4>
             </SetTop>
             <MemoInput
@@ -917,6 +978,7 @@ const RoutineDetail = () => {
       {modalPtId && (
         <WorkoutView
           ptId={modalPtId}
+          isModal= {true}
           onClose={handleCloseWorkoutModal}
         />
       )}

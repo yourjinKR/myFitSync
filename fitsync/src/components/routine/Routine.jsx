@@ -7,20 +7,21 @@ import dateFormat from '../../utils/dateFormat';
 const {getDateDiffText} = dateFormat;
 
 const RoutineWrapper = styled.div`
-  width: calc( 50% - 5px );
+  width: calc(50% - 0.75rem);
   border: 1px solid var(--border-light);
   background: var(--bg-secondary);
-  padding: 18px 18px 32px;
-  border-radius: 12px;
+  padding: 1.5rem 2.5rem 2.5rem;
+  border-radius: 16px;
   position: relative;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  transition: box-shadow 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
   
   & > p {
     width: 100%;
     text-align: center;
-    font-size: 1.8rem;
-    padding-top: 20px;
+    font-size: 1.6rem;
+    padding-top: 2rem;
     color: var(--text-secondary);
     font-weight: 500;
   }
@@ -34,31 +35,34 @@ const Inner = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
   
   & > h3 {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: 700;
     margin: 0;
+    line-height: 1.3;
   }
   
   & > button {
     background: var(--bg-tertiary);
-    border: none;
+    border: 1px solid var(--border-light);
     border-radius: 8px;
-    padding: 4px 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: background 0.2s;
-    
-    &:active {
-      background: var(--primary-blue);
-    }
+    justify-content: center;
+    transition: all 0.2s ease;
     
     svg {
-      color: var(--text-secondary);
-      font-size: 2.2rem;
+      width: 2.6rem;
+      height: 2.6rem;
+      color: white;
+      transition: color 0.2s ease;
+      background: var(--error);
+      border-radius: 50%;
+      padding: 0.2rem;
     }
   }
 `;
@@ -66,9 +70,11 @@ const Inner = styled.div`
 const CategoryText = styled.div`
   font-size: 1.4rem;
   color: var(--text-secondary);
-  margin-top: 8px;
-  font-weight: bold;
+  margin-top: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
 `;
+
 
 const Routine = ({ data, onDelete, type, setTempData, setHeightData, targetIdx : propTargetIdx  }) => {
   const nav = useNavigate();

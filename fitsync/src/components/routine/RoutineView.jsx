@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import RoutineList from './RoutineList';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
@@ -7,39 +7,58 @@ import Routine from './Routine';
 
 
 const RoutineWrapper = styled.div`
-  padding: 15px;
-  position:relative;
+  padding: 2rem;
+  position: relative;
+  background: var(--bg-primary);
+  min-height: calc(100vh - 150px);
+  
   & > button {
-    text-align:center;
-    border:1px solid #ccc;
-    border-radius:5px;
-    padding: 10px;
-    width:100%;
-    font-size: 2rem;
-    line-height:1.2;
-    font-weight:bold;
+    background: var(--primary-blue);
+    color: var(--text-primary);
+    border: 2px solid var(--primary-blue);
+    border-radius: 12px;
+    padding: 1.6rem 2rem;
+    width: 100%;
+    font-size: 1.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    
+    &:active {
+      transform: translateY(1px);
+    }
   }
 
   & > .section-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 20px 0 10px;
+    margin: 3rem 0 1.5rem;
+    padding: 0 0.5rem;
 
-    h3{
-      font-size:1.8rem;
+    h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
     }
 
     button {
-      font-size: 3rem;
-      color: var(--text-white);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 0.8rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s ease;
       
       svg {
-        width: 30px;
-        height: 30px;
+        width: 2.4rem;
+        height: 2.4rem;
+        color: white;
+        background: var(--primary-blue);
+        border-radius: 50%;
+        padding: 0.4rem;
       }
     }
   }
@@ -48,8 +67,12 @@ const RoutineWrapper = styled.div`
 const TempDataWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  
+  @media (max-width: 650px) {
+    gap: 1rem;
+  }
 `;
 
 const MoreCTA = styled.button`
@@ -74,6 +97,7 @@ const RoutineView = () => {
   const isTrainerView = state?.viewer === 'trainer';
   const targetMemberIdx = state?.targetMember;
   
+
   
   const nav = useNavigate();
   const handleAddRoutine = (type) => {
@@ -92,7 +116,7 @@ const RoutineView = () => {
   return (
     <RoutineWrapper>
       <button onClick={() => handleAddRoutine("custom")}>빠른 기록&emsp;+ </button>
-      {tempData.length > 0 ?
+      {tempData && tempData.length > 0 ?
         <>
           <div className='section-top'>
             <h3>미기록 운동</h3>
@@ -112,7 +136,8 @@ const RoutineView = () => {
               :<></>
             }
           </TempDataWrapper>
-        </> : <></>
+        </> : 
+        <></>
       }
 
       <>

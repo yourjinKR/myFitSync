@@ -117,7 +117,14 @@ const Login = () => {
     ) {
       // 약간의 지연을 두어 Google 로그인 등의 리디렉션과 충돌하지 않도록 함
       const timer = setTimeout(() => {
-        nav("/");
+        // 저장된 리다이렉트 경로가 있으면 해당 경로로, 없으면 홈으로
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          nav(redirectPath);
+        } else {
+          nav("/");
+        }
       }, 100);
       
       return () => clearTimeout(timer);

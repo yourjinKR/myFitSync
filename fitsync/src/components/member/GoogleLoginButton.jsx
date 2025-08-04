@@ -222,7 +222,14 @@ const GoogleLoginButton = ({ setLoading }) => {
           if (!result.data.user.isLogin) {
             nav('/register');
           } else {
-            nav('/');
+            // 저장된 리다이렉트 경로가 있으면 해당 경로로, 없으면 홈으로
+            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+            if (redirectPath) {
+              sessionStorage.removeItem('redirectAfterLogin');
+              nav(redirectPath);
+            } else {
+              nav('/');
+            }
           }
         }, 50);
       } else {
