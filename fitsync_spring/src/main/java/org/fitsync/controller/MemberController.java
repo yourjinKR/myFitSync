@@ -178,6 +178,7 @@ public class MemberController {
         }
     }
     
+    // 프로필 신고
     @PostMapping("/report/profile")
     public ResponseEntity<?> reportUser(@RequestBody Map<String, Object> data, HttpSession session) {
         Object sessionIdx = session.getAttribute("member_idx");
@@ -200,8 +201,6 @@ public class MemberController {
             return ResponseEntity.badRequest().body("신고 대상자 ID가 유효하지 않습니다.");
         }
         
-        
-        
         ReportVO report = new ReportVO();
         report.setIdx_num(reporterIdx); // 게시물 신고가 아니라면 0 또는 null
         report.setReport_category((String) data.get("report_category"));
@@ -212,6 +211,65 @@ public class MemberController {
 
         reportService.insertReport(report);
         return ResponseEntity.ok("신고가 접수되었습니다.");
+    }
+    
+    // 리뷰 신고
+    @PostMapping("/report/review")
+    public ResponseEntity<?> reportReview(@RequestBody Map<String, Object> data, HttpSession session) {
+        System.out.println("신고 요청 데이터: " + data);
+
+        Object sessionIdx = session.getAttribute("member_idx");
+        if (sessionIdx == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        int reporterIdx = Integer.parseInt(sessionIdx.toString());
+
+        if (data == null
+            || !data.containsKey("idx_num")
+            || !data.containsKey("report_category")
+            || !data.containsKey("report_content")
+            || data.get("idx_num") == null
+            || data.get("report_category") == null
+            || data.get("report_content") == null
+        ) {
+            return ResponseEntity.badRequest().body("필수 신고 정보가 누락되었습니다.");
+        }
+
+        Integer reviewIdx = null;
+        try {
+            reviewIdx = Integer.parseInt(data.get("idx_num").toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("리뷰 ID가 유효하지 않습니다.");
+        }
+
+        String category = data.get("report_category").toString();
+        String content = data.get("report_content").toString();
+        System.out.println("idx_num 값: " + data.get("idx_num"));
+        int reportHidden = 0;
+        try {
+            Object rh = data.get("report_hidden");
+            if (rh != null && !rh.toString().isEmpty()) {
+                reportHidden = Integer.parseInt(rh.toString());
+            }
+        } catch (Exception ignored) {}
+
+        ReportVO report = new ReportVO();
+        report.setIdx_num(reviewIdx);
+        report.setReport_category(category);
+        report.setReport_content(content);
+        report.setReport_hidden(reportHidden);
+        report.setMember_idx(reporterIdx);
+
+        try {
+            reportService.insertReport(report);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다.");
+        }
+
+        return ResponseEntity.ok("리뷰 신고가 접수되었습니다.");
     }
 
 

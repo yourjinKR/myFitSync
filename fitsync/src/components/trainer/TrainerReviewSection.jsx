@@ -12,15 +12,19 @@ const TrainerReviewSection = () => {
   const [reviews, setReviews] = useState([]);
   const [canWriteReview, setCanWriteReview] = useState(false);
   const [showInsert, setShowInsert] = useState(false);
-  
+  console.log('리뷰 목록 확인:', reviews);
+
   useEffect(() => {
     
     if (!trainerIdx || !memberIdx) return;
 
     // 리뷰 목록 불러오기
     axios.get(`/trainer/reviews/${trainerIdx}`)
-      .then(res => setReviews(res.data))
-      .catch(err => console.error('리뷰 목록 요청 실패:', err));
+    .then(res => {
+      console.log('서버 응답 리뷰:', res.data);  // 이 줄 추가
+      setReviews(res.data);
+    })
+      
     
     // 리뷰 작성 가능 여부 체크
     axios.get(`/user/check-review-eligibility`, {
@@ -55,6 +59,7 @@ const TrainerReviewSection = () => {
             content={r.review_content}
             title={r.review_title}
             memberName={r.member_name}
+            review_idx={r.review_idx}
           />
         ))}
       </div>

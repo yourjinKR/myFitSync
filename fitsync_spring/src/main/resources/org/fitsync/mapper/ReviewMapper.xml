@@ -16,6 +16,7 @@
   	<!-- 1. 리뷰 목록 조회 -->
   	<select id="selectReviewsByTrainer" resultType="org.fitsync.domain.ReviewVO">
 	  SELECT
+	    m.matching_idx AS review_idx,
 	    r.review_star,
 	    r.review_title,
 	    r.review_content,
