@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { CheckInput, ChecklabelText } from '../../styles/commonStyle';
+import useRequireLogin from '../../hooks/useRequireLogin';
 
 const HeaderWrapper = styled.header`
   display: flex;
@@ -196,6 +197,9 @@ const ChkBox = styled.div`
 `;
 
 const RoutineMain = () => {
+  // 로그인 확인
+  useRequireLogin();
+  
   const nav = useNavigate();
   const { routine_list_idx } = useParams();
   
@@ -206,7 +210,6 @@ const RoutineMain = () => {
   const targetDate = query.get("date");
   
   const targetIdx = location.state?.targetMember;
-  console.log(targetIdx);
 
   
   // 헤더 변경 여부
@@ -263,7 +266,21 @@ const RoutineMain = () => {
     if(location.pathname === '/routine/view'){
       setRoutineData(routineInit);
       closeAlert();
-    } 
+      
+      // tempData 새로고침 - localStorage에서 다시 로드
+      const storedTempData = localStorage.getItem('routineData');
+      
+      if (storedTempData) {
+        try {
+          const parsedData = JSON.parse(storedTempData);
+          setTempData(parsedData);
+        } catch (error) {
+          setTempData([]);
+        }
+      } else {
+        setTempData([]);
+      }
+    }
 
     if(isEdit){
       setIsEdit(false);
@@ -301,8 +318,6 @@ const handleRoutineResponse = async () => {
       ...routineData,
       ...(targetIdx ? { member_idx: targetIdx } : {}),
     };
-    console.log('targetIdx:', targetIdx);
-    console.log('routineDataWithTarget:', routineDataWithTarget);
     try {
       const response = await axios.post(
         "/routine/add",

@@ -10,60 +10,82 @@ const WorkoutWrapper = styled.div`
     overflow: hidden;
     height: 0;
   }
+  
   label {
     display: flex;
     align-items: center;
     border-bottom: 1px solid var(--border-light);
-    padding: 15px;
-    gap: 10px;
+    padding: 1.5rem;
+    gap: 1.2rem;
     background: var(--bg-secondary);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    
     &:active {
       background: var(--bg-tertiary);
+      transform: translateX(1px);
     }
     
-    svg{
-      width: 32px;
-      height: 32px;
+    &:last-child {
+      border-bottom: none;
     }
-  
+    
+    svg {
+      width: 2rem;
+      height: 2rem;
+      color: var(--primary-blue);
+      margin-left: auto;
+      background: var(--primary-blue);
+      color: white;
+      border-radius: 50%;
+      padding: 0.2rem;
+    }
   }
 `;
 
 const ImgBox = styled.div`
-  border: 1px solid var(--border-light);
+  border: 2px solid var(--border-light);
   background: var(--bg-primary);
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--bg-primary);
   }
 `;
 
 const InfoBox = styled.div`
-  width: calc(100% - 112px);
+  width: calc(100% - 8rem);
+  flex: 1;
+  
   dl {
     margin: 0;
   }
+  
   dt {
     font-size: 1.6rem;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
   }
+  
   dd {
     font-size: 1.4rem;
     color: var(--text-secondary);
     margin: 0;
+    opacity: 0.8;
   }
 `;
 

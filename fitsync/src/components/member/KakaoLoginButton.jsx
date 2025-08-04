@@ -118,13 +118,19 @@ const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure, setLoading }) => {
       setLoading && setLoading(true); // 추가
 
       const response = await axios.get(`/auth/kakao/callback?code=${code}`);
-      const userData = response.data;
       await dispatch(setUser(response.data.user));
       
       if(!response.data.user.isLogin) {
           nav('/register');  
       } else{
-          nav('/');
+          // 저장된 리디렉션 경로 확인
+          const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+          if (redirectPath) {
+              sessionStorage.removeItem('redirectAfterLogin');
+              nav(redirectPath);
+          } else {
+              nav('/');
+          }
       }
 
       // 성공 시에는 페이지 이동하므로 setLoading(false) 불필요

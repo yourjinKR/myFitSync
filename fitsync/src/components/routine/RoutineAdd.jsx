@@ -6,35 +6,66 @@ import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
 
 const RoutineAddWrapper = styled.div`
-  padding:15px;
+  padding: 2rem;
+  background: var(--bg-primary);
+  min-height: 100vh;
 `;
 
 const SearchBox = styled.div`
   display: flex;
-  margin-bottom:5px;
-  width:100%;
-  gap:5px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  gap: 1rem;
+  
   & > input {
-    padding: 5px 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    width:calc(100% - 45px);
-    font-size:1.4rem;
+    padding: 1.2rem 1.6rem;
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    width: calc(100% - 9rem);
+    font-size: 1.6rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
+    
+    &:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
   }
+  
   & > button {
-    border-radius: 5px;
-    padding: 5px 10px;
-    border:1px solid #ccc;
+    border-radius: 12px;
+    padding: 1.2rem 2rem;
+    border: 2px solid var(--primary-blue);
+    background: var(--primary-blue);
+    color: var(--text-primary);
+    font-size: 1.6rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 8rem;
   }
 `;
 
 const FilterCTA = styled.button`
-  border: 1px solid #ccc;
-  border-radius:5px;
-  width:100%;
-  padding: 5px 10px;
-  text-align:center;
-  margin-bottom:10px;
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  width: 100%;
+  padding: 1.2rem 1.6rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1.6rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 
@@ -60,12 +91,23 @@ const RoutineAdd = () => {
 
   useEffect(() => {
     getWorkOut();
-    if(prev === null){
+    
+    if(prev === null || !prev.includes('/routine/detail/custom')){
       setRoutineData({
         routine_name: '',
         member_idx: '',
         routines: [],
       });
+    } else {
+      
+      if (!routineData.routine_list_idx) {
+        console.log('routine_list_idx가 없어서 custom으로 설정');
+        setRoutineData(prevData => ({
+          ...prevData,
+          routine_list_idx: 'custom',
+          routine_name: prevData.routine_name || '자유 운동'
+        }));
+      }
     }
   }, []);
 

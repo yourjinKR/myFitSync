@@ -4,11 +4,12 @@ import styled from 'styled-components';
 
 const ListWrapper = styled.div`
   border: 1px solid var(--border-light);
-  border-bottom: 0;
-  margin-bottom: 50px;
+  margin-bottom: 3rem;
   background: var(--bg-secondary);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 `;
 
 const WorkoutList = ({routineData, setRoutineData, list}) => {

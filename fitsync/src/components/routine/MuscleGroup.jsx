@@ -15,40 +15,67 @@ const MuscleInner = styled.label`
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--border-light);
-  padding: 15px;
-  gap: 10px;
+  padding: 1.8rem 1.5rem;
+  gap: 1.5rem;
   background: var(--bg-secondary);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
+  
   &:active {
     background: var(--bg-tertiary);
+    transform: translateX(2px);
+  }
+  
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
 const ImgBox = styled.div`
-  border: 1px solid var(--border-light);
+  border: 2px solid var(--border-light);
   background: var(--bg-primary);
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--bg-primary);
   }
 `;
 
 const InfoBox = styled.div`
-  font-size: 1.6rem;
-  font-weight: bold;
-  width: calc(100% - 112px);
+  font-size: 1.8rem;
+  font-weight: 700;
+  width: calc(100% - 10rem);
   color: var(--text-primary);
+  line-height: 1.4;
+`;
+
+const CheckIconWrapper = styled.div`
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  
+  svg {
+    width: 1.6rem;
+    height: 1.6rem;
+    color: white;
+  }
 `;
 
 const MuscleGroup = ({ data, muscle, setMuscle, idx }) => {
@@ -76,7 +103,9 @@ const MuscleGroup = ({ data, muscle, setMuscle, idx }) => {
           {data}
         </InfoBox>
         {parseInt(muscle) === parseInt(idx) ? (
-          <CheckIcon/>
+          <CheckIconWrapper>
+            <CheckIcon/>
+          </CheckIconWrapper>
         ) : null}
       </MuscleInner>
     </MuscleWrapper>

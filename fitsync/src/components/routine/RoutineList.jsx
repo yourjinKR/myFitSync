@@ -8,99 +8,124 @@ import AddIcon from '@mui/icons-material/Add';
 
 const EmptyData = styled.div`
   width: 100%;
-  font-weight: bold;
-  font-size: 2rem;
+  font-weight: 600;
+  font-size: 1.8rem;
   color: var(--text-tertiary);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 50px 0;
+  border: 2px dashed var(--border-light);
+  border-radius: 16px;
+  padding: 4rem 2rem;
   text-align: center;
-  margin-top: 12px;
+  margin-top: 2rem;
   background: var(--bg-secondary);
+  transition: all 0.2s ease;
 `;
 
 const RoutineListWrapper = styled.div`
   position: relative;
+  
   .routine-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 1.5rem;
+    
+    @media (max-width: 650px) {
+      gap: 1rem;
+    }
+    
+    /* Sortable 애니메이션을 위한 스타일 */
+    .sortable-ghost {
+      opacity: 0.4;
+      background: var(--primary-blue);
+      transform: scale(1.05);
+    }
+    
+    .sortable-chosen {
+      cursor: grabbing !important;
+      transform: scale(1.02);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    
+    .sortable-drag {
+      opacity: 0.8;
+      transform: rotate(2deg);
+    }
   }
 `;
 
 const RoutineAddCTA = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'lengthData' && prop !== 'heightData'
 })`
-  color: var(--text-white);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(50% - 5px);
+  width: calc(50% - 0.75rem);
   height: ${(props) => (props.heightData > 0 ? props.heightData + 'px' : '120px')};
-  border: 1px solid var(--border-light);
+  border: 2px dashed var(--border-light);
   background: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: 16px;
   position: absolute;
-  ${(props)=> props.lengthData%2 === 1 ? 'bottom: 0; right:0;' : 'top: 100%; margin-top: 10px;'}
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  transition: box-shadow 0.2s;
+  ${(props) => props.lengthData % 2 === 1 ? 'bottom: 0; right:0;' : 'top: 100%; margin-top: 1.5rem;'}
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
   cursor: pointer;
+  
+  &:active {
+    transform: translateY(0);
+  }
 
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  svg {
+    width: 3rem;
+    height: 3rem;
+    color: white;
+    transition: all 0.2s ease;
+    background: var(--primary-blue);
+    border-radius: 50%;
+    padding: 0.6rem;
   }
 
   @media (max-width: 650px) {
     width: 100%;
-    top: 100%;
-    margin-top: 10px;
-  }
-  
-  svg {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: 1px solid var(--text-secondary);
-    path {
-      color: var(--text-secondary);
-    }
+    position: static;
+    margin-top: 1rem;
   }
 `;
 
-const RoutineList = ({ handleAddRoutine, targetMemberIdx  }) => {
+const RoutineList = ({ handleAddRoutine, targetMemberIdx }) => {
   const [initList, setInitList] = useState([]);
   const [routinelist, setRoutinelist] = useState([]);
   const [sort, setSort] = useState([]);
   const [heightData, setHeightData] = useState(0);
   const targetIdx = targetMemberIdx || null;
 
-  
+
   // API에서 데이터 받아오는 함수
-const handleRoutineResponse = async () => {
-  try {
-    const response = await axios.get(
-      targetIdx ? `/routine/getList/${targetIdx}` : `/routine/getList`,
-      { withCredentials: true }
-    );
-    const data = response.data;
-    const vo = data.vo;
+  const handleRoutineResponse = async () => {
+    try {
+      const response = await axios.get(
+        targetIdx ? `/routine/getList/${targetIdx}` : `/routine/getList`,
+        { withCredentials: true }
+      );
+      const data = response.data;
+      const vo = data.vo;
 
-    if (vo && vo.length !== 0) {
-      const sorted = vo.map((item, idx) => {
-        item.routine_list_idx = sort[idx] || item.routine_list_idx;
-        return item;
-      });
+      if (vo && vo.length !== 0) {
+        const sorted = vo.map((item, idx) => {
+          item.routine_list_idx = sort[idx] || item.routine_list_idx;
+          return item;
+        });
 
-      setInitList(sorted);
-      setRoutinelist(sorted);
-    } else {
-      setInitList([]);
-      setRoutinelist([]);
+        setInitList(sorted);
+        setRoutinelist(sorted);
+      } else {
+        setInitList([]);
+        setRoutinelist([]);
+      }
+    } catch (err) {
+      console.error("루틴 리스트 불러오기 실패:", err);
     }
-  } catch (err) {
-    console.error("루틴 리스트 불러오기 실패:", err);
-  }
-};
+  };
 
   // 정렬된 순서를 서버에 업데이트하는 함수
   const handleSortUpdate = async (newSort) => {
@@ -137,7 +162,7 @@ const handleRoutineResponse = async () => {
 
   useEffect(() => {
   }, [routinelist, heightData]);
-  
+
   return (
     <RoutineListWrapper>
       {
@@ -145,10 +170,16 @@ const handleRoutineResponse = async () => {
           <ReactSortable
             list={routinelist}
             setList={handleSort}
-            animation={150}
+            animation={200}
+            easing="cubic-bezier(1, 0, 0, 1)"
             className="routine-list"
             filter=".no-drag"
             preventOnFilter={false}
+            ghostClass="sortable-ghost"
+            chosenClass="sortable-chosen"
+            dragClass="sortable-drag"
+            forceFallback={true}
+            fallbackTolerance={5}
           >
             {
               routinelist.map((routine, idx) => (

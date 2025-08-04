@@ -123,7 +123,14 @@ const NaverLoginButton = ({ setLoading }) => {
             if (!res.data.user.isLogin) {
               nav('/register');
             } else {
-              nav('/');
+              // 저장된 리디렉션 경로 확인
+              const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+              if (redirectPath) {
+                  sessionStorage.removeItem('redirectAfterLogin');
+                  nav(redirectPath);
+              } else {
+                  nav('/');
+              }
             }
             window.history.replaceState({}, document.title, window.location.pathname);
             // 성공 시에는 페이지 이동하므로 setLoading(false) 불필요
