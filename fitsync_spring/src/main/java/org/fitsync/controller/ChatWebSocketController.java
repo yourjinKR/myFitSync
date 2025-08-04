@@ -5,7 +5,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.fitsync.domain.MessageVO;
+import org.fitsync.domain.ReportVO;
 import org.fitsync.service.ChatService;
+import org.fitsync.service.ReportServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -18,6 +20,9 @@ public class ChatWebSocketController {
 
     @Autowired
     private ChatService chatService;
+    
+    @Autowired
+    private ReportServiceImple reportService;
     
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -36,6 +41,48 @@ public class ChatWebSocketController {
             String message_type = extractStringFromMessage(message, "message_type");
             String unique_id = extractStringFromMessage(message, "unique_id");
             Integer parent_idx = extractIntegerFromMessage(message, "parent_idx");
+            
+            // 필수 값 검증
+            if (sender_idx == null || receiver_idx == null || room_idx == null || 
+                message_content == null || message_content.trim().isEmpty()) {
+                System.err.println("필수 메시지 데이터 누락");
+                return;
+            }
+            
+            // 차단 상태 확인
+            try {
+                ReportVO reportVO = reportService.getBlockData(sender_idx);
+                if (reportVO != null && reportVO.getReport_time() != null) {
+                    java.util.Date currentTime = new java.util.Date();
+                    java.util.Date blockTime = reportVO.getReport_time();
+                    
+                    // 현재 시간이 차단 시간보다 크면 (차단 기간이 지나지 않았으면) 채팅 차단
+                    if (currentTime.before(blockTime)) {
+                       
+                        // 차단 알림 메시지를 보낸 사용자에게만 전송
+                        Map<String, Object> blockNotification = Map.of(
+                            "type", "blocked_user",
+                            "message", "현재 차단된 상태입니다. 차단 해제 시간: " + blockTime,
+                            "block_until", blockTime.toString(),
+                            "timestamp", System.currentTimeMillis()
+                        );
+                        
+                        // 차단된 사용자에게만 알림 전송
+                        messagingTemplate.convertAndSendToUser(
+                            sender_idx.toString(), 
+                            "/queue/notification", 
+                            blockNotification
+                        );
+                        
+                        return; // 메시지 처리 중단
+                    }
+                    
+                }
+            } catch (Exception e) {
+                System.err.println("차단 상태 확인 중 오류: " + e.getMessage());
+                e.printStackTrace();
+                // 차단 상태 확인 실패 시에도 메시지 처리 계속 진행
+            }
             
             // 매칭 데이터 추출 및 검증
             Map<String, Object> matching_data = null;
@@ -64,13 +111,6 @@ public class ChatWebSocketController {
             // 기본값 설정
             if (message_type == null || message_type.trim().isEmpty()) {
                 message_type = "text";
-            }
-            
-            // 필수 값 검증
-            if (sender_idx == null || receiver_idx == null || room_idx == null || 
-                message_content == null || message_content.trim().isEmpty()) {
-                System.err.println("필수 메시지 데이터 누락");
-                return;
             }
             
             // 중복 메시지 검사
