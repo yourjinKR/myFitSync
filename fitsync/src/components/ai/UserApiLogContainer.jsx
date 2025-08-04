@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import styled from "styled-components";
 import { useWorkoutNames } from "../../hooks/admin/useWorkoutNames";
@@ -18,12 +18,30 @@ const UserApiLogContainer = () => {
     // 확장된 루틴 관리 (여러 개 동시 열기 가능)
     const [expandedRoutines, setExpandedRoutines] = useState({});
 
+    // 검색 및 필터링 상태
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearchResults, setShowSearchResults] = useState(false);
+
+    // 각 로그 아이템의 ref를 저장
+    const logRefs = useRef({});
+
     // 운동명 파싱 데이터
     const { rawDataIdx, rawDataMap } = useWorkoutNames();
 
     // 로그 아이템 클릭 핸들러
     const handleLogClick = (logId) => {
-        setExpandedLogId(expandedLogId === logId ? null : logId);
+        const newExpandedId = expandedLogId === logId ? null : logId;
+        setExpandedLogId(newExpandedId);
+        
+        // 드롭다운이 열릴 때만 스크롤 이동
+        if (newExpandedId && logRefs.current[logId]) {
+            setTimeout(() => {
+                logRefs.current[logId].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100); // 애니메이션이 시작된 후 스크롤 이동
+        }
     };
 
     // 루틴 드롭다운 클릭 핸들러
@@ -86,6 +104,73 @@ const UserApiLogContainer = () => {
         }
     };
 
+    // 검색어 변경 핸들러
+    const handleSearchChange = (e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+        setShowSearchResults(query.length > 0);
+    };
+
+    // 검색어 초기화
+    const handleClearSearch = () => {
+        setSearchQuery('');
+        setShowSearchResults(false);
+    };
+
+    // 로그 필터링 함수
+    const getFilteredLogs = () => {
+        if (!searchQuery.trim()) {
+            return apiLogs;
+        }
+
+        return apiLogs.filter(log => {
+            if (!log.parsed_response || !Array.isArray(log.parsed_response)) {
+                return false;
+            }
+
+            // 루틴 이름이나 운동 이름에서 검색어 찾기
+            return log.parsed_response.some(routine => {
+                // 루틴 이름에서 검색
+                if (routine.routine_name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                    return true;
+                }
+
+                // 운동 이름에서 검색
+                return routine.exercises?.some(exercise => 
+                    exercise.pt_name?.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            });
+        });
+    };
+
+    // 필터링된 로그 데이터
+    const filteredLogs = getFilteredLogs();
+
+    // 텍스트 하이라이트 함수
+    const highlightText = (text, query) => {
+        if (!query.trim()) return text;
+        
+        const regex = new RegExp(`(${query})`, 'gi');
+        const parts = text.split(regex);
+        
+        return parts.map((part, index) => 
+            regex.test(part) ? (
+                <HighlightText key={index}>{part}</HighlightText>
+            ) : (
+                part
+            )
+        );
+    };
+
+    // 루틴에 검색 키워드와 일치하는 운동이 있는지 확인
+    const hasMatchingExercise = (routine, query) => {
+        if (!query.trim() || !routine.exercises) return false;
+        
+        return routine.exercises.some(exercise => 
+            exercise.pt_name?.toLowerCase().includes(query.toLowerCase())
+        );
+    };
+
     if (loading) {
         return (
             <Container>
@@ -97,11 +182,44 @@ const UserApiLogContainer = () => {
     return (
         <Container>
             <Header>
-                <Title>🏋️‍♂️ 내 AI 운동 추천 기록</Title>
+                <Title>🏋️‍♂️ 내 AI 루틴 추천 기록</Title>
                 <Description>
                     이전에 받았던 AI 운동 추천 결과를 다시 확인하고 루틴으로 저장할 수 있습니다.
                 </Description>
             </Header>
+
+            {/* 검색 섹션 */}
+            <SearchSection>
+                <SearchContainer>
+                    <SearchInputWrapper>
+                        <SearchIcon>🔍</SearchIcon>
+                        <SearchInput
+                            type="text"
+                            placeholder="운동명이나 루틴명으로 검색..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                        />
+                        {searchQuery && (
+                            <ClearButton onClick={handleClearSearch}>
+                                ✕
+                            </ClearButton>
+                        )}
+                    </SearchInputWrapper>
+                </SearchContainer>
+                
+                {showSearchResults && (
+                    <SearchResults>
+                        <ResultsCount>
+                            총 {filteredLogs.length}개의 기록에서 "{searchQuery}" 검색 결과
+                        </ResultsCount>
+                        {filteredLogs.length === 0 && (
+                            <NoResults>
+                                검색된 결과가 없습니다. 다른 검색어를 입력해보세요.
+                            </NoResults>
+                        )}
+                    </SearchResults>
+                )}
+            </SearchSection>
 
             {apiLogs.length === 0 ? (
                 <EmptyState>
@@ -113,8 +231,11 @@ const UserApiLogContainer = () => {
                 </EmptyState>
             ) : (
                 <LogList>
-                    {apiLogs.map((log) => (
-                        <LogItem key={log.apilog_idx}>
+                    {filteredLogs.map((log) => (
+                        <LogItem 
+                            key={log.apilog_idx}
+                            ref={el => logRefs.current[log.apilog_idx] = el}
+                        >
                             <LogHeader 
                                 onClick={() => handleLogClick(log.apilog_idx)}
                                 expanded={expandedLogId === log.apilog_idx}
@@ -181,7 +302,12 @@ const UserApiLogContainer = () => {
                                                                 <RoutineHeader
                                                                     onClick={() => handleRoutineClick(log.apilog_idx, index)}
                                                                 >
-                                                                    <RoutineDay>{routine.routine_name}</RoutineDay>
+                                                                    <RoutineDay hasMatch={hasMatchingExercise(routine, searchQuery)}>
+                                                                        {searchQuery ? 
+                                                                            highlightText(routine.routine_name, searchQuery) : 
+                                                                            routine.routine_name
+                                                                        }
+                                                                    </RoutineDay>
                                                                     <RoutineExpandIcon 
                                                                         expanded={expandedRoutines[`${log.apilog_idx}_${index}`]}
                                                                     >
@@ -193,21 +319,30 @@ const UserApiLogContainer = () => {
                                                                         {routine.exercises?.map((exercise, exerciseIndex) => (
                                                                             <ExerciseItem key={exerciseIndex}>
                                                                                 <ExerciseInfo>
-                                                                                    <ExerciseName>{exercise.pt_name}</ExerciseName>
+                                                                                    <ExerciseName>
+                                                                                        {searchQuery ? 
+                                                                                            highlightText(exercise.pt_name, searchQuery) : 
+                                                                                            exercise.pt_name
+                                                                                        }
+                                                                                    </ExerciseName>
                                                                                 </ExerciseInfo>
                                                                                 <ExerciseDetails>
                                                                                     <DetailItem>
                                                                                         <DetailLabel>세트</DetailLabel>
                                                                                         <DetailValue>{exercise.set_num}세트</DetailValue>
                                                                                     </DetailItem>
-                                                                                    <DetailItem>
-                                                                                        <DetailLabel>횟수</DetailLabel>
-                                                                                        <DetailValue>{exercise.set_count}회</DetailValue>
-                                                                                    </DetailItem>
-                                                                                    <DetailItem>
-                                                                                        <DetailLabel>중량</DetailLabel>
-                                                                                        <DetailValue>{exercise.set_volume}kg</DetailValue>
-                                                                                    </DetailItem>
+                                                                                    {exercise.set_count !== 0 && (
+                                                                                        <DetailItem>
+                                                                                            <DetailLabel>횟수</DetailLabel>
+                                                                                            <DetailValue>{exercise.set_count}회</DetailValue>
+                                                                                        </DetailItem>
+                                                                                    )}
+                                                                                    {exercise.set_volume !== 0 && (
+                                                                                        <DetailItem>
+                                                                                            <DetailLabel>{exercise.set_count !== 0 ? (<>중량</>) : (<>횟수</>)}</DetailLabel>
+                                                                                            <DetailValue>{exercise.set_volume} {exercise.set_count !== 0 ? (<>kg</>) : (<>회</>)}</DetailValue>
+                                                                                        </DetailItem>
+                                                                                    )}
                                                                                 </ExerciseDetails>
                                                                             </ExerciseItem>
                                                                         ))}
@@ -268,6 +403,133 @@ const Header = styled.div`
   @media (max-width: 768px) {
     margin-bottom: 20px;
   }
+`;
+
+// 검색 관련 스타일 컴포넌트
+const SearchSection = styled.div`
+  margin-bottom: 25px;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+`;
+
+const SearchInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  align-items: center;
+`;
+
+const SearchIcon = styled.div`
+  position: absolute;
+  left: 15px;
+  font-size: 16px;
+  color: var(--text-tertiary);
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    left: 12px;
+    font-size: 14px;
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 14px 50px 14px 45px;
+  font-size: 16px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-light);
+  border-radius: 25px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 45px 12px 40px;
+    font-size: 14px;
+  }
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  right: 15px;
+  background: var(--text-tertiary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--text-secondary);
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    right: 12px;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+`;
+
+const SearchResults = styled.div`
+  text-align: center;
+`;
+
+const ResultsCount = styled.div`
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  display: inline-block;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+`;
+
+const NoResults = styled.div`
+  font-size: 14px;
+  color: var(--text-tertiary);
+  padding: 20px;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+    padding: 15px;
+  }
+`;
+
+const HighlightText = styled.span`
+  color: var(--primary-blue);
+  font-weight: 700;
+  font-size : 14px;
 `;
 
 const Title = styled.h1`
@@ -470,49 +732,6 @@ const SectionTitle = styled.h4`
   }
 `;
 
-const UserInfoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-`;
-
-const UserInfoItem = styled.div`
-  background: var(--bg-tertiary);
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-light);
-
-  @media (max-width: 768px) {
-    padding: 10px;
-  }
-`;
-
-const InfoLabel = styled.div`
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin-bottom: 4px;
-  font-weight: 500;
-
-  @media (max-width: 768px) {
-    font-size: 11px;
-  }
-`;
-
-const InfoValue = styled.div`
-  font-size: 14px;
-  color: var(--text-primary);
-  font-weight: 500;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-`;
-
 const RoutineContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -554,7 +773,7 @@ const RoutineHeader = styled.div`
 const RoutineDay = styled.h5`
   font-size: 16px;
   font-weight: 600;
-  color: var(--primary-blue);
+  color: ${props => props.hasMatch ? 'var(--primary-blue)' : 'var(--text-primary)'};
   margin: 0;
 
   @media (max-width: 768px) {

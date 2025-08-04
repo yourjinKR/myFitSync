@@ -23,7 +23,6 @@ import AdminApiContainer from '../components/admin/AdminApiContainer';
 import AdminMain from '../components/admin/AdminMain';
 import RoutineDetail from '../components/routine/RoutineDetail';
 import BarbellLoading from '../components/BarbellLoading';
-import AiServiceContainer from '../components/ai/AiServiceContainer';
 import ChatLoading from '../components/ChatLoading';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
@@ -45,6 +44,7 @@ import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser, setUser } from '../action/userAction';
 import UserApiLogContainer from '../components/ai/UserApiLogContainer';
+import AiRoutineServiceContainer from '../components/ai/AiRoutineServiceContainer';
 
 const DisplayWrapper = styled.div`
   ${props => props.$isAdmin ? '' : 'max-width: 750px;'}
@@ -191,12 +191,12 @@ const Display = () => {
           <Route path='/Timer' element={<Timer />} />
           <Route path='/workout/:ptId' element={<WorkoutView key={location.pathname} />} />
 
-          <Route path='/ai' element={<AiServiceContainer />}>
-          </Route>
+          <Route path='/ai/routine' element={<AiRoutineServiceContainer />}/>
+          <Route path='/ai/userLog' element={<UserApiLogContainer />} />
+
           <Route path='/ai/test/input' element={<SlideInputFormTest />} />
           <Route path='/ai/test/result' element={<ResponseResultPage resultData={{}} />} />
           <Route path='/ai/test/total' element={<AIWorkoutService />} />
-          <Route path='/ai/userLog' element={<UserApiLogContainer />} />
 
           <Route path='/subscription' element={<SubscriptionContainer />}>
             <Route path='test' element={<KaKaoPayTest />} />

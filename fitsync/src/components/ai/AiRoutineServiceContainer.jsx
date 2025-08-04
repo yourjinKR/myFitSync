@@ -110,7 +110,7 @@ const ProgressLabel = styled.div`
     }
 `;
 
-const AiServiceContainer = () => {
+const AiRoutineServiceContainer = () => {
     useRequireLogin();
 
     const user = useSelector(state => state.user.user);
@@ -220,7 +220,7 @@ const AiServiceContainer = () => {
         }
     };
 
-    // 결과 저장 처리
+    /** 결과 저장 처리 */ 
     const handleSaveResult = async () => {
         if (!aiResult || !aiResult.content) {
             alert('저장할 루틴이 없습니다.');
@@ -243,7 +243,7 @@ const AiServiceContainer = () => {
         }
     };
 
-    // 결과 저장하지 않기
+    /** 결과 저장하지 않기 */ 
     const handleIgnoreResult = async () => {
         if (!aiResult || !aiResult.content) {
             alert('저장할 루틴이 없습니다.');
@@ -251,10 +251,25 @@ const AiServiceContainer = () => {
         }
         try {
             const response = await AiUtil.updateLogUserAction({apilog_idx : aiResult.logIdx, apilog_user_action : IGNORE});
-            nav('/routine/view');
+            nav('/ai/userLog');
         } catch (error) {
             console.error('루틴 저장 실패:', error);
             alert('루틴 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
+
+    /** 결과 다시 생성 */
+    const handleRetryResult = async () => {
+        if (!aiResult || !aiResult.content) {
+            alert('저장할 루틴이 없습니다.');
+            return;
+        }
+        try {
+            const response = await AiUtil.updateLogUserAction({apilog_idx : aiResult.logIdx, apilog_user_action : IGNORE});
+            setCurrentStep(1);
+            setFeedbackCompleted(false); // 다시 시도할때 피드백 상태 초기화
+        } catch (error) {
+            
         }
     }
 
@@ -354,11 +369,8 @@ const AiServiceContainer = () => {
                     result={aiResult}
                     onSave={handleSaveResult}
                     onIgnore={handleIgnoreResult}
+                    onRetry={handleRetryResult}
                     onFeedback={() => setShowFeedbackModal(true)}
-                    onRetry={() => {
-                        setCurrentStep(1);
-                        setFeedbackCompleted(false); // 다시 시도할때 피드백 상태 초기화
-                    }}
                     onSubmit={handleFeedback}
                     feedbackCompleted={feedbackCompleted}
                 />
@@ -382,4 +394,4 @@ const AiServiceContainer = () => {
     );
 };
 
-export default AiServiceContainer;
+export default AiRoutineServiceContainer;

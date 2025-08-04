@@ -155,7 +155,7 @@ const SideNav = ({ setIsOpen }) => {
         ? { to: `/trainer/view/${memberIdx}`, label: "마이페이지", icon: <FaUserCircle /> }
             : { to: "/mypage", label: "마이페이지", icon: <FaUserCircle /> },
             { to: "/subscription", label: "구독/결제", icon: <FaMoneyBillWave /> },
-            { to: "/ai", label: "AI 서비스", icon: <FaRobot /> },
+            { to: "/ai/userLog", label: "AI 서비스", icon: <FaRobot /> },
             ...(user.member_type === "admin" ? [{ to: "/admin", label: "관리자", icon: <FaCrown /> }] : []),
     ];
     const location = useLocation();
