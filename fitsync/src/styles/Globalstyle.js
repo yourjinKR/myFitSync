@@ -40,7 +40,7 @@ const GlobalStyle = createGlobalStyle`
 
     --start-red: #F44336; /* 체크박스 체크 색상 */
     --stop-green: #4CAF50; /* 체크박스 체크 색상 */
-    --reset-gay: #808080; /* 체크박스 체크 색상 */
+    --reset-gray: #808080; /* 체크박스 체크 색상 */
   }
 
   /* reset.css 기반 */

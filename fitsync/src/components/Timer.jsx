@@ -121,7 +121,7 @@ const Button = styled.button.attrs(props => ({
     'var(--stop-green)' : 
     props.color === 'blue' ? 
     'var(--primary-blue)' :
-    'var(--reset-gay)'};
+    'var(--reset-gray)'};
   padding: 10px 20px;
   border-radius: 10px;
   text-align: center;
