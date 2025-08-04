@@ -57,6 +57,8 @@ const AiUtil = {
     /** 결과 저장 함수 */
     async saveResult(result, rawDataIdx, rawDataMap) {
         const parsedResult = this.parseResult(result, rawDataIdx, rawDataMap);
+        console.log(parsedResult);
+        
         for (const routineData of parsedResult) {
             try {
                 const response = await axios.post('/routine/add', routineData, {

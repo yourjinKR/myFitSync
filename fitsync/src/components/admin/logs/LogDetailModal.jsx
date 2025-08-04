@@ -53,6 +53,10 @@ const LogDetailModal = ({
 
     // 루틴 추천 결과 저장하기
     const handleSaveResult = async (e) => {
+        const ask = window.confirm('해당 루틴을 저장하시겠습니까?');
+
+        if (!ask) return;
+
         console.log('click');
         
         const result = {content : log.parsed_response, logIdx : log.apilog_idx}
@@ -734,7 +738,7 @@ const LogDetailModal = ({
                                                                 <ExerciseCardContent>
                                                                     <ExerciseCardName isValid={isValid}>
                                                                         <span style={{fontSize: '1.2em'}}>{exerciseName}</span>
-                                                                        {!isValid && (
+                                                                        {!isValid && memberType === 'admin' && (
                                                                             <InvalidBadge>
                                                                                 유효하지 않은 운동명
                                                                                 {exercise.matchScore !== null && (
@@ -744,7 +748,7 @@ const LogDetailModal = ({
                                                                                 )}
                                                                             </InvalidBadge>
                                                                         )}
-                                                                        {isValid && exercise.matchedName && exercise.matchedName !== exerciseName && (
+                                                                        {isValid && exercise.matchedName && exercise.matchedName !== exerciseName && memberType === 'admin' &&  (
                                                                             <span style={{ 
                                                                                 fontSize: '11px', 
                                                                                 color: exercise.matchType === 'exact' ? '#059669' : '#0369a1', 
@@ -765,7 +769,7 @@ const LogDetailModal = ({
                                                                                 </span>
                                                                             </span>
                                                                         )}
-                                                                        {isValid && exercise.matchType === 'exact' && exercise.matchedName === exerciseName && (
+                                                                        {isValid && exercise.matchType === 'exact' && exercise.matchedName === exerciseName && memberType === 'admin' && (
                                                                             <span style={{
                                                                                 fontSize: '9px',
                                                                                 backgroundColor: '#10b981',

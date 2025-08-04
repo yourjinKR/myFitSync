@@ -158,6 +158,10 @@ public class RoutineController {
 	        HttpSession session) {
 
 	    Map<String, Object> result = new HashMap<>();
+	    
+	    Object writerIdx = body.get("writer_idx");
+	    System.out.println(writerIdx);
+	    
 	    Object sessionIdx = session.getAttribute("member_idx");
 	    System.out.println("writer_idx = " + sessionIdx);
 	    if (sessionIdx == null) {
@@ -165,9 +169,11 @@ public class RoutineController {
 	        result.put("msg", "인증 정보가 없습니다.");
 	        return ResponseEntity.status(401).body(result);
 	    }
-
+	    
+	    // 파싱
 	    int sessionMemberIdx = Integer.parseInt(sessionIdx.toString());
-
+	    
+	    
 	    int targetMemberIdx;
 	    Object memberIdxObj = body.get("member_idx");
 
@@ -184,7 +190,11 @@ public class RoutineController {
 	    	targetMemberIdx = sessionMemberIdx;
 	    }
 	    
-	    body.put("writer_idx", sessionMemberIdx);
+	    if (writerIdx == null) {
+	    	body.put("writer_idx", sessionMemberIdx);	    	
+	    } else {
+	    	body.put("writer_idx", (int)writerIdx);
+	    }
 	    
 	    service.insertRoutine(body, targetMemberIdx);
 
