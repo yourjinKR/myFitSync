@@ -50,15 +50,23 @@ public class ChatRestController {
     @GetMapping("/member-info")
     public ResponseEntity<Map<String, Object>> getChatMemberInfo(HttpSession session) {
         Integer member_idx = (Integer) session.getAttribute("member_idx");
-        Date block_date = (Date) session.getAttribute("block_date");
+        
         
         if (member_idx != null) {
             System.out.println("member_idx 조회 성공: " + member_idx);
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "member_idx", member_idx,
-                "block_date", block_date
-            ));
+            if(session.getAttribute("block_date") != null) {
+            	 Date block_date = (Date) session.getAttribute("block_date");
+            	return ResponseEntity.ok(Map.of(
+        			"success", true,
+        			"member_idx", member_idx,
+        			"block_date", block_date
+    			));
+            }else {
+            	return ResponseEntity.ok(Map.of(
+	    			"success", true,
+	    			"member_idx", member_idx
+    			));
+            }
         } else {
             System.out.println("세션에 member_idx 없음 - 로그인 필요");
             return ResponseEntity.status(401).body(Map.of(
