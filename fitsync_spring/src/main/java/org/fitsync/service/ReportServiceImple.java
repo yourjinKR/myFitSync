@@ -66,6 +66,7 @@ public class ReportServiceImple implements ReportService {
 				}
 			}else {				
 				ReviewVO rvo = reviewMapper.getReviewOne(vo.getIdx_num());
+				System.out.println("rvo : " + rvo);
 				MemberVO memvo = memberMapper.selectTrainerByIdx(rvo.getMember_idx());
 				if(rvo != null) {
 					vo.setReview(rvo);

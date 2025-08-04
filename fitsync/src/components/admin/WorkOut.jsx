@@ -13,6 +13,20 @@ const WorkOutWrapper = styled.div`
   background: var(--bg-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .table-container {
+    margin-top: 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
   table {
     width: 100%;
@@ -29,69 +43,111 @@ const WorkOutWrapper = styled.div`
       display: flex;
       align-items: center;
       justify-content: center;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
 
-      p {font-size: 1.6rem}
+      p {
+        font-size: 1.6rem;
+        color: var(--text-primary);
+      }
     }
 
     th {
-      color: var(--text-white);
+      background: var(--primary-blue);
+      color: var(--text-primary);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
     
     tr {
       display: flex;
+      
+      &:last-child td {
+        border-bottom: none;
+      }
     }
-    th:nth-child(1), td:nth-child(1) { flex: 1; }
-    th:nth-child(2), td:nth-child(2) { flex: 5; }
-    th:nth-child(3), td:nth-child(3) { flex: 1.5; }
-    th:nth-child(4), td:nth-child(4) { flex: 1.5; }
-    th:nth-child(5), td:nth-child(5) { flex: 1.5; }
+    
+    th:nth-child(1), td:nth-child(1) { flex: 0.5; min-width: 75px; }
+    th:nth-child(2), td:nth-child(2) { flex: 2; min-width: 200px; word-break: keep-all; }
+    th:nth-child(3), td:nth-child(3) { flex: 1.5; min-width: 120px; }
+    th:nth-child(4), td:nth-child(4) { flex: 1.5; min-width: 120px; }
+    th:nth-child(5), td:nth-child(5) { flex: 1.5; min-width: 120px; }
     th:nth-child(6), td:nth-child(6) { flex: 5; }
-    th:nth-child(7), td:nth-child(7) { flex: 4; }
+    th:nth-child(7), td:nth-child(7) { flex: 4; min-width: 235px; }
 
     button {
       font-size: 1.4rem;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-primary);
+      
+      &:hover {
+        background: var(--primary-blue-hover);
+      }
     }
   }
-  & .table-body {
-    height: calc(100% - 105px);
+  
+  .table-body {
+    flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
   }
 `;
 
 const ButtonBox = styled.div`
   display: flex;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
+  gap: 10px;
+  
   button {
     flex: 1;
-    max-width: 120px;
-    padding: 6px 12px;
-    font-size: 1.4rem;
-    background: var(--bg-primary);
-    color: var(--text-secondary);
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 1.3rem;
+    font-weight: 600;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     text-align: center;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
   }
+  
   button.success {
     background: var(--check-green);
-    color: var(--text-white);
+    color: var(--text-primary);
+    
+    &:hover {
+      background: var(--success);
+    }
   }
+  
   button.warning {
     background: var(--warning);
-    color: var(--text-white);
+    color: var(--text-primary);
+    
+    &:hover {
+      background: var(--start-red);
+    }
   }
+  
   button.show {
     background: var(--primary-blue);
-    color: var(--text-white);
+    color: var(--text-primary);
+    
+    &:hover {
+      background: var(--primary-blue-hover);
+    }
   }
+  
   button:disabled {
-    background: var(--border-light);
-    color: var(--text-secondary);
-    cursor: not-allowed;
+    background: var(--border-light) !important;
+    color: var(--text-secondary) !important;
+    cursor: not-allowed !important;
   }
 `;
 
@@ -100,16 +156,31 @@ const WrapperTop = styled.div`
   justify-content: space-between;
   align-items: center;
 
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   button {
     margin-left: 10px;
     padding: 8px 16px;
     font-size: 1.6rem;
     background: var(--primary-blue);
-    color: var(--text-white);
+    color: var(--text-primary);
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    height: 40px;
+    
+    &:hover {
+      background: var(--primary-blue-hover);
+    }
   }
   
   input {
@@ -117,22 +188,27 @@ const WrapperTop = styled.div`
     min-width: 250px;
     font-size: 1.4rem;
     padding: 10px;
-    border-radius: 5px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--text-primary);
+    
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
   }
 
   select {
     background: var(--bg-tertiary);
     font-size: 1.4rem;
     padding: 10px;
-    margin-right: 10px;
     border-radius: 4px;
     border: 1px solid var(--border-light);
     cursor: pointer;
-    height: 40px;
+    color: var(--text-primary);
 
     option {
       background: var(--bg-secondary);
-      color: var(--text-secondary);
+      color: var(--text-primary);
       font-size: 1.4rem;
     }
   }
@@ -168,15 +244,33 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
     }
   };
 
+  const getImageSrc = () => {
+    if (postData.pt_image[idx] && typeof postData.pt_image[idx] !== "string") {
+      return URL.createObjectURL(postData.pt_image[idx]);
+    }
+    
+    if (idx === 0) {
+      return postData.pt_image.find((img) => img.includes(".gif")) || blank_img;
+    } else {
+      return postData.pt_image.find((img) => img.includes(".png")) || blank_img;
+    }
+  };
+
   return (
-    <>
+    <div className="image-upload">
       <label htmlFor={`file_image_${idx}`}>
-        
-        {postData.pt_image[idx] && typeof postData.pt_image[idx] !== "string" ? (
-          <img src={URL.createObjectURL(postData.pt_image[idx])} alt={`운동 이미지${idx + 1}`} />
-        ) : (
-          <img src={idx === 0 ? postData.pt_image.find((img) => img.includes(".gif")) : postData.pt_image.find((img) => img.includes(".png"))} alt={`운동 이미지${idx + 1}`} />
-        )}
+        <img 
+          src={getImageSrc()} 
+          alt={`운동 이미지${idx + 1}`}
+          style={{ 
+            width: '150px', 
+            height: '150px', 
+            objectFit: 'cover',
+            border: '2px dashed var(--border-light)',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+        />
       </label>
       <input
         type="file"
@@ -185,9 +279,125 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
         accept={idx === 0 ? "image/gif" : "image/png"}
         onChange={handleImageChange}
       />
-    </>
+      <small style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
+        {idx === 0 ? 'GIF 파일만 가능' : 'PNG 파일만 가능'}
+      </small>
+    </div>
   );
 };
+
+const ModalContainer = styled.div`
+  background: var(--bg-white);
+  border-radius: 8px;
+  padding: 24px;
+  
+  .modal-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border-light);
+    
+    h3 {
+      color: var(--text-black);
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    
+    th {
+      background: var(--bg-tertiary);
+      color: var(--text-black);
+      font-weight: 600;
+      text-align: center;
+      width: 120px;
+      min-width: 120px;
+    }
+    
+    td {
+      background: var(--bg-white);
+      
+      input, select, textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
+        font-size: 1.4rem;
+        color: var(--text-black);
+        background: var(--bg-white);
+        
+        &:focus {
+          outline: none;
+          border-color: var(--primary-blue);
+        }
+        
+        &::placeholder {
+          color: var(--text-tertiary);
+        }
+      }
+      
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.4;
+      }
+      
+      select {
+        cursor: pointer;
+        
+        option {
+          background: var(--bg-white);
+          color: var(--text-black);
+        }
+      }
+    }
+  }
+  
+  .image-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    
+    label {
+      cursor: pointer;
+      display: block;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        transform: scale(1.02);
+      }
+      
+      img {
+        border: 2px dashed var(--border-light);
+        border-radius: 8px;
+        transition: border-color 0.2s ease;
+        
+        &:hover {
+          border-color: var(--primary-blue);
+        }
+      }
+    }
+    
+    small {
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      text-align: center;
+    }
+  }
+`;
 
 const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, modalType }) => {
   const handleChange = (e) => {
@@ -200,8 +410,11 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
   };
 
   return (
-    <>
-      <h3>운동 수정</h3>
+    <ModalContainer>
+      <div className="modal-header">
+        <h3>{modalType === "add" ? "운동 추가" : "운동 수정"}</h3>
+      </div>
+      
       <table>
         <tbody>
           <tr>
@@ -213,11 +426,12 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
                 id="pt_name"
                 value={postData.pt_name}
                 onChange={handleChange}
+                placeholder="운동명을 입력하세요"
               />
             </td>
           </tr>
           <tr>
-            <th><label htmlFor="pt_category" className='ta-c'>카테고리</label></th>
+            <th><label htmlFor="pt_category">카테고리</label></th>
             <td>
               <select
                 name="pt_category"
@@ -237,39 +451,43 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
             </td>
           </tr>
           <tr>
-            <th><label htmlFor="pt_content" className='ta-c'>설명</label></th>
+            <th><label htmlFor="pt_content">설명</label></th>
             <td>
               <textarea
                 name="pt_content"
                 id="pt_content"
                 value={postData.pt_content || ''}
                 onChange={handleChange}
+                placeholder="운동 설명을 입력하세요"
               ></textarea>
             </td>
           </tr>
           <tr>
-            <th className='ta-c'>이미지<br/>(gif)</th>
+            <th>이미지<br/>(gif)</th>
             <td>
-              <ChangeImg postData={postData} setPostData={setPostData} idx={0} />
+              <div className="image-upload">
+                <ChangeImg postData={postData} setPostData={setPostData} idx={0} />
+              </div>
             </td>
           </tr>
           <tr>
-            <th className='ta-c'>이미지<br/>(png)</th>
+            <th>이미지<br/>(png)</th>
             <td>
-              <ChangeImg postData={postData} setPostData={setPostData} idx={1} />
+              <div className="image-upload">
+                <ChangeImg postData={postData} setPostData={setPostData} idx={1} />
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+      
       <ButtonBox>
-        {modalType === "add" ? (
-          <button className='success' onClick={handleSubmit}>추가</button>
-        ) : (
-          <button className='success' onClick={handleSubmit}>수정</button>
-        )}
-        <button onClick={onClose}>취소</button>
+        <button className='success' onClick={handleSubmit}>
+          {modalType === "add" ? "추가" : "수정"}
+        </button>
+        <button className='warning' onClick={onClose}>취소</button>
       </ButtonBox>
-    </>
+    </ModalContainer>
   );
 });
 
@@ -492,8 +710,7 @@ const WorkOut = () => {
   return (
     <WorkOutWrapper>
       <WrapperTop> 
-        <button onClick={() => handleModalOpen("add")}>운동 추가</button>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="filter-section">
           <select 
             name="category" 
             id="category"
@@ -520,6 +737,9 @@ const WorkOut = () => {
             <option value="활성화">활성화</option>
             <option value="비활성화">비활성화</option>
           </select>
+          <button onClick={() => handleModalOpen("add")}>운동 추가</button>
+        </div>
+        <div className="search-section">
           <input
             ref={searchRef}
             onKeyUp={e => {
@@ -535,7 +755,7 @@ const WorkOut = () => {
           </button>
         </div>
       </WrapperTop>
-      <>
+      <div className="table-container">
         <table>
           <thead>
             <tr>
@@ -574,33 +794,18 @@ const WorkOut = () => {
                   </tr>
                 )) :
                   <tr>
-                    <td colSpan="7">데이터가 없습니다.</td>
+                    <td colSpan="7" style={{justifyContent: 'center'}}>데이터가 없습니다.</td>
                   </tr>
               }
             </tbody>
           </table>
         </div>
-        
-        {/* 현재 적용된 필터 표시 */}
-        {(filters.category || filters.status || filters.search) && (
-          <div style={{ 
-            marginTop: '10px', 
-            padding: '10px', 
-            background: 'var(--bg-tertiary)', 
-            borderRadius: '4px',
-            fontSize: '1.4rem'
-          }}>
-            적용된 필터: 
-            {filters.category && <span> 카테고리: {filters.category}</span>}
-            {filters.status && <span> 상태: {filters.status}</span>}
-            {filters.search && <span> 검색: {filters.search}</span>}
-          </div>
-        )}
-        
-        <Modal
-          modalOpen={modalOpen}
-          setModalOpen={setModalOpen}
-          modalData={
+      </div>
+      
+      <Modal
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        modalData={
             modalType === "modify" || modalType === "add"? (
               <ModalPostData
                 postData={postData}
@@ -611,10 +816,9 @@ const WorkOut = () => {
               />
             ) : modalData
           }
-          setModalData={setModalData}
-          setPostData={setPostData}
-        />
-      </>
+        setModalData={setModalData}
+        setPostData={setPostData}
+      />
     </WorkOutWrapper>
   );
 };

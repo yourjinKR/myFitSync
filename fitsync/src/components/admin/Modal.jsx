@@ -17,16 +17,19 @@ const DetailModal = styled.div`
 const ModalContent = styled.div`
   background: var(--bg-white);
   padding: 20px;
-  border-radius: 5px;
+  border-radius: 8px;
   max-width: 500px;
   width: 80%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 
   h3 {
     color: var(--text-black);
     text-align: center;
-    font-size: 3rem;
-    font-weight:bold;
+    font-size: 2.4rem;
+    font-weight: 600;
+    margin-bottom: 20px;
   }
+
   select {
     width: 100%;
     padding: 10px;
@@ -35,11 +38,13 @@ const ModalContent = styled.div`
     border-radius: 4px;
     background: var(--bg-white);
     color: var(--text-black);
+    
     option {
       font-size: 1.6rem;
       color: var(--text-black);
     }
   }
+
   textarea {
     width: 100%;
     height: 100px;
@@ -50,35 +55,50 @@ const ModalContent = styled.div`
     resize: none;
     background: var(--bg-white);
     color: var(--text-black);
+
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
   }
+
   img {
     width: 100%;
     display: block;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
+
   ul {
     margin: 15px 0;
   }
+
   li {
     display: flex;
     align-items: center;
   }
-  label{
+
+  label {
     color: var(--text-black);
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+    cursor: pointer;
   }
+
   input[type="radio"] {
     margin-right: 10px;
+    accent-color: var(--primary-blue);
   }
+
   p {
     background: var(--bg-white);
     margin: 10px 0;
     border: 1px solid var(--border-light);
-    border-radius: 5px;
+    border-radius: 4px;
     padding: 10px;
     text-align: center;
     color: var(--text-black);
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
+
   & > table > tbody > tr > th {
     display: flex;
     flex: 1 !important;
@@ -86,7 +106,9 @@ const ModalContent = styled.div`
     align-items: center;
     color: var(--text-black);
     padding: 0;
+    font-size: 1.6rem;
   }
+
   & > table > tbody > tr > td {
     display: flex;
     flex: 4 !important;
@@ -101,13 +123,19 @@ const ModalContent = styled.div`
       border-radius: 4px;
       background: var(--bg-white);
       color: var(--text-black);
+      
+      &::placeholder {
+        color: var(--text-tertiary);
+      }
     }
   
     img {
       border: 1px solid var(--border-light);
       width: 150px;
       cursor: pointer;
+      border-radius: 4px;
     }
+
     input[type="file"] {
       width: 0;
       height: 0;
@@ -117,6 +145,7 @@ const ModalContent = styled.div`
       z-index: -1;
     }
   }
+
   button {
     margin-top: 15px;
   }

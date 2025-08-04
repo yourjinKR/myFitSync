@@ -14,6 +14,14 @@ const AwardsWrapper = styled.div`
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
+  .table-container {
+    margin-top: 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -29,57 +37,143 @@ const AwardsWrapper = styled.div`
       display: flex;
       align-items: center;
       justify-content: center;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
     }
 
     th {
-      color: var(--text-white);
+      background: var(--primary-blue);
+      color: var(--text-primary);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
     
     tr {
       display: flex;
+      
+      &:last-child td {
+        border-bottom: none;
+      }
     }
-    th:nth-child(1), td:nth-child(1) { flex: 1; }
-    th:nth-child(2), td:nth-child(2) { flex: 2; }
-    th:nth-child(3), td:nth-child(3) { flex: 7; }
-    th:nth-child(4), td:nth-child(4) { flex: 2; }
-    th:nth-child(5), td:nth-child(5) { flex: 2; }
-    th:nth-child(6), td:nth-child(6) { flex: 3; }
+    
+    th:nth-child(1), td:nth-child(1) { flex: 0.8; }
+    th:nth-child(2), td:nth-child(2) { flex: 1.5; }
+    th:nth-child(3), td:nth-child(3) { flex: 3; }
+    th:nth-child(4), td:nth-child(4) { flex: 1.2; }
+    th:nth-child(5), td:nth-child(5) { flex: 1.5; }
+    th:nth-child(6), td:nth-child(6) { flex: 2; min-width: 216px; }
 
     button {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-primary);
+      
+      &:hover {
+        background: var(--primary-blue-hover);
+      }
     }
+  }
+
+  .table-body {
+    height: calc(100% - 105px);
+    overflow-y: auto;
   }
 `;
 
 const ButtonBox = styled.div`
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
+  
   button {
     flex: 1;
     max-width: 120px;
-    padding: 6px 12px;
+    min-width: 90px;
+    padding: 12px 20px;
     font-size: 1.4rem;
-    background: var(--bg-primary);
-    color: var(--text-secondary);
+    font-weight: 600;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     text-align: center;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    &:hover::before {
+      left: 100%;
+    }
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
   }
+  
   button.success {
-    background: var(--check-green);
-    color: var(--text-white);
+    background: linear-gradient(135deg, var(--check-green), #27ae60);
+    color: var(--text-primary);
+    
+    &:hover {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+    }
   }
+  
   button.warning {
-    background: var(--warning);
-    color: var(--text-white);
+    background: linear-gradient(135deg, var(--warning), #e74c3c);
+    color: var(--text-primary);
+    
+    &:hover {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+    }
   }
+  
+  button.default {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: var(--text-primary);
+    
+    &:hover {
+      background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+      box-shadow: 0 6px 20px rgba(149, 165, 166, 0.3);
+    }
+  }
+  
   button:disabled {
-    background: var(--border-light);
-    color: var(--text-secondary);
-    cursor: not-allowed;
+    background: var(--border-light) !important;
+    color: var(--text-secondary) !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    
+    &::before {
+      display: none;
+    }
   }
 `;
 
@@ -88,15 +182,31 @@ const WrapperTop = styled.div`
   justify-content: space-between;
   align-items: center;
 
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   button {
     margin-left: 10px;
     padding: 8px 16px;
     font-size: 1.6rem;
     background: var(--primary-blue);
-    color: var(--text-white);
+    color: var(--text-primary);
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    
+    &:hover {
+      background: var(--primary-blue-hover);
+    }
   }
   
   input {
@@ -104,20 +214,28 @@ const WrapperTop = styled.div`
     min-width: 250px;
     font-size: 1.4rem;
     padding: 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--text-primary);
+    
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
   }
 
   select {
     background: var(--bg-tertiary);
     font-size: 1.4rem;
     padding: 10px;
-    margin-left: 10px;
+
     border-radius: 4px;
     border: 1px solid var(--border-light);
     cursor: pointer;
+    color: var(--text-primary);
 
     option {
       background: var(--bg-secondary);
-      color: var(--text-secondary);
+      color: var(--text-primary);
       font-size: 1.4rem;
     }
   }
@@ -133,36 +251,190 @@ const checkImage = (url) => {
 }
 
 const handleInputChange = (e, postData, setPostData) => {
-  if(e.target.id !== 'reason6'){
-    e.target.closest("ul").nextSibling.style.display='none';
-    return setPostData({...postData, awards_reason: e.target.closest("li").innerText});
-  }else{
-    e.target.closest("ul").nextSibling.style.display='block';
-    return setPostData({...postData, awards_reason: ''});
+  const selectedReason = e.target.closest("li").querySelector('label').textContent;
+  const textareaElement = e.target.closest("ul").nextSibling;
+  
+  if (e.target.id !== 'reason6') {
+    textareaElement.style.display = 'none';
+    setPostData({ ...postData, awards_reason: selectedReason });
+  } else {
+    textareaElement.style.display = 'block';
+    setPostData({ ...postData, awards_reason: '' });
   }
 };
 
+const ApprovalModalContainer = styled.div`
+  .modal-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border-light);
+    
+    h3 {
+      color: var(--text-black);
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin: 0;
+      position: relative;
+      
+      &::before {
+        content: '⚠️';
+        margin-right: 8px;
+        font-size: 2rem;
+      }
+    }
+    
+    p {
+      color: var(--text-secondary);
+      font-size: 1.4rem;
+      margin: 8px 0 0 0;
+    }
+  }
+
+  .reason-list {
+    margin-bottom: 20px;
+    
+    li {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      
+      &:hover {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-color: var(--primary-blue);
+        transform: translateX(4px);
+      }
+      
+      input[type="radio"] {
+        accent-color: var(--primary-blue);
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+      }
+      
+      label {
+        color: var(--text-black);
+        font-size: 2rem;
+        cursor: pointer;
+        line-height: 1.5;
+        flex: 1;
+        font-weight: 500;
+        
+        &:hover {
+          color: var(--primary-blue);
+        }
+      }
+    }
+  }
+
+  .custom-reason {
+    width: 100%;
+    min-height: 100px;
+    padding: 16px;
+    font-size: 1.4rem;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--bg-white);
+    color: var(--text-black);
+    resize: vertical;
+    margin-bottom: 24px;
+    font-family: inherit;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+    
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+      transform: translateY(-1px);
+    }
+  }
+`;
+
 const ApprovalModal = ({ postData, setPostData, onApprove, onClose }) => (
-  <div>
-    <h3>반려 사유 입력</h3>
-    <ul>
-      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason1" /><label htmlFor="reason1">제출 서류 누락 또는 미비</label></li>
-      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason2" /><label htmlFor="reason2">서류 정보와 신청 정보 불일치</label></li>
-      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason3" /><label htmlFor="reason3">유효하지 않은 서류 제출</label></li>
-      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason4" /><label htmlFor="reason4">자격 요건 미충족</label></li>
-      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason5" /><label htmlFor="reason5">서류의 판독 불가 또는 해상도 저하</label></li>
-      <li><input type="radio" onChange={(e) => handleInputChange(e, postData, setPostData)} name="reason" id="reason6" /><label htmlFor="reason6">내부 심사 기준 미충족</label></li>
+  <ApprovalModalContainer>
+    <div className="modal-header">
+      <h3>반려 사유 선택</h3>
+    </div>
+    
+    <ul className="reason-list">
+      <li>
+        <input 
+          type="radio" 
+          onChange={(e) => handleInputChange(e, postData, setPostData)} 
+          name="reason" 
+          id="reason1" 
+        />
+        <label htmlFor="reason1">제출 서류 누락 또는 미비</label>
+      </li>
+      <li>
+        <input 
+          type="radio" 
+          onChange={(e) => handleInputChange(e, postData, setPostData)} 
+          name="reason" 
+          id="reason2" 
+        />
+        <label htmlFor="reason2">서류 정보와 신청 정보 불일치</label>
+      </li>
+      <li>
+        <input 
+          type="radio" 
+          onChange={(e) => handleInputChange(e, postData, setPostData)} 
+          name="reason" 
+          id="reason3" 
+        />
+        <label htmlFor="reason3">유효하지 않은 서류 제출</label>
+      </li>
+      <li>
+        <input 
+          type="radio" 
+          onChange={(e) => handleInputChange(e, postData, setPostData)} 
+          name="reason" 
+          id="reason4" 
+        />
+        <label htmlFor="reason4">자격 요건 미충족</label>
+      </li>
+      <li>
+        <input 
+          type="radio" 
+          onChange={(e) => handleInputChange(e, postData, setPostData)} 
+          name="reason" 
+          id="reason5" 
+        />
+        <label htmlFor="reason5">서류의 판독 불가 또는 해상도 저하</label>
+      </li>
+      <li>
+        <input 
+          type="radio" 
+          onChange={(e) => handleInputChange(e, postData, setPostData)} 
+          name="reason" 
+          id="reason6" 
+        />
+        <label htmlFor="reason6">기타 (직접 입력)</label>
+      </li>
     </ul>
-    <textarea style={{display: 'none'}}
+    
+    <textarea 
+      className="custom-reason"
+      style={{display: 'none'}}
       value={postData.awards_reason}
       onChange={(e) => setPostData({ ...postData, awards_reason: e.target.value })}
-      placeholder="반려 사유를 입력해주세요."
-    ></textarea>
+      placeholder="반려 사유를 상세히 입력해주세요."
+    />
+    
     <ButtonBox>
       <button className='warning' onClick={onApprove}>반려</button>
       <button className='default' onClick={onClose}>취소</button>
     </ButtonBox>
-  </div>
+  </ApprovalModalContainer>
 );
 
 
@@ -294,7 +566,7 @@ const Awards = () => {
   return (
     <AwardsWrapper>
       <WrapperTop> 
-        <div>
+        <div className="filter-section">
           <select name="" id=""
             onChange={(e) => {
               const value = e.target.value;
@@ -328,7 +600,7 @@ const Awards = () => {
             <option value="학위">학위</option>
           </select>
         </div>
-        <div>
+        <div className="search-section">
           <input
             ref={searchRef}
             onKeyUp={e => {
@@ -336,59 +608,79 @@ const Awards = () => {
             }}
             type="text"
             name="search"
+            placeholder="검색어를 입력하세요"
           />
           <button onClick={handleSearch}>검색</button>
         </div>
       </WrapperTop>
-      <table>
-        <thead>
-          <tr>
-            <th>번호</th>
-            <th>이름</th>
-            <th>자격증</th>
-            <th>카테고리</th>
-            <th>상태</th>
-            <th>관리</th>
-          </tr>
-        </thead>
-      </table>
-      <table>
-        <tbody>
-          {
-            awardData.length > 0 ? awardData.map((item) => (
-              <tr key={item.awards_idx}>
-                <td>{item.awards_idx}</td>
-                <td>{item.member.member_name}</td>
-                <td>
-                  <button onClick={() => handleModalOpen("img", item.awards_certificate)}>
-                    {item.awards_name}
-                  </button>
-                </td>
-                <td>{item.awards_category}</td>
-                <td>
-                  {item.awards_approval === 'Y' ? 
-                    '승인완료' : 
-                    item.awards_approval === 'N' ? 
-                    '승인전' : 
-                    <button onClick={() => handleModalOpen('reasaon', item.awards_reason)}>반려</button>}
-                </td>
-                <td>
-                  {/* 관리 버튼들 추가 */}
-                  { item.awards_approval === 'N' ? (
-                    <ButtonBox>
-                      <button className='success' onClick={() => setPostData({...postData, awards_idx:item.awards_idx, awards_approval: 'Y'})}>승인</button>
-                      <button className='warning' onClick={() => handleModalOpen("approval", item)}>반려</button>
-                    </ButtonBox>
-                  ) : null}
-                </td>
-              </tr>
-            )) :
+      <div className="table-container">
+        <table>
+          <thead>
             <tr>
-              <td colSpan="5">데이터가 없습니다.</td>
+              <th>번호</th>
+              <th>이름</th>
+              <th>자격증</th>
+              <th>카테고리</th>
+              <th>상태</th>
+              <th>관리</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+        </table>
+        <div className="table-body">
+          <table>
+            <tbody>
+              {
+                awardData.length > 0 ? awardData.map((item) => (
+                  <tr key={item.awards_idx}>
+                    <td>{item.awards_idx}</td>
+                    <td>{item.member.member_name}</td>
+                    <td>
+                      <button onClick={() => handleModalOpen("img", item.awards_certificate)}>
+                        {item.awards_name}
+                      </button>
+                    </td>
+                    <td>{item.awards_category}</td>
+                    <td>
+                      {item.awards_approval === 'Y' ? 
+                        '승인완료' : 
+                        item.awards_approval === 'N' ? 
+                        '승인전' : 
+                        <button onClick={() => handleModalOpen('reasaon', item.awards_reason)}>반려</button>}
+                    </td>
+                    <td>
+                      { item.awards_approval === 'N' ? (
+                        <ButtonBox>
+                          <button 
+                            className='success' 
+                            onClick={() => setPostData({
+                              ...postData, 
+                              awards_idx: item.awards_idx, 
+                              awards_approval: 'Y'
+                            })}
+                          >
+                            승인
+                          </button>
+                          <button 
+                            className='warning' 
+                            onClick={() => handleModalOpen("approval", item)}
+                          >
+                            반려
+                          </button>
+                        </ButtonBox>
+                      ) : null}
+                    </td>
+                  </tr>
+                )) :
+                <tr>
+                  <td colSpan="6" style={{justifyContent: 'center'}}>
+                    데이터가 없습니다.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
       <Modal 
         modalOpen={modalOpen} 
         setModalOpen={setModalOpen} 
