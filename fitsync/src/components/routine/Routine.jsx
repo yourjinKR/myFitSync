@@ -10,7 +10,7 @@ const RoutineWrapper = styled.div`
   width: calc(50% - 0.75rem);
   border: 1px solid var(--border-light);
   background: var(--bg-secondary);
-  padding: 2rem 2rem 3rem;
+  padding: 1.5rem 2.5rem 2.5rem;
   border-radius: 16px;
   position: relative;
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
@@ -49,7 +49,6 @@ const Inner = styled.div`
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: 8px;
-    padding: 0.6rem;
     cursor: pointer;
     display: flex;
     align-items: center;

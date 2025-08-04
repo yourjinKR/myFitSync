@@ -10,7 +10,7 @@ const RoutineWrapper = styled.div`
   padding: 2rem;
   position: relative;
   background: var(--bg-primary);
-  min-height: 100vh;
+  min-height: calc(100vh - 150px);
   
   & > button {
     background: var(--primary-blue);
@@ -19,12 +19,12 @@ const RoutineWrapper = styled.div`
     border-radius: 12px;
     padding: 1.6rem 2rem;
     width: 100%;
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     font-weight: 600;
-    transition: all 0.2s ease;
+    cursor: pointer;
     
     &:active {
-      transform: translateY(0);
+      transform: translateY(1px);
     }
   }
 
