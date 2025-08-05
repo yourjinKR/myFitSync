@@ -99,26 +99,24 @@ const EditTextarea = styled.textarea`
 
 const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageUpload }) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalImgSrc, setModalImgSrc] = useState(null);
-  const [resolvedImages, setResolvedImages] = useState(images); // axios 호출 제거 후 바로 images 할당
+  const [modalImgIndex, setModalImgIndex] = useState(0);
+  const [resolvedImages, setResolvedImages] = useState(images);
   const inputRefs = useRef([]);
 
-  // 이미지 URL 가져오기 부분 제거, 그냥 images 상태 그대로 사용
   useEffect(() => {
-    // axios 호출 없이 images 바로 세팅
     setResolvedImages(images);
   }, [images]);
 
-  const handleImageClick = (img) => {
+  const handleImageClick = (img, idx) => {
     if (!isEdit && img?.url) {
-      setModalImgSrc(img.url);
+      setModalImgIndex(idx);
       setModalOpen(true);
     }
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setModalImgSrc(null);
+    setModalImgIndex(0);
   };
 
   const handleFileChange = async (e, index) => {
@@ -206,13 +204,24 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
         <>
           <ImageGrid>
             {resolvedImages.map((img, i) => (
-              <ImageBox key={i} onClick={() => handleImageClick(img)} style={{ cursor: img?.url ? 'pointer' : 'default' }}>
+              <ImageBox
+                key={i}
+                onClick={() => handleImageClick(img, i)}
+                style={{ cursor: img?.url ? 'pointer' : 'default' }}
+              >
                 {img?.url ? <img src={img.url} alt={`trainer-img-${i}`} /> : null}
               </ImageBox>
             ))}
           </ImageGrid>
           <Description>{description}</Description>
-          {modalOpen && <ImageModal src={modalImgSrc} alt="확대 이미지" onClose={handleCloseModal} />}
+          {modalOpen && (
+            <ImageModal
+              images={resolvedImages}
+              index={modalImgIndex}
+              alt="확대 이미지"
+              onClose={handleCloseModal}
+            />
+          )}
         </>
       )}
     </>

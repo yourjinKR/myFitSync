@@ -216,9 +216,6 @@ useEffect(() => {
 }, [trainerIdx]);
 
 
-
-
-
   const isLoggedIn = !!loginUserId;
 
   // 상담 버튼 클릭 핸들러

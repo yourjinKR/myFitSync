@@ -106,7 +106,7 @@ const TrainerReviewSection = ({ reviews: propReviews }) => {
       <ReviewList>
         {reviews.map((r, index) => (
           <Review
-            key={r.review_idx ?? index}
+            key={r.review_idx || r.matching_idx || index}
             review={r}
           />
         ))}
