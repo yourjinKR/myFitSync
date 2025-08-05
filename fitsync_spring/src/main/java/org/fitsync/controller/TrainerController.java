@@ -1,8 +1,10 @@
 package org.fitsync.controller;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpSession;
 
@@ -15,6 +17,7 @@ import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.ReviewVO;
 import org.fitsync.domain.ScheduleVO;
 import org.fitsync.domain.TrainerProfileDTO;
+import org.fitsync.mapper.ChatAttachMapper;
 import org.fitsync.service.AwardsService;
 import org.fitsync.service.CloudinaryService;
 import org.fitsync.service.GymServiceImple;
@@ -63,6 +66,8 @@ public class TrainerController {
     private ReviewService reviewService;
     @Autowired
     private GymServiceImple gymService;
+    @Autowired
+    private ChatAttachMapper attachMapper;
 
     // 트레이너 프로필 조회
     @GetMapping("/profile/{trainerIdx}")
@@ -81,6 +86,19 @@ public class TrainerController {
         profile.setAwards(awards);
         profile.setReviews(reviews);
         profile.setGymInfo(gymInfo);
+
+        // ✅ infoImage 처리
+        String imageStr = member.getMember_info_image(); // "3,4,5"
+        if (imageStr != null && !imageStr.isEmpty()) {
+            List<Integer> attachIdxList = Arrays.stream(imageStr.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
+
+            List<String> imageUrls = attachMapper.getCloudinaryUrlsByIdxList(attachIdxList);
+            profile.setInfoImageUrls(imageUrls);
+        }
 
         return ResponseEntity.ok(profile);
     }
@@ -387,4 +405,10 @@ public class TrainerController {
         List<ReviewVO> reviews = reviewService.getReviewsByTrainer(trainerIdx);
         return ResponseEntity.ok(reviews);
     }
+    
+    @PostMapping("/images")
+    public ResponseEntity<List<String>> getTrainerImageUrls(@RequestBody List<Integer> attachIdxList) {
+        List<String> urls = attachMapper.getCloudinaryUrlsByIdxList(attachIdxList);
+        return ResponseEntity.ok(urls);
+    }    
 }

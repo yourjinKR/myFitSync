@@ -19,6 +19,7 @@ public class TrainerProfileDTO {
     private List<AwardsVO> awards;
     private List<ReviewVO> reviews;
     private GymVO gymInfo;
+    private List<String> infoImageUrls;
     
     public void setMember(MemberVO vo) {
         this.member_idx = vo.getMember_idx();

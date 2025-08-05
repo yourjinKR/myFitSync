@@ -8,72 +8,94 @@ import TrainerMapContainer from './TrainerMapContainer';
 
 // Styled Components
 const Section = styled.section`
-  padding: 24px 0;
-  border-bottom: 1px solid var(--border-light);
+  padding: 22px 0 18px 0;
+  border-bottom: 1.5px solid var(--border-light);
   background: var(--bg-secondary);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  @media (max-width: 500px) {
+    padding: 16px 0 12px 0;
+  }
 `;
 
 const SectionTitle = styled.h3`
-  font-weight: bold;
-  margin-bottom: 16px;
-  font-size: 1.3rem;
-  color: var(--text-primary);
+  font-weight: 800;
+  margin-bottom: 13px;
+  font-size: 2.22rem;
+  color: var(--primary-blue);
+  letter-spacing: -0.01em;
+  @media (max-width: 500px) {
+    font-size: 2.09rem;
+  }
 `;
 
 const CertList = styled.ul`
   list-style: none;
   padding-left: 0;
-  font-size: 1.15rem;
+  font-size: 1.09rem;
   color: var(--text-primary);
-
+  margin-bottom: 0.7rem;
   li {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     cursor: pointer;
+    transition: color 0.18s;
+    &:hover { color: var(--primary-blue); }
   }
 `;
 
 const InfoContent = styled.div`
-  font-size: 1.15rem;
+  font-size: 1.09rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: pre-line;
+  margin-bottom: 0.5rem;
+  @media (max-width: 500px) {
+    font-size: 0.98rem;
+  }
 `;
 
 const ReviewItem = styled.div`
-  padding: 14px;
-  margin-bottom: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
   background-color: var(--bg-tertiary);
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--text-primary);
   line-height: 1.6;
 
   strong {
     display: block;
     color: var(--text-tertiary);
-    margin-bottom: 4px;
-    font-size: 0.9rem;
+    margin-bottom: 3px;
+    font-size: 0.89rem;
+    font-weight: 600;
   }
 
   h4 {
-    margin: 4px 0 6px;
-    font-size: 1.15rem;
+    margin: 3px 0 5px;
+    font-size: 1.09rem;
     font-weight: bold;
     color: var(--primary-blue);
   }
 `;
 
 const MoreButton = styled.button`
-  margin-top: 10px;
+  margin-top: 7px;
   background: none;
   border: none;
   color: var(--primary-blue);
-  font-size: 1rem;
-  font-weight: bold;
+  font-size: 1.01rem;
+  font-weight: 700;
   cursor: pointer;
   padding: 0;
+  border-radius: 0.7rem;
+  transition: color 0.18s, background 0.18s;
   &:hover {
     color: var(--primary-blue-hover);
+    background: var(--bg-tertiary);
   }
 `;
 
@@ -91,17 +113,90 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: white;
-  padding: 20px;
+  background: var(--bg-secondary);
+  padding: 18px;
   border-radius: 10px;
-  max-width: 90%;
-  max-height: 90%;
+  max-width: 92vw;
+  max-height: 90vh;
   text-align: center;
 
   img {
     max-width: 100%;
-    max-height: 80vh;
+    max-height: 60vh;
     border-radius: 8px;
+    margin-top: 1rem;
+  }
+`;
+
+const NoGym = styled.div`
+  color: var(--text-tertiary);
+  font-size: 1.01rem;
+  text-align: center;
+  margin: 1.2rem 0 1.5rem 0;
+`;
+
+const EditField = styled.input`
+  width: 100%;
+  font-size: 1.09rem;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  transition: border 0.18s, background 0.18s;
+  &:focus {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-secondary);
+  }
+  &::placeholder {
+    color: var(--text-tertiary);
+    opacity: 1;
+  }
+`;
+
+const EditSelect = styled.select`
+  width: 100%;
+  font-size: 1.09rem;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  transition: border 0.18s, background 0.18s;
+  &:focus {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-secondary);
+  }
+`;
+
+const EditLabel = styled.label`
+  font-size: 1.05rem;
+  color: var(--primary-blue-light);
+  font-weight: 600;
+  margin-bottom: 2px;
+  display: block;
+`;
+
+const EditFileInput = styled.input`
+  margin-top: 4px;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 8px 0;
+  &::file-selector-button {
+    background: var(--primary-blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 1.01rem;
+    cursor: pointer;
+    margin-right: 10px;
   }
 `;
 
@@ -110,7 +205,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
   const [awards, setAwards] = useState([]);
   const [selectedAward, setSelectedAward] = useState(null);
   const [newAward, setNewAward] = useState({ category: '', name: '', file: null });
-
+  
   useEffect(() => {
     const fetchAwards = async () => {
       try {
@@ -165,12 +260,17 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
     }
   };
 
+  const normalizedImages = (trainer.images || []).map(img => {
+  if (typeof img === 'object' && img.url) return img;  // 이미 url이 있으면 그대로
+  return { id: img, url: null };  // attach_idx 문자열이라면 객체로 변환
+});
+
   return (
     <>
       <Section>
         <SectionTitle>선생님 소개</SectionTitle>
         <TrainerIntroduce
-          images={trainer.images}
+          images={normalizedImages}
           description={trainer.description}
           isEdit={isEdit}
           onChange={onChange}
@@ -190,10 +290,10 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         </CertList>
 
         {isEdit && (
-          <div style={{ marginTop: '16px' }}>
-            <label>
+          <div style={{ marginTop: '13px' }}>
+            <EditLabel>
               카테고리:
-              <select
+              <EditSelect
                 value={newAward.category}
                 onChange={(e) => handleAwardChange('category', e.target.value)}
               >
@@ -201,24 +301,22 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
                 <option value="자격증">자격증</option>
                 <option value="학위">학위</option>
                 <option value="수상경력">수상경력</option>
-              </select>
-            </label>
-            <br />
-            <label>
+              </EditSelect>
+            </EditLabel>
+            <EditLabel>
               이름:
-              <input
+              <EditField
                 type="text"
                 value={newAward.name}
                 onChange={(e) => handleAwardChange('name', e.target.value)}
+                placeholder="자격/수상명 입력"
               />
-            </label>
-            <br />
-            <label>
+            </EditLabel>
+            <EditLabel>
               증명 이미지:
-              <input type="file" onChange={handleAwardFileChange} />
-            </label>
-            <br />
-            <button onClick={handleAwardSubmit}>+ 자격 사항 추가</button>
+              <EditFileInput type="file" onChange={handleAwardFileChange} />
+            </EditLabel>
+            <MoreButton onClick={handleAwardSubmit}>+ 자격 사항 추가</MoreButton>
           </div>
         )}
       </Section>
@@ -226,7 +324,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
       {selectedAward && (
         <ModalOverlay onClick={() => setSelectedAward(null)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <h4>{selectedAward.awards_name}</h4>
+            <h4 style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>{selectedAward.awards_name}</h4>
             <img
               src={selectedAward.awards_certificate}
               alt={`${selectedAward.awards_name} 증명서`}
@@ -255,19 +353,28 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
       </Section>
 
-      <TrainerPriceList
-        lessons={lessons || []}
-        isEdit={isEdit}
-        onLessonsChange={onLessonsChange}
-        onChange={onChange}
-        />
-
-      <SectionTitle>위치</SectionTitle>
-      {trainer.gymInfo !== null || isEdit ? (
-        <TrainerMapContainer 
-          gymInfo={trainer.gymInfo}
+      <Section>
+        <SectionTitle>레슨 가격</SectionTitle>
+        <TrainerPriceList
+          lessons={lessons || []}
           isEdit={isEdit}
-          onChange={onChange}/>) : (<>등록된 체육관이 없습니다 !</>)}
+          onLessonsChange={onLessonsChange}
+          onChange={onChange}
+        />
+      </Section>
+
+      <Section>
+        <SectionTitle>위치</SectionTitle>
+        {trainer.gymInfo !== null || isEdit ? (
+          <TrainerMapContainer
+            gymInfo={trainer.gymInfo}
+            isEdit={isEdit}
+            onChange={onChange}
+          />
+        ) : (
+          <NoGym>등록된 체육관이 없습니다 !</NoGym>
+        )}
+      </Section>
     </>
   );
 };

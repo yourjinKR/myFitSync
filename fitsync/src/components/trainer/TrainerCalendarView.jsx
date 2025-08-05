@@ -21,7 +21,7 @@ import DailyDetailModal from '../user/DailyDetailModal';
 
 // 스타일 컴포넌트 분리
 const Wrapper = styled.div`
-  padding: 2rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;

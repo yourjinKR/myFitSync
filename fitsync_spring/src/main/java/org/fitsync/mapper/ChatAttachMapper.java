@@ -1,5 +1,7 @@
 package org.fitsync.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 import org.fitsync.domain.ChatAttachVO;
 
@@ -13,5 +15,7 @@ public interface ChatAttachMapper {
     public int deleteAttach(@Param("attach_idx") int attach_idx);
     // 기존 프로필 사진 불러오기
     public ChatAttachVO selectProfileImageByMemberIdx(@Param("memberIdx") int memberIdx);
+    
+    public List<String> getCloudinaryUrlsByIdxList(@Param("list") List<Integer> list);
     
 }

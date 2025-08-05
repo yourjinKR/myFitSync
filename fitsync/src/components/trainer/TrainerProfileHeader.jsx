@@ -1,160 +1,221 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { MdEdit, MdCheck, MdReport } from 'react-icons/md';
+import { MdEdit, MdCheck, MdReport, MdVisibility, MdVisibilityOff, MdCameraAlt } from 'react-icons/md';
 import Switch from '@mui/material/Switch';
 import ProfileImageEditable from '../ProfileImageEditable';
 import axios from 'axios';
 
-const ProfileHeader = styled.div`
-  text-align: center;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-light);
-  background: var(--bg-secondary);
+// --- 스타일: 카드 크기 확대, 인스타 느낌, 모든 기능 포함 ---
+const InstaProfileHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 2.2rem;
+  padding: 2.5rem 2rem 2rem 2rem;
+  background: linear-gradient(120deg, var(--bg-secondary) 70%, var(--bg-primary) 100%);
+  border-radius: 2.2rem;
+  box-shadow: 0 0.3rem 1.5rem rgba(0,0,0,0.13);
+  max-width: 715px;
+  min-width: 0;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 0.7rem 1.5rem 0.7rem;
+    border-radius: 1.2rem;
+    max-width: 99vw;
+    gap: 1.2rem;
+  }
 `;
 
-const NameWrapper = styled.div`
+const InstaProfileImgWrap = styled.div`
+  position: relative;
+  width: 110px;
+  height: 110px;
+  min-width: 110px;
+  min-height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
 `;
 
-const Name = styled.h2`
-  font-size: 1.7rem;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-`;
-
-const EditButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.6rem;
-  color: var(--primary-blue);
-  padding: 0;
-  margin-bottom: 8px;
-
-  &:hover {
-    opacity: 0.8;
-    color: var(--primary-blue-hover);
-  }
-`;
-
-const ReviewCount = styled.p`
-  color: var(--text-secondary);
-  font-size: 1.05rem;
-  margin-top: 4px;
-`;
-
-const Quote = styled.p`
-  font-style: italic;
-  font-size: 1.15rem;
-  color: var(--text-secondary);
-  margin-top: 10px;
-  padding: 0 10px;
-`;
-
-const QuoteInput = styled.input`
-  margin-top: 10px;
-  padding: 8px 10px;
-  width: 80%;
-  font-size: 1.1rem;
-  font-style: italic;
-  border: 1px solid var(--border-light);
-  border-radius: 6px;
-  text-align: center;
+const InstaProfileImg = styled.img`
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--primary-blue);
   background: var(--bg-tertiary);
-  color: var(--text-primary);
+  box-shadow: 0 0.12rem 0.7rem rgba(74,144,226,0.13);
 `;
 
-const SummaryBox = styled.div`
-  margin-top: 14px;
-  padding: 16px;
-  background-color: var(--bg-tertiary);
-  border-radius: 10px;
+const EditImgButton = styled.button`
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: var(--primary-blue);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 0.05rem 0.2rem rgba(74,144,226,0.18);
+  cursor: pointer;
+  transition: background 0.18s;
+  &:hover { background: var(--primary-blue-hover); }
+`;
+
+const InstaProfileInfo = styled.div`
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 1.15rem;
+  gap: 0.7rem;
+`;
+
+const InstaNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+`;
+
+const InstaName = styled.h2`
+  font-size: 2.1rem;
+  font-weight: 900;
+  color: var(--primary-blue);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.2rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+`;
+
+const InstaButtonGroup = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
+const InstaButton = styled.button`
+  padding: 0.5rem 1.3rem;
+  border: none;
+  border-radius: 1.4rem;
+  background: ${({ $primary }) =>
+    $primary
+      ? 'linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%)'
+      : 'var(--bg-tertiary)'};
+  color: ${({ $primary }) => ($primary ? 'var(--text-primary)' : 'var(--text-secondary)')};
+  font-size: 1.13rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: ${({ $primary }) => $primary ? '0 0.05rem 0.2rem rgba(74,144,226,0.10)' : 'none'};
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  &:hover, &:focus {
+    background: ${({ $primary }) =>
+      $primary
+        ? 'linear-gradient(90deg, var(--primary-blue-hover) 60%, var(--primary-blue) 100%)'
+        : 'var(--border-medium)'};
+    color: ${({ $primary }) => ($primary ? 'var(--bg-primary)' : 'var(--text-primary)')};
+    outline: none;
+  }
+`;
+
+const InstaEmail = styled.div`
+  font-size: 1.13rem;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+`;
+
+const InstaGymInfo = styled.div`
+  font-size: 1.13rem;
+  color: var(--primary-blue-light);
+  margin-top: 0.2rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+`;
+
+const InstaSwitchRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.2rem;
+`;
+
+const InstaSwitchLabel = styled.span`
+  font-size: 1.08rem;
+  color: var(--text-tertiary);
+`;
+
+const InstaPriceBox = styled.div`
+  margin: 1.2rem 0 1.8rem 0;
+  background: var(--bg-tertiary);
+  border-radius: 1.2rem;
+  padding: 1.3rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+`;
+
+const InstaPriceTitle = styled.div`
+  font-size: 1.18rem;
+  color: var(--primary-blue-light);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+`;
+
+const InstaPriceValue = styled.div`
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--primary-blue);
+  letter-spacing: 0.01em;
+`;
+
+const InstaCareerBox = styled.div`
+  margin-bottom: 2rem;
+  background: var(--bg-tertiary);
+  border-radius: 1.2rem;
+  padding: 1.3rem 1.1rem;
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+`;
+
+const InstaCareerTitle = styled.div`
+  font-size: 1.18rem;
+  color: var(--primary-blue-light);
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+`;
+
+const InstaCareerList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 1.13rem;
   color: var(--text-primary);
 `;
 
-const SummaryItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const VisibilityToggle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: 10px;
-`;
-
-const ReportButton = styled.button`
-  margin-left: 10px;
-  background: none;
-  border: none;
-  color: #d32f2f;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-
-  svg {
-    margin-right: 4px;
-  }
-
-  &:hover {
-    text-decoration: underline;
+const InstaCareerItem = styled.li`
+  padding-left: 0.5rem;
+  position: relative;
+  &:before {
+    content: '•';
+    color: var(--primary-blue-light);
+    position: absolute;
+    left: 0;
   }
 `;
 
-const ReportModal = styled.div`
-  position: fixed;
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, -30%);
-  background: white;
-  border: 1px solid #ccc;
-  padding: 20px;
-  z-index: 2000;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
-`;
-
-const ModalActions = styled.div`
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-
-  button {
-    padding: 6px 12px;
-    border: none;
-    cursor: pointer;
-  }
-`;
-
-
-/**
- * @param {object} props
- * @param {object} props.trainer - 트레이너 객체 (또는 null)
- * @param {object} props.user - 유저 객체 (또는 null)
- * @param {boolean} props.isEdit - 수정 모드 여부 (트레이너만)
- * @param {function} props.onChange - 필드 변경 핸들러 (트레이너만)
- * @param {function} props.onEditToggle - 수정/저장 버튼 핸들러 (트레이너만)
- * @param {string} props.loginUserId - 로그인 유저 이메일
- * @param {'trainer' | 'user'} props.mode - 모드 구분
- * @param {function} props.onImageChange - 프로필 이미지 변경 콜백
- * @param {function} props.onVisibilityToggle - 공개/비공개 토글 콜백
- */
-
-const reportReasons = {
-  trainer: ['비전문적인 트레이닝', '불친절한 응대', '허위 정보 제공', '기타'],
-  user: ['무분별한 요청', '악의적 리뷰', '비매너 행동', '기타'],
-};
-
+// --- 컴포넌트 ---
 const TrainerProfileHeader = ({
   trainer,
   user,
@@ -168,8 +229,7 @@ const TrainerProfileHeader = ({
 }) => {
   const isTrainer = mode === 'trainer';
   const [localTrainer, setLocalTrainer] = useState(trainer);
-    useEffect(() => {
-    console.log('trainer prop 변경:', trainer);
+  useEffect(() => {
     setLocalTrainer(trainer);
   }, [trainer]);
   const [updating, setUpdating] = useState(false);
@@ -182,13 +242,14 @@ const TrainerProfileHeader = ({
   const isHidden = localTrainer?.member_hidden === 1;
   const targetMember = localTrainer || user;
 
+  // 공개/비공개 토글
   const handleToggleVisibility = async () => {
     if (updating || !localTrainer?.member_idx) return;
     try {
       setUpdating(true);
       const updatedHidden = isHidden ? 0 : 1;
       const res = await axios.put(`/trainer/${localTrainer.member_idx}/visibility`, {
-        member_hidden: updatedHidden, // 숫자로 보내기
+        member_hidden: updatedHidden,
       });
       if (res.status === 200) {
         const updatedTrainer = { ...localTrainer, member_hidden: updatedHidden };
@@ -196,116 +257,184 @@ const TrainerProfileHeader = ({
         if (onVisibilityToggle) onVisibilityToggle(updatedHidden);
       }
     } catch (err) {
-      console.error('공개/비공개 전환 실패:', err);
+      alert('공개/비공개 전환 실패');
     } finally {
       setUpdating(false);
     }
   };
 
+  // 신고 제출
   const handleReportSubmit = async () => {
     try {
       await axios.post('/member/report/profile', {
         report_category: 'member',
         report_content: reportReason,
-        report_sanction: targetMember?.member_idx, // ← 신고 대상자 (트레이너 등)
+        report_sanction: targetMember?.member_idx,
         report_hidden: 0
       });
       alert('신고가 접수되었습니다.');
       setShowReportModal(false);
       setReportReason('');
     } catch (err) {
-      console.error('신고 실패:', err);
       alert('신고 처리 중 문제가 발생했습니다.');
     }
-    
+  };
+
+  // 프로필 이미지 변경
+  const handleImageChange = (file) => {
+    if (onImageChange) onImageChange(file);
   };
 
   return (
-    <ProfileHeader>
-      <ProfileImageEditable imageUrl={profileImage} onSuccess={onImageChange} />
-
-      <NameWrapper>
-        <Name>
-          {name}
-          {isTrainer ? ' 선생님' : ''}
-        </Name>
-
+    <InstaProfileHeader>
+      <InstaProfileImgWrap>
+        <InstaProfileImg src={profileImage || '/default-profile.png'} alt="프로필" />
+        {/* 트레이너 또는 일반 유저 본인 모두 프로필 사진 변경 가능 */}
+        {isMine && (
+          <EditImgButton onClick={() => document.getElementById('profile-img-input').click()} title="프로필 이미지 변경">
+            <MdCameraAlt size={20} />
+            <input
+              id="profile-img-input"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={e => e.target.files && handleImageChange(e.target.files[0])}
+            />
+          </EditImgButton>
+        )}
+      </InstaProfileImgWrap>
+      <InstaProfileInfo>
+        <InstaNameRow>
+          <InstaName>
+            {name}
+            {isTrainer ? ' 선생님' : ''}
+          </InstaName>
+          <InstaButtonGroup>
+            {isTrainer && isMine && (
+              <InstaButton $primary onClick={onEditToggle}>
+                {isEdit ? <MdCheck /> : <MdEdit />}
+                {isEdit ? '저장' : '수정'}
+              </InstaButton>
+            )}
+            {!isMine && (
+              <InstaButton onClick={() => setShowReportModal(true)}>
+                <MdReport />
+                신고
+              </InstaButton>
+            )}
+          </InstaButtonGroup>
+        </InstaNameRow>
+        <InstaEmail>{localTrainer?.member_email}</InstaEmail>
+        {localTrainer?.gymInfo?.gym_name && (
+          <InstaGymInfo>{localTrainer.gymInfo.gym_name}</InstaGymInfo>
+        )}
         {isTrainer && isMine && (
-          <>
-            <EditButton onClick={onEditToggle} title={isEdit ? '저장하기' : '수정하기'}>
-              {isEdit ? <MdCheck /> : <MdEdit />}
-            </EditButton>
-
-            <VisibilityToggle>
-              <span>{isHidden ? '비공개' : '공개'}</span>
-              <Switch
-                checked={!isHidden}
-                onChange={handleToggleVisibility}
-                color="primary"
-                disabled={updating}
-              />
-            </VisibilityToggle>
-          </>
+          <InstaSwitchRow>
+            <Switch
+              checked={!isHidden}
+              onChange={handleToggleVisibility}
+              color="primary"
+              size="small"
+              inputProps={{ 'aria-label': '공개/비공개 전환' }}
+              disabled={updating}
+            />
+            <InstaSwitchLabel>
+              {isHidden ? <MdVisibilityOff size={18} /> : <MdVisibility size={18} />}
+              {isHidden ? '비공개' : '공개'}
+            </InstaSwitchLabel>
+          </InstaSwitchRow>
         )}
-
-        {/* 신고 버튼 - 본인이 아닐 때만 표시 */}
-        {!isMine && (
-          <ReportButton onClick={() => setShowReportModal(true)} title="신고하기">
-            <MdReport /> 신고
-          </ReportButton>
+        {/* 가격 카드 */}
+        {localTrainer?.priceBase && (
+          <InstaPriceBox>
+            <InstaPriceTitle>PT 가격</InstaPriceTitle>
+            <InstaPriceValue>
+              {localTrainer.priceBase.toLocaleString()}원
+            </InstaPriceValue>
+          </InstaPriceBox>
         )}
-      </NameWrapper>
-
-      {isTrainer && <ReviewCount>⭐ 후기 {localTrainer?.reviews || 0}개</ReviewCount>}
-
-      {isTrainer &&
-        (isEdit ? (
-          <QuoteInput
-            type="text"
-            value={localTrainer?.intro ?? ''}
-            onChange={(e) => onChange('intro', e.target.value)}
-            placeholder="한줄소개를 입력하세요"
-          />
-        ) : (
-          <Quote>
-            {localTrainer?.intro?.trim()
-              ? `"${localTrainer.intro}"`
-              : '"한줄소개가 아직 등록되지 않았습니다."'}
-          </Quote>
-        ))}
-
-      {isTrainer && (
-        <SummaryBox>
-          <SummaryItem>📜 자격증 {localTrainer?.certifications?.length || 0}개</SummaryItem>
-          <SummaryItem>🏋️‍♂️ 전문: {(localTrainer?.specialties || []).join(', ')}</SummaryItem>
-          <SummaryItem>💰 1회 {localTrainer?.priceBase?.toLocaleString() || 0}원</SummaryItem>
-        </SummaryBox>
-      )}
+        {/* 경력 카드 */}
+        <InstaCareerBox>
+          <InstaCareerTitle>경력 및 자격</InstaCareerTitle>
+          <InstaCareerList>
+            {localTrainer?.certifications && localTrainer.certifications.length > 0 ? (
+              localTrainer.certifications.map((cert, idx) => (
+                <InstaCareerItem key={idx}>{cert}</InstaCareerItem>
+              ))
+            ) : (
+              <InstaCareerItem>경력 정보 없음</InstaCareerItem>
+            )}
+          </InstaCareerList>
+        </InstaCareerBox>
+      </InstaProfileInfo>
 
       {/* 신고 모달 */}
       {showReportModal && (
-        <ReportModal>
-          <h4>신고 사유를 선택하세요</h4>
-          <select
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.55)',
+            zIndex: 9999,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              borderRadius: '1.2rem',
+              padding: '2.2rem 1.5rem 1.5rem 1.5rem',
+              width: '95vw',
+              maxWidth: 400,
+              boxSizing: 'border-box',
+              boxShadow: '0 0.2rem 1.2rem rgba(0,0,0,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'stretch'
+            }}
+            onClick={e => e.stopPropagation()}
           >
-            <option value="">-- 선택 --</option>
-            {reportReasons[mode].map((reason) => (
-              <option key={reason} value={reason}>
-                {reason}
-              </option>
-            ))}
-          </select>
-          <ModalActions>
-            <button onClick={handleReportSubmit} disabled={!reportReason}>
-              제출
-            </button>
-            <button onClick={() => setShowReportModal(false)}>취소</button>
-          </ModalActions>
-        </ReportModal>
+            <h2 style={{
+              margin: 0, marginBottom: '1.2rem',
+              color: 'var(--primary-blue)',
+              fontSize: '1.4rem',
+              fontWeight: 700,
+              textAlign: 'center'
+            }}>프로필 신고하기</h2>
+            <div style={{
+              color: 'var(--text-secondary)',
+              fontSize: '1.08rem',
+              textAlign: 'center',
+              marginBottom: '1.2rem'
+            }}>신고 사유를 입력해주세요</div>
+            <textarea
+              placeholder="신고 사유를 자세히 작성해 주세요."
+              value={reportReason}
+              onChange={e => setReportReason(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: 90,
+                resize: 'none',
+                marginBottom: '1.2rem',
+                padding: '1rem',
+                fontSize: '1.08rem',
+                borderRadius: '0.7rem',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
+                border: '1.5px solid var(--border-light)',
+                outline: 'none'
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.7rem' }}>
+              <InstaButton onClick={() => setShowReportModal(false)}>취소</InstaButton>
+              <InstaButton $primary onClick={handleReportSubmit}>신고</InstaButton>
+            </div>
+          </div>
+        </div>
       )}
-    </ProfileHeader>
+    </InstaProfileHeader>
   );
 };
 
