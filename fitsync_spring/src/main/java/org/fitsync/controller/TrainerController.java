@@ -407,8 +407,8 @@ public class TrainerController {
     }
     
     @PostMapping("/images")
-    public ResponseEntity<List<String>> getTrainerImageUrls(@RequestBody List<Integer> attachIdxList) {
-        List<String> urls = attachMapper.getCloudinaryUrlsByIdxList(attachIdxList);
+    public ResponseEntity<List<String>> getTrainerImageUrls(@RequestBody List<Integer> list) {
+        List<String> urls = attachMapper.getCloudinaryUrlsByIdxList(list);
         return ResponseEntity.ok(urls);
     }    
 }

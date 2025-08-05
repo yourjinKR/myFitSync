@@ -11,7 +11,6 @@ const ReviewWrapper = styled.div`
   padding: 15px;
   border: 1px solid #ccc;
   box-sizing: border-box;
-  height: ${({ height }) => (height ? `${height}px` : 'auto')};
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -133,10 +132,19 @@ const Button = styled.button`
   }
 `;
 
-const Review = ({ content, score, height, title, memberName, review_idx }) => {
+const Review = ({ review = {} }) => {
+  const {
+    review_idx,
+    review_title,
+    review_content,
+    review_star,
+    member_name
+  } = review;
+
   const [modalVisible, setModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
-  const member = useSelector((state) => state.user.user); // 현재 로그인한 사용자 정보
+  const member = useSelector(state => state.user.user); // 로그인 유저 정보
+
   const openModal = () => {
     setReportReason('');
     setModalVisible(true);
@@ -154,11 +162,11 @@ const Review = ({ content, score, height, title, memberName, review_idx }) => {
       report_category: 'review',
       report_content: reportReason,
       report_hidden: 0,
-      member_idx: member?.member_idx, // 로그인된 사용자 IDX
+      member_idx: member?.member_idx,
     };
 
     try {
-      const res = await axios.post('/member/report/review', reportData);
+      await axios.post('/member/report/review', reportData);
       alert('신고가 접수되었습니다.');
       closeModal();
     } catch (err) {
@@ -169,25 +177,25 @@ const Review = ({ content, score, height, title, memberName, review_idx }) => {
 
   return (
     <>
-      <ReviewWrapper height={height}>
+      <ReviewWrapper>
         <div className="review-top">
-          <h3>{memberName} 회원님</h3>
+          <h3>{member_name} 회원님</h3>
           <button onClick={openModal}>신고</button>
         </div>
-        <ReviewScore score={score} />
-        <div>{title}</div>
-        <p>{content}</p>
+        <ReviewScore score={review_star} />
+        <div>{review_title}</div>
+        <p>{review_content}</p>
       </ReviewWrapper>
 
       {modalVisible && (
         <ModalOverlay onClick={closeModal}>
-          <ModalBox onClick={(e) => e.stopPropagation()}>
+          <ModalBox onClick={e => e.stopPropagation()}>
             <ModalTitle>리뷰 신고하기</ModalTitle>
             <ModalDesc>신고 사유를 입력해주세요</ModalDesc>
             <TextArea
               placeholder="신고 사유를 자세히 작성해 주세요."
               value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
+              onChange={e => setReportReason(e.target.value)}
             />
             <ButtonGroup>
               <Button onClick={closeModal}>취소</Button>

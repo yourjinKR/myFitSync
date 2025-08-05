@@ -156,65 +156,6 @@ const InstaSwitchLabel = styled.span`
   color: var(--text-tertiary);
 `;
 
-const InstaPriceBox = styled.div`
-  margin: 1.2rem 0 1.8rem 0;
-  background: var(--bg-tertiary);
-  border-radius: 1.2rem;
-  padding: 1.3rem 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
-`;
-
-const InstaPriceTitle = styled.div`
-  font-size: 1.18rem;
-  color: var(--primary-blue-light);
-  font-weight: 700;
-  margin-bottom: 0.2rem;
-`;
-
-const InstaPriceValue = styled.div`
-  font-size: 1.45rem;
-  font-weight: 900;
-  color: var(--primary-blue);
-  letter-spacing: 0.01em;
-`;
-
-const InstaCareerBox = styled.div`
-  margin-bottom: 2rem;
-  background: var(--bg-tertiary);
-  border-radius: 1.2rem;
-  padding: 1.3rem 1.1rem;
-  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
-`;
-
-const InstaCareerTitle = styled.div`
-  font-size: 1.18rem;
-  color: var(--primary-blue-light);
-  font-weight: 700;
-  margin-bottom: 0.7rem;
-`;
-
-const InstaCareerList = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 1.13rem;
-  color: var(--text-primary);
-`;
-
-const InstaCareerItem = styled.li`
-  padding-left: 0.5rem;
-  position: relative;
-  &:before {
-    content: '•';
-    color: var(--primary-blue-light);
-    position: absolute;
-    left: 0;
-  }
-`;
-
 // --- 컴포넌트 ---
 const TrainerProfileHeader = ({
   trainer,
@@ -289,7 +230,6 @@ const TrainerProfileHeader = ({
     <InstaProfileHeader>
       <InstaProfileImgWrap>
         <InstaProfileImg src={profileImage || '/default-profile.png'} alt="프로필" />
-        {/* 트레이너 또는 일반 유저 본인 모두 프로필 사진 변경 가능 */}
         {isMine && (
           <EditImgButton onClick={() => document.getElementById('profile-img-input').click()} title="프로필 이미지 변경">
             <MdCameraAlt size={20} />
@@ -344,28 +284,7 @@ const TrainerProfileHeader = ({
             </InstaSwitchLabel>
           </InstaSwitchRow>
         )}
-        {/* 가격 카드 */}
-        {localTrainer?.priceBase && (
-          <InstaPriceBox>
-            <InstaPriceTitle>PT 가격</InstaPriceTitle>
-            <InstaPriceValue>
-              {localTrainer.priceBase.toLocaleString()}원
-            </InstaPriceValue>
-          </InstaPriceBox>
-        )}
-        {/* 경력 카드 */}
-        <InstaCareerBox>
-          <InstaCareerTitle>경력 및 자격</InstaCareerTitle>
-          <InstaCareerList>
-            {localTrainer?.certifications && localTrainer.certifications.length > 0 ? (
-              localTrainer.certifications.map((cert, idx) => (
-                <InstaCareerItem key={idx}>{cert}</InstaCareerItem>
-              ))
-            ) : (
-              <InstaCareerItem>경력 정보 없음</InstaCareerItem>
-            )}
-          </InstaCareerList>
-        </InstaCareerBox>
+
       </InstaProfileInfo>
 
       {/* 신고 모달 */}

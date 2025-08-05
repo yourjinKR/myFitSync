@@ -5,6 +5,7 @@ import TrainerPriceList from './TrainerPriceList';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import TrainerMapContainer from './TrainerMapContainer';
+import Review from '../review/Review';
 
 // Styled Components
 const Section = styled.section`
@@ -340,16 +341,12 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
 
       <Section>
         <SectionTitle>최근 후기</SectionTitle>
-        {trainer.reviewList
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 2)
-          .map((review) => (
-            <ReviewItem key={review.id}>
-              <strong>{review.date}</strong>
-              <h4>{review.title}</h4>
-              <div>{review.content}</div>
-            </ReviewItem>
-          ))}
+          {trainer.reviewList
+            ?.sort((a, b) => b.review_idx - a.review_idx)
+            .slice(0, 2)
+            .map((review) => (
+              <Review key={review.review_idx} review={review} />
+            ))}
         <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
       </Section>
 
