@@ -8,6 +8,9 @@ import { SAVED_AFTER } from "../../reducers/type";
 import { useNavigate } from "react-router-dom";
 import useRequireLogin from "../../hooks/useRequireLogin";
 import { PaymentUtil } from "../../utils/PaymentUtil";
+import GradientButton from "./GradientButton";
+import { BsStars } from "react-icons/bs";
+import { PiStarFourFill } from "react-icons/pi";
 
 const UserApiLogContainer = () => {
     useRequireLogin();
@@ -210,10 +213,9 @@ const UserApiLogContainer = () => {
                             AI가 추천한 개인 맞춤 루틴을 확인하고 관리하세요
                         </Description>
                     </HeaderText>
-                    <CreateButton onClick={handleCreateNewRoutine}>
-                        <PlusIcon>+</PlusIcon>
-                        <ButtonText>새 루틴 추천</ButtonText>
-                    </CreateButton>
+                    <GradientButton onClick={handleCreateNewRoutine} size="small" circular>
+                        <PiStarFourFill style={{ position: "relative", zIndex: 2 }}/>
+                    </GradientButton>
                 </HeaderContent>
                 
                 {/* AI 사용량 표시 */}
@@ -470,8 +472,6 @@ const HeaderContent = styled.div`
   gap: 20px;
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
     gap: 15px;
   }
 `;

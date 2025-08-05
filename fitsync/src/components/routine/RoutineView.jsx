@@ -4,29 +4,18 @@ import RoutineList from './RoutineList';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import Routine from './Routine';
-
+import { BsStars } from "react-icons/bs";
+import { PiStarFourFill } from "react-icons/pi";
+import { useSubscription } from '../../hooks/useSubscription';
+import GradientButton from '../ai/GradientButton';
 
 const RoutineWrapper = styled.div`
   padding: 2rem;
   position: relative;
   background: var(--bg-primary);
   min-height: calc(100vh - 150px);
-  
-  & > button {
-    background: var(--primary-blue);
-    color: var(--text-primary);
-    border: 2px solid var(--primary-blue);
-    border-radius: 12px;
-    padding: 1.6rem 2rem;
-    width: 100%;
-    font-size: 1.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    
-    &:active {
-      transform: translateY(1px);
-    }
-  }
+
+  /* 더 이상 button 스타일 지정 X */
 
   & > .section-top {
     display: flex;
@@ -41,6 +30,7 @@ const RoutineWrapper = styled.div`
       color: var(--text-primary);
     }
 
+    /* section-top 내부의 버튼만 별도 유지 */
     button {
       background: var(--bg-tertiary);
       color: var(--text-primary);
@@ -51,7 +41,7 @@ const RoutineWrapper = styled.div`
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
-      
+
       svg {
         width: 2.4rem;
         height: 2.4rem;
@@ -63,6 +53,7 @@ const RoutineWrapper = styled.div`
     }
   }
 `;
+
 
 const TempDataWrapper = styled.div`
   display: flex;
@@ -87,6 +78,49 @@ const MoreCTA = styled.button`
   }
 `;
 
+const BaseButton = styled.button`
+  font-size: 1.6rem;
+  font-weight: 600;
+  padding: 1.6rem 2rem;
+  border-radius: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 0;
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+    padding: 1.2rem 1.6rem;
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 1.2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+
+  @media (max-width: 480px) {
+    gap: 1rem;
+  }
+`;
+
+export const PrimaryButton = styled(BaseButton)`
+  background: var(--primary-blue);
+  color: var(--text-primary);
+  border: 2px solid var(--primary-blue);
+  
+  &:hover {
+    background: var(--primary-blue-hover);
+    border-color: var(--primary-blue-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  }
+`;
 
 const RoutineView = () => {
   const { tempData, setTempData } = useOutletContext();
@@ -97,7 +131,14 @@ const RoutineView = () => {
   const isTrainerView = state?.viewer === 'trainer';
   const targetMemberIdx = state?.targetMember;
   
-
+  const { 
+    isSubscriber, 
+    totalCost, 
+    lastPaymentDate, 
+    loading, 
+    error, 
+    reload 
+  } = useSubscription();
   
   const nav = useNavigate();
   const handleAddRoutine = (type) => {
@@ -115,7 +156,18 @@ const RoutineView = () => {
 
   return (
     <RoutineWrapper>
-      <button onClick={() => handleAddRoutine("custom")}>빠른 기록&emsp;+ </button>
+      <ButtonContainer>
+        <PrimaryButton onClick={() => handleAddRoutine("custom")}>
+          빠른 기록&emsp;+
+        </PrimaryButton>
+        {isSubscriber && (
+          <GradientButton flex={true} onClick={() => nav('/ai/routine')}>
+            AI 추천&emsp;
+            <BsStars style={{ fontSize: "1.7rem", position: "relative", zIndex: 2}}/>
+          </GradientButton>
+        )}
+      </ButtonContainer>
+      
       {tempData && tempData.length > 0 ?
         <>
           <div className='section-top'>

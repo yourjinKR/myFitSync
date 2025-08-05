@@ -99,6 +99,7 @@ const GymWrapper = styled.div`
 
     tbody tr {
       transition: all 0.2s ease;
+      cursor : pointer;
       
       &:hover {
         background: var(--bg-tertiary);
@@ -1062,7 +1063,7 @@ const Gym = () => {
             </tr>
           ) : (
             gyms.map((gym) => (
-              <tr key={gym.gym_idx}>
+              <tr key={gym.gym_idx} onClick={() => handleEdit(gym.gym_idx)}>
                 <td>{gym.gym_idx}</td>
                 <td>{gym.gym_name}</td>
                 <td>{gym.gym_address}</td>
