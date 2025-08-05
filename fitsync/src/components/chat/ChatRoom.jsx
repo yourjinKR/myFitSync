@@ -189,7 +189,7 @@ const ChatRoom = () => {
     return { recentMessages, hasOldMessages: hasOldMessagesFound };
   }, []);
 
-  // 향상된 roomData 생성 함수 - 성별 정보 및 프로필 이미지 보완
+  // roomData 생성 함수
   const createEnhancedRoomData = useCallback(() => {
 
     if (!user || !roomId) {
@@ -206,14 +206,17 @@ const ChatRoom = () => {
         // 현재 사용자 정보로 보완
         if (enhancedRoomData.trainer_idx === user.member_idx) {
           enhancedRoomData.trainer_gender = user.member_gender;
+          enhancedRoomData.trainer_birth = user.member_birth;
         } else if (enhancedRoomData.user_idx === user.member_idx) {
           enhancedRoomData.user_gender = user.member_gender;
+          enhancedRoomData.user_birth = user.member_birth;
         }
         
         // trainerInfo에서 트레이너 성별 정보 추가
         if (location.state?.trainerInfo?.member_gender) {
           if (user.member_type !== 'trainer') {
             enhancedRoomData.trainer_gender = location.state.trainerInfo.member_gender;
+            enhancedRoomData.trainer_birth = location.state.trainerInfo.member_birth;
           }
         }
       }
@@ -239,11 +242,13 @@ const ChatRoom = () => {
           trainer_name: user.member_name,
           trainer_image: user.member_image,
           trainer_gender: user.member_gender,
+          trainer_birth: user.member_birth,
           trainer_email: user.member_email,
           trainer_type: user.member_type,
           user_name: trainerInfo.member_name,
           user_image: trainerInfo.member_image,
           user_gender: trainerInfo.member_gender,
+          user_birth: trainerInfo.member_birth,
           user_email: trainerInfo.member_email,
           user_type: trainerInfo.member_type
         };
@@ -255,12 +260,14 @@ const ChatRoom = () => {
           user_idx: user.member_idx,
           trainer_name: trainerInfo.member_name || '트레이너',
           trainer_image: trainerInfo.member_image,
-          trainer_gender: trainerInfo.member_gender, // 성별 정보 확실히 설정
+          trainer_gender: trainerInfo.member_gender, // 성별
+          trainer_birth: trainerInfo.member_birth, // 생년월일
           trainer_email: trainerInfo.member_email,
           trainer_type: trainerInfo.member_type || 'trainer',
           user_name: user.member_name || '회원',
           user_image: user.member_image,
-          user_gender: user.member_gender, // 현재 사용자 성별 정보도 설정
+          user_gender: user.member_gender, // 현재 사용자 성별
+          user_birth: user.member_birth, // 현재 사용자 생년월일
           user_email: user.member_email,
           user_type: user.member_type || 'user'
         };
@@ -279,11 +286,13 @@ const ChatRoom = () => {
       trainer_name: isCurrentUserTrainer ? user.member_name : '트레이너',
       trainer_image: isCurrentUserTrainer ? user.member_image : null,
       trainer_gender: isCurrentUserTrainer ? user.member_gender : null,
+      trainer_birth: isCurrentUserTrainer ? user.member_birth : null,
       trainer_email: isCurrentUserTrainer ? user.member_email : null,
       trainer_type: isCurrentUserTrainer ? user.member_type : 'trainer',
       user_name: isCurrentUserTrainer ? '회원' : user.member_name,
       user_image: isCurrentUserTrainer ? null : user.member_image,
       user_gender: isCurrentUserTrainer ? null : user.member_gender,
+      user_birth: isCurrentUserTrainer ? null : user.member_birth,
       user_email: isCurrentUserTrainer ? null : user.member_email,
       user_type: isCurrentUserTrainer ? 'user' : user.member_type
     };

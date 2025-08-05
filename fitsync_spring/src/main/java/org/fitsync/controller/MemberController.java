@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -272,6 +273,52 @@ public class MemberController {
         return ResponseEntity.ok("리뷰 신고가 접수되었습니다.");
     }
 
-
+    // 회원 프로필 정보 조회(채팅창)
+    @GetMapping("/user/profile/{memberIdx}")
+    public ResponseEntity<Map<String, Object>> getUserProfile(@PathVariable int memberIdx, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+        	// 세션 확인
+            Object sessionIdx = session.getAttribute("member_idx");
+            if (sessionIdx == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+            }
+            
+            // 회원 정보 조회
+            MemberVO member = service.getMemberByIdx(memberIdx);
+            
+            if (member == null) {
+                result.put("success", false);
+                result.put("message", "존재하지 않는 회원입니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+            }
+            
+            // 필요한 정보만 반환 (개인정보 보호)
+            Map<String, Object> profileData = new HashMap<>();
+            profileData.put("member_name", member.getMember_name());
+            profileData.put("member_image", member.getMember_image());
+            profileData.put("member_gender", member.getMember_gender());
+            // Birth 날짜 처리 - null 체크 및 형식 변환
+            if (member.getMember_birth() != null) {
+                // SQL Date를 문자열로 변환하여 전송 (JSON 직렬화 문제 방지)
+                String birthString = member.getMember_birth().toString(); // yyyy-MM-dd 형식
+                profileData.put("member_birth", birthString);
+            } else {
+                profileData.put("member_birth", null);
+            }
+            
+            return ResponseEntity.ok(profileData);
+            
+        } catch (Exception e) {
+            System.err.println("회원 프로필 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "프로필 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
 
 }

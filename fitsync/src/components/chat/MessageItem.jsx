@@ -1,7 +1,10 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import ImageModal from './ImageModal';
 import MessageContextMenu from './MessageContextMenu';
+import UserProfileModal from './UserProfileModal';
 import { useSelector } from 'react-redux';
 import chatApi from '../../utils/ChatApi';
 import { useWebSocket } from '../../hooks/UseWebSocket';
@@ -43,6 +46,7 @@ const ProfileImage = styled.div`
   flex-shrink: 0;
   margin-top: 0;
   position: relative;
+  cursor: ${props => props.$isConsecutive ? 'default' : 'pointer'};
   
   opacity: ${props => props.$isConsecutive ? 0 : 1};
   
@@ -57,6 +61,14 @@ const ProfileImage = styled.div`
   }};
   
   transition: all 0.3s ease;
+
+  ${props => !props.$isConsecutive && `
+
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  `}
   
   img {
     width: 100%;
@@ -84,6 +96,7 @@ const ProfileImage = styled.div`
   
   &.invisible {
     opacity: 0;
+    cursor: default;
   }
 `;
 
@@ -597,6 +610,7 @@ const MessageItem = ({
 
   // Redux에서 사용자 정보 가져오기
   const { user } = useSelector(state => state.user);
+  const navigate = useNavigate();
   
   // WebSocket 훅에서 브로드캐스트 함수 가져오기
   const { broadcastMatchingStatus } = useWebSocket();
@@ -625,6 +639,10 @@ const MessageItem = ({
     position: { x: 0, y: 0 }
   });
   
+  // 프로필 모달 상태
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileUserInfo, setProfileUserInfo] = useState(null);
+  
   // 매칭 관련 상태
   const [matchingLoading, setMatchingLoading] = useState(false);
 
@@ -639,6 +657,74 @@ const MessageItem = ({
     }
     
     return false;
+  };
+
+  // 프로필 이미지 클릭 핸들러
+  const handleProfileImageClick = async () => {
+    if (isConsecutive || isCurrentUser) return;
+    
+    // 상대방 정보 가져오기
+    const otherPersonInfo = getOtherPersonInfo();
+    if (!otherPersonInfo) return;
+    
+    try {
+      if (otherPersonInfo.type === 'trainer') {
+        // 트레이너인 경우 - TrainerDetailView로 이동
+        navigate(`/trainer/view/${otherPersonInfo.member_idx}`);
+      } else if (otherPersonInfo.type === 'user') {
+        // 회원인 경우 - 상세 정보 조회 후 모달 표시
+        const response = await axios.get(`/member/user/profile/${otherPersonInfo.member_idx}`, {
+          withCredentials: true
+        });
+        
+        // API 응답 구조에 맞게 수정
+        if (response.data) {
+          setProfileUserInfo(response.data);
+          setIsProfileModalOpen(true);
+        }
+      }
+    } catch (error) {
+      console.error('프로필 정보 조회 실패:', error);
+      // 기본 모달 표시 (user 타입인 경우)
+      if (otherPersonInfo.type === 'user') {
+        setProfileUserInfo({
+          member_name: otherPersonInfo.name,
+          member_image: otherPersonInfo.image,
+          member_gender: otherPersonInfo.gender,
+          member_birth: null
+        });
+        setIsProfileModalOpen(true);
+      }
+    }
+  };
+
+  // 상대방 정보 가져오기 함수
+  const getOtherPersonInfo = () => {
+    if (!roomData || !user) {
+      return null;
+    }
+      
+    const currentMemberIdx = user.member_idx;
+      
+    if (roomData.trainer_idx === currentMemberIdx) {
+      // 내가 트레이너인 경우 → 회원 반환
+      return {
+        member_idx: roomData.user_idx,
+        name: roomData.user_name || '회원',
+        image: roomData.user_image,
+        gender: roomData.user_gender,
+        type: 'user'
+      };
+    } else {
+      // 내가 일반 사용자인 경우 → 트레이너 반환
+      return {
+        member_idx: roomData.trainer_idx,
+        name: roomData.trainer_name || '트레이너',
+        image: roomData.trainer_image,
+        gender: roomData.trainer_gender,
+        type: roomData.trainer_type || 'trainer'
+      };
+    }
   };
 
   // 매칭 상태 조회 - 단 한 번만 실행 - 매칭 요청 메시지의 실시간 상태를 DB에서 조회
@@ -924,6 +1010,8 @@ const MessageItem = ({
       <ProfileImage 
         $isConsecutive={isConsecutive}
         $gender={senderGender}
+        onClick={handleProfileImageClick}
+        title={isConsecutive ? '' : '프로필 보기'}
       >
         {hasValidImage ? (
           <img 
@@ -1137,6 +1225,13 @@ const MessageItem = ({
         onClose={handleModalClose}
       />
     )}
+
+    {/* 회원 프로필 모달 */}
+    <UserProfileModal
+      isOpen={isProfileModalOpen}
+      onClose={() => setIsProfileModalOpen(false)}
+      userInfo={profileUserInfo}
+    />
     </>
   );
 };

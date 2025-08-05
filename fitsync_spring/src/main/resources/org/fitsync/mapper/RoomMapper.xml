@@ -60,11 +60,13 @@
             t.member_email as trainer_email,
             t.member_type as trainer_type,
             t.member_gender as trainer_gender,
+            t.member_gender as trainer_birth,
             u.member_name as user_name,
             u.member_image as user_image,
             u.member_email as user_email,
             u.member_type as user_type,
-            u.member_gender as user_gender
+            u.member_gender as user_gender,
+            u.member_gender as user_birth
         FROM room r
         LEFT JOIN member t ON r.trainer_idx = t.member_idx
         LEFT JOIN member u ON r.user_idx = u.member_idx

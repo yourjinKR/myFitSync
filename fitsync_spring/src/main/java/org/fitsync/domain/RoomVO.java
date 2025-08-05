@@ -19,6 +19,7 @@ public class RoomVO {
 	private String trainer_email, user_email;
 	private String trainer_type, user_type;
 	private String trainer_gender, user_gender;
+	private String trainer_birth, user_birth;
 	
 	public RoomVO(int trainer_idx, int user_idx, String room_name) {
 		this.trainer_idx = trainer_idx;
