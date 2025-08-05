@@ -659,7 +659,16 @@ const handleRoutineResponse = async () => {
               location.pathname !== `/routine/detail/${routine_list_idx}` ? 
               <HeaderCTA disabled={location.pathname !== '/routine/set' ? true : false} onClick={handleDataSubmit}>저장</HeaderCTA>
               :
-              <HeaderCTA disabled={isEdit || routineData?.routines.length === 0} onClick={handleRocordSubmit}>마치기</HeaderCTA>
+              <HeaderCTA 
+                disabled={
+                  routine_list_idx === 'custom' 
+                    ? !targetDate && (routineData?.routines?.length === 0) 
+                    : isEdit || (routineData?.routines?.length === 0)
+                } 
+                onClick={handleRocordSubmit}
+              >
+                {routine_list_idx === 'custom' && targetDate ? '저장' : '마치기'}
+              </HeaderCTA>
             }
           </HeaderWrapper> : <></>}
       {
