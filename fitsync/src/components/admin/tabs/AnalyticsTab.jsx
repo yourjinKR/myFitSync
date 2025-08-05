@@ -261,7 +261,7 @@ const AnalyticsTab = ({
                                                 <InsightItem>
                                                     <InsightIcon>🕐</InsightIcon>
                                                     <InsightText>
-                                                        가장 활발한 시간대: {
+                                                        요청이 가장 많은 시간대: {
                                                             timelineData.datasets[0].data.indexOf(
                                                                 Math.max(...timelineData.datasets[0].data)
                                                             )
@@ -271,7 +271,7 @@ const AnalyticsTab = ({
                                                 <InsightItem>
                                                     <InsightIcon>😴</InsightIcon>
                                                     <InsightText>
-                                                        가장 조용한 시간대: {
+                                                        요청이 가장 적은 시간대: {
                                                             timelineData.datasets[0].data.indexOf(
                                                                 Math.min(...timelineData.datasets[0].data.filter(v => v > 0))
                                                             )
@@ -488,222 +488,360 @@ const AnalyticsTab = ({
 
 // 스타일 컴포넌트들 (다음 응답에서 계속)
 const TabContainer = styled.div`
-  background: #f9fafb;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border-radius: 0.75rem;
   height: 100%;
   overflow-y: auto;
 `;
 
 const TabHeader = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--bg-secondary);
+  padding: 2.5rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  border-bottom: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const TabTitle = styled.h2`
-  margin: 0 0 8px 0;
-  font-size: 24px;
+  margin: 0 0 0.8rem 0;
+  font-size: 2.8rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 2.4rem;
+  }
 `;
 
 const TabDescription = styled.p`
   margin: 0;
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
 `;
 
 const TabContent = styled.div`
-  padding: 24px;
+  padding: 2.5rem;
+  
+  @media (max-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const AnalysisSelector = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 2.2rem;
+  margin-bottom: 2.8rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+  }
 `;
 
 const SelectorTitle = styled.h3`
-  margin: 0 0 16px 0;
-  font-size: 16px;
+  margin: 0 0 1.8rem 0;
+  font-size: 1.8rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const SelectorButtons = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 1.4rem;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    gap: 1.2rem;
+  }
 `;
 
 const SelectorButton = styled.button`
-  padding: 8px 16px;
-  border: 1px solid ${props => props.active ? '#3b82f6' : '#d1d5db'};
-  background: ${props => props.active ? '#3b82f6' : 'white'};
-  color: ${props => props.active ? 'white' : '#374151'};
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 1rem 1.8rem;
+  border: 1px solid ${props => props.active ? 'var(--primary-blue)' : 'var(--border-light)'};
+  background: ${props => props.active ? 'var(--primary-blue)' : 'var(--bg-tertiary)'};
+  color: ${props => props.active ? 'var(--text-primary)' : 'var(--text-secondary)'};
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 
   &:hover {
-    border-color: #3b82f6;
-    ${props => !props.active && `background: #f3f4f6;`}
+    border-color: var(--primary-blue);
+    ${props => !props.active && `background: var(--bg-secondary); color: var(--text-primary);`}
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.9rem 1.6rem;
+    font-size: 1.3rem;
   }
 `;
 
 const AnalysisContent = styled.div`
-  margin-bottom: 24px;
+  margin-bottom: 2.8rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 2.5rem;
+  }
 `;
 
 const AnalysisSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 2.8rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    padding: 2.5rem;
+  }
 `;
 
 const SectionTitle = styled.h3`
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 2.2rem 0;
+  font-size: 2rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
 `;
 
 const AnalysisGrid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 24px;
+  gap: 2.8rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
 `;
 
 const ChartContainer = styled.div`
-  height: 400px;
+  height: 450px;
   position: relative;
+  
+  @media (max-width: 768px) {
+    height: 400px;
+  }
 `;
 
 const InsightsPanel = styled.div`
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 20px;
+  background: var(--bg-tertiary);
+  border-radius: 0.75rem;
+  padding: 2.2rem;
+  border: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const InsightsTitle = styled.h4`
-  margin: 0 0 16px 0;
-  font-size: 14px;
+  margin: 0 0 1.8rem 0;
+  font-size: 1.6rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const InsightsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 1.4rem;
+  
+  @media (max-width: 768px) {
+    gap: 1.2rem;
+  }
 `;
 
 const InsightItem = styled.div`
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+  }
 `;
 
 const InsightIcon = styled.span`
-  font-size: 16px;
-  margin-top: 2px;
+  font-size: 1.8rem;
+  margin-top: 0.2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
 `;
 
 const InsightText = styled.span`
-  font-size: 13px;
-  color: #6b7280;
-  line-height: 1.4;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
 `;
 
 const ModelStats = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+  }
 `;
 
 const StatRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-light);
+  
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 
 const StatLabel = styled.span`
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
 `;
 
 const StatValue = styled.span`
-  font-size: 13px;
+  font-size: 1.4rem;
   font-weight: 600;
   color: ${props => {
-        if (props.good) return '#059669';
-        if (props.warning) return '#d97706';
-        if (props.error) return '#dc2626';
-        return '#374151';
+        if (props.good) return 'var(--success)';
+        if (props.warning) return 'var(--warning)';
+        if (props.error) return 'var(--warning)';
+        return 'var(--text-primary)';
     }};
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
 `;
 
 const PerformanceStats = styled(ModelStats)``;
 
 const ErrorAnalysisGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
 `;
 
 const ErrorCard = styled.div`
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--warning);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.8rem;
+  }
 `;
 
 const ErrorCardTitle = styled.h4`
-  margin: 0 0 12px 0;
-  font-size: 14px;
+  margin: 0 0 1.4rem 0;
+  font-size: 1.6rem;
   font-weight: 600;
-  color: #991b1b;
+  color: var(--warning);
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
 `;
 
 const ErrorList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+  }
 `;
 
 const ErrorItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid #fecaca;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border-light);
 
   &:last-child {
     border-bottom: none;
   }
+  
+  @media (max-width: 768px) {
+    padding: 0.7rem 0;
+  }
 `;
 
 const ErrorLabel = styled.span`
-  font-size: 12px;
-  color: #7f1d1d;
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 const ErrorCount = styled.span`
-  font-size: 12px;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #991b1b;
+  color: var(--warning);
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 const ErrorSummary = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+  }
 `;
 
 const SummaryRow = styled(StatRow)``;
@@ -711,37 +849,67 @@ const SummaryLabel = styled(StatLabel)``;
 const SummaryValue = styled(StatValue)``;
 
 const SummarySection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 2.8rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    padding: 2.5rem;
+  }
 `;
 
 const SummaryTitle = styled.h3`
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 2.2rem 0;
+  font-size: 2rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
 `;
 
 const SummaryCards = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.8rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 `;
 
 const SummaryCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  gap: 1.4rem;
+  padding: 2rem;
+  background: var(--bg-tertiary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 1.8rem;
+    gap: 1.2rem;
+  }
 `;
 
 const SummaryCardIcon = styled.span`
-  font-size: 24px;
+  font-size: 2.8rem;
+  
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
 `;
 
 const SummaryCardContent = styled.div`
@@ -749,21 +917,33 @@ const SummaryCardContent = styled.div`
 `;
 
 const SummaryCardTitle = styled.div`
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 4px;
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 const SummaryCardValue = styled.div`
-  font-size: 16px;
+  font-size: 1.8rem;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 2px;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
 `;
 
 const SummaryCardDetail = styled.div`
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
 `;
 
 const NoDataMessage = styled.div`
@@ -771,8 +951,12 @@ const NoDataMessage = styled.div`
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #9ca3af;
-  font-size: 14px;
+  color: var(--text-tertiary);
+  font-size: 1.6rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
 `;
 
 export default AnalyticsTab;

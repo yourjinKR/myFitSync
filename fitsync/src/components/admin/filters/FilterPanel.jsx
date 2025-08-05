@@ -121,10 +121,10 @@ const FilterPanel = ({
                 <FilterGroup>
                     <FilterLabel>정렬</FilterLabel>
                     <StyledSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                        <option value="newest">🆕 최신순</option>
-                        <option value="oldest">📅 오래된순</option>
-                        <option value="tokens">🪙 토큰순</option>
-                        <option value="time">⏱️ 응답시간순</option>
+                        <option value="newest">최신순</option>
+                        <option value="oldest">오래된순</option>
+                        <option value="tokens">토큰순</option>
+                        <option value="time">응답시간순</option>
                     </StyledSelect>
                 </FilterGroup>
                 
