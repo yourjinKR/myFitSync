@@ -32,11 +32,6 @@ export const useWebSocket = () => {
       const getWebSocketUrl = () => {
         const currentHost = window.location.hostname;
         const protocol = window.location.protocol;
-
-        if (window.location.hostname === 'fitsyncproject.vercel.app') {
-          // Quick Tunnel URL (실행할 때마다 확인 필요)
-          return 'https://piece-ms-houston-beat.trycloudflare.com';
-        }
         
         return `${protocol}//${currentHost}:7070/chat`;
       };
