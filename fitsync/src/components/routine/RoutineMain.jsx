@@ -303,9 +303,49 @@ const RoutineMain = () => {
   },[newData])
 
   useEffect(() => {
+    console.log("🚀  :  tempData:", tempData)
     if(tempData === null) return;
     localStorage.setItem('routineData', JSON.stringify(tempData));
   },[tempData]);
+
+  // routineData 변경시 custom 모드에서 tempData 업데이트
+  useEffect(() => {
+    if (routine_list_idx === 'custom' && routineData && routineData.routines && routineData.routines.length > 0) {
+      console.log("🚀 routineData 변경 감지:", routineData);
+      // 한국 시간 형식으로 생성
+      const getKoreaTime = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      };
+      const currentDate = targetDate || getKoreaTime();
+      const updatedData = {
+        ...routineData,
+        saveDate: currentDate,
+        routine_list_idx: 'custom'
+      };
+      
+      console.log("🚀 업데이트할 데이터:", updatedData);
+      setTempData(prev => {
+        console.log("🚀 이전 tempData:", prev);
+        const existingIndex = prev.findIndex(item => item.saveDate === currentDate);
+        if (existingIndex !== -1) {
+          const newTempData = [...prev];
+          newTempData[existingIndex] = updatedData;
+          console.log("🚀 기존 항목 업데이트:", newTempData);
+          return newTempData;
+        } else {
+          console.log("🚀 새 항목 추가:", [...prev, updatedData]);
+          return [...prev, updatedData];
+        }
+      });
+    }
+  }, [routineData, routine_list_idx, targetDate]);
 
   // 루틴 추가
 const handleRoutineResponse = async () => {
@@ -356,10 +396,10 @@ const handleRoutineResponse = async () => {
     };
 
     const dataFilter = newData.routines;
-    dataFilter.map((routine) => {
+    dataFilter.forEach((routine) => {
       const sets = routine.sets;
       const filter = sets.filter((set) => set.checked === undefined || set.checked === false); 
-      filter.map((set,idx) => {
+      filter.forEach((set,idx) => {
         setUnfinished(prev => [
           ...prev, 
           `${routine.pt.pt_name} ${filter[idx].set_num}세트`
@@ -407,7 +447,15 @@ const handleRoutineResponse = async () => {
           // 루틴 이름이 없으면 기본 이름 설정
           let updatedRoutineData = { ...postData };
           if(!updatedRoutineData.routine_name || updatedRoutineData.routine_name === "") {
-            updatedRoutineData.routine_name = `루틴_${postData.saveDate.slice(0, 10)}`;
+            const getDateStr = () => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            const dateStr = postData.saveDate ? postData.saveDate.slice(0, 10) : getDateStr();
+            updatedRoutineData.routine_name = `루틴_${dateStr}`;
           }
           
           // 업데이트된 데이터로 루틴 등록
@@ -474,7 +522,7 @@ const handleRoutineResponse = async () => {
 
   useEffect(() => {
     if(newData === null) return;
-  },[isEdit]);
+  },[newData, isEdit]);
   
   useEffect(() => {
     if(init === null) return;
@@ -578,9 +626,17 @@ const handleRoutineResponse = async () => {
     checkedRef.current = e.target;
     const chk = e.target.checked;
     if( chk) {
+      const getDateStr = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const dateStr = routineData.saveDate ? routineData.saveDate.slice(0, 10) : getDateStr();
       setRoutineData(prev => ({
         ...prev,
-        routine_name: `루틴_${routineData.saveDate.slice(0, 10)}`,
+        routine_name: `루틴_${dateStr}`,
       }));
     }else{
       setRoutineData(prev => ({

@@ -231,7 +231,9 @@ const MemberRegister = () => {
       member_activity_area: `${info.sido1 || ''} ${info.gugun1 || ''}`.trim()
     };
 
-    const response = await axios.post('/member/register', sendInfo);
+    const response = await axios.post('/member/register', sendInfo, {
+      withCredentials: true
+    });
     if (response.data.success) {
       dispatch(setUser(response.data.user));
       alert('회원 정보가 등록되었습니다.');
