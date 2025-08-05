@@ -14,7 +14,8 @@ public interface MemberService {
 	public MemberVO getFindUser(String member_email);
 	// 유저 추가 입력
 	public boolean insertUser(Map<String, String> body);
-	
+	// 유저 정보 업데이트
+	public boolean updateInfo(MemberVO vo);
 	// 트레이너 정보 조회
     public MemberVO getTrainerByIdx(int memberIdx);
     // 트레이너의 자격증/수상경력/학위 조회

@@ -94,6 +94,11 @@ public class MemberServiceImple implements MemberService {
 		}
 	}
 	
+	@Override
+	public boolean updateInfo(MemberVO vo) {
+		return mapper.updateInfo(vo) > 0;
+	}
+	
 	// 트레이너 프로필 조회
     @Override
     public MemberVO getTrainerByIdx(int memberIdx) {

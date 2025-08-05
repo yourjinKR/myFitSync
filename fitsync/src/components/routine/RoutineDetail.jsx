@@ -16,7 +16,7 @@ const { getTimeDifference } = dateFormat;
 const WorkoutSetWrapper = styled.div`
   padding: 16px;
   background: var(--bg-primary);
-  height: 100vh;
+  height: calc(100vh - 150px);
   overflow-y: auto;
 
   h3 {

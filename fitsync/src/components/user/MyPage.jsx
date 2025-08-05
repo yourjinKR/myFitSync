@@ -7,6 +7,7 @@ import LatestBodyInfo from './LatestBodyInfo';
 import TrainerProfileHeader from '../trainer/TrainerProfileHeader';
 import { useSelector } from 'react-redux';
 import { PrimaryButton, SecondaryButton, ButtonGroup } from '../../styles/commonStyle';
+import UserInfo from './UserInfo';
 
 const Container = styled.div`
   display: flex;
@@ -177,6 +178,7 @@ const MyPage = () => {
   const [loading, setLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
   const [showAllRoutines, setShowAllRoutines] = useState(false);
+  const [isInfoEdit, setIsInfoEdit] = useState(false);
 
   useEffect(() => {
     if (loginUser) {
@@ -197,19 +199,18 @@ const MyPage = () => {
     }
   };
 
-    useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get('/user/profile', { withCredentials: true });
-        setUser(res.data);
-        
-      } catch (error) {
-        console.error('유저 정보 불러오기 실패', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get('/user/profile', { withCredentials: true });
+      setUser(res.data); 
+    } catch (error) {
+      console.error('유저 정보 불러오기 실패', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUser();
   }, []);
 
@@ -254,7 +255,14 @@ const MyPage = () => {
         onChange={onChange}
         loginUserId={loginUser?.member_email}
         onImageChange={handleImageChange}
+        setIsInfoEdit={setIsInfoEdit}
       />
+      {isInfoEdit && (
+        <Section>
+          <SectionTitle>개인정보 수정</SectionTitle>
+          <UserInfo user={user} setIsInfoEdit={setIsInfoEdit}/>
+        </Section>
+      )}
       <Section>
         <SectionTitle>최근 인바디 정보</SectionTitle>
         <LatestBodyInfo onUpdate={handleBodyUpdate} />

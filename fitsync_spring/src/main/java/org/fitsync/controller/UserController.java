@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.extern.log4j.Log4j;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -259,5 +261,19 @@ public class UserController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(nextSchedule);
+    }
+    
+    @PostMapping("/info")
+    public ResponseEntity<?> updateInfo(@RequestBody MemberVO vo, HttpSession session) {
+    	Map<String, Object> result = new HashMap<String, Object>();
+    	vo.setMember_idx((int) session.getAttribute("member_idx"));
+    	if(memberService.updateInfo(vo)) {
+    		result.put("success", true);
+    	}else {
+    		result.put("success", false);
+    		result.put("msg", "수정에 실패하였습니다.");
+    	}
+        
+        return ResponseEntity.ok(result);
     }
 }

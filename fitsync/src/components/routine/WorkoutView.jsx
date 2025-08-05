@@ -104,18 +104,8 @@ export default WorkoutView;
 
 
 const Wrapper = styled.div`
-  position : fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  overflow-y: auto;
-  background: var(--bg-primary);
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 4rem 2rem;
-  color: var(--text-primary);
+  margin-top:5%;
+  padding: 0 30px 30px;
 `;
 
 const Title = styled.h1`
@@ -266,7 +256,6 @@ const FullscreenOverlay = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  max-width: 750px;
   height: 100vh;
   margin: 0 auto;
   background-color: var(--bg-primary);
@@ -282,7 +271,9 @@ const FullscreenOverlay = styled.div`
 `;
 
 const FullscreenContent = styled.div`
+  max-width: 750px;
   flex: 1;
   background: var(--bg-primary);
   color: var(--text-primary);
+  margin: 0 auto;
 `;

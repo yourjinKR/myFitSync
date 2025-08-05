@@ -73,13 +73,14 @@
 	</insert>
 
 	<!-- 유저 추가정보 입력 -->
-	<!-- <update id="updateInfo" parameterType="org.fitsync.domain.MemberVO">
+	<update id="updateInfo" parameterType="org.fitsync.domain.MemberVO">
 		UPDATE MEMBER SET 
 			MEMBER_PURPOSE = #{member_purpose},
 			MEMBER_DISEASE = #{member_disease},
-			MEMBER_TIME = #{member_time}			
+			MEMBER_TIME = #{member_time},
+			MEMBER_ACTIVITY_AREA = #{member_activity_area}			
 		WHERE MEMBER_IDX = #{member_idx}
-	</update> -->
+	</update>
 	
 	<!-- 트레이너 추가정보 입력 -->
 	<!-- <update id="updateTrainerInfo" parameterType="org.fitsync.domain.MemberVO">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { MdEdit, MdCheck, MdReport, MdVisibility, MdVisibilityOff, MdCameraAlt } from 'react-icons/md';
 import Switch from '@mui/material/Switch';
+import SettingsIcon from '@mui/icons-material/Settings';
 import ProfileImageEditable from '../ProfileImageEditable';
 import axios from 'axios';
 
@@ -16,6 +17,7 @@ const InstaProfileHeader = styled.div`
   box-shadow: 0 0.3rem 1.5rem rgba(0,0,0,0.13);
   max-width: 715px;
   min-width: 0;
+  position: relative;
 
   @media (max-width: 600px) {
     flex-direction: column;
@@ -156,6 +158,76 @@ const InstaSwitchLabel = styled.span`
   color: var(--text-tertiary);
 `;
 
+const InstaPriceBox = styled.div`
+  margin: 1.2rem 0 1.8rem 0;
+  background: var(--bg-tertiary);
+  border-radius: 1.2rem;
+  padding: 1.3rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+`;
+
+const InstaPriceTitle = styled.div`
+  font-size: 1.18rem;
+  color: var(--primary-blue-light);
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+`;
+
+const InstaPriceValue = styled.div`
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--primary-blue);
+  letter-spacing: 0.01em;
+`;
+
+const InstaCareerBox = styled.div`
+  margin-bottom: 2rem;
+  background: var(--bg-tertiary);
+  border-radius: 1.2rem;
+  padding: 1.3rem 1.1rem;
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+`;
+
+const InstaCareerTitle = styled.div`
+  font-size: 1.18rem;
+  color: var(--primary-blue-light);
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+`;
+
+const InstaCareerList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 1.13rem;
+  color: var(--text-primary);
+`;
+
+const InstaCareerItem = styled.li`
+  padding-left: 0.5rem;
+  position: relative;
+  &:before {
+    content: '•';
+    color: var(--primary-blue-light);
+    position: absolute;
+    left: 0;
+  }
+`;
+
+const ButtonEdit = styled.button`
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  svg{
+    width: 2.4rem;
+    height: 2.4rem;
+    color: var(--text-secondary);
+  }
+`;
+
 // --- 컴포넌트 ---
 const TrainerProfileHeader = ({
   trainer,
@@ -167,6 +239,7 @@ const TrainerProfileHeader = ({
   mode = 'trainer',
   onImageChange,
   onVisibilityToggle,
+  setIsInfoEdit
 }) => {
   const isTrainer = mode === 'trainer';
   const [localTrainer, setLocalTrainer] = useState(trainer);
@@ -352,6 +425,11 @@ const TrainerProfileHeader = ({
             </div>
           </div>
         </div>
+      )}
+      {!isTrainer && (
+        <ButtonEdit onClick={() => setIsInfoEdit(true)} title="프로필 설정">
+          <SettingsIcon />
+        </ButtonEdit>
       )}
     </InstaProfileHeader>
   );
