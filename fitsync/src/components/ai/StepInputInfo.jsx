@@ -924,7 +924,7 @@ const ChatBubble = styled.div`
     border-radius: 20px 20px 20px 5px;
     padding: 1.5rem;
     position: relative;
-    max-width: 300px;
+    max-width: 320px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     
     /* 말풍선 꼬리 */
@@ -1039,12 +1039,23 @@ const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }
                     맞춤형 운동 루틴을 만들어드릴게요!
                 </>
             );
-        } else {
+        } 
+        else if (available && !isSubscriber) {
+            return (
+                <>
+                    반가워요 <ChatHighlight>{formData.name}</ChatHighlight>님! 🙋‍♂️<br/>
+                    <ChatHighlight>무료 추천 서비스</ChatHighlight>를 제공해 드릴게요!<br/>
+                    지금 바로 시작할까요?
+                </>
+            )
+        }
+        else {
             return (
                 <>
                     안녕하세요! <ChatHighlight>{formData.name}</ChatHighlight>님! 👋<br/>
-                    저는 여러분의 <ChatHighlight>AI 트레이너</ChatHighlight>입니다!<br/>
-                    맞춤형 운동 루틴을 만들어드릴게요!
+                    AI 루틴 추천서비스를 이용하기 위해서는<br/>
+                    구독이 필요해요😂<br/>
+                    <button>구독하러 가기</button>
                 </>
             );
         }

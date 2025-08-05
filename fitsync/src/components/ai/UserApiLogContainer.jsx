@@ -217,25 +217,27 @@ const UserApiLogContainer = () => {
                 </HeaderContent>
                 
                 {/* AI 사용량 표시 */}
-                <UsageSection>
-                    <UsageHeader>
-                        <UsageLabel>AI 사용량</UsageLabel>
-                        <UsagePercentage>
-                            {subscriptionData?.totalCost >= 0
-                                ? `${Math.min(100, ((subscriptionData?.totalCost / 5) * 100)).toFixed(0)}%`
-                                : '계산 중...'}
-                        </UsagePercentage>
-                    </UsageHeader>
-                    <UsageBarContainer>
-                        <UsageBarFill 
-                            $percentage={
-                                subscriptionData?.totalCost > 0 
-                                    ? Math.min(100, (subscriptionData?.totalCost / 5) * 100) 
-                                    : 0
-                            }
-                        />
-                    </UsageBarContainer>
-                </UsageSection>
+                {subscriptionData?.isSubScription && (
+                  <UsageSection>
+                      <UsageHeader>
+                          <UsageLabel>AI 사용량</UsageLabel>
+                          <UsagePercentage>
+                              {subscriptionData?.totalCost >= 0
+                                  ? `${Math.min(100, ((subscriptionData?.totalCost / 5) * 100)).toFixed(0)}%`
+                                  : '계산 중...'}
+                          </UsagePercentage>
+                      </UsageHeader>
+                      <UsageBarContainer>
+                          <UsageBarFill 
+                              $percentage={
+                                  subscriptionData?.totalCost > 0 
+                                      ? Math.min(100, (subscriptionData?.totalCost / 5) * 100) 
+                                      : 0
+                              }
+                          />
+                      </UsageBarContainer>
+                  </UsageSection>
+                )}
             </Header>
 
             {/* 검색 섹션 */}
