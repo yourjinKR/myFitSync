@@ -59,4 +59,15 @@
             SELECT member_image FROM member WHERE member_idx = #{memberIdx}
         )
     </select>
+    
+	<select id="getCloudinaryUrlsByIdxList" parameterType="list" resultType="string">
+	  <if test="list != null and list.size() > 0">
+	    SELECT CLOUDINARY_URL
+	    FROM chatattach
+	    WHERE attach_idx IN
+	    <foreach item="idx" collection="list" open="(" separator="," close=")">
+	      #{idx}
+	    </foreach>
+	  </if>
+	</select>
 </mapper>

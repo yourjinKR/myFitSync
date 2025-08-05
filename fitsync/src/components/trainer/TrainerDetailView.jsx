@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { MdChat } from 'react-icons/md';
+import ChatApi from '../../utils/ChatApi';
 
 import TrainerProfileHeader from './TrainerProfileHeader';
 import TrainerIntroSection from './TrainerIntroSection';
@@ -45,7 +46,7 @@ const TabButton = styled.button`
   transition: background 0.2s, color 0.2s;
 `;
 
-// 플로팅 버튼
+// 플로팅 버튼 (상담하기 버튼)
 const FloatingButton = styled.button`
   position: fixed;
   bottom: 1.5rem;
@@ -64,8 +65,15 @@ const FloatingButton = styled.button`
   justify-content: center;
   font-size: 2rem;
   transition: background 0.2s;
+  
   &:hover {
     background: var(--primary-blue-hover);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--border-medium);
   }
 `;
 
@@ -127,6 +135,7 @@ const TrainerDetailView = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('소개');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isConsultLoading, setIsConsultLoading] = useState(false); // 상담 버튼 로딩 상태
 
   useEffect(() => {
     async function fetchData() {
@@ -148,11 +157,31 @@ const TrainerDetailView = () => {
           profile_image: data.member_image,
           gym_idx : data.gym_idx,
           gymInfo : data.gymInfo,
-          member_hidden : data.member_hidden
+          member_hidden : data.member_hidden,
+          
+          // 채팅방 생성 시 필요한 필드들
+          member_name: data.member_name,
+          member_image: data.member_image,
+          member_gender: data.member_gender,
+          member_birth: data.member_birth,
+          member_type: data.member_type || 'trainer',
+          member_info: data.member_info,
+          member_purpose: data.member_purpose,
+          member_time: data.member_time,
+          member_activity_area: data.member_activity_area,
+          member_intro: data.member_intro,
+          member_disease: data.member_disease
         };
 
+        console.log('트레이너 데이터 확인:', {
+          member_idx: data.member_idx,
+          member_name: data.member_name,
+          member_gender: data.member_gender,
+          member_birth: data.member_birth,
+          member_image: data.member_image
+        });
+
         console.log(trainerData);
-        
         
         // 레슨 데이터도 함께 불러오기
         const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
@@ -171,11 +200,97 @@ const TrainerDetailView = () => {
 
   const isLoggedIn = !!loginUserId;
 
-  const handleConsultClick = () => {
+  // 상담 버튼 클릭 핸들러
+  const handleConsultClick = async () => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
-    } else {
-      navigate(`/consult/${trainer.member_idx}`);
+      return;
+    }
+
+    // 자기 자신과 채팅 방지
+    if (user.member_email === trainer.member_email) {
+      alert('자기 자신과는 채팅할 수 없습니다.');
+      return;
+    }
+
+    setIsConsultLoading(true);
+
+    try {
+      // 채팅방 참여자 정보 설정
+      const trainer_idx = trainer.member_idx;
+      const room_name = `${trainer.name || trainer.member_name}님과의 상담`;
+
+      // 채팅방 생성/조회 API 호출
+      const roomData = await ChatApi.registerRoom(trainer_idx, null, room_name);
+
+      // 완전한 trainerInfo 객체 생성
+      const completeTrainerInfo = {
+        member_idx: trainer.member_idx,
+        member_name: trainer.name || trainer.member_name || '트레이너',
+        member_image: trainer.profile_image || trainer.member_image,
+        member_gender: trainer.member_gender,
+        member_birth: trainer.member_birth,
+        member_email: trainer.member_email,
+        member_type: trainer.member_type || 'trainer',
+        member_info: trainer.description || trainer.member_info,
+        member_purpose: trainer.member_purpose,
+        member_time: trainer.availableTime || trainer.member_time,
+        member_activity_area: trainer.member_activity_area,
+        member_intro: trainer.intro || trainer.member_intro,
+        member_disease: trainer.member_disease
+      };
+
+      // roomData 구성
+      const enhancedRoomData = {
+        ...roomData,
+        // 트레이너 정보
+        trainer_idx: trainer.member_idx,
+        trainer_name: trainer.name || trainer.member_name || '트레이너',
+        trainer_image: trainer.profile_image || trainer.member_image,
+        trainer_gender: trainer.member_gender,
+        trainer_birth: trainer.member_birth,
+        trainer_email: trainer.member_email,
+        trainer_type: trainer.member_type || 'trainer',
+        
+        // 현재 사용자(회원) 정보
+        user_idx: user.member_idx,
+        user_name: user.member_name || '회원',
+        user_image: user.member_image,
+        user_gender: user.member_gender,
+        user_birth: user.member_birth,
+        user_email: user.member_email,
+        user_type: user.member_type || 'user'
+      };
+
+      console.log('🔥 채팅방 이동 시 전달되는 데이터:', {
+        roomData: enhancedRoomData,
+        trainerInfo: completeTrainerInfo,
+        trainer_gender: enhancedRoomData.trainer_gender,
+        user_gender: enhancedRoomData.user_gender
+      });
+
+      // 채팅방으로 이동
+      navigate(`/chat/${roomData.room_idx}`, {
+        state: {
+          roomData: enhancedRoomData,
+          trainerInfo: completeTrainerInfo
+        }
+      });
+
+    } catch (error) {
+      console.error('채팅방 생성 오류:', error);
+      
+      // 에러 메시지를 사용자에게 표시
+      if (error.response?.status === 401) {
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+      } else if (error.response?.status === 500) {
+        alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } else {
+        alert('채팅방 생성에 실패했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsConsultLoading(false);
     }
   };
 
@@ -196,7 +311,6 @@ const TrainerDetailView = () => {
         await axios.post(`/trainer/lesson/${trainerIdx}`, editedTrainer.lessons, {
           withCredentials: true,
         });
-        alert('수정이 완료되었습니다.');
         setTrainer(editedTrainer);
       } catch (err) {
         alert('수정 중 오류가 발생했습니다.');
@@ -261,8 +375,23 @@ const TrainerDetailView = () => {
 
       {/* 상담 버튼 */}
       {loginUserId !== trainer.member_email && (
-        <FloatingButton onClick={handleConsultClick} title="상담하기">
-          <MdChat />
+        <FloatingButton 
+          onClick={handleConsultClick} 
+          disabled={isConsultLoading}
+          title={isConsultLoading ? "채팅방 생성 중..." : "상담하기"}
+        >
+          {isConsultLoading ? (
+            <div style={{ 
+              width: '20px', 
+              height: '20px', 
+              border: '2px solid transparent',
+              borderTop: '2px solid white',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          ) : (
+            <MdChat />
+          )}
         </FloatingButton>
       )}
 
@@ -276,6 +405,14 @@ const TrainerDetailView = () => {
           </ModalBox>
         </ModalBackdrop>
       )}
+
+      {/* 채팅방로딩 애니메이션을 위한 CSS */}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </Container>
   );
 };

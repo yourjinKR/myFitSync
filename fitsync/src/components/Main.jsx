@@ -115,9 +115,6 @@ useEffect(() => {
   }
 }, [isLogin, member_type, member_idx]);
 
-console.log('트레이너 정보:' , trainerInfo);
-console.log('다음 스케줄:' , nextSchedule);
-
   const handleCTA = () => {
     nav('/trainer/search');
   };

@@ -1,8 +1,9 @@
 import axios from 'axios';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import ImageModal from './ImageModal';
 
+// 기존 Section 스타일과 동기화된 입력/이미지 스타일
 const ImageGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -11,66 +12,125 @@ const ImageGrid = styled.div`
 `;
 
 const ImageBox = styled.div`
-  position: relative;   /* X 버튼 위치 위해 필요 */
-  background-color: #e2e2e2;
+  position: relative;
+  background-color: var(--bg-tertiary);
   height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #555;
-  font-size: 1rem;
-  border-radius: 6px;
+  color: var(--text-tertiary);
+  font-size: 1.3rem;
+  border-radius: 8px;
   overflow: hidden;
+  border: 1.5px solid var(--border-light);
+  transition: border 0.18s, background 0.18s;
+  cursor: pointer;
 
   img {
     max-width: 100%;
     max-height: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--bg-tertiary);
+  }
+
+  &:hover {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-secondary);
   }
 `;
 
 const RemoveButton = styled.button`
   position: absolute;
-  top: 2px;
-  right: 2px;
-  background: rgba(0,0,0,0.6);
+  top: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.7);
   border: none;
-  color: white;
+  color: #fff;
   font-weight: bold;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
-  line-height: 16px;
+  line-height: 18px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.1rem;
+  z-index: 2;
+  transition: background 0.18s;
+  &:hover {
+    background: var(--warning);
+  }
 `;
 
 const Description = styled.p`
-  font-size: 1.15rem;
+  font-size: 1.13rem;
   color: var(--text-secondary);
   line-height: 1.7;
   white-space: pre-line;
+  margin-top: 8px;
 `;
 
-const Textarea = styled.textarea`
+const EditTextarea = styled.textarea`
   width: 100%;
-  font-size: 1.1rem;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  line-height: 1.6;
+  font-size: 1.09rem;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  line-height: 1.7;
   resize: vertical;
   min-height: 100px;
+  transition: border 0.18s, background 0.18s;
+  &:focus {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-secondary);
+  }
+  &::placeholder {
+    color: var(--text-tertiary);
+    opacity: 1;
+  }
 `;
 
 const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageUpload }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalImgSrc, setModalImgSrc] = useState(null);
-  const inputRefs = React.useRef([]);
+  const [resolvedImages, setResolvedImages] = useState([]);
+  const inputRefs = useRef([]);
 
-    // 이미지 클릭 시 모달 열기
+  // 이미지 URL 가져오기 (attach_idx -> url)
+  useEffect(() => {
+    const fetchImageUrls = async () => {
+      const needToResolve = images.some(img => img && !img.url && img.id);
+      if (!isEdit && needToResolve) {
+        try {
+          const idxList = images.map(img => img?.id).filter(Boolean);
+          const res = await axios.post('/trainer/images', idxList); // 백엔드에 POST로 요청
+          const urls = res.data; // 서버에서 순서 맞춰서 [{id, url}, ...]을 보내주는 게 이상적
+          console.log('res.data',res.data);
+          
+          const mapped = images.map((img, i) => ({
+            id: img.id,
+            url: urls[i] || null,
+          }));
+
+          setResolvedImages(mapped);
+        } catch (err) {
+          console.error('이미지 URL 조회 실패:', err);
+        }
+      } else {
+        setResolvedImages(images); // 이미 url이 있는 경우 그냥 사용
+      }
+    };  
+      
+    fetchImageUrls();
+  }, [images, isEdit]);
+
   const handleImageClick = (img) => {
     if (!isEdit && img?.url) {
       setModalImgSrc(img.url);
@@ -78,7 +138,6 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
     }
   };
 
-  // 모달 닫기
   const handleCloseModal = () => {
     setModalOpen(false);
     setModalImgSrc(null);
@@ -95,11 +154,6 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
       const res = await onImageUpload(formData);
       const { attach_idx, url } = res;
 
-      console.log('[업로드 결과]', res);              // { attach_idx, url }
-      console.log('[수정 전 images]', images);        // 이전 이미지 배열
-      console.log('[새로 들어갈 위치]', index);       // 어디에 들어가는지
-      console.log('[추가될 항목]', { id: attach_idx, url });
-
       if (attach_idx && url) {
         const updated = [...images];
         updated[index] = { id: attach_idx, url };
@@ -115,14 +169,12 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
     inputRefs.current[index]?.click();
   };
 
-  // 삭제 핸들러
   const handleRemove = async (index) => {
     const attachIdToDelete = images[index]?.id;
     if (!attachIdToDelete) return;
 
     try {
       await axios.delete(`/trainer/upload/${attachIdToDelete}`, { withCredentials: true });
-      // 삭제 성공 시 state 갱신
       const updated = [...images];
       updated.splice(index, 1);
       onChange('images', updated);
@@ -138,13 +190,13 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
         <>
           <ImageGrid>
             {[...Array(6)].map((_, i) => (
-              <ImageBox key={i} onClick={() => handleClick(i)} style={{ cursor: 'pointer' }}>
+              <ImageBox key={i} onClick={() => handleClick(i)}>
                 {images[i]?.url ? (
                   <>
                     <img src={images[i].url} alt={`img-${i}`} />
                     <RemoveButton
                       onClick={(e) => {
-                        e.stopPropagation(); // 클릭 이벤트 버블링 막기 (파일 업로드 클릭 방지)
+                        e.stopPropagation();
                         handleRemove(i);
                       }}
                       aria-label="이미지 삭제"
@@ -154,7 +206,7 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
                     </RemoveButton>
                   </>
                 ) : (
-                  '+'
+                  <span style={{ fontSize: '2.2rem', color: 'var(--text-tertiary)' }}>+</span>
                 )}
                 <input
                   type="file"
@@ -166,17 +218,18 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
               </ImageBox>
             ))}
           </ImageGrid>
-          <Textarea
+          <EditTextarea
             value={description}
             onChange={(e) => onChange('description', e.target.value)}
+            placeholder="선생님 소개를 입력해 주세요."
           />
         </>
       ) : (
         <>
           <ImageGrid>
-            {images.map((img, i) => (
+            {resolvedImages.map((img, i) => (
               <ImageBox key={i} onClick={() => handleImageClick(img)} style={{ cursor: img?.url ? 'pointer' : 'default' }}>
-                {img?.url ? <img src={img.url} alt={`trainer-img-${i}`} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '6px' }} /> : null}
+                {img?.url ? <img src={img.url} alt={`trainer-img-${i}`} /> : null}
               </ImageBox>
             ))}
           </ImageGrid>
@@ -189,3 +242,4 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
 };
 
 export default TrainerIntroduce;
+

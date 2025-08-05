@@ -6,18 +6,13 @@ import { ButtonSubmit } from '../../styles/FormStyles';
 import { GymUtil } from '../../utils/GymUtils';
 import { interpolate } from 'framer-motion';
 
-const MapContainer = styled.div`
-  width: 100%;
-  height: 300px;
-  margin-bottom: 10px;
-`;
-
 const GymSearchContainer = styled.div`
   margin-bottom: 15px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 15px;
-  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-light);
+  border-radius: 10px;
+  padding: 18px 12px 14px 12px;
+  background: var(--bg-tertiary);
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
 `;
 
 const SearchForm = styled.form`
@@ -28,56 +23,74 @@ const SearchForm = styled.form`
 
 const SearchInput = styled.input`
   flex: 1;
-  padding: 8px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border-medium);
+  border-radius: 8px;
+  font-size: 1.09rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: border 0.18s, background 0.18s;
+  &:focus {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-tertiary);
+  }
+  &::placeholder {
+    color: var(--text-tertiary);
+    opacity: 1;
+  }
 `;
 
 const SearchButton = styled.button`
-  padding: 8px 16px;
-  background: var(--primary-blue);
-  color: white;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
+  color: var(--text-primary);
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  
+  font-size: 1.09rem;
+  font-weight: 700;
+  transition: background 0.18s;
   &:hover {
     background: var(--primary-blue-hover);
+    color: #fff;
+  }
+  &:disabled {
+    background: var(--border-medium);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
   }
 `;
 
 const GymListContainer = styled.div`
   overflow-y: auto;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  background: white;
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  margin-top: 8px;
 `;
 
 const GymItem = styled.div`
-  padding: 10px;
+  padding: 13px 10px 10px 10px;
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
-  font-size: 14px;
-  
+  font-size: 1.09rem;
+  background: var(--bg-tertiary);
+  transition: background 0.18s;
   &:hover {
-    background: var(--bg-tertiary);
+    background: var(--primary-blue-light);
   }
-  
   &:last-child {
     border-bottom: none;
   }
-  
   .gym-name {
     font-weight: bold;
-    color: var(--text-primary);
+    color: var(--primary-blue);
     margin-bottom: 2px;
+    font-size: 1.09rem;
   }
-  
   .gym-address {
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 0.98rem;
   }
 `;
 
@@ -91,18 +104,19 @@ const PaginationContainer = styled.div`
 `;
 
 const PageButton = styled.button`
-  padding: 5px 10px;
-  border: 1px solid var(--border-light);
-  background: ${props => props.active ? 'var(--primary-blue)' : 'white'};
+  padding: 7px 13px;
+  border: 1.5px solid var(--border-light);
+  background: ${props => props.active ? 'var(--primary-blue)' : 'var(--bg-tertiary)'};
   color: ${props => props.active ? 'white' : 'var(--text-primary)'};
-  border-radius: 4px;
+  border-radius: 7px;
   cursor: pointer;
-  font-size: 12px;
-  
+  font-size: 1.01rem;
+  font-weight: 600;
+  transition: background 0.18s, color 0.18s;
   &:hover:not(:disabled) {
-    background: ${props => props.active ? 'var(--primary-blue)' : 'var(--bg-tertiary)'};
+    background: ${props => props.active ? 'var(--primary-blue)' : 'var(--primary-blue-light)'};
+    color: #fff;
   }
-  
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -112,8 +126,18 @@ const PageButton = styled.button`
 const NoResults = styled.div`
   padding: 20px;
   text-align: center;
-  color: var(--text-secondary);
-  font-size: 14px;
+  color: var(--text-tertiary);
+  font-size: 1.01rem;
+`;
+
+const MapContainer = styled.div`
+  width: 100%;
+  height: 300px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+  background: var(--bg-tertiary);
 `;
 
 const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {

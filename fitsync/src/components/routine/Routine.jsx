@@ -117,8 +117,6 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData, targetIdx :
         });
         const result = response.data;
         
-        alert(result.msg);
-        
         if (result.success && onDelete) {
           onDelete(); // 삭제 후 목록 갱신
         }
