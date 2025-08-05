@@ -124,7 +124,7 @@
 	        WHERE r.matching_idx = m.matching_idx
 	      )
   	</select>
-  	<!-- 
+  	
   	<select id="selectCompletedMatchingByMemberIdx" parameterType="int" resultType="org.fitsync.domain.MatchingVO">
 		  SELECT *
 		  FROM matching
@@ -132,10 +132,9 @@
 		    AND matching_complete = 2
 		    AND ROWNUM = 1
 	</select>
-	 -->
-	<!-- 
-	<select id="selectMatchedTrainerByUserIdx" resultType="org.fitsync.domain.memberVO">
-	    SELECT m.trainer_idx,
+	 
+	<select id="selectMatchedTrainerByUserIdx" resultType="org.fitsync.domain.MemberVO">
+	    SELECT m.trainer_idx AS member_idx,
 	           mb.member_name,
 	           mb.member_email,
 	           mb.member_intro AS member_quote,
@@ -147,6 +146,6 @@
 	    WHERE m.user_idx = #{userIdx}
 	      AND m.matching_complete = 1
 	      AND (m.matching_end IS NULL OR m.matching_end > SYSDATE)
-  	</select>
-  	 -->
+	</select>
+  	
 </mapper>

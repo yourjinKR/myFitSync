@@ -108,10 +108,6 @@ const MyPage = () => {
         onImageChange={handleImageChange}
       />
       <Section>
-        <SectionTitle>운동 캘린더</SectionTitle>
-        <TrainerCalendarView />
-      </Section>
-      <Section>
         <SectionTitle>최근 인바디 정보</SectionTitle>
         <LatestBodyInfo onUpdate={handleBodyUpdate} />
       </Section>

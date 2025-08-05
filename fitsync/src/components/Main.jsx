@@ -4,6 +4,7 @@ import ReviewList from './review/ReviewList';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import TrainerCalendarView from './trainer/TrainerCalendarView';
 
 const MainWrapper = styled.div`
   position:relative;
@@ -23,6 +24,51 @@ const FindTrainerCTA = styled.button`
   margin:15px 0;
   border:1px solid #ccc;
 `;
+
+const TrainerCard = styled.div`
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 10px;
+
+  img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    margin-right: 15px;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 4px 0;
+    color: #666;
+  }
+`;
+
+const ScheduleCard = styled.div`
+  margin: 10px 0;
+  padding: 15px;
+  background: #e6f3ff;
+  border-radius: 10px;
+
+  h4 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  p {
+    margin: 4px 0;
+    color: #333;
+  }
+`;
+
 
 const Main = () => {
   const nav = useNavigate();
@@ -55,58 +101,83 @@ useEffect(() => {
   }
 }, [isLogin, member_type, member_idx]);
 
-// useEffect(() => {
-//   if (isLogin && member_type === 'user') {
-//     // 매칭된 트레이너 정보 조회
-//     axios.get(`/user/${member_idx}/matched-trainer`)
-//       .then(res => setTrainerInfo(res.data))
-//       .catch(err => console.error('트레이너 정보 조회 실패', err));
+useEffect(() => {
+  if (isLogin && member_type === 'user') {
+    // 매칭된 트레이너 정보 조회
+    axios.get(`/user/${member_idx}/matched-trainer`)
+      .then(res => setTrainerInfo(res.data))
+      .catch(err => console.error('트레이너 정보 조회 실패', err));
 
-//     // 다음 PT 스케줄 조회
-//     axios.get(`/user/${member_idx}/next-schedule`)
-//       .then(res => setNextSchedule(res.data))
-//       .catch(err => console.error('다음 스케줄 조회 실패', err));
-//   }
-// }, [isLogin, member_type, member_idx]);
+    // 다음 PT 스케줄 조회
+    axios.get(`/user/${member_idx}/next-schedule`)
+      .then(res => setNextSchedule(res.data))
+      .catch(err => console.error('다음 스케줄 조회 실패', err));
+  }
+}, [isLogin, member_type, member_idx]);
 
+console.log('트레이너 정보:' , trainerInfo);
+console.log('다음 스케줄:' , nextSchedule);
 
   const handleCTA = () => {
     nav('/trainer/search');
   };
 
-  return (
-    <>
-      <MainWrapper>
-        {!isLogin && (
+return (
+  <>
+    <MainWrapper>
+      {!isLogin && (
+        <>
+          <Slogan>회원가입하고 나에게 맞는 트레이너를 찾아보세요!</Slogan>
+          <FindTrainerCTA onClick={() => nav(handleCTA)}>
+            PT찾기
+          </FindTrainerCTA>
+          <ReviewList />
+        </>
+      )}
+
+      {isLogin && member_type === 'user' && (
+        isMatched ? (
           <>
-            <Slogan>회원가입하고 나에게 맞는 트레이너를 찾아보세요!</Slogan>
-            <FindTrainerCTA onClick={() => nav(handleCTA)}>
+            <Slogan>매칭된 트레이너와 함께<br />운동을 이어가보세요!</Slogan>
+
+            {/* 매칭된 트레이너 정보 카드 */}
+            {trainerInfo && (
+              <TrainerCard>
+                <img src={trainerInfo.member_image} alt="트레이너 프로필" />
+                <div>
+                  <h3>{trainerInfo.member_name} 트레이너</h3>
+                  <p>{trainerInfo.member_email}</p>
+                </div>
+              </TrainerCard>
+            )}
+
+            {/* 다음 PT 스케줄 정보 카드 */}
+            {nextSchedule && (
+              <ScheduleCard>
+                <h4>다음 스케줄</h4>
+                <p>
+                  {new Date(nextSchedule.schedule_date).toLocaleDateString()} (
+                  {nextSchedule.schedule_stime} ~ {nextSchedule.schedule_etime})
+                </p>
+                <p>{nextSchedule.schedule_content}</p>
+              </ScheduleCard>
+            )}
+          </>
+        ) : (
+          <>
+            <Slogan>아직 트레이너가 없으신가요?<br />지금 바로 찾아보세요!</Slogan>
+            <FindTrainerCTA onClick={handleCTA}>
               PT찾기
             </FindTrainerCTA>
           </>
-        )}
+        )
+      )}
+    </MainWrapper>
 
-        {isLogin && member_type === 'user' && (
-          isMatched ? (
-            <>
-              <Slogan>매칭된 트레이너와 함께<br />운동을 이어가보세요!</Slogan>
-              <FindTrainerCTA onClick={() => nav('/mytrainer')}>
-                내 트레이너 보기
-              </FindTrainerCTA>
-            </>
-          ) : (
-            <>
-              <Slogan>아직 트레이너가 없으신가요?<br />지금 바로 찾아보세요!</Slogan>
-              <FindTrainerCTA onClick={handleCTA}>
-                PT찾기
-              </FindTrainerCTA>
-            </>
-          )
-        )}
-      </MainWrapper>
-      <ReviewList />
-    </>
-  );
+    <TrainerCalendarView />
+  </>
+);
+
 };
 
 export default Main;
