@@ -303,7 +303,6 @@ const RoutineMain = () => {
   },[newData])
 
   useEffect(() => {
-    console.log("🚀  :  tempData:", tempData)
     if(tempData === null) return;
     localStorage.setItem('routineData', JSON.stringify(tempData));
   },[tempData]);
@@ -311,7 +310,6 @@ const RoutineMain = () => {
   // routineData 변경시 custom 모드에서 tempData 업데이트
   useEffect(() => {
     if (routine_list_idx === 'custom' && routineData && routineData.routines && routineData.routines.length > 0) {
-      console.log("🚀 routineData 변경 감지:", routineData);
       // 한국 시간 형식으로 생성
       const getKoreaTime = () => {
         const now = new Date();
@@ -330,17 +328,13 @@ const RoutineMain = () => {
         routine_list_idx: 'custom'
       };
       
-      console.log("🚀 업데이트할 데이터:", updatedData);
       setTempData(prev => {
-        console.log("🚀 이전 tempData:", prev);
         const existingIndex = prev.findIndex(item => item.saveDate === currentDate);
         if (existingIndex !== -1) {
           const newTempData = [...prev];
           newTempData[existingIndex] = updatedData;
-          console.log("🚀 기존 항목 업데이트:", newTempData);
           return newTempData;
         } else {
-          console.log("🚀 새 항목 추가:", [...prev, updatedData]);
           return [...prev, updatedData];
         }
       });

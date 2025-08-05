@@ -479,9 +479,6 @@ const RoutineDetail = () => {
         const filteredData = prev.filter(item => {
           const itemKey = `${item.saveDate}-${item.routine_name}`;
           const shouldKeep = itemKey !== targetKey;
-          if (!shouldKeep) {
-            console.log("�️ 기존 데이터 제거 (중복방지):", itemKey);
-          }
           return shouldKeep;
         });
         
@@ -506,11 +503,9 @@ const RoutineDetail = () => {
           // 같은 루틴 idx이고 같은 날짜(년월일)면 교체
           const newTempData = [...prev];
           newTempData[existingIndex] = updatedData;
-          console.log("🔄 기존 데이터 교체:", updatedData.routine_list_idx, updatedData.saveDate?.split(' ')[0]);
           return newTempData;
         } else {
           // 다른 날짜이거나 새로운 루틴이면 따로 저장
-          console.log("➕ 새 데이터 추가:", updatedData.routine_list_idx, updatedData.saveDate?.split(' ')[0]);
           return [...prev, updatedData];
         }
       });
@@ -725,9 +720,6 @@ const RoutineDetail = () => {
       return;
     }
 
-    console.log("🔧 data 변경 감지 - data:", data);
-    console.log("🔧 data 변경 감지 - data.saveDate:", data.saveDate);
-
     const omitData = omitCheckedAndSaveDate(data);
     const omitInit = omitCheckedAndSaveDate(localInit);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
@@ -754,22 +746,14 @@ const RoutineDetail = () => {
   useEffect(() => {
     if (routine_list_idx !== 'custom' || !data) return;
 
-    console.log("🔧 saveDate 체크 - data:", data);
-    console.log("🔧 saveDate 체크 - data.saveDate:", data.saveDate);
-    console.log("🔧 saveDate 체크 - targetDate:", targetDate);
-    console.log("🔧 saveDate 체크 - tempData:", tempData);
-
     // 빠간기록용 기본 saveDate 설정 - saveDate가 없거나 null이면 설정
     if (!data.saveDate || data.saveDate === null) {
       const currentDate = targetDate || getKoreaTime();
-      console.log("🔧 saveDate 설정 시도:", currentDate);
       setData(prev => {
-        console.log("🔧 setData 호출 - prev:", prev);
         const newData = {
           ...prev,
           saveDate: currentDate
         };
-        console.log("🔧 setData 호출 - newData:", newData);
         return newData;
       });
     }
@@ -852,7 +836,6 @@ const RoutineDetail = () => {
           alert(result.msg);
         }
       } catch (err) {
-        console.error('루틴 로딩 에러:', err);
         alert("루틴 정보를 불러오지 못했습니다.");
       } finally {
         setIsLoading(false);
@@ -866,12 +849,6 @@ const RoutineDetail = () => {
       // 현재 날짜 생성
       const currentDate = targetDate || getKoreaTime();
       
-      console.log("🔧 시간 체크:", {
-        설정날짜: currentDate,
-        targetDate: targetDate,
-        getKoreaTime결과: getKoreaTime()
-      });
-      
       // localStorage에서 해당 날짜의 데이터 찾기
       const storedTempData = localStorage.getItem('routineData');
       let existingData = null;
@@ -879,7 +856,6 @@ const RoutineDetail = () => {
       if (storedTempData && targetDate) {
         try {
           const parsedTempData = JSON.parse(storedTempData);
-          console.log("🔧 localStorage에서 읽은 전체 데이터:", parsedTempData);
           
           // 같은 날짜의 데이터 찾기 (루틴명 고려)
           const sameDateData = parsedTempData.filter(item => {
@@ -893,8 +869,6 @@ const RoutineDetail = () => {
             existingData = sameDateData.find(item => item.routine_name && item.routine_name !== '자유 운동') 
                           || sameDateData[sameDateData.length - 1];
           }
-          console.log("🔧 미기록 운동 데이터 찾기 (날짜기준):", existingData);
-          console.log("🔧 같은 날짜 데이터 개수:", sameDateData.length);
           
           // 중복된 데이터가 있다면 정리 (같은 날짜, 같은 이름)
           if (sameDateData.length > 1) {
@@ -919,7 +893,6 @@ const RoutineDetail = () => {
             // 중복이 정리된 데이터로 localStorage 업데이트
             if (uniqueData.length !== parsedTempData.length) {
               localStorage.setItem('routineData', JSON.stringify(uniqueData));
-              console.log("🔧 중복 데이터 정리 완료:", uniqueData.length, "개 항목으로 축소");
             }
           }
         } catch (error) {
@@ -933,8 +906,6 @@ const RoutineDetail = () => {
         routines: existingData?.routines || routineData?.routines || [],
         saveDate: currentDate // 강제로 currentDate만 사용
       };
-      console.log("🔧 custom 데이터 초기화:", customData);
-      console.log("🔧 custom saveDate 확인:", customData.saveDate);
       setData(customData);
       setInit(customData);
       setLocalInit(customData); // 로컬 init도 설정
