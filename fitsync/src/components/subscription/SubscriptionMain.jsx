@@ -1285,7 +1285,7 @@ const SubscriptionMain = () => {
           <PremiumTitle>FitSync Premium</PremiumTitle>
           <PremiumSubtitle>FitSync와 운동을 스마트하고 즐겁게✨</PremiumSubtitle>
           
-          {/* 구독 진행률 */}
+          {/* 구독 토큰 사용량 */}
           <ProgressSection>
             <ProgressHeader>
               <ProgressLabel>사용량</ProgressLabel>

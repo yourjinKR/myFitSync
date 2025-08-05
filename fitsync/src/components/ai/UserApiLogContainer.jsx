@@ -5,9 +5,23 @@ import { useWorkoutNames } from "../../hooks/admin/useWorkoutNames";
 import { useUserApiLogs } from "../../hooks/admin/useApiLogs";
 import AiUtil from "../../utils/AiUtils";
 import { SAVED_AFTER } from "../../reducers/type";
+import { useNavigate } from "react-router-dom";
+import useRequireLogin from "../../hooks/useRequireLogin";
+import { PaymentUtil } from "../../utils/PaymentUtil";
 
 const UserApiLogContainer = () => {
+    useRequireLogin();
     const {member_idx} = useSelector(state => state.user?.user);
+    const [subscriptionData, setSubscriptionData] = useState(null);
+    // 구독 정보 가져오기
+    const loadSubscriptionData = async () => {
+      const result = await PaymentUtil.checkSubscriptionStatus(member_idx);
+      setSubscriptionData(result.data);
+    }
+    // 불러오기
+    useEffect(()=>{
+      loadSubscriptionData();
+    },[]);
 
     // 사용자 로그 데이터 가져오기 (파싱 포함)
     const { apiLogs, loading } = useUserApiLogs(member_idx);
@@ -22,11 +36,18 @@ const UserApiLogContainer = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchResults, setShowSearchResults] = useState(false);
 
+    const nav = useNavigate();
+
     // 각 로그 아이템의 ref를 저장
     const logRefs = useRef({});
 
     // 운동명 파싱 데이터
     const { rawDataIdx, rawDataMap } = useWorkoutNames();
+
+    // 루틴 추천으로 이동
+    const handleCreateNewRoutine = () => {
+      nav('/ai/routine');
+    };
 
     // 로그 아이템 클릭 핸들러
     const handleLogClick = (logId) => {
@@ -182,10 +203,39 @@ const UserApiLogContainer = () => {
     return (
         <Container>
             <Header>
-                <Title>🏋️‍♂️ 내 AI 루틴 추천 기록</Title>
-                <Description>
-                    이전에 받았던 AI 운동 추천 결과를 다시 확인하고 루틴으로 저장할 수 있습니다.
-                </Description>
+                <HeaderContent>
+                    <HeaderText>
+                        <Title>Fitsync AI</Title>
+                        <Description>
+                            AI가 추천한 개인 맞춤 루틴을 확인하고 관리하세요
+                        </Description>
+                    </HeaderText>
+                    <CreateButton onClick={handleCreateNewRoutine}>
+                        <PlusIcon>+</PlusIcon>
+                        <ButtonText>새 루틴 추천</ButtonText>
+                    </CreateButton>
+                </HeaderContent>
+                
+                {/* AI 사용량 표시 */}
+                <UsageSection>
+                    <UsageHeader>
+                        <UsageLabel>AI 사용량</UsageLabel>
+                        <UsagePercentage>
+                            {subscriptionData?.totalCost >= 0
+                                ? `${Math.min(100, ((subscriptionData?.totalCost / 5) * 100)).toFixed(0)}%`
+                                : '계산 중...'}
+                        </UsagePercentage>
+                    </UsageHeader>
+                    <UsageBarContainer>
+                        <UsageBarFill 
+                            $percentage={
+                                subscriptionData?.totalCost > 0 
+                                    ? Math.min(100, (subscriptionData?.totalCost / 5) * 100) 
+                                    : 0
+                            }
+                        />
+                    </UsageBarContainer>
+                </UsageSection>
             </Header>
 
             {/* 검색 섹션 */}
@@ -223,13 +273,18 @@ const UserApiLogContainer = () => {
 
             {apiLogs.length === 0 ? (
                 <EmptyState>
-                    <EmptyIcon>📝</EmptyIcon>
-                    <EmptyTitle>아직 AI 추천 기록이 없습니다</EmptyTitle>
+                    <EmptyIcon>🤖</EmptyIcon>
+                    <EmptyTitle>AI 루틴 추천을 시작해보세요!</EmptyTitle>
                     <EmptyDescription>
-                        AI 운동 추천 서비스를 이용해보세요!
+                        개인 맞춤형 운동 루틴을 AI가 추천해드립니다.<br />
+                        체형, 목표, 운동 경험을 바탕으로 최적의 루틴을 만들어보세요.
                     </EmptyDescription>
+                    <EmptyButton onClick={handleCreateNewRoutine}>
+                        ✨ 첫 루틴 만들기
+                    </EmptyButton>
                 </EmptyState>
             ) : (
+                <>
                 <LogList>
                     {filteredLogs.map((log) => (
                         <LogItem 
@@ -243,7 +298,7 @@ const UserApiLogContainer = () => {
                             >
                                 <LogInfo>
                                     <LogPreview>
-                                        {getRoutinePreview(log)} <span>#{log.apilog_idx}</span>
+                                        {getRoutinePreview(log)}
                                     </LogPreview>
                                     <LogDate>
                                         {new Date(log.apilog_request_time).toLocaleString('ko-KR')}
@@ -378,6 +433,7 @@ const UserApiLogContainer = () => {
                         </LogItem>
                     ))}
                 </LogList>
+                </>
             )}
         </Container>
     );
@@ -399,10 +455,167 @@ const Container = styled.div`
 
 const Header = styled.div`
   margin-bottom: 30px;
-  text-align: center;
 
   @media (max-width: 768px) {
     margin-bottom: 20px;
+  }
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+`;
+
+const HeaderText = styled.div`
+  flex: 1;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+
+const CreateButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+
+  &:hover {
+    background: var(--primary-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+`;
+
+const PlusIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+
+  @media (max-width: 768px) {
+    width: 22px;
+    height: 22px;
+    font-size: 18px;
+  }
+`;
+
+const ButtonText = styled.span`
+  font-size : 16px;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+`;
+
+const UsageSection = styled.div`
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 15px;
+    padding: 14px;
+  }
+`;
+
+const UsageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 10px;
+  }
+`;
+
+const UsageLabel = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+`;
+
+const UsagePercentage = styled.span`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-blue);
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+`;
+
+const UsageBarContainer = styled.div`
+  width: 100%;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+`;
+
+const UsageBarFill = styled.div`
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: ${props => Math.min(100, props.$percentage || 0)}%;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+`;
+
+const UsageInfo = styled.div`
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 11px;
   }
 `;
 
@@ -424,7 +637,6 @@ const SearchContainer = styled.div`
 const SearchInputWrapper = styled.div`
   position: relative;
   width: 100%;
-  max-width: 500px;
   display: flex;
   align-items: center;
 `;
@@ -599,9 +811,42 @@ const EmptyTitle = styled.h3`
 const EmptyDescription = styled.p`
   font-size: 16px;
   color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 30px;
 
   @media (max-width: 768px) {
     font-size: 14px;
+    margin-bottom: 25px;
+  }
+`;
+
+const EmptyButton = styled.button`
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+
+  &:hover {
+    background: var(--primary-blue-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 280px;
+    padding: 16px 32px;
+    font-size: 17px;
   }
 `;
 
@@ -650,7 +895,7 @@ const LogHeader = styled.div`
     align-items: flex-start;
     gap: 8px;
   }
-`;
+`;  
 
 const LogInfo = styled.div`
   display: flex;
