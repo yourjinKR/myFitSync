@@ -361,7 +361,6 @@ const SelectField = styled.select`
   cursor: pointer;
   font-weight: 500;
   appearance: none; /* 기본 화살표 제거 */
-  background-image: url("data:image/svg+xml;utf8,<svg fill='%23666' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat: no-repeat;
   background-position: right 1.2rem center;
   background-size: 1.5rem;
@@ -385,6 +384,17 @@ const SelectField = styled.select`
     font-size: 2.1rem;
     background-position: right 1rem center;
     background-size: 1.3rem;
+
+  @media (max-width: 480px) {
+    padding: 1.3rem 1rem;
+    font-size: 2.1rem;
+    background-position: right 1rem center;
+    background-size: 1.3rem;
+
+    /* 옵션 크기 줄이기 */
+    option {
+      font-size: 2.1rem;
+    }
   }
 `;
 

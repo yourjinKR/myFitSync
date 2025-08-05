@@ -319,8 +319,6 @@ const AiRoutineServiceContainer = () => {
 
     return (
         <ServiceContainer>
-            <ServiceTitle>🤖 AI 운동 루틴 추천</ServiceTitle>
-            
             {/* 진행 단계 표시 */}
             <ProgressBar>
                 {steps.map((step, index) => (
