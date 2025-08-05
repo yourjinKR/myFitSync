@@ -145,6 +145,7 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData, targetIdx :
     <RoutineWrapper ref={routineRef} onClick={handleGoRoutine}>
       <Inner>
         <h3>
+          {console.log("🚀  :  data.saveDate:", data.saveDate)}
           {
             type !== null && type === 'custom' ? 
             <>{data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name} )` : ''}</> :

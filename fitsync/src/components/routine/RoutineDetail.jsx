@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
@@ -11,7 +11,7 @@ import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
 import dateFormat from '../../utils/dateFormat';
 import WorkoutView from './WorkoutView';
-const { formatDate, getTimeDifference } = dateFormat;
+const { getTimeDifference } = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
   padding: 16px;
@@ -386,10 +386,8 @@ const TimerCTA = styled.button`
 
 
 const RoutineDetail = () => {
-  const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
+  const { routineData, setRoutineData, isEdit, setIsEdit, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
   const { routine_list_idx } = useParams();
-
-  console.log('RoutineDetail 렌더링:', { routine_list_idx, routineData, init });
 
 
   const [time, setTime] = useState({
@@ -419,6 +417,106 @@ const RoutineDetail = () => {
 
   const targetIdx = location.state?.targetMember;
 
+  // 한국 시간 생성 함수
+  const getKoreaTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  // localStorage 정리 함수
+  const cleanupLocalStorage = () => {
+    const storedData = localStorage.getItem('routineData');
+    if (!storedData) return;
+    
+    try {
+      const tempDataArray = JSON.parse(storedData);
+      const uniqueData = [];
+      const seenKeys = new Set();
+      
+      tempDataArray.forEach(item => {
+        // ISO 형식 saveDate를 한국 시간 형식으로 변환
+        if (item.saveDate && item.saveDate.includes('T')) {
+          const isoDate = new Date(item.saveDate);
+          const year = isoDate.getFullYear();
+          const month = String(isoDate.getMonth() + 1).padStart(2, '0');
+          const day = String(isoDate.getDate()).padStart(2, '0');
+          const hours = String(isoDate.getHours()).padStart(2, '0');
+          const minutes = String(isoDate.getMinutes()).padStart(2, '0');
+          const seconds = String(isoDate.getSeconds()).padStart(2, '0');
+          item.saveDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+        
+        const key = `${item.saveDate}-${item.routine_name}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          uniqueData.push(item);
+        }
+      });
+      
+      if (uniqueData.length !== tempDataArray.length) {
+        localStorage.setItem('routineData', JSON.stringify(uniqueData));
+      }
+    } catch (error) {
+      console.error("localStorage 정리 에러:", error);
+    }
+  };
+
+  // tempData 업데이트 공통 함수 - localStorage와 tempData 동기화
+  const updateTempData = (updatedData) => {
+    if (routine_list_idx === 'custom') {
+      setTempData(prev => {
+        
+        // 식별자 생성 (날짜 + 루틴명)
+        const targetKey = `${updatedData.saveDate}-${updatedData.routine_name}`;
+        
+        // 같은 키를 가진 데이터를 모두 제거하고 새 데이터 추가
+        const filteredData = prev.filter(item => {
+          const itemKey = `${item.saveDate}-${item.routine_name}`;
+          const shouldKeep = itemKey !== targetKey;
+          if (!shouldKeep) {
+            console.log("�️ 기존 데이터 제거 (중복방지):", itemKey);
+          }
+          return shouldKeep;
+        });
+        
+        // 새 데이터 추가
+        const finalData = [...filteredData, updatedData];
+        
+        return finalData;
+      });
+    } else {
+      // 일반 루틴인 경우 - 동일한 루틴 idx와 날짜(년월일)가 같으면 교체, 다르면 따로 저장
+      setTempData(prev => {
+        const existingIndex = prev.findIndex(item => {
+          // 날짜 부분만 추출해서 비교 (년-월-일)
+          const itemDateOnly = item.saveDate ? item.saveDate.split(' ')[0] : '';
+          const updatedDateOnly = updatedData.saveDate ? updatedData.saveDate.split(' ')[0] : '';
+          
+          return item.routine_list_idx === updatedData.routine_list_idx && 
+                 itemDateOnly === updatedDateOnly;
+        });
+        
+        if (existingIndex !== -1) {
+          // 같은 루틴 idx이고 같은 날짜(년월일)면 교체
+          const newTempData = [...prev];
+          newTempData[existingIndex] = updatedData;
+          console.log("🔄 기존 데이터 교체:", updatedData.routine_list_idx, updatedData.saveDate?.split(' ')[0]);
+          return newTempData;
+        } else {
+          // 다른 날짜이거나 새로운 루틴이면 따로 저장
+          console.log("➕ 새 데이터 추가:", updatedData.routine_list_idx, updatedData.saveDate?.split(' ')[0]);
+          return [...prev, updatedData];
+        }
+      });
+    }
+  };
+
   // checked 필드와 saveDate, set_num을 제거한 새로운 객체 반환 (비교용)
   const omitCheckedAndSaveDate = (obj) => {
     if (!obj || !obj.routines) {
@@ -436,24 +534,11 @@ const RoutineDetail = () => {
     };
   };
 
-  // checked 필드를 제거한 새로운 객체 반환
-  const omitChecked = (obj) => {
-    if (!obj || !obj.routines) return obj;
-    return {
-      ...obj,
-      routines: obj.routines.map(routine => ({
-        ...routine,
-        sets: routine.sets.map(({ checked, id, set_num, ...setRest }) => setRest)
-      }))
-    };
-  };
-
   // 세트 값 변경 핸들러
   const handleSetValueChange = (routinePtIdx, index, field, value) => {
-    console.log('값 변경:', routinePtIdx, index, field, value);
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r => {
+    const updatedData = {
+      ...data,
+      routines: data.routines.map(r => {
         return r.pt_idx === routinePtIdx ? {
           ...r,
           sets: r.sets.map((s, i) => {
@@ -464,16 +549,27 @@ const RoutineDetail = () => {
           })
         } : r;
       })
-    }));
+    };
+
+    // saveDate가 없으면 자동 설정
+    if (!updatedData.saveDate) {
+      updatedData.saveDate = targetDate || getKoreaTime();
+    }
+    
+    setData(updatedData);
+    
+    // tempData 업데이트
+    updateTempData(updatedData);
   };
 
   // 세트 체크 핸들러
   const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
     const key = `${routinePtIdx}-${setIndex}`;
     checkedSetsRef.current[key] = e.target.checked;
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r =>
+    
+    const updatedData = {
+      ...data,
+      routines: data.routines.map(r =>
         r.pt_idx === routinePtIdx
           ? {
             ...r,
@@ -483,14 +579,24 @@ const RoutineDetail = () => {
           }
           : r
       )
-    }));
+    };
+
+    // saveDate가 없으면 자동 설정
+    if (!updatedData.saveDate) {
+      updatedData.saveDate = targetDate || getKoreaTime();
+    }
+    
+    setData(updatedData);
+    
+    // tempData 업데이트
+    updateTempData(updatedData);
   };
 
   // 세트 추가 핸들러
   const handleAddSet = (routinePtIdx) => {
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r =>
+    const updatedData = {
+      ...data,
+      routines: data.routines.map(r =>
         r.pt_idx === routinePtIdx
           ? {
             ...r,
@@ -508,16 +614,27 @@ const RoutineDetail = () => {
           }
           : r
       )
-    }));
+    };
+
+    // saveDate가 없으면 자동 설정
+    if (!updatedData.saveDate) {
+      updatedData.saveDate = targetDate || getKoreaTime();
+    }
+    
+    setData(updatedData);
+    
+    // tempData 업데이트
+    updateTempData(updatedData);
   };
 
   // 세트 삭제 핸들러
   const handleDeleteSet = (routinePtIdx, setIndex, routine_idx) => {
     const target = data.routines.find((item) => item.routine_idx === routine_idx);
     if (target.sets.length === 1) return alert("최소 하나의 세트는 남겨야 합니다.");
-    setData(prev => ({
-      ...prev,
-      routines: prev.routines.map(r =>
+    
+    const updatedData = {
+      ...data,
+      routines: data.routines.map(r =>
         r.pt_idx === routinePtIdx
           ? {
             ...r,
@@ -530,16 +647,36 @@ const RoutineDetail = () => {
           }
           : r
       )
-    }));
+    };
+
+    // saveDate가 없으면 자동 설정
+    if (!updatedData.saveDate) {
+      updatedData.saveDate = targetDate || getKoreaTime();
+    }
+    
+    setData(updatedData);
+    
+    // tempData 업데이트
+    updateTempData(updatedData);
   };
 
   // 루틴 삭제 핸들러
   const handleRoutineDelete = (idx) => {
     if (window.confirm("이 루틴을 삭제하시겠습니까?")) {
-      setData(prev => ({
-        ...prev,
-        routines: prev.routines.filter(item => item.pt_idx !== idx)
-      }));
+      const updatedData = {
+        ...data,
+        routines: data.routines.filter(item => item.pt_idx !== idx)
+      };
+
+      // saveDate가 없으면 자동 설정
+      if (!updatedData.saveDate) {
+        updatedData.saveDate = targetDate || getKoreaTime();
+      }
+      
+      setData(updatedData);
+      
+      // tempData 업데이트
+      updateTempData(updatedData);
     }
   };
 
@@ -549,7 +686,6 @@ const RoutineDetail = () => {
 
   // 취소 핸들러 추가
   const handleCancel = () => {
-    console.log('취소 버튼 클릭 - localInit으로 되돌림:', localInit);
     if (localInit) {
       setData(localInit);
       setIsEdit(false);
@@ -589,6 +725,9 @@ const RoutineDetail = () => {
       return;
     }
 
+    console.log("🔧 data 변경 감지 - data:", data);
+    console.log("🔧 data 변경 감지 - data.saveDate:", data.saveDate);
+
     const omitData = omitCheckedAndSaveDate(data);
     const omitInit = omitCheckedAndSaveDate(localInit);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
@@ -615,15 +754,26 @@ const RoutineDetail = () => {
   useEffect(() => {
     if (routine_list_idx !== 'custom' || !data) return;
 
-    // 빠간기록용 기본 saveDate 설정
-    if (!data.saveDate && data.routines.length === 0) {
-      const currentDate = targetDate || formatDate();
-      setData(prev => ({
-        ...prev,
-        saveDate: currentDate
-      }));
+    console.log("🔧 saveDate 체크 - data:", data);
+    console.log("🔧 saveDate 체크 - data.saveDate:", data.saveDate);
+    console.log("🔧 saveDate 체크 - targetDate:", targetDate);
+    console.log("🔧 saveDate 체크 - tempData:", tempData);
+
+    // 빠간기록용 기본 saveDate 설정 - saveDate가 없거나 null이면 설정
+    if (!data.saveDate || data.saveDate === null) {
+      const currentDate = targetDate || getKoreaTime();
+      console.log("🔧 saveDate 설정 시도:", currentDate);
+      setData(prev => {
+        console.log("🔧 setData 호출 - prev:", prev);
+        const newData = {
+          ...prev,
+          saveDate: currentDate
+        };
+        console.log("🔧 setData 호출 - newData:", newData);
+        return newData;
+      });
     }
-  }, [routine_list_idx, targetDate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [routine_list_idx, targetDate, tempData, data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 일반 루틴의 체크된 세트 처리 - 간소화하여 무한루프 방지
   useEffect(() => {
@@ -641,7 +791,7 @@ const RoutineDetail = () => {
       if (diffDate > 0 || !findData) {
         setData(prev => ({
           ...prev,
-          saveDate: formatDate(),
+          saveDate: getKoreaTime(),
         }));
       } else if (findData) {
         setData(prev => ({
@@ -655,7 +805,6 @@ const RoutineDetail = () => {
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      console.log('RoutineDetail 언마운트 - 모든 상태 초기화');
       // RoutineDetail에서 나갈 때 모든 상태 초기화
       setRoutineData({
         routine_name: '',
@@ -672,25 +821,16 @@ const RoutineDetail = () => {
 
   // 데이터 로드 useEffect - 간소화로 무한 루프 방지
   useEffect(() => {
-    console.log('데이터 로드 useEffect 실행:', { 
-      routine_list_idx, 
-      targetIdx, 
-      isLoading 
-    });
-    
     const fetchRoutine = async () => {
       try {
-        console.log('루틴 데이터 fetch 시작');
         setIsLoading(true);
 
         const url = targetIdx
           ? `/routine/trainer/${routine_list_idx}/${targetIdx}`
           : `/routine/${routine_list_idx}`;
 
-        console.log('요청 URL:', url);
         const response = await axios.get(url, { withCredentials: true });
         const result = response.data;
-        console.log('서버 응답:', result);
 
         if (result.success) {
           const newData = {
@@ -704,7 +844,6 @@ const RoutineDetail = () => {
             }))
           };
 
-          console.log('새 데이터 설정:', newData);
           setData(newData);
           setInit(result.vo);
           setLocalInit(result.vo); // 로컬 init도 설정
@@ -721,15 +860,81 @@ const RoutineDetail = () => {
     };
 
     if (routine_list_idx === 'custom') {
-      console.log('빠간기록 모드');
-      // 빠간기록은 단순하게 처리
+      // localStorage 정리 먼저 실행
+      cleanupLocalStorage();
+      
+      // 현재 날짜 생성
+      const currentDate = targetDate || getKoreaTime();
+      
+      console.log("🔧 시간 체크:", {
+        설정날짜: currentDate,
+        targetDate: targetDate,
+        getKoreaTime결과: getKoreaTime()
+      });
+      
+      // localStorage에서 해당 날짜의 데이터 찾기
+      const storedTempData = localStorage.getItem('routineData');
+      let existingData = null;
+      
+      if (storedTempData && targetDate) {
+        try {
+          const parsedTempData = JSON.parse(storedTempData);
+          console.log("🔧 localStorage에서 읽은 전체 데이터:", parsedTempData);
+          
+          // 같은 날짜의 데이터 찾기 (루틴명 고려)
+          const sameDateData = parsedTempData.filter(item => {
+            const itemDateOnly = item.saveDate ? item.saveDate.split(' ')[0] : '';
+            const targetDateOnly = targetDate.split(' ')[0];
+            return itemDateOnly === targetDateOnly;
+          });
+          
+          if (sameDateData.length > 0) {
+            // 루틴명이 있는 데이터를 우선적으로 선택, 없으면 가장 최근 것
+            existingData = sameDateData.find(item => item.routine_name && item.routine_name !== '자유 운동') 
+                          || sameDateData[sameDateData.length - 1];
+          }
+          console.log("🔧 미기록 운동 데이터 찾기 (날짜기준):", existingData);
+          console.log("🔧 같은 날짜 데이터 개수:", sameDateData.length);
+          
+          // 중복된 데이터가 있다면 정리 (같은 날짜, 같은 이름)
+          if (sameDateData.length > 1) {
+            const uniqueData = [];
+            const seenKeys = new Set();
+            
+            parsedTempData.forEach(item => {
+              const key = `${item.saveDate}-${item.routine_name}`;
+              if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                uniqueData.push(item);
+              } else {
+                // 중복된 경우 운동 데이터가 더 많은 것을 선택
+                const existingItem = uniqueData.find(u => `${u.saveDate}-${u.routine_name}` === key);
+                if (existingItem && item.routines.length > existingItem.routines.length) {
+                  const index = uniqueData.findIndex(u => `${u.saveDate}-${u.routine_name}` === key);
+                  uniqueData[index] = item;
+                }
+              }
+            });
+            
+            // 중복이 정리된 데이터로 localStorage 업데이트
+            if (uniqueData.length !== parsedTempData.length) {
+              localStorage.setItem('routineData', JSON.stringify(uniqueData));
+              console.log("🔧 중복 데이터 정리 완료:", uniqueData.length, "개 항목으로 축소");
+            }
+          }
+        } catch (error) {
+          console.error("localStorage 파싱 에러:", error);
+        }
+      }
+      
       const customData = {
         routine_list_idx: 'custom',
-        routine_name: '자유 운동',
-        routines: routineData?.routines || [],
-        saveDate: targetDate || null
+        routine_name: existingData?.routine_name || '자유 운동',
+        routines: existingData?.routines || routineData?.routines || [],
+        saveDate: currentDate // 강제로 currentDate만 사용
       };
-      console.log('커스텀 데이터 설정:', customData);
+      console.log("🔧 custom 데이터 초기화:", customData);
+      console.log("🔧 custom saveDate 확인:", customData.saveDate);
       setData(customData);
       setInit(customData);
       setLocalInit(customData); // 로컬 init도 설정
@@ -738,10 +943,8 @@ const RoutineDetail = () => {
     }
 
     if (routine_list_idx && routine_list_idx !== 'custom') {
-      console.log('일반 루틴 모드 - fetch 실행');
       fetchRoutine();
     } else {
-      console.log('기타 경우 - 로딩 종료');
       setIsLoading(false);
     }
 
@@ -856,14 +1059,14 @@ const RoutineDetail = () => {
             <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
             <SetTop>
               <img 
-                src={routine.pt.pt_image.split(",").filter((item) => item.includes(".png"))} 
-                alt={routine.pt.pt_name} 
-                data-idx={routine.pt.pt_idx} 
+                src={routine.pt?.pt_image ? routine.pt.pt_image.split(",").filter((item) => item.includes(".png"))[0] || "https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png" : "https://res.cloudinary.com/dhupmoprk/image/upload/v1752545383/nodata.png"} 
+                alt={routine.pt?.pt_name || "운동"} 
+                data-idx={routine.pt?.pt_idx} 
                 onClick={handleOpenWorkoutModal} 
               />
               <div className="exercise-info">
-                <h4>{routine.pt.pt_name}</h4>
-                <div className="exercise-category">{routine.pt.pt_category || '전신 운동'}</div>
+                <h4>{routine.pt?.pt_name || "운동명 없음"}</h4>
+                <div className="exercise-category">{routine.pt?.pt_category || '전신 운동'}</div>
               </div>
             </SetTop>
             <MemoInput
@@ -873,14 +1076,19 @@ const RoutineDetail = () => {
               value={routine.routine_memo || ""}
               onChange={e => {
                 const value = e.target.value;
-                setData(prev => ({
-                  ...prev,
-                  routines: prev.routines.map(r =>
+                const updatedData = {
+                  ...data,
+                  routines: data.routines.map(r =>
                     r.pt_idx === routine.pt_idx
                       ? { ...r, routine_memo: value }
                       : r
                   )
-                }));
+                };
+                
+                setData(updatedData);
+                
+                // tempData 업데이트
+                updateTempData(updatedData);
               }}
             />
             <ListHeader>
