@@ -1,7 +1,7 @@
 import axios from 'axios';
-import React, { useState, useRef, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import { FormGroup, Label, Input, TimeSelect, TimeInputWrapper, ButtonSubmit, Select } from '../../styles/FormStyles';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { useDispatch, useSelector } from 'react-redux';
@@ -132,9 +132,8 @@ const validateFn = (info) => {
     newInvalid.gugun1 = true;
   }
 
-  if (!info.member_disease || info.member_disease === "") {
-    newInvalid.member_disease = true;
-  }
+  // member_disease는 선택사항이므로 필수 체크 제거
+  
   if (!info.member_time_start || !timePattern.test(info.member_time_start)) {
     newInvalid.member_time_start = true;
   }
@@ -179,18 +178,19 @@ const MemberRegister = () => {
 
 
   useEffect(()=>{
-    setInfo({
-      ...info,
-      ...user
-    })
-  },[])
+    if (user) {
+      setInfo(prevInfo => ({
+        ...prevInfo,
+        ...user
+      }))
+    }
+  },[user, setInfo])
   const handleSubmit = () => {
     if (!validate()) {
       const alertMsg = {
         body_height: '키는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         body_weight: '몸무게는 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
         member_purpose: '운동목적을 선택해주세요.',
-        member_disease: '질병은 한글, 영문, 숫자, 공백으로 최대 30자까지 입력해주세요.',
         member_time_start: '운동 시작 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
         member_time_end: '운동 종료 시간은 24시간제 HH:MM 형식으로 입력해주세요.',
         body_skeletal_muscle: '골격근량은 0 이상 300 이하의 숫자(소수점 1자리까지)로 입력해주세요.',
