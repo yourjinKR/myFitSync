@@ -2,8 +2,6 @@ package org.fitsync.filter;
 
 import org.fitsync.util.JwtUtil;
 
-import io.jsonwebtoken.Claims;
-
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -14,7 +12,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Date;
 
 public class AuthTokenFilter implements Filter {
     private JwtUtil jwtUtil;
@@ -51,25 +48,14 @@ public class AuthTokenFilter implements Filter {
         }
 
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
-            // 사용자 정보 추출
             Integer memberIdx = jwtUtil.getUserIdx(token).intValue();
-            
-            java.util.Date blockDate = jwtUtil.getBlockDate(token);
-            if(blockDate != null) {
-            	request.setAttribute("block_date", blockDate);
-            	httpRequest.getSession().setAttribute("block_date", blockDate);            	
-            }
-
-            // request에 저장
+            // request attribute에 저장
             request.setAttribute("member_idx", memberIdx);
-
             // 세션에도 저장
             httpRequest.getSession().setAttribute("member_idx", memberIdx);
-
             chain.doFilter(request, response);
             return;
         }
-
 
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         httpResponse.setContentType("application/json;charset=UTF-8");
@@ -90,6 +76,7 @@ public class AuthTokenFilter implements Filter {
             "/auth",           // 인증 관련 API (로그인, 회원가입)
             "/login",          // 로그인 페이지
             "/register",       // 회원가입 페이지
+            "/member/register", // 회원가입 API 추가
             "/static",         // 정적 리소스
             "/css",           // CSS 파일
             "/js",            // JavaScript 파일
