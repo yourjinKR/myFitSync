@@ -729,55 +729,284 @@ const ServiceStatusSubtext = styled.div`
     }
 `;
 
-const FeatureList = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin: 1.5rem 0;
+const FeatureGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+    width: 100%;
+    max-width: 800px;
+    
+    @media (max-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.2rem;
+        margin: 1.5rem 0;
+    }
     
     @media (max-width: 480px) {
-        gap: 0.8rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
         margin: 1.2rem 0;
     }
 `;
 
-const FeatureItem = styled.div`
+const FeatureCard = styled.div`
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 1.2rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    border: 1px solid var(--border-light);
+    flex-direction: column;
+    justify-content: center;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--primary-blue-light), var(--primary-blue));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 14px;
+    }
+    
+    &:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-blue);
+        box-shadow: 0 15px 30px rgba(74, 144, 226, 0.2);
+        
+        &::before {
+            opacity: 0.1;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        padding: 1rem;
+        min-height: 100px;
+        
+        &:hover {
+            transform: translateY(-3px);
+        }
+    }
     
     @media (max-width: 480px) {
-        gap: 0.8rem;
         padding: 0.8rem;
+        min-height: 90px;
     }
 `;
 
 const FeatureIcon = styled.div`
-    font-size: 2rem;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+    
+    @media (max-width: 768px) {
+        font-size: 2.8rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 3rem;
+        margin-bottom: 0.3rem;
+    }
+`;
+
+const FeatureTitle = styled.div`
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+    position: relative;
+    z-index: 1;
+    
+    @media (max-width: 768px) {
+        font-size: 2rem;
+        margin-bottom: 0.2rem;
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 2rem;
+        margin-bottom: 0.2rem;
+    }
+`;
+
+// 이미지 컨테이너 스타일
+const ImageContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    @media (max-width: 480px) {
+        margin-bottom: 1.5rem;
+    }
+`;
+
+const StyledImage = styled.img`
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+    
+    &:hover {
+        transform: scale(1.05);
+        filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+    }
+    
+    @media (max-width: 480px) {
+        max-height: 200px;
+    }
+`;
+
+const FeatureDescription = styled.div`
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    position: relative;
+    z-index: 1;
+    
+    @media (max-width: 768px) {
+        font-size: 1.5rem;
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 1.5rem;
+    }
+`;
+
+// 말풍선 관련 스타일 추가
+const ChatContainer = styled.div`
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    
+    @media (max-width: 480px) {
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+`;
+
+const TrainerAvatar = styled.div`
     flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+    animation: ${pulse} 3s ease-in-out infinite;
+    
+    @media (max-width: 480px) {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+`;
+
+const ChatBubble = styled.div`
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border: 2px solid var(--border-light);
+    border-radius: 20px 20px 20px 5px;
+    padding: 1.5rem;
+    position: relative;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    
+    /* 말풍선 꼬리 */
+    &::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        bottom: 15px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 12px 12px 0;
+        border-color: transparent var(--border-light) transparent transparent;
+    }
+    
+    &::after {
+        content: '';
+        position: absolute;
+        left: -7px;
+        bottom: 16px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 10px 10px 0;
+        border-color: transparent var(--bg-secondary) transparent transparent;
+    }
+    
+    @media (max-width: 480px) {
+        max-width: 250px;
+        padding: 1.2rem;
+        border-radius: 16px 16px 16px 4px;
+    }
+`;
+
+const ChatText = styled.div`
+    font-size: 1.7rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-weight: 500;
+    
+    /* 타이핑 애니메이션을 위한 스타일 */
+    &.typing {
+        overflow: hidden;
+        border-right: 2px solid var(--primary-blue);
+        white-space: nowrap;
+        animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
+    }
+    
+    @keyframes typing {
+        from { width: 0 }
+        to { width: 100% }
+    }
+    
+    @keyframes blink-caret {
+        from, to { border-color: transparent }
+        50% { border-color: var(--primary-blue) }
+    }
     
     @media (max-width: 480px) {
         font-size: 1.8rem;
     }
 `;
 
-const FeatureText = styled.div`
-    font-size: 1.3rem;
-    color: var(--text-primary);
-    font-weight: 500;
-    
-    @media (max-width: 480px) {
-        font-size: 1.2rem;
-    }
+const ChatHighlight = styled.span`
+    color: var(--primary-blue);
+    font-weight: 700;
+    font-size : inherit;
 `;
 
 // ...existing code...
 
-const WelcomeSlide = ({ onNext, formData, setFormData, available }) => {
+const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }) => {
+    const [showTyping, setShowTyping] = useState(true);
+    
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowTyping(false);
+        }, 2500);
+        
+        return () => clearTimeout(timer);
+    }, []);
+
     const getBMIStatus = (bmi) => {
         if (bmi < 18.5) return { text: '저체중', color: '#2196F3' };
         if (bmi < 25) return { text: '정상', color: 'var(--check-green)' };
@@ -798,8 +1027,28 @@ const WelcomeSlide = ({ onNext, formData, setFormData, available }) => {
     };
 
     const bmiStatus = formData.bmi ? getBMIStatus(formData.bmi) : null;
-    const hasBasicInfo = formData.name && formData.age && formData.gender;
-    const hasBodyInfo = formData.height && formData.weight;
+    const hasBasicInfo = formData.name && formData.age && formData.gender && formData.height && formData.weight;
+
+    // 개인화된 인사말 생성
+    const getPersonalizedGreeting = () => {
+        if (available && isSubscriber) {
+            return (
+                <>
+                    안녕하세요, <ChatHighlight>{formData.name}</ChatHighlight>님! 👋<br/>
+                    저장된 정보를 확인했어요.<br/> 
+                    맞춤형 운동 루틴을 만들어드릴게요!
+                </>
+            );
+        } else {
+            return (
+                <>
+                    안녕하세요! <ChatHighlight>{formData.name}</ChatHighlight>님! 👋<br/>
+                    저는 여러분의 <ChatHighlight>AI 트레이너</ChatHighlight>입니다!<br/>
+                    맞춤형 운동 루틴을 만들어드릴게요!
+                </>
+            );
+        }
+    };
 
     return (
         <Slide>
@@ -808,104 +1057,54 @@ const WelcomeSlide = ({ onNext, formData, setFormData, available }) => {
                 AI가 당신만의 특별한 운동 루틴을 만들어드려요!
             </SlideSubtitle>
             
+
+            {/* 트레이너와의 대화 섹션 */}
+            <ImageContainer>
+                <StyledImage src="/fitsyncAI.png" alt="FitSync AI" />
+                <ChatContainer>
+                    <ChatBubble>
+                        <ChatText className={showTyping ? 'typing' : ''}>
+                            {getPersonalizedGreeting()}
+                        </ChatText>
+                    </ChatBubble>
+                </ChatContainer>
+            </ImageContainer>
+            
             <WelcomeCenter>
-                <WelcomeIcon>🤖💪</WelcomeIcon>
-                
-                {hasBasicInfo && (
-                    <UserInfoCard>
-                        <UserGreeting>
-                            안녕하세요, {formData.name}님! 👋
-                        </UserGreeting>
-                        
-                        {hasBodyInfo && (
-                            <InfoGrid>
-                                <InfoItem>
-                                    <InfoLabel>나이</InfoLabel>
-                                    <InfoValue>{formData.age}세</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
-                                    <InfoLabel>성별</InfoLabel>
-                                    <InfoValue>{formData.gender}</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
-                                    <InfoLabel>키</InfoLabel>
-                                    <InfoValue>{formData.height}cm</InfoValue>
-                                </InfoItem>
-                                <InfoItem>
-                                    <InfoLabel>체중</InfoLabel>
-                                    <InfoValue>{formData.weight}kg</InfoValue>
-                                </InfoItem>
-                                {formData.bmi && (
-                                    <>
-                                        <InfoItem>
-                                            <InfoLabel>BMI</InfoLabel>
-                                            <InfoValue style={{ color: bmiStatus.color }}>
-                                                {formData.bmi} ({bmiStatus.text})
-                                            </InfoValue>
-                                        </InfoItem>
-                                        <InfoItem>
-                                            <InfoLabel>목표</InfoLabel>
-                                            <InfoValue>
-                                                {getPurposeIcon(formData.purpose)} {formData.purpose || '미설정'}
-                                            </InfoValue>
-                                        </InfoItem>
-                                    </>
-                                )}
-                                <InfoItem>
-                                    <InfoLabel>골격근량</InfoLabel>
-                                    <InfoValue>
-                                        {formData.skeletal_muscle}
-                                    </InfoValue>
-                                </InfoItem>
-                            </InfoGrid>
-                        )}
-                    </UserInfoCard>
-                )}
-
-                <ServiceStatusCard $available={available}>
-                    <ServiceStatusIcon>
-                        {available ? '✅' : '⚠️'}
-                    </ServiceStatusIcon>
-                    <ServiceStatusText>
-                        {available ? 'AI 서비스 이용 가능' : 'AI 서비스 이용 불가'}
-                    </ServiceStatusText>
-                    <ServiceStatusSubtext>
-                        {available 
-                            ? '개인 맞춤 루틴 생성이 준비되었습니다' 
-                            : '구독 또는 크레딧이 필요합니다'
-                        }
-                    </ServiceStatusSubtext>
-                </ServiceStatusCard>
-
-                <FeatureList>
-                    <FeatureItem>
+                <FeatureGrid>
+                    <FeatureCard>
                         <FeatureIcon>🎯</FeatureIcon>
-                        <FeatureText>개인 체형과 목표에 맞춤 분석</FeatureText>
-                    </FeatureItem>
-                    <FeatureItem>
+                        <FeatureTitle>개인 맞춤</FeatureTitle>
+                        <FeatureDescription>체형과 목표 분석</FeatureDescription>
+                    </FeatureCard>
+                    <FeatureCard>
                         <FeatureIcon>🏥</FeatureIcon>
-                        <FeatureText>건강 상태를 고려한 안전한 루틴</FeatureText>
-                    </FeatureItem>
-                    <FeatureItem>
+                        <FeatureTitle>안전한 루틴</FeatureTitle>
+                        <FeatureDescription>건강 상태 고려</FeatureDescription>
+                    </FeatureCard>
+                    <FeatureCard>
                         <FeatureIcon>📅</FeatureIcon>
-                        <FeatureText>{formData.split || 4}분할 맞춤 스케줄 제공</FeatureText>
-                    </FeatureItem>
-                    <FeatureItem>
+                        <FeatureTitle>스마트 스케줄</FeatureTitle>
+                        <FeatureDescription>커스텀 분할 추천</FeatureDescription>
+                    </FeatureCard>
+                    <FeatureCard>
                         <FeatureIcon>⚡</FeatureIcon>
-                        <FeatureText>AI 기반 실시간 루틴 최적화</FeatureText>
-                    </FeatureItem>
-                </FeatureList>
+                        <FeatureTitle>AI 최적화</FeatureTitle>
+                        <FeatureDescription>실시간 루틴 개선</FeatureDescription>
+                    </FeatureCard>
+                </FeatureGrid>
 
                 <WelcomeMessage>
                     {hasBasicInfo 
-                        ? '기존 정보를 확인하고 업데이트하여 더 정확한 루틴을 받아보세요!'
-                        : '몇 가지 간단한 정보만 입력하면 개인 맞춤형 운동 계획을 받을 수 있어요!'
+                        ? '저장된 정보를 확인하고 업데이트해보세요!'
+                        : '간단한 정보 입력으로 AI 맞춤 루틴을 받아보세요!'
                     }
                 </WelcomeMessage>
             </WelcomeCenter>
         </Slide>
     );
 };
+
 
 // ...existing code...
 
@@ -1143,7 +1342,7 @@ const GoalsSlide = ({ formData, setFormData }) => {
     );
 };
 
-const StepInputInfo = ({memberData, onGenerate, available=false}) => {
+const StepInputInfo = ({memberData, onGenerate, available=false, isSubscriber}) => {
     console.log("available:", available); // false여야 함
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -1274,7 +1473,8 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
         const commonProps = {
             formData,
             setFormData,
-            available
+            available,
+            isSubscriber
         };
 
         return <SlideComponent {...commonProps} />;

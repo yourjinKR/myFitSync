@@ -163,7 +163,7 @@ const ModalHeader = styled.div`
 
 const ModalTitle = styled.h3`
     color: var(--text-primary);
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 600;
     margin: 0;
     display: flex;
@@ -171,14 +171,14 @@ const ModalTitle = styled.h3`
     gap: 0.5rem;
     
     @media (max-width: 768px) {
-        font-size: 1.25rem;
+        font-size: 2.5rem;
     }
 `;
 
 const CloseButton = styled.button`
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: var(--text-secondary);
     cursor: pointer;
     padding: 0.25rem;

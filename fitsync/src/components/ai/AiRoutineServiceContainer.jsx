@@ -353,6 +353,7 @@ const AiRoutineServiceContainer = () => {
                             )
                             : false
                     }
+                    isSubscriber={subscriptionData?.isSubscriber}
                 />
             )}
             
