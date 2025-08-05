@@ -89,7 +89,6 @@ const StatsSection = styled.div`
     
     &:hover {
         border-color: var(--primary-blue);
-        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
     }
     
     @media (max-width: 768px) {
@@ -163,7 +162,6 @@ const RoutineItem = styled.div`
     animation-fill-mode: both;
     
     &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border-color: var(--primary-blue-light);
     }
     
@@ -353,11 +351,9 @@ const ActionButton = styled.button`
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
     
     &:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
         background: ${props => props.$variant === 'primary' ? 'var(--primary-blue-hover)' : 
                             props.$variant === 'success' ? '#45a049' : 
                             props.$variant === 'danger' ? '#d32f2f' : 'var(--border-dark)'};
@@ -371,7 +367,7 @@ const ActionButton = styled.button`
         width: 100%;
         justify-content: center;
         padding: 14px 20px;
-        font-size: 1.6rem;
+        font-size: 1.8rem;
     }
 `;
 
@@ -386,7 +382,6 @@ const FeedbackSection = styled.div`
     
     &:hover {
         border-color: var(--primary-blue);
-        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
     }
     
     @media (max-width: 768px) {

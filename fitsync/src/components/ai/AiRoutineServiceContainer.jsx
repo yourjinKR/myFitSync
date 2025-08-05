@@ -20,7 +20,6 @@ const ServiceContainer = styled.div`
     max-width: 1000px;
     margin: 0 auto;
     padding: 2rem;
-    min-height: 100vh;
     background: var(--bg-primary);
 `;
 
@@ -65,7 +64,7 @@ const ProgressStep = styled.div`
         right: -50%;
         width: 100%;
         height: 3px;
-        background: ${props => props.completed ? 'var(--primary-blue)' : 'var(--border-light)'};
+        background: ${props => props.completed ? 'var(--success)' : 'var(--border-light)'};
         border-radius: 2px;
         transform: translateY(-50%);
         z-index: 1;
@@ -319,8 +318,7 @@ const AiRoutineServiceContainer = () => {
 
     return (
         <ServiceContainer>
-            {/* 진행 단계 표시 */}
-            <ProgressBar>
+            {/* <ProgressBar>
                 {steps.map((step, index) => (
                     <ProgressStep 
                         key={step.step}
@@ -337,7 +335,7 @@ const AiRoutineServiceContainer = () => {
                         </ProgressLabel>
                     </ProgressStep>
                 ))}
-            </ProgressBar>
+            </ProgressBar> */}
 
             {/* 단계별 컴포넌트 렌더링 */}
             {currentStep === 1 && (

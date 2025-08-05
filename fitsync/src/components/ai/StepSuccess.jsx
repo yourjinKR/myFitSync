@@ -30,10 +30,7 @@ const fadeInUp = keyframes`
 `;
 
 const SuccessContainer = styled.div`
-    background: var(--bg-secondary);
     padding: 3rem 2rem;
-    border-radius: 16px;
-    border: 1px solid var(--border-light);
     text-align: center;
     max-width: 600px;
     margin: 0 auto; 
@@ -41,7 +38,6 @@ const SuccessContainer = styled.div`
     
     @media (max-width: 768px) {
         padding: 2rem 1.5rem;
-        margin: 0 1rem;
     }
 `;
 
@@ -217,10 +213,6 @@ const StepSuccess = ({ result, onNewRoutine }) => {
                 <StatItem>
                     <StatValue>{totalExercises}</StatValue>
                     <StatLabel>총 운동 수</StatLabel>
-                </StatItem>
-                <StatItem>
-                    <StatValue>{result?.responseTime || 0}초</StatValue>
-                    <StatLabel>생성 시간</StatLabel>
                 </StatItem>
             </SuccessStats>
             
