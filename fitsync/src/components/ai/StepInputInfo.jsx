@@ -326,7 +326,7 @@ const InputField = styled.input`
 
   &::placeholder {
     color: var(--text-tertiary);
-    font-size: 1.1rem;
+    font-size: 2.2rem;
     font-weight: 400;
   }
 
@@ -603,27 +603,311 @@ const WelcomeMessage = styled.div`
     line-height: 1.8;
     
     @media (max-width: 480px) {
+        font-size: 1.8rem;
+    }
+`;
+
+// ...existing code...
+
+// Welcome 화면 전용 추가 스타일
+const UserInfoCard = styled.div`
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border: 2px solid var(--border-light);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    
+    @media (max-width: 480px) {
+        padding: 1.5rem;
+        margin: 1rem 0;
+        gap: 0.8rem;
+    }
+`;
+
+const UserGreeting = styled.div`
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    text-align: center;
+    margin-bottom: 1rem;
+    
+    @media (max-width: 480px) {
+        font-size: 2rem;
+        margin-bottom: 0.8rem;
+    }
+`;
+
+const InfoGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    
+    @media (max-width: 480px) {
+        gap: 0.8rem;
+    }
+`;
+
+const InfoItem = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    
+    @media (max-width: 480px) {
+        padding: 0.8rem;
+    }
+`;
+
+const InfoLabel = styled.div`
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.3rem;
+    
+    @media (max-width: 480px) {
+        font-size: 1.1rem;
+    }
+`;
+
+const InfoValue = styled.div`
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    
+    @media (max-width: 480px) {
+        font-size: 1.6rem;
+    }
+`;
+
+const ServiceStatusCard = styled.div`
+    background: ${props => props.$available ? 
+        'linear-gradient(135deg, var(--check-green), var(--success))' : 
+        'linear-gradient(135deg, var(--warning), #d32f2f)'};
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    text-align: center;
+    color: white;
+    
+    @media (max-width: 480px) {
+        padding: 1.2rem;
+        margin: 0.8rem 0;
+    }
+`;
+
+const ServiceStatusIcon = styled.div`
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    
+    @media (max-width: 480px) {
+        font-size: 2.5rem;
+        margin-bottom: 0.3rem;
+    }
+`;
+
+const ServiceStatusText = styled.div`
+    font-size: 1.4rem;
+    font-weight: 600;
+    
+    @media (max-width: 480px) {
         font-size: 1.3rem;
     }
 `;
 
-// 슬라이드 컴포넌트들
-const WelcomeSlide = ({ onNext }) => (
-    <Slide>
-        <SlideTitle>🎯 맞춤형 운동 루틴</SlideTitle>
-        <SlideSubtitle>
-            AI가 당신만의 특별한 운동 루틴을 만들어드려요!
-        </SlideSubtitle>
-        
-        <WelcomeCenter>
-            <WelcomeIcon>🤖💪</WelcomeIcon>
-            <WelcomeMessage>
-                몇 가지 간단한 정보만 입력하면<br/>
-                개인 맞춤형 운동 계획을 받을 수 있어요!
-            </WelcomeMessage>
-        </WelcomeCenter>
-    </Slide>
-);
+const ServiceStatusSubtext = styled.div`
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-top: 0.3rem;
+    
+    @media (max-width: 480px) {
+        font-size: 0.9rem;
+    }
+`;
+
+const FeatureList = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    
+    @media (max-width: 480px) {
+        gap: 0.8rem;
+        margin: 1.2rem 0;
+    }
+`;
+
+const FeatureItem = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    
+    @media (max-width: 480px) {
+        gap: 0.8rem;
+        padding: 0.8rem;
+    }
+`;
+
+const FeatureIcon = styled.div`
+    font-size: 2rem;
+    flex-shrink: 0;
+    
+    @media (max-width: 480px) {
+        font-size: 1.8rem;
+    }
+`;
+
+const FeatureText = styled.div`
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    
+    @media (max-width: 480px) {
+        font-size: 1.2rem;
+    }
+`;
+
+// ...existing code...
+
+const WelcomeSlide = ({ onNext, formData, setFormData, available }) => {
+    const getBMIStatus = (bmi) => {
+        if (bmi < 18.5) return { text: '저체중', color: '#2196F3' };
+        if (bmi < 25) return { text: '정상', color: 'var(--check-green)' };
+        if (bmi < 30) return { text: '과체중', color: '#FF9800' };
+        return { text: '비만', color: 'var(--warning)' };
+    };
+
+    const getPurposeIcon = (purpose) => {
+        switch (purpose) {
+            case '체중 관리': return '🔥';
+            case '근육 증가': return '💪';
+            case '체형 교정': return '📐';
+            case '체력 증진': return '⚡';
+            case '재활': return '🏥';
+            case '바디 프로필': return '📸';
+            default: return '🎯';
+        }
+    };
+
+    const bmiStatus = formData.bmi ? getBMIStatus(formData.bmi) : null;
+    const hasBasicInfo = formData.name && formData.age && formData.gender;
+    const hasBodyInfo = formData.height && formData.weight;
+
+    return (
+        <Slide>
+            <SlideTitle>🎯 맞춤형 운동 루틴</SlideTitle>
+            <SlideSubtitle>
+                AI가 당신만의 특별한 운동 루틴을 만들어드려요!
+            </SlideSubtitle>
+            
+            <WelcomeCenter>
+                <WelcomeIcon>🤖💪</WelcomeIcon>
+                
+                {hasBasicInfo && (
+                    <UserInfoCard>
+                        <UserGreeting>
+                            안녕하세요, {formData.name}님! 👋
+                        </UserGreeting>
+                        
+                        {hasBodyInfo && (
+                            <InfoGrid>
+                                <InfoItem>
+                                    <InfoLabel>나이</InfoLabel>
+                                    <InfoValue>{formData.age}세</InfoValue>
+                                </InfoItem>
+                                <InfoItem>
+                                    <InfoLabel>성별</InfoLabel>
+                                    <InfoValue>{formData.gender}</InfoValue>
+                                </InfoItem>
+                                <InfoItem>
+                                    <InfoLabel>키</InfoLabel>
+                                    <InfoValue>{formData.height}cm</InfoValue>
+                                </InfoItem>
+                                <InfoItem>
+                                    <InfoLabel>체중</InfoLabel>
+                                    <InfoValue>{formData.weight}kg</InfoValue>
+                                </InfoItem>
+                                {formData.bmi && (
+                                    <>
+                                        <InfoItem>
+                                            <InfoLabel>BMI</InfoLabel>
+                                            <InfoValue style={{ color: bmiStatus.color }}>
+                                                {formData.bmi} ({bmiStatus.text})
+                                            </InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>목표</InfoLabel>
+                                            <InfoValue>
+                                                {getPurposeIcon(formData.purpose)} {formData.purpose || '미설정'}
+                                            </InfoValue>
+                                        </InfoItem>
+                                    </>
+                                )}
+                                <InfoItem>
+                                    <InfoLabel>골격근량</InfoLabel>
+                                    <InfoValue>
+                                        {formData.skeletal_muscle}
+                                    </InfoValue>
+                                </InfoItem>
+                            </InfoGrid>
+                        )}
+                    </UserInfoCard>
+                )}
+
+                <ServiceStatusCard $available={available}>
+                    <ServiceStatusIcon>
+                        {available ? '✅' : '⚠️'}
+                    </ServiceStatusIcon>
+                    <ServiceStatusText>
+                        {available ? 'AI 서비스 이용 가능' : 'AI 서비스 이용 불가'}
+                    </ServiceStatusText>
+                    <ServiceStatusSubtext>
+                        {available 
+                            ? '개인 맞춤 루틴 생성이 준비되었습니다' 
+                            : '구독 또는 크레딧이 필요합니다'
+                        }
+                    </ServiceStatusSubtext>
+                </ServiceStatusCard>
+
+                <FeatureList>
+                    <FeatureItem>
+                        <FeatureIcon>🎯</FeatureIcon>
+                        <FeatureText>개인 체형과 목표에 맞춤 분석</FeatureText>
+                    </FeatureItem>
+                    <FeatureItem>
+                        <FeatureIcon>🏥</FeatureIcon>
+                        <FeatureText>건강 상태를 고려한 안전한 루틴</FeatureText>
+                    </FeatureItem>
+                    <FeatureItem>
+                        <FeatureIcon>📅</FeatureIcon>
+                        <FeatureText>{formData.split || 4}분할 맞춤 스케줄 제공</FeatureText>
+                    </FeatureItem>
+                    <FeatureItem>
+                        <FeatureIcon>⚡</FeatureIcon>
+                        <FeatureText>AI 기반 실시간 루틴 최적화</FeatureText>
+                    </FeatureItem>
+                </FeatureList>
+
+                <WelcomeMessage>
+                    {hasBasicInfo 
+                        ? '기존 정보를 확인하고 업데이트하여 더 정확한 루틴을 받아보세요!'
+                        : '몇 가지 간단한 정보만 입력하면 개인 맞춤형 운동 계획을 받을 수 있어요!'
+                    }
+                </WelcomeMessage>
+            </WelcomeCenter>
+        </Slide>
+    );
+};
+
+// ...existing code...
 
 const BasicInfoSlide = ({ formData, setFormData }) => {
     const handleChange = (e) => {
@@ -706,10 +990,21 @@ const BodyCompositionSlide = ({ formData, setFormData }) => {
             <SlideTitle>📊 체성분 정보</SlideTitle>
             <SlideSubtitle>
                 체성분 정보를 알고 계시면 더 정확한 루틴을 제공할 수 있어요<br/>
-                <span style={{ fontSize: '1.1rem', opacity: 0.8, fontWeight: '600' }}>(선택사항)</span>
             </SlideSubtitle>
             
             <InputArea>
+                <InputGroup>
+                    <InputLabel required>⚖️ 몸무게 (kg)</InputLabel>
+                    <InputField
+                        name="weight"
+                        type="number"
+                        min="30"
+                        max="300"
+                        value={formData.weight}
+                        onChange={handleChange}
+                        placeholder="몸무게를 입력하세요"
+                    />
+                </InputGroup>
                 <InputGroup>
                     <InputLabel>🧈 체지방량 (kg)</InputLabel>
                     <InputField
@@ -813,7 +1108,7 @@ const GoalsSlide = ({ formData, setFormData }) => {
             
             <InputArea>
                 <InputGroup>
-                    <InputLabel>🏃 운동 목적</InputLabel>
+                    <InputLabel required>🏃 운동 목적</InputLabel>
                     <SelectField
                         name="purpose"
                         value={formData.purpose}
@@ -830,12 +1125,13 @@ const GoalsSlide = ({ formData, setFormData }) => {
                 </InputGroup>
                 
                 <InputGroup>
-                    <InputLabel>🗓️ 분할 루틴</InputLabel>
+                    <InputLabel required>🗓️ 분할 루틴</InputLabel>
                     <SelectField
                         name="split"
                         value={formData.split}
                         onChange={handleChange}
-                    >
+                    >   
+                        <option value="">선택하세요</option>
                         <option value="2">2분할 (주 2회)</option>
                         <option value="3">3분할 (주 3회)</option>
                         <option value="4">4분할 (주 4회)</option>
@@ -863,7 +1159,7 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
         fat: '',
         fat_percentage: '',
         skeletal_muscle: '',
-        split: 4,
+        split: '',
     });
 
     // 멤버 데이터 로드
@@ -886,7 +1182,7 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
                         fat: body?.body_fat || '',
                         fat_percentage: body?.body_fat_percentage || '',
                         skeletal_muscle: body?.body_skeletal_muscle || '',
-                        split: member?.member_split || 4,
+                        split: member?.member_split || '',
                     }));
                 }
             } catch (error) {
@@ -938,6 +1234,7 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
     };
 
     const isFormValid = formData.age && formData.gender && formData.height && formData.weight;
+    const isFormFinalValid = formData.age && formData.gender && formData.height && formData.weight && formData.purpose && formData.split;
         
     const getButtonConfig = () => {
         switch (currentSlide) {
@@ -951,7 +1248,7 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
                 return {
                     type: 'submit',
                     text: '루틴 생성하기 🚀',
-                    disabled: false
+                    disabled: !isFormFinalValid 
                 };
             default:
                 return {
@@ -976,7 +1273,8 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
         
         const commonProps = {
             formData,
-            setFormData
+            setFormData,
+            available
         };
 
         return <SlideComponent {...commonProps} />;
@@ -992,7 +1290,7 @@ const StepInputInfo = ({memberData, onGenerate, available=false}) => {
                         ←
                     </HeaderBackButton>
                 )}
-                <HeaderTitle>AI 루틴 생성</HeaderTitle>
+                <HeaderTitle>사용자 맞춤 루틴 추천</HeaderTitle>
                 <CloseButton onClick={handleClose}>✕</CloseButton>
                 <ProgressBar>
                     <ProgressFill currentSlide={currentSlide} totalSlides={slides.length} />
