@@ -217,7 +217,7 @@ const UserApiLogContainer = () => {
                 </HeaderContent>
                 
                 {/* AI 사용량 표시 */}
-                {subscriptionData?.isSubScription && (
+                {subscriptionData?.isSubscriber && (
                   <UsageSection>
                       <UsageHeader>
                           <UsageLabel>AI 사용량</UsageLabel>

@@ -87,10 +87,6 @@ const StatsSection = styled.div`
     margin-bottom: 20px;
     transition: all 0.2s ease;
     
-    &:hover {
-        border-color: var(--primary-blue);
-    }
-    
     @media (max-width: 768px) {
         margin-bottom: 15px;
         padding: 14px;
@@ -160,10 +156,6 @@ const RoutineItem = styled.div`
     animation: ${slideIn} 0.6s ease-out;
     animation-delay: ${props => props.$index * 0.1}s;
     animation-fill-mode: both;
-    
-    &:hover {
-        border-color: var(--primary-blue-light);
-    }
     
     @media (max-width: 768px) {
         border-radius: 8px;
@@ -236,11 +228,6 @@ const ExerciseItem = styled.div`
     padding: 12px;
     border: 1px solid var(--border-light);
     transition: all 0.2s ease;
-    
-    &:hover {
-        background: var(--bg-tertiary);
-        border-color: var(--primary-blue-light);
-    }
     
     @media (max-width: 768px) {
         padding: 10px;

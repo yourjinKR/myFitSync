@@ -95,9 +95,9 @@ const FeedbackModal = ({ onClose, onSubmit }) => {
                                 onChange={(e) => setSelectedReason(e.target.value)}
                             />
                             <OptionText>
-                                <strong>{reason.label}</strong>
+                                <strong style={{ fontSize: '1.6rem' }}>{reason.label}</strong>
                                 <br />
-                                <span style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>
+                                <span style={{ color: 'var(--text-tertiary)', fontSize: '1.4rem' }}>
                                     {reason.description}
                                 </span>
                             </OptionText>
@@ -178,7 +178,7 @@ const ModalTitle = styled.h3`
 const CloseButton = styled.button`
     background: none;
     border: none;
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--text-secondary);
     cursor: pointer;
     padding: 0.25rem;
@@ -194,7 +194,7 @@ const CloseButton = styled.button`
 const FeedbackDescription = styled.p`
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
-    font-size: 1rem;
+    font-size: 1.3rem;
     line-height: 1.5;
 `;
 
@@ -206,7 +206,6 @@ const OptionLabel = styled.label`
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    margin-bottom: 1rem;
     color: var(--text-primary);
     cursor: pointer;
     padding: 0.75rem;
@@ -233,7 +232,7 @@ const OptionInput = styled.input`
 `;
 
 const OptionText = styled.span`
-    font-size: 1rem;
+    font-size: 2rem;
     line-height: 1.4;
     flex: 1;
 `;
@@ -268,15 +267,11 @@ const ModalActions = styled.div`
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
-    
-    @media (max-width: 768px) {
-        flex-direction: column-reverse;
-    }
 `;
 
 const ActionButton = styled.button`
     padding: 0.75rem 1.5rem;
-    font-size: 1rem;
+    font-size: 1.5rem;
     font-weight: 500;
     border: none;
     border-radius: 6px;
@@ -285,7 +280,7 @@ const ActionButton = styled.button`
     min-width: 100px;
     
     @media (max-width: 768px) {
-        width: 100%;
+        font-size: 2rem;
     }
 `;
 

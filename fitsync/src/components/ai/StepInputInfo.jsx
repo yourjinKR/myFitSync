@@ -375,7 +375,7 @@ const SelectField = styled.select`
   option {
     background: var(--bg-secondary);
     color: var(--text-primary);
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     padding: 1.2rem;
   }
 
@@ -393,7 +393,6 @@ const SelectField = styled.select`
 
     /* 옵션 크기 줄이기 */
     option {
-      font-size: 2.1rem;
     }
   }
 `;
@@ -1055,7 +1054,6 @@ const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }
                     안녕하세요! <ChatHighlight>{formData.name}</ChatHighlight>님! 👋<br/>
                     AI 루틴 추천서비스를 이용하기 위해서는<br/>
                     구독이 필요해요😂<br/>
-                    <button>구독하러 가기</button>
                 </>
             );
         }
