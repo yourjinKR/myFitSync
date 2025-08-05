@@ -189,7 +189,7 @@ const FilterGroup = styled.div`
 
 const FilterLabel = styled.label`
   display: block;
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   color: var(--text-secondary);
   margin-bottom: 0.25rem;
   font-weight: 500;
@@ -200,7 +200,7 @@ const SearchInput = styled.input`
   padding: 0.5rem;
   border: 1px solid var(--border-light);
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   transition: all 0.2s ease;
@@ -221,7 +221,7 @@ const StyledSelect = styled.select`
   padding: 0.5rem;
   border: 1px solid var(--border-light);
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   cursor: pointer;
@@ -244,7 +244,7 @@ const DateInput = styled.input`
   padding: 0.5rem;
   border: 1px solid var(--border-light);
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   transition: all 0.2s ease;
@@ -268,7 +268,7 @@ const RefreshButton = styled.button`
   color: white;
   border: none;
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;

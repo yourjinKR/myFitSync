@@ -1,4 +1,120 @@
 import React from 'react';
+import styled from 'styled-components';
+
+// 스타일 컴포넌트 정의
+const FilterContainer = styled.div`
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-light);
+    
+    @media (max-width: 768px) {
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+`;
+
+const FilterTitle = styled.h4`
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    @media (max-width: 768px) {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+    }
+`;
+
+const FilterTagsContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    
+    @media (max-width: 768px) {
+        gap: 0.75rem;
+    }
+`;
+
+const FilterTag = styled.span`
+    padding: 0.4rem 1rem;
+    border-radius: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    white-space: nowrap;
+    
+    ${props => {
+        switch (props.type) {
+            case 'status':
+                return `
+                    background-color: var(--primary-blue-light);
+                    color: var(--text-primary);
+                `;
+            case 'model':
+                return `
+                    background-color: var(--success);
+                    color: var(--text-primary);
+                `;
+            case 'service':
+                return `
+                    background-color: #f59e0b;
+                    color: var(--text-primary);
+                `;
+            case 'version':
+                return `
+                    background-color: #8b5cf6;
+                    color: var(--text-primary);
+                `;
+            case 'search':
+                return `
+                    background-color: #a855f7;
+                    color: var(--text-primary);
+                `;
+            case 'date':
+                return `
+                    background-color: var(--warning);
+                    color: var(--text-primary);
+                `;
+            default:
+                return `
+                    background-color: var(--bg-tertiary);
+                    color: var(--text-secondary);
+                `;
+        }
+    }}
+    
+    @media (max-width: 768px) {
+        padding: 0.45rem 1.1rem;
+        font-size: 1.1rem;
+    }
+`;
+
+const ClearButton = styled.button`
+    padding: 0.4rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    @media (max-width: 768px) {
+        padding: 0.45rem 1.1rem;
+        font-size: 1.1rem;
+    }
+`;
 
 /**
  * 적용된 필터 표시 컴포넌트
@@ -41,129 +157,60 @@ const ActiveFilters = ({ filters, clearAllFilters }) => {
     };
 
     return (
-        <div style={{ 
-            background: 'white', 
-            padding: '1rem', 
-            borderRadius: '0.75rem', 
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
-            marginBottom: '1.5rem',
-            border: '1px solid #e5e7eb'
-        }}>
-            <h4 style={{ 
-                fontSize: '0.9rem', 
-                fontWeight: '600', 
-                marginBottom: '0.75rem', 
-                color: '#374151', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem' 
-            }}>
+        <FilterContainer>
+            <FilterTitle>
                 🔍 현재 적용된 필터
-            </h4>
+            </FilterTitle>
             
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <FilterTagsContainer>
                 {/* 상태 필터 */}
                 {filter !== 'all' && (
-                    <span style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#dbeafe', 
-                        color: '#1e40af', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                    }}>
+                    <FilterTag type="status">
                         상태: {getStatusLabel(filter)}
-                    </span>
+                    </FilterTag>
                 )}
                 
                 {/* 모델 필터 */}
                 {modelFilter !== 'all' && (
-                    <span style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#dcfce7', 
-                        color: '#166534', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                    }}>
+                    <FilterTag type="model">
                         모델: {modelFilter}
-                    </span>
+                    </FilterTag>
                 )}
                 
                 {/* 서비스 필터 */}
                 {serviceFilter !== 'all' && (
-                    <span style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#fef3c7', 
-                        color: '#92400e', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                    }}>
+                    <FilterTag type="service">
                         서비스: {serviceFilter}
-                    </span>
+                    </FilterTag>
                 )}
                 
                 {/* 버전 필터 */}
                 {versionFilter !== 'all' && (
-                    <span style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#ede9fe', 
-                        color: '#7c3aed', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                    }}>
+                    <FilterTag type="version">
                         버전: v{versionFilter}
-                    </span>
+                    </FilterTag>
                 )}
                 
                 {/* 검색어 필터 */}
                 {searchTerm && (
-                    <span style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#f3e8ff', 
-                        color: '#6b21a8', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                    }}>
+                    <FilterTag type="search">
                         검색: "{searchTerm}"
-                    </span>
+                    </FilterTag>
                 )}
                 
                 {/* 날짜 범위 필터 */}
                 {(dateRange.start || dateRange.end) && (
-                    <span style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#fecaca', 
-                        color: '#991b1b', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                    }}>
+                    <FilterTag type="date">
                         기간: {dateRange.start || '처음'} ~ {dateRange.end || '마지막'}
-                    </span>
+                    </FilterTag>
                 )}
                 
                 {/* 모든 필터 제거 버튼 */}
-                <button 
-                    onClick={clearAllFilters}
-                    style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#f3f4f6', 
-                        color: '#374151', 
-                        border: '1px solid #d1d5db',
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                    }}
-                >
+                <ClearButton onClick={clearAllFilters}>
                     ❌ 모든 필터 제거
-                </button>
-            </div>
-        </div>
+                </ClearButton>
+            </FilterTagsContainer>
+        </FilterContainer>
     );
 };
 

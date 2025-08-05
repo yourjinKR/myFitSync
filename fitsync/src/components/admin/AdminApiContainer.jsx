@@ -187,6 +187,7 @@ const AdminApiContainer = () => {
                             total: filteredLogs.length,
                             isFiltered: filteredLogs.length !== apiLogs.length
                         }}
+                        memberType={user.user.member_type}
                     />
                 )}
 

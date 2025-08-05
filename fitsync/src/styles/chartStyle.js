@@ -10,23 +10,36 @@ export const Container = styled.div`
 
 export const Inner = styled.div`
   margin: 0 auto;
+  max-width: 1600px;
+  width: 100%;
+  padding: 0 1rem;
+  
+  @media (max-width: 768px) {
+    padding: 0 0.5rem;
+  }
 `;
 
 export const Title = styled.h1`
-  font-size: 1.875rem;
+  font-size: 2.5rem;
   font-weight: bold;
   color: var(--text-primary);
   margin-bottom: 1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 2.2rem;
+  }
 `;
 
 export const Button = styled.button`
   background-color: var(--primary-blue);
   color: var(--text-primary);
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-size: 1.4rem;
+  font-weight: 500;
   
   &:hover {
     background-color: var(--primary-blue-hover);
@@ -34,14 +47,25 @@ export const Button = styled.button`
   &:disabled {
     opacity: 0.5;
   }
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    padding: 0.8rem 1.6rem;
+  }
 `;
 
 export const Select = styled.select`
   border: 1px solid var(--border-light);
   border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
+  font-size: 1.4rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    padding: 0.8rem 1.1rem;
+  }
 `;
 
 export const StatCard = styled.div`
@@ -53,15 +77,23 @@ export const StatCard = styled.div`
 `;
 
 export const StatTitle = styled.h3`
-  font-size: 0.875rem;
+  font-size: 1.2rem;
   font-weight: 500;
   color: var(--text-secondary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
 `;
 
 export const StatValue = styled.p`
-  font-size: 1.875rem;
+  font-size: 2.5rem;
   font-weight: bold;
   color: ${props => props.color || 'var(--text-primary)'};
+  
+  @media (max-width: 768px) {
+    font-size: 2.2rem;
+  }
 `;
 
 export const Table = styled.table`
@@ -73,28 +105,38 @@ export const Table = styled.table`
 `;
 
 export const Th = styled.th`
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.8rem;
   text-align: left;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    padding: 0.9rem 1.6rem;
+  }
 `;
 
 export const Td = styled.td`
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
+  padding: 1rem 1.8rem;
+  font-size: 1.3rem;
   color: var(--text-primary);
   white-space: nowrap;
   border-bottom: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    padding: 0.9rem 1.6rem;
+  }
 `;
 
 export const StatusTag = styled.span`
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 1.1rem;
   font-weight: 600;
   border-radius: 9999px;
 
@@ -107,6 +149,11 @@ export const StatusTag = styled.span`
 
   color: var(--text-primary);
   opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    padding: 0.35rem 0.7rem;
+  }
 `;
 
 export const ModalOverlay = styled.div`
@@ -135,17 +182,28 @@ export const Section = styled.div`
 `;
 
 export const SectionTitle = styled.h4`
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1.4rem;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
 `;
 
 export const SectionContent = styled.div`
   background-color: var(--bg-tertiary);
-  padding: 0.75rem;
+  padding: 1rem;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 1.3rem;
   border: 1px solid var(--border-light);
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    padding: 0.9rem;
+  }
 `;
 
 export const RoutineCard = styled.div`
@@ -156,8 +214,13 @@ export const RoutineCard = styled.div`
 `;
 
 export const Exercise = styled.li`
-  font-size: 0.875rem;
+  font-size: 1.3rem;
   color: var(--text-primary);
+  margin-bottom: 0.3rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 // AdminApiContainer용 추가 컴포넌트들
@@ -184,16 +247,16 @@ export const AutoRefreshLabel = styled.label`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   color: var(--text-secondary);
   font-weight: 500;
   
   input {
-    transform: scale(1.1);
+    transform: scale(1.3);
   }
   
   @media (max-width: 768px) {
-    font-size: 1rem;
+    font-size: 1.3rem;
   }
 `;
 
@@ -210,14 +273,14 @@ export const TabContainer = styled.div`
 `;
 
 export const TabButton = styled.button`
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 2rem;
   border: none;
   background: ${props => props.active ? 'var(--primary-blue)' : 'transparent'};
   color: ${props => props.active ? 'var(--text-primary)' : 'var(--text-secondary)'};
   border-radius: 0.5rem 0.5rem 0 0;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: ${props => props.active ? '600' : '400'};
+  font-size: 1.4rem;
+  font-weight: ${props => props.active ? '600' : '500'};
   transition: all 0.2s;
   white-space: nowrap;
   
@@ -227,8 +290,8 @@ export const TabButton = styled.button`
   }
   
   @media (max-width: 768px) {
-    padding: 1rem 1.25rem;
-    font-size: 0.85rem;
+    padding: 1.1rem 1.8rem;
+    font-size: 1.3rem;
   }
 `;
 
@@ -246,13 +309,13 @@ export const FilterContainer = styled.div`
 `;
 
 export const FilterTitle = styled.h3`
-  font-size: 1rem;
+  font-size: 1.6rem;
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--text-primary);
   
   @media (max-width: 768px) {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
   }
 `;
 
@@ -269,22 +332,22 @@ export const FilterGrid = styled.div`
 
 export const FilterLabel = styled.label`
   display: block;
-  font-size: 0.875rem;
+  font-size: 1.3rem;
   color: var(--text-secondary);
   margin-bottom: 0.25rem;
   font-weight: 500;
   
   @media (max-width: 768px) {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
   }
 `;
 
 export const Input = styled.input`
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.8rem;
   border: 1px solid var(--border-light);
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1.3rem;
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
   
@@ -299,8 +362,8 @@ export const Input = styled.input`
   }
   
   @media (max-width: 768px) {
-    padding: 0.75rem;
-    font-size: 0.9rem;
+    padding: 0.85rem;
+    font-size: 1.2rem;
   }
 `;
 
@@ -319,7 +382,7 @@ export const CurrentFiltersContainer = styled.div`
 `;
 
 export const CurrentFiltersTitle = styled.h4`
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
   color: var(--text-primary);
@@ -328,7 +391,7 @@ export const CurrentFiltersTitle = styled.h4`
   gap: 0.5rem;
   
   @media (max-width: 768px) {
-    font-size: 1rem;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
   }
 `;
@@ -344,27 +407,27 @@ export const FilterTagsContainer = styled.div`
 `;
 
 export const FilterTag = styled.span`
-  padding: 0.25rem 0.75rem;
+  padding: 0.4rem 1rem;
   background-color: ${props => props.bgColor || 'var(--primary-blue-light)'};
   color: ${props => props.textColor || 'var(--text-primary)'};
   border-radius: 1rem;
-  font-size: 0.75rem;
+  font-size: 1.2rem;
   font-weight: 500;
   white-space: nowrap;
   
   @media (max-width: 768px) {
-    padding: 0.375rem 0.875rem;
-    font-size: 0.8rem;
+    padding: 0.45rem 1.1rem;
+    font-size: 1.1rem;
   }
 `;
 
 export const ClearFiltersButton = styled.button`
-  padding: 0.25rem 0.75rem;
+  padding: 0.4rem 1rem;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   border: 1px solid var(--border-light);
   border-radius: 1rem;
-  font-size: 0.75rem;
+  font-size: 1.2rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -375,8 +438,8 @@ export const ClearFiltersButton = styled.button`
   }
   
   @media (max-width: 768px) {
-    padding: 0.375rem 0.875rem;
-    font-size: 0.8rem;
+    padding: 0.45rem 1.1rem;
+    font-size: 1.1rem;
   }
 `;
 
@@ -406,7 +469,7 @@ export const ChartContainer = styled.div`
 `;
 
 export const ChartTitle = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 1rem;
   color: var(--text-primary);
@@ -415,7 +478,7 @@ export const ChartTitle = styled.h3`
   gap: 0.5rem;
   
   @media (max-width: 768px) {
-    font-size: 1.1rem;
+    font-size: 1.6rem;
     margin-bottom: 0.75rem;
   }
 `;
@@ -430,17 +493,18 @@ export const ChartWrapper = styled.div`
 `;
 
 export const ChartDescription = styled.div`
-  font-size: 0.875rem;
+  font-size: 1.3rem;
   color: var(--text-secondary);
   text-align: center;
   margin-top: 1rem;
   background: var(--bg-tertiary);
-  padding: 0.5rem;
+  padding: 0.8rem;
   border-radius: 0.375rem;
+  line-height: 1.5;
   
   @media (max-width: 768px) {
-    font-size: 0.8rem;
-    padding: 0.75rem;
+    font-size: 1.2rem;
+    padding: 0.9rem;
   }
 `;
 
@@ -468,16 +532,24 @@ export const DetailModalHeader = styled.div`
 `;
 
 export const DetailModalTitle = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1.8rem;
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
 `;
 
 export const DetailModalSubtitle = styled.div`
-  font-size: 0.875rem;
+  font-size: 1.3rem;
   color: var(--text-secondary);
   margin-top: 0.25rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 export const DetailModalCloseButton = styled.button`
