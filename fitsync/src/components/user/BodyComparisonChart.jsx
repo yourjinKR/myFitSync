@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,78 +14,49 @@ import axios from 'axios';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import BodyInputForm from './BodyInputForm';
+import { PrimaryButton, ButtonGroup } from '../../styles/commonStyle';
 
 ChartJS.register(LineElement, PointElement, LinearScale, Title, CategoryScale, Legend, Tooltip);
 
 // 스타일 정의
-const Container = styled.div`
-  padding: 2.4rem 1.2rem;
-  background: #fff;
-  border-radius: 1.4rem;
-  box-shadow: 0 0 14px rgba(0, 0, 0, 0.06);
-  max-width: 860px;
-  margin: 0 auto;
-  min-height: 520px;
-`;
-
-const ChartTitle = styled.h2`
-  color: #222;
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-  text-align: center;
-`;
-
 const ToggleWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 1.5rem;
+  gap: 8px;
+  margin-bottom: 20px;
 `;
 
 const ToggleButton = styled.button`
-  padding: 0.6rem 1.2rem;
-  border-radius: 20px;
-  background: ${({ active }) => (active ? '#1976d2' : '#eee')};
-  color: ${({ active }) => (active ? '#fff' : '#444')};
-  border: none;
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: ${({ active }) => (active ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
+  color: ${({ active }) => (active ? 'white' : 'var(--text-secondary)')};
+  border: 1px solid ${({ active }) => (active ? 'var(--primary-blue)' : 'var(--border-light)')};
+  font-weight: 500;
+  font-size: 1.4rem;
   cursor: pointer;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ active }) => (active ? '#1565c0' : '#ddd')};
+    background: ${({ active }) => (active ? 'var(--primary-blue-light)' : 'var(--bg-secondary)')};
+    color: ${({ active }) => (active ? 'white' : 'var(--text-primary)')};
+    transform: translateY(-1px);
   }
 `;
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: 70px 20px;
-  font-size: 1.15rem;
-  color: #333;
-  background: #f8f9fa;
-  border-radius: 1.2rem;
-  max-width: 480px;
-  margin: 0 auto;
+  padding: 40px 20px;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
 
   strong {
-    font-weight: 700;
-  }
-`;
-
-const StyledButton = styled.button`
-  margin-top: 2rem;
-  padding: 1rem 2rem;
-  background: #1976d2;
-  color: #fff;
-  border-radius: 0.8rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-
-  &:hover {
-    background: #145ea8;
+    color: var(--text-primary);
+    font-weight: 600;
   }
 `;
 
@@ -100,19 +71,20 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
-  padding: 2rem 1.5rem;
-  border-radius: 1rem;
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 12px;
   max-width: 480px;
   width: 95vw;
+  border: 1px solid var(--border-light);
 `;
 
 const chartColors = {
-  weight: '#1976d2',
-  muscle: '#43a047',
-  fat: '#ff9800',
-  fatPercent: '#d500f9',
-  bmi: '#0091ea',
+  weight: '#4A90E2',      // 파란색 (Primary Blue)
+  muscle: '#43A047',      // 초록색 
+  fat: '#FF9800',         // 주황색
+  fatPercent: '#E91E63',  // 핑크색
+  bmi: '#00BCD4',         // 청록색
 };
 
 const BodyComparisonChart = () => {
@@ -121,15 +93,15 @@ const BodyComparisonChart = () => {
   const [selectedMetric, setSelectedMetric] = useState('weight');
   const { member_idx } = useSelector((state) => state.user.user);
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     axios.get(`/user/body/${member_idx}`)
       .then(res => setBodyData(res.data))
       .catch(err => console.error('📉 인바디 데이터 불러오기 실패:', err));
-  };
+  }, [member_idx]);
 
   useEffect(() => {
     if (member_idx) fetchData();
-  }, [member_idx]);
+  }, [member_idx, fetchData]);
 
   const sortedData = [...bodyData].sort(
     (a, b) => new Date(a.body_regdate) - new Date(b.body_regdate)
@@ -179,20 +151,54 @@ const BodyComparisonChart = () => {
     datasets: [{
       ...datasetsConfig[selectedMetric],
       tension: 0.3,
+      borderWidth: 3,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      pointBackgroundColor: datasetsConfig[selectedMetric].borderColor,
+      pointBorderColor: '#2a2a2a',  // 다크 배경색으로 명시
+      pointBorderWidth: 2,
+      pointHoverBackgroundColor: datasetsConfig[selectedMetric].borderColor,
+      pointHoverBorderColor: '#ffffff',  // 흰색으로 명시
+      pointHoverBorderWidth: 2,
+      fill: false
     }]
   };
 
   const generateScales = (metric) => {
     return {
       x: {
-        ticks: { color: '#555' },
-        grid: { color: '#e0e0e0' }
+        ticks: { 
+          color: '#ffffff',  // 흰색으로 명시
+          font: { size: 12 }
+        },
+        grid: { 
+          color: '#404040',  // 회색으로 명시
+          borderColor: '#404040'
+        },
+        border: {
+          color: '#404040'
+        }
       },
       [datasetsConfig[metric].yAxisID]: {
         type: 'linear',
         position: 'left',
-        title: { display: true, text: datasetsConfig[metric].label },
-        grid: { drawOnChartArea: true }
+        title: { 
+          display: true, 
+          text: datasetsConfig[metric].label,
+          color: '#ffffff',  // 흰색으로 명시
+          font: { size: 14 }
+        },
+        ticks: {
+          color: '#ffffff',  // 흰색으로 명시
+          font: { size: 12 }
+        },
+        grid: { 
+          drawOnChartArea: true,
+          color: '#404040'  // 회색으로 명시
+        },
+        border: {
+          color: '#404040'
+        }
       }
     };
   };
@@ -201,8 +207,19 @@ const BodyComparisonChart = () => {
     responsive: true,
     interaction: { mode: 'index', intersect: false },
     plugins: {
-      legend: { position: 'top', labels: { font: { size: 14 } } },
+      legend: { 
+        position: 'top', 
+        labels: { 
+          font: { size: 14 },
+          color: '#ffffff'  // 흰색으로 명시
+        } 
+      },
       tooltip: {
+        backgroundColor: '#3a3a3a',  // 다크 회색
+        titleColor: '#ffffff',       // 흰색
+        bodyColor: '#ffffff',        // 흰색
+        borderColor: '#404040',      // 회색
+        borderWidth: 1,
         callbacks: {
           label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue}`
         }
@@ -216,8 +233,9 @@ const BodyComparisonChart = () => {
       <EmptyState>
         아직 인바디 데이터가 없어요. <br />
         <strong>첫 인바디 정보를 입력하고</strong> 그래프를 시작해보세요!
-        <br />
-        <StyledButton onClick={() => setShowModal(true)}>정보 입력</StyledButton>
+        <ButtonGroup>
+          <PrimaryButton onClick={() => setShowModal(true)}>정보 입력</PrimaryButton>
+        </ButtonGroup>
         {showModal && (
           <ModalOverlay onClick={() => setShowModal(false)}>
             <ModalContent onClick={e => e.stopPropagation()}>
@@ -233,9 +251,7 @@ const BodyComparisonChart = () => {
   }
 
   return (
-    <Container>
-      <ChartTitle>체성분 변화 차트</ChartTitle>
-
+    <>
       <ToggleWrapper>
         {Object.keys(datasetsConfig).map(metric => (
           <ToggleButton
@@ -250,9 +266,9 @@ const BodyComparisonChart = () => {
 
       <Line data={data} options={options} />
 
-      {true && (
-        <StyledButton onClick={() => setShowModal(true)}>정보 추가하기</StyledButton>
-      )}
+      <ButtonGroup>
+        <PrimaryButton onClick={() => setShowModal(true)}>정보 추가하기</PrimaryButton>
+      </ButtonGroup>
 
       {showModal && (
         <ModalOverlay onClick={() => setShowModal(false)}>
@@ -264,7 +280,7 @@ const BodyComparisonChart = () => {
           </ModalContent>
         </ModalOverlay>
       )}
-    </Container>
+    </>
   );
 };
 

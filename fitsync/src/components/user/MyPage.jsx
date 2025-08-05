@@ -1,34 +1,172 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import BodyComparisonChart from './BodyComparisonChart';
-import TrainerCalendarView from '../trainer/TrainerCalendarView';
 import Routine from '../routine/Routine';
 import axios from 'axios';
 import LatestBodyInfo from './LatestBodyInfo';
 import TrainerProfileHeader from '../trainer/TrainerProfileHeader';
 import { useSelector } from 'react-redux';
+import { PrimaryButton, SecondaryButton, ButtonGroup } from '../../styles/commonStyle';
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding: 16px;
-  max-width: 100%;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--bg-primary);
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 20px;
+  }
 `;
 
 const Section = styled.section`
-  background: #ffffff;
+  background: var(--bg-secondary);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 16px;
-  overflow-x: auto;
+  border: 1px solid rgba(74, 144, 226, 0.1);
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+    border-radius: 10px;
+  }
+`;
+
+const RoutineSection = styled.section`
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid rgba(74, 144, 226, 0.1);
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+    border-radius: 10px;
+  }
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.25rem;
+  font-size: 1.8rem;
   font-weight: 600;
-  margin-bottom: 12px;
-  color: #222;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-blue);
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+  }
+`;
+
+const LoadingMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+`;
+
+const ErrorMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--warning);
+  font-size: 1.4rem;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  background: linear-gradient(145deg, var(--bg-tertiary) 0%, rgba(58, 58, 58, 0.8) 100%);
+  border-radius: 16px;
+  border: 2px dashed rgba(74, 144, 226, 0.3);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  
+  &::before {
+    content: '💪';
+    display: block;
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.6;
+    filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3));
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(74, 144, 226, 0.1) 60deg,
+      transparent 120deg
+    );
+    animation: rotate 8s linear infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  span {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 8px;
+    font-size: 1.2rem;
+    color: var(--primary-blue-light);
+    font-style: italic;
+    opacity: 0.8;
+  }
+`;
+
+const RoutineListWrapper = styled.div`
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  
+  @media (max-width: 650px) {
+    gap: 1rem;
+  }
+  
+`;
+
+const ShowMoreButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--primary-blue);
+  }
 `;
 
 const MyPage = () => {
@@ -38,13 +176,14 @@ const MyPage = () => {
   const [routineList, setRoutineList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
+  const [showAllRoutines, setShowAllRoutines] = useState(false);
 
   useEffect(() => {
     if (loginUser) {
       setUser(loginUser); // 로그인된 유저 정보를 세팅
     }
     handleRoutineResponse();
-  }, []);
+  }, [loginUser]);
 
   const handleRoutineResponse = async () => {
     try {
@@ -93,8 +232,17 @@ const MyPage = () => {
 
   const handleBodyUpdate = () => setChartKey((prev) => prev + 1);
 
-  if (loading || !user) return <div>로딩중...</div>;
-  if (!user) return <div>유저 정보를 불러올 수 없습니다.</div>;
+  if (loading || !user) return (
+    <Container>
+      <LoadingMessage>로딩중...</LoadingMessage>
+    </Container>
+  );
+  
+  if (!user) return (
+    <Container>
+      <ErrorMessage>유저 정보를 불러올 수 없습니다.</ErrorMessage>
+    </Container>
+  );
 
   return (
     <Container>
@@ -115,28 +263,32 @@ const MyPage = () => {
         <SectionTitle>인바디 변화 그래프</SectionTitle>
         <BodyComparisonChart key={chartKey} />
       </Section>
-      <Section>
+      <RoutineSection>
         <SectionTitle>내 루틴</SectionTitle>
-        {routineList.length > 0 ? (
-          <div
-            style={{
-              overflowX: routineList.length >= 3 ? 'auto' : 'visible',
-              paddingBottom: routineList.length >= 3 ? '8px' : '0',
-            }}
-          >
-            {routineList.map((routineItem) => (
-              <div
-                key={routineItem.routine_list_idx}
-                style={{ flexShrink: 0 }}
-              >
-                <Routine data={routineItem} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div>등록된 루틴이 없습니다.</div>
-        )}
-      </Section>
+        <RoutineListWrapper>
+          {routineList.length > 0 ? (
+            <>
+                {(showAllRoutines ? routineList : routineList.slice(0, 4)).map((routineItem) => (
+                  <Routine 
+                    data={routineItem} 
+                    key={routineItem.routine_list_idx}
+                    onDelete={handleRoutineResponse}
+                  />
+                ))}
+              {routineList.length > 4 && (
+                <ShowMoreButton onClick={() => setShowAllRoutines(!showAllRoutines)}>
+                  {showAllRoutines ? '접기' : `더보기 (${routineList.length - 4}개 더)`}
+                </ShowMoreButton>
+              )}
+            </>
+          ) : (
+            <EmptyMessage>
+              등록된 루틴이 없습니다
+              <span>새로운 루틴을 추가해보세요!</span>
+            </EmptyMessage>
+          )}
+        </RoutineListWrapper>
+      </RoutineSection>
     </Container>
   );
 };
