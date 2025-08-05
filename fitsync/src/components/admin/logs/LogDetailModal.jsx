@@ -113,6 +113,12 @@ const LogDetailModal = ({
     const getSimilarExercises = (userInput) => {
         if (!userInput) return null;
 
+        // 버전 확인: 0.2.0 이상인 경우 유사어 검색 과정 생략
+        if (log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0')) {
+            console.log(`Version ${log.apilog_version} detected. Skipping similar exercise search.`);
+            return null;
+        }
+
         try {
             let exerciseNames = [];
             // userInput이 문자열인 경우 JSON 파싱 시도
@@ -360,10 +366,25 @@ const LogDetailModal = ({
         )];
 
         // 운동별 유효성 검사 정보 추가 (rawData 우선, rawDataMap 보조)
+        // 버전 0.2.0 이상에서는 유효성 검사 스킵
+        const shouldSkipValidation = log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0');
+        
         const exerciseValidation = routineArray.map(routine => ({
             ...routine,
             exercises: routine.exercises?.map(ex => {
                 const exerciseName = ex.pt_name || ex.name || ex.exercise_name || '';
+                
+                // 버전 0.2.0 이상에서는 기본적으로 모든 운동을 유효한 것으로 처리
+                if (shouldSkipValidation) {
+                    return {
+                        ...ex,
+                        isValid: true,
+                        matchedName: null,
+                        matchScore: null,
+                        matchType: 'default',
+                        normalizedName: exerciseName.replace(/\s+/g, '')
+                    };
+                }
                 
                 // 1단계: rawData에서 정확한 매칭 검사 (공백 제거 후 비교)
                 const normalizedName = exerciseName.replace(/\s+/g, '');
@@ -685,15 +706,17 @@ const LogDetailModal = ({
                                             <SummaryLabel>총 운동 수</SummaryLabel>
                                             <SummaryValue>{workoutResult.totalExercises}개</SummaryValue>
                                         </SummaryItem>
-                                        {/* 운동명 유효성 검사 결과 추가 (AItest.jsx 방식) */}
-                                        {workoutResult.invalidExerciseCount !== undefined && (
+                                        {/* 운동명 유효성 검사 결과 추가 (AItest.jsx 방식) - 버전 0.2.0 이상에서는 숨김 */}
+                                        {workoutResult.invalidExerciseCount !== undefined && 
+                                         !(log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0')) && (
                                             <SummaryItem>
                                                 <SummaryIcon>✅</SummaryIcon>
                                                 <SummaryLabel>유효성 검사</SummaryLabel>
                                                 <SummaryValue>{workoutResult.validationRatio}%</SummaryValue>
                                             </SummaryItem>
                                         )}
-                                        {workoutResult.invalidExerciseCount > 0 && (
+                                        {workoutResult.invalidExerciseCount > 0 && 
+                                         !(log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0')) && (
                                             <SummaryItem>
                                                 <SummaryIcon>⚠️</SummaryIcon>
                                                 <SummaryLabel>유효하지 않은 운동</SummaryLabel>
@@ -736,6 +759,9 @@ const LogDetailModal = ({
                                                         // 개선된 파싱에서 추가된 유효성 정보 사용
                                                         const isValid = exercise.isValid !== undefined ? exercise.isValid : true;
                                                         const exerciseName = exercise.pt_name || exercise.name || exercise.exercise_name || '';
+                                                        
+                                                        // 버전 0.2.0 이상에서는 유효성 검사 관련 UI 숨김
+                                                        const shouldSkipValidationUI = log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0');
 
                                                         return (
                                                             <ExerciseCard key={exerciseIndex} isValid={isValid}>
@@ -745,7 +771,7 @@ const LogDetailModal = ({
                                                                 <ExerciseCardContent>
                                                                     <ExerciseCardName isValid={isValid}>
                                                                         <span style={{fontSize: '1.2em'}}>{exerciseName}</span>
-                                                                        {!isValid && memberType === 'admin' && (
+                                                                        {!shouldSkipValidationUI && !isValid && memberType === 'admin' && (
                                                                             <InvalidBadge>
                                                                                 유효하지 않은 운동명
                                                                                 {exercise.matchScore !== null && (
@@ -755,7 +781,7 @@ const LogDetailModal = ({
                                                                                 )}
                                                                             </InvalidBadge>
                                                                         )}
-                                                                        {isValid && exercise.matchedName && exercise.matchedName !== exerciseName && memberType === 'admin' &&  (
+                                                                        {!shouldSkipValidationUI && isValid && exercise.matchedName && exercise.matchedName !== exerciseName && memberType === 'admin' &&  (
                                                                             <span style={{ 
                                                                                 fontSize: '11px', 
                                                                                 color: exercise.matchType === 'exact' ? '#059669' : '#0369a1', 
@@ -776,7 +802,7 @@ const LogDetailModal = ({
                                                                                 </span>
                                                                             </span>
                                                                         )}
-                                                                        {isValid && exercise.matchType === 'exact' && exercise.matchedName === exerciseName && memberType === 'admin' && (
+                                                                        {!shouldSkipValidationUI && isValid && exercise.matchType === 'exact' && exercise.matchedName === exerciseName && memberType === 'admin' && (
                                                                             <span style={{
                                                                                 fontSize: '9px',
                                                                                 backgroundColor: '#10b981',
@@ -910,8 +936,9 @@ const LogDetailModal = ({
                                     <InfoLabel>similarExercises 매칭 결과</InfoLabel>
                                     <InfoValue>{similarExercises ? `${similarExercises.filter(ex => ex.matchType === 'similar').length}개` : '없음'}</InfoValue>
                                 </InfoItem> */}
-                                {/* 매칭 유형별 카운트 */}
-                                {similarExercises && similarExercises.length > 0 && (
+                                {/* 매칭 유형별 카운트 - 버전 0.2.0 이상에서는 숨김 */}
+                                {similarExercises && similarExercises.length > 0 && 
+                                 !(log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0')) && (
                                     <InfoItem>
                                         <InfoLabel>운동명 매칭 유형별 분석</InfoLabel>
                                         <InfoValue>
@@ -924,15 +951,25 @@ const LogDetailModal = ({
                                 {/* AItest.jsx 방식의 추가 디버그 정보 */}
                                 {workoutResult && (
                                     <>
-                                        <InfoItem>
-                                            <InfoLabel>운동명 유효성 검사</InfoLabel>
-                                            <InfoValue>
-                                                {workoutResult.invalidExerciseCount !== undefined ?
-                                                    `${workoutResult.validationRatio}% (${workoutResult.totalExercises - workoutResult.invalidExerciseCount}/${workoutResult.totalExercises})` :
-                                                    '검사 안함'
-                                                }
-                                            </InfoValue>
-                                        </InfoItem>
+                                        {/* 운동명 유효성 검사 정보 - 버전 0.2.0 이상에서는 숨김 */}
+                                        {!(log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0')) && (
+                                            <InfoItem>
+                                                <InfoLabel>운동명 유효성 검사</InfoLabel>
+                                                <InfoValue>
+                                                    {workoutResult.invalidExerciseCount !== undefined ?
+                                                        `${workoutResult.validationRatio}% (${workoutResult.totalExercises - workoutResult.invalidExerciseCount}/${workoutResult.totalExercises})` :
+                                                        '검사 안함'
+                                                    }
+                                                </InfoValue>
+                                            </InfoItem>
+                                        )}
+                                        {/* 버전 0.2.0 이상에서는 유효성 검사 스킵 메시지 표시 */}
+                                        {log.apilog_version && versionUtils.isVersionAtLeast(log.apilog_version, '0.2.0') && (
+                                            <InfoItem>
+                                                <InfoLabel>운동명 유효성 검사</InfoLabel>
+                                                <InfoValue>스킵됨 (버전 {log.apilog_version})</InfoValue>
+                                            </InfoItem>
+                                        )}
                                         <InfoItem>
                                             <InfoLabel>근육군 분석</InfoLabel>
                                             <InfoValue>{workoutResult.muscleGroups?.length ? `${workoutResult.muscleGroups.join(', ')}` : '없음'}</InfoValue>
