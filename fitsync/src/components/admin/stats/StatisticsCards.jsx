@@ -151,47 +151,63 @@ const StatisticsCards = ({ stats, isLoading }) => {
 // 스타일 컴포넌트
 const CardsContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.2rem;
+  margin-bottom: 3.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
 `;
 
 const StatCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 2rem;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 
   ${props => props.success && `
-    border-left: 4px solid #10b981;
-    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    border-left: 4px solid var(--success);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
   `}
 
   ${props => props.fast && `
-    border-left: 4px solid #3b82f6;
-    background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+    border-left: 4px solid var(--primary-blue);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
   `}
 
   ${props => props.error && `
-    border-left: 4px solid #ef4444;
-    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+    border-left: 4px solid var(--warning);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
   `}
+  
+  @media (max-width: 768px) {
+    padding: 2.2rem;
+    gap: 1.8rem;
+  }
 `;
 
 const CardIcon = styled.div`
-  font-size: 32px;
-  min-width: 48px;
+  font-size: 4rem;
+  min-width: 5.5rem;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 3.5rem;
+    min-width: 5rem;
+  }
 `;
 
 const CardContent = styled.div`
@@ -199,54 +215,84 @@ const CardContent = styled.div`
 `;
 
 const CardTitle = styled.h3`
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 1rem 0;
+  font-size: 1.4rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const CardValue = styled.div`
-  font-size: 28px;
+  font-size: 3.2rem;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 0.6rem;
   color: ${props => {
-        if (props.success) return '#059669';
-        if (props.fast) return '#2563eb';
-        if (props.error) return '#dc2626';
-        return '#111827';
+        if (props.success) return 'var(--success)';
+        if (props.fast) return 'var(--primary-blue)';
+        if (props.error) return 'var(--warning)';
+        return 'var(--text-primary)';
     }};
+  
+  @media (max-width: 768px) {
+    font-size: 2.8rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 const CardSubtext = styled.div`
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: 1.3rem;
+  color: var(--text-tertiary);
   line-height: 1.4;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 `;
 
 const LoadingCard = styled(StatCard)`
   grid-column: 1 / -1;
   justify-content: center;
-  min-height: 120px;
+  min-height: 140px;
+  
+  @media (max-width: 768px) {
+    min-height: 120px;
+  }
 `;
 
 const LoadingMessage = styled.div`
-  color: #6b7280;
-  font-size: 16px;
+  color: var(--text-secondary);
+  font-size: 1.8rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
 `;
 
 const ErrorCard = styled(StatCard)`
   grid-column: 1 / -1;
   justify-content: center;
-  min-height: 120px;
-  border-color: #fecaca;
-  background: #fef2f2;
+  min-height: 140px;
+  border-color: var(--warning);
+  background: var(--bg-tertiary);
+  
+  @media (max-width: 768px) {
+    min-height: 120px;
+  }
 `;
 
 const ErrorMessage = styled.div`
-  color: #dc2626;
-  font-size: 16px;
+  color: var(--warning);
+  font-size: 1.8rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
 `;
 
 export default StatisticsCards;
