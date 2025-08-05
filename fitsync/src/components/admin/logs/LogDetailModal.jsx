@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { getSimilarNamesByMap } from '../../../utils/KorUtil';
 import {
@@ -82,6 +82,32 @@ const LogDetailModal = ({
     const [isUserInfoExpanded, setIsUserInfoExpanded] = useState(false);
     const [isUserInputExpanded, setIsUserInputExpanded] = useState(false);
     const [isAiResponseExpanded, setIsAiResponseExpanded] = useState(false);
+
+    // 모달이 열릴 때 배경 스크롤 방지 및 ESC 키 이벤트 처리
+    useEffect(() => {
+        if (isOpen) {
+            // 배경 스크롤 방지
+            document.body.style.overflow = 'hidden';
+            
+            // ESC 키 이벤트 처리
+            const handleEscKey = (event) => {
+                if (event.key === 'Escape') {
+                    onClose();
+                }
+            };
+            
+            document.addEventListener('keydown', handleEscKey);
+            
+            return () => {
+                // 컴포넌트 언마운트 시 정리
+                document.body.style.overflow = 'unset';
+                document.removeEventListener('keydown', handleEscKey);
+            };
+        } else {
+            // 모달이 닫혔을 때 스크롤 복원
+            document.body.style.overflow = 'unset';
+        }
+    }, [isOpen, onClose]);
 
     if (!isOpen || !log) return null;
 
@@ -1019,27 +1045,6 @@ const LogDetailModal = ({
     );
 };
 
-const FullScreenModalWrapper = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  background: var(--bg-primary); /* Display.jsx와 동일하게 적용 */
-  z-index: 1000;
-  overflow-y: auto;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-`;
-
-const FullScreenModalInner = styled.div`
-  max-width: 750px;
-  margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
-  color: var(--font-color); // 필요한 경우 글로벌 변수 사용
-`;
-
-
 // 수정된 스타일 컴포넌트
 const ModalOverlay = styled.div`
   position: fixed;
@@ -1047,19 +1052,39 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* 반투명 검정 배경 */
   z-index: 1000;
-  overflow-y: auto;
   display: flex;
   justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+    align-items: flex-start; /* 모바일에서는 상단 정렬 */
+    padding-top: 20px;
+  }
 `;
 
 // 모달 내부 컨테이너
 const ModalContainer = styled.div`
   width: 100%;
-  max-width: 750px; /* Display.jsx와 동일 */
-  background: var(--bg-secondary); /* 기존과 동일 */
+  max-width: 900px; /* 조금 더 넓게 */
+  max-height: 90vh; /* 화면 높이의 90% */
+  background: var(--bg-secondary);
+  border-radius: 12px; /* 둥근 모서리 */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); /* 그림자 효과 */
   overflow: hidden;
   box-sizing: border-box;
+  margin: auto; /* 중앙 정렬 */
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 8px;
+    margin: 0;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -1144,7 +1169,7 @@ const NavInfo = styled.div`
 `;
 
 const ModalBody = styled.div`
-  max-height: calc(90vh - 120px);
+  max-height: calc(90vh - 200px); /* 헤더와 여백을 고려한 높이 */
   overflow-y: auto;
   padding: 24px;
 `;
