@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ChatApi from '../../utils/ChatApi';
-import { FaMapMarkerAlt, FaClock, FaComments } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaClock, FaComments, FaUser } from 'react-icons/fa';
 
 const TrainerCard = styled.div`
   background: var(--bg-secondary);
@@ -122,78 +122,47 @@ const TrainerBasicInfo = styled.div`
   gap: 8px;
 
   .trainer-name {
-    font-size: 1.3rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.3;
     display: flex;
     align-items: center;
-    gap: 6px;
-    line-height: 1.3;
+    gap: 12px;
+    flex-wrap: wrap;
     
     @media (min-width: 768px) {
-      font-size: 1.5rem;
-      margin-bottom: 6px;
-      gap: 8px;
+      margin-bottom: 8px;
+      gap: 14px;
     }
   }
 
   .trainer-location {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 10px;
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 1.6rem;
 
     .location-icon {
       color: var(--primary-blue);
       flex-shrink: 0;
-    }
-    
-    @media (min-width: 768px) {
-      gap: 6px;
-      font-size: 1.2rem;
+      font-size: 1.6rem; /* Match size with person icon */
     }
   }
 
   .trainer-time {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 10px;
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 1.6rem;
 
     .time-icon {
       color: var(--primary-blue);
       flex-shrink: 0;
-    }
-    
-    @media (min-width: 768px) {
-      gap: 6px;
-      font-size: 1.2rem;
-    }
-  }
-
-  .trainer-details {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
-    padding: 10px;
-    background: var(--bg-primary);
-    border-radius: 10px;
-    border-left: 3px solid ${props => 
-      props.gender === '남자' 
-        ? 'var(--primary-blue)'
-        : 'var(--primary-pink)'
-    };
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    
-    @media (min-width: 768px) {
-      padding: 12px;
-      border-radius: 12px;
-      gap: 10px;
-      margin-top: 10px;
+      font-size: 1.6rem; /* Match size with person icon */
     }
   }
 
@@ -202,43 +171,49 @@ const TrainerBasicInfo = styled.div`
     color: white;
     padding: 6px 12px;
     border-radius: 16px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    align-self: flex-start;
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
     
     &::before {
       content: '💪';
-      font-size: 0.75rem;
+      font-size: 0.8rem;
     }
     
     @media (min-width: 768px) {
       padding: 7px 14px;
       border-radius: 18px;
-      font-size: 0.85rem;
+      font-size: 1rem;
       gap: 5px;
     }
   }
 
   .trainer-intro {
-    color: var(--text-primary);
-    line-height: 1.4;
-    font-size: 1.05rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    opacity: 0.9;
-    
-    @media (min-width: 768px) {
-      line-height: 1.45;
-      font-size: 1.1rem;
-      -webkit-line-clamp: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Match gap with location and time */
+    color: var(--text-secondary);
+    font-size: 1.6rem; /* Match font size */
+
+    .intro-icon {
+        color: var(--primary-blue);
+        flex-shrink: 0;
+        font-size: 1.6rem; /* Match exact size with location and time icons */
     }
-  }
+
+    .intro-text {
+        flex: 1;
+        color: var(--text-secondary);
+        font-size: 1.6rem; /* Match font size */
+        line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
 `;
 
 const ActionButtons = styled.div`
@@ -288,54 +263,6 @@ const ActionButtons = styled.div`
         box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
       }
     }
-  }
-`;
-
-const GenderBadge = styled.span`
-  background: ${props => {
-    if (props.gender === '남자') return 'linear-gradient(135deg, #3B82F6, #60A5FA)';
-    if (props.gender === '여자') return 'linear-gradient(135deg, #EC4899, #F472B6)';
-    return 'linear-gradient(135deg, #9E9E9E, #757575)';
-  }};
-  color: white;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  box-shadow: 0 3px 10px ${props => {
-    if (props.gender === '남자') return 'rgba(59, 130, 246, 0.3)';
-    if (props.gender === '여자') return 'rgba(236, 72, 153, 0.3)';
-    return 'rgba(158, 158, 158, 0.3)';
-  }};
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-  }
-  
-  &:hover::before {
-    left: 100%;
-  }
-  
-  &:hover {
-    transform: scale(1.05);
-  }
-  
-  @media (min-width: 768px) {
-    padding: 7px 16px;
-    border-radius: 24px;
-    font-size: 0.85rem;
   }
 `;
 
@@ -458,7 +385,7 @@ const TrainerInfo = ({idx, trainerData}) => {
         <TrainerBasicInfo gender={trainerGender}>
           <div className="trainer-name">
             {trainerName}
-            {trainerGender && <GenderBadge gender={trainerGender}>{trainerGender}</GenderBadge>}
+            <div className="trainer-purpose">{trainerPurpose}</div>
           </div>
           <div className="trainer-location">
             <FaMapMarkerAlt className="location-icon" />
@@ -468,9 +395,9 @@ const TrainerInfo = ({idx, trainerData}) => {
             <FaClock className="time-icon" />
             {trainerTime}
           </div>
-          <div className="trainer-details">
-            <div className="trainer-purpose">{trainerPurpose}</div>
-            <div className="trainer-intro">{trainerInfo}</div>
+          <div className="trainer-intro">
+            <FaUser className="intro-icon" />
+            <div className="intro-text">{trainerInfo}</div>
           </div>
         </TrainerBasicInfo>
       </TrainerHeader>
