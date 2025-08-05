@@ -9,7 +9,6 @@ export const Container = styled.div`
 `;
 
 export const Inner = styled.div`
-  max-width: 1120px;
   margin: 0 auto;
 `;
 

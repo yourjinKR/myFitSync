@@ -1010,7 +1010,6 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--bg-primary); /* 기존 rgba 제거, Display.jsx에 맞춤 */
   z-index: 1000;
   overflow-y: auto;
   display: flex;
