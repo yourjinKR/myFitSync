@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
 import { CheckInput, Checklabel } from '../../styles/commonStyle';
@@ -14,32 +14,37 @@ import WorkoutView from './WorkoutView';
 const { formatDate, getTimeDifference } = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
-  padding: 20px;
+  padding: 16px;
   background: var(--bg-primary);
-  height: 100%;
+  height: 100vh;
+  overflow-y: auto;
 
   h3 {
-    font-size: 2.4rem;
+    font-size: 2rem;
     color: var(--text-primary);
     font-weight: 600;
-    height: 30px;
-    line-height: 30px;
-    width: calc(100% - 100px);
+    height: auto;
+    line-height: 1.4;
+    width: calc(100% - 80px);
+    margin: 0;
   }
+  
   .imgBox{
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 80%;
+    height: 60vh;
     img {
-      width: 50%;
+      width: 60%;
+      max-width: 200px;
+      opacity: 0.6;
     }
   }
 `;
 const ExerciseSection = styled.div`
   position: relative;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   background: var(--bg-secondary);
   border-radius: 12px;
   border: 1px solid var(--border-light);
@@ -55,15 +60,14 @@ const ExerciseSection = styled.div`
   }
   
   & > button > svg { 
-    width: 2.6rem;
-    height: 2.6rem;
+    width: 2.2rem;
+    height: 2.2rem;
     background: var(--border-dark);
     border-radius: 50%;
     path { 
       color : var(--bg-secondary);
     };
   }
-
 
   @keyframes editing {
     0%, 50%, 100% {
@@ -76,34 +80,53 @@ const ExerciseSection = styled.div`
       transform: rotate(-0.3deg);
     }
   }
-
-    
 `;
+
 const SetTop = styled.div`
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
   
-  h4 {
-    font-size: 1.8rem;
-    color: var(--text-primary);
-    font-weight: 500;
-  }
-  
   img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
     border: 2px solid var(--border-medium);
     object-fit: cover;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      border-color: var(--primary-blue);
+      transform: scale(1.05);
+    }
+  }
+  
+  .exercise-info {
+    flex: 1;
+    min-width: 0;
+    
+    h4 {
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      line-height: 1.3;
+    }
+    
+    .exercise-category {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      opacity: 0.8;
+    }
   }
 `;
 const MemoInput = styled.input`
-  padding: 16px 20px;
-  font-size: 1.6rem;
+  padding: 12px 16px;
+  font-size: 1.3rem;
   width: 100%;
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -112,11 +135,13 @@ const MemoInput = styled.input`
   
   &::placeholder {
     color: var(--text-tertiary);
+    font-size: 1.2rem;
   }
   
   &:focus {
     background: var(--bg-primary);
     outline: none;
+    border-bottom-color: var(--primary-blue);
   }
 `;
 const ListHeader = styled.div`
@@ -127,11 +152,19 @@ const ListHeader = styled.div`
   
   div { 
     flex: 1;
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     font-weight: 600;
     text-align: center;
-    padding: 12px 0;
+    padding: 10px 0;
     color: var(--text-primary);
+    
+    &:first-child {
+      flex: 0.6;
+    }
+    
+    &:last-child {
+      flex: 0.8;
+    }
   }
 `;
 const ListBody = styled.div`
@@ -150,49 +183,59 @@ const ListBody = styled.div`
     width: 100%;
     display: flex;
     align-items: center;
-    padding: 8px 0;
+    padding: 6px 0;
     border-bottom: 1px solid var(--border-light);
+    min-height: 44px;
 
     svg {
-      width: 2.6rem;
-      height: 2.6rem;
+      width: 2.2rem;
+      height: 2.2rem;
       color: white;
       background: var(--error);
       border-radius: 50%;
-      padding: 4px;
+      padding: 3px;
     }
   }
 
-  
   .swipeable-list-item__content > div {
     flex: 1;
     text-align: center;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     color: var(--text-primary);
     font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
+    
+    &:first-child {
+      flex: 0.6;
+      font-size: 1.3rem;
+    }
+    
+    &:last-child {
+      flex: 0.8;
+    }
   } 
   
   .swipeable-list-item__content > div > input {
-    width: 100%;
-    padding: 8px 0;
+    width: 80%;
+    padding: 6px 4px;
     text-align: center;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     background: transparent;
     color: var(--text-primary);
     border: none;
     outline: none;
-    text-indent: 2rem;
+    border-radius: 4px;
     
     &:focus {
       background: var(--bg-primary);
-      border-radius: 4px;
+      border: 1px solid var(--primary-blue);
     }
     
     &::placeholder {
       color: var(--text-tertiary);
+      font-size: 1.2rem;
     }
   } 
   
@@ -200,7 +243,7 @@ const ListBody = styled.div`
     background: var(--error);
     color: #ffffff;
     font-weight: 600;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     width: 100%;
     display: flex;
     align-items: center;
@@ -213,13 +256,13 @@ const ListBody = styled.div`
   }
   
   .swipeable-list-item__trailing-actions {
-    max-width: 75px;
+    max-width: 70px;
   }
 `;
 const SetAddCTA = styled.button`
   width: 100%; 
-  font-size: 1.6rem;
-  padding: 16px 0;
+  font-size: 1.4rem;
+  padding: 12px 0;
   background: var(--primary-blue);
   color: #ffffff;
   border: none;
@@ -235,25 +278,33 @@ const SetAddCTA = styled.button`
 
 const DeleteCTA = styled.button`
   position: absolute;
-  width: 30px;
-  height: 30px;
-  top: 10px;
-  right: 10px;
+  width: 28px;
+  height: 28px;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  
+  svg {
+    width: 2rem;
+    height: 2rem;
+  }
 `;
 
 const RoutineTop = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--border-light);
+  
   input {
-    font-size: 2.4rem;
+    font-size: 2rem;
     color: var(--text-primary);
     font-weight: 600;
-    height: 30px;
-    line-height: 1.5;
-    width: calc(100% - 100px);
+    height: auto;
+    line-height: 1.4;
+    width: calc(100% - 80px);
     padding: 0;
   }
 `;
@@ -261,12 +312,12 @@ const RoutineTop = styled.div`
 const EditCTA = styled.button`
   display: flex;
   align-items: center;
-  font-size: 1.4rem;
-  color : var(--text-primary);
-  padding: 5px 15px;
-  border-radius: 5px;
-  height: 30px;
-  line-height: 1.5;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border-radius: 6px;
+  height: 32px;
+  line-height: 1.4;
 
   &.edit {
     background: var(--primary-blue);
@@ -274,21 +325,21 @@ const EditCTA = styled.button`
   }
 
   svg {
-    width: 3rem;
-    height: 3rem;
+    width: 2.4rem;
+    height: 2.4rem;
     border-radius: 50%;
     padding: 4px;
     color: white;
   }
 
   path {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: var(--text-primary);
   }
 `;
 
 const RoutineTitle = styled.input`
-  font-size: 2.4rem;
+  font-size: 2rem;
   border: none;
   background: transparent;
 `;
@@ -299,36 +350,36 @@ const LoadingWrapper = styled.div`
   align-items: center;
   height: 100vh;
   background: var(--bg-primary);
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   color: var(--text-secondary);
 `;
 
 const TimerBox = styled.div`
-  display:flex;
+  display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 5px 10px;
+  padding: 4px 8px;
   width: 100%;
-  margin:10px 0;
-  min-height: 34px;
+  margin: 8px 0 16px 0;
+  min-height: 32px;
   
   svg {
-    width: 2.4rem;
-    height: 2.4rem;
+    width: 2rem;
+    height: 2rem;
     border-radius: 50%;
   }
   path {
     color: var(--primary-blue-light);
-    font-weight:bold;
+    font-weight: bold;
   }
 `;
 
 const TimerCTA = styled.button`
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: var(--primary-blue-light);
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: bold;
 `;
 
@@ -350,8 +401,6 @@ const RoutineDetail = () => {
   const location = useLocation();
   const param = new URLSearchParams(location.search);
   const targetDate = param.get('date');
-  
-  const nav = useNavigate();
   const [modalPtId, setModalPtId] = useState(null);
 
   const checkedSetsRef = useRef({});
@@ -884,8 +933,16 @@ const RoutineDetail = () => {
           <ExerciseSection key={routine.pt_idx} className={isEdit ? 'edit' : ''}>
             <DeleteCTA onClick={() => handleRoutineDelete(routine.pt_idx)}><DoNotDisturbOnIcon /></DeleteCTA>
             <SetTop>
-              <img src={routine.pt.pt_image.split(",").filter((item) => item.includes(".png"))} alt={routine.pt.pt_name} data-idx={routine.pt.pt_idx} onClick={handleOpenWorkoutModal} />
-              <h4>{routine.pt.pt_name}</h4>
+              <img 
+                src={routine.pt.pt_image.split(",").filter((item) => item.includes(".png"))} 
+                alt={routine.pt.pt_name} 
+                data-idx={routine.pt.pt_idx} 
+                onClick={handleOpenWorkoutModal} 
+              />
+              <div className="exercise-info">
+                <h4>{routine.pt.pt_name}</h4>
+                <div className="exercise-category">{routine.pt.pt_category || '전신 운동'}</div>
+              </div>
             </SetTop>
             <MemoInput
               name="memo"
@@ -905,8 +962,8 @@ const RoutineDetail = () => {
               }}
             />
             <ListHeader>
-              <div>번호</div>
-              <div>KG</div>
+              <div>세트</div>
+              <div>중량(kg)</div>
               <div>횟수</div>
               <div>{isEdit ? '삭제' : '완료'}</div>
             </ListHeader>
