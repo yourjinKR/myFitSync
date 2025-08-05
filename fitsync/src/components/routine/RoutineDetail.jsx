@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
@@ -389,14 +389,17 @@ const RoutineDetail = () => {
   const { routineData, setRoutineData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData } = useOutletContext();
   const { routine_list_idx } = useParams();
 
+  console.log('RoutineDetail 렌더링:', { routine_list_idx, routineData, init });
+
 
   const [time, setTime] = useState({
     minutes: 0,
     seconds: 0,
   });
-  const [data, setData] = useState(init);
-  const [isLoading, setIsLoading] = useState(routine_list_idx !== 'custom');
+  const [data, setData] = useState(null); // init 대신 null로 초기화
+  const [isLoading, setIsLoading] = useState(true); // 항상 true로 시작
   const [isTimerShow, setIsTimerShow] = useState(false);
+  const [localInit, setLocalInit] = useState(null); // 로컬 init 상태 추가
   const { setNewData } = useOutletContext();
   const location = useLocation();
   const param = new URLSearchParams(location.search);
@@ -447,6 +450,7 @@ const RoutineDetail = () => {
 
   // 세트 값 변경 핸들러
   const handleSetValueChange = (routinePtIdx, index, field, value) => {
+    console.log('값 변경:', routinePtIdx, index, field, value);
     setData(prev => ({
       ...prev,
       routines: prev.routines.map(r => {
@@ -543,6 +547,15 @@ const RoutineDetail = () => {
     setIsTimerShow(true);
   };
 
+  // 취소 핸들러 추가
+  const handleCancel = () => {
+    console.log('취소 버튼 클릭 - localInit으로 되돌림:', localInit);
+    if (localInit) {
+      setData(localInit);
+      setIsEdit(false);
+    }
+  };
+
   // trailingActions
   const trailingActions = (routinePtIdx, setIndex, routine_idx) => {
     const routine = data.routines.find(r => r.pt_idx === routinePtIdx);
@@ -570,14 +583,14 @@ const RoutineDetail = () => {
     );
   };
 
-  // useEffect - data 수정
+  // useEffect - data 수정 (간소화) - 무한루프 방지
   useEffect(() => {
-    if (data === null || init === undefined) {
+    if (data === null || localInit === null) {
       return;
     }
 
     const omitData = omitCheckedAndSaveDate(data);
-    const omitInit = omitCheckedAndSaveDate(init);
+    const omitInit = omitCheckedAndSaveDate(localInit);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
 
     if (routine_list_idx !== 'custom') {
@@ -592,142 +605,92 @@ const RoutineDetail = () => {
       });
     }
 
-    if (location.pathname.includes('/routine/detail/')) {
-      setRoutineData(data);
-    }
-  }, [data, init, routine_list_idx, location.pathname]); // setData 호출하는 로직 제거
+    // setRoutineData 호출 제거하여 무한루프 방지
+    // if (location.pathname.includes('/routine/detail/')) {
+    //   setRoutineData(data);
+    // }
+  }, [data, routine_list_idx, localInit, setNewData]); // setNewData 의존성 추가
 
-  // 자유 운동 저장 로직을 별도 useEffect로 분리 (setData 호출 없이)
+  // 자유 운동 저장 로직 - 간소화하여 무한루프 방지
   useEffect(() => {
-    if (!data || routine_list_idx !== 'custom') return;
+    if (routine_list_idx !== 'custom' || !data) return;
 
-    const currentDate = data.saveDate === undefined ? formatDate() : data.saveDate;
-
-    // saveDate 설정이 필요한 경우에만 한 번만 실행
-    if (data.routines.length === 0 && !data.saveDate) {
+    // 빠간기록용 기본 saveDate 설정
+    if (!data.saveDate && data.routines.length === 0) {
+      const currentDate = targetDate || formatDate();
       setData(prev => ({
         ...prev,
         saveDate: currentDate
       }));
-      return;
     }
+  }, [routine_list_idx, targetDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // targetDate가 있고 데이터가 비어있을 때 기존 데이터 로드
-    if (targetDate && data.routines.length === 0 && data.saveDate) {
-      
-      const existingData = tempData.find(item => item.saveDate === targetDate);
-      
-      if (existingData && JSON.stringify(existingData) !== JSON.stringify(data)) {
-        setData(existingData);
-        return;
-      }
-    }
-
-    // tempData에 저장 (setData 호출 없이)
-    if (data.routines.length > 0 && data.saveDate && !data.routine_name) {
-      setTempData(prev => {
-        const existingIndex = prev.findIndex(item => item.saveDate === data.saveDate);
-        
-        if (existingIndex !== -1) {
-          const existing = prev[existingIndex];
-          // 데이터가 실제로 변경된 경우에만 업데이트
-          if (JSON.stringify(existing) !== JSON.stringify(data)) {
-            return prev.map((item, index) =>
-              index === existingIndex ? data : item
-            );
-          }
-          return prev;
-        } else {
-          return [...prev, data];
-        }
-      });
-    }
-  }, [targetDate, tempData.length]); // data 제거, 필요한 의존성만 추가
-
-  // 일반 루틴의 체크된 세트 처리를 별도 useEffect로 분리
+  // 일반 루틴의 체크된 세트 처리 - 간소화하여 무한루프 방지
   useEffect(() => {
     if (!data || !data.routines || routine_list_idx === 'custom') return;
 
-    let shouldUpdateSaveDate = false;
-    let shouldUpdateTempData = false;
-    let newSaveDate = null;
+    // 체크된 세트가 있는지만 확인하고 tempData 업데이트는 별도로 처리
+    const hasCheckedSets = data.routines.some(routine => 
+      routine.sets.some(set => set.checked === true)
+    );
 
-    data.routines.forEach(routine => {
-      const checkedSets = routine.sets.filter(set => set.checked === true);
-      if (checkedSets.length > 0) {
-        const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
-        const diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
-        
-        if (!data.saveDate) {
-          const target = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
-          if (diffDate > 0 || !target) {
-            shouldUpdateSaveDate = true;
-            newSaveDate = formatDate();
-          } else if (findData) {
-            shouldUpdateSaveDate = true;
-            newSaveDate = findData.saveDate;
-          }
-        } else {
-          shouldUpdateTempData = true;
-        }
-      }
-    });
-
-    // 한 번에 상태 업데이트
-    if (shouldUpdateSaveDate && newSaveDate !== data.saveDate) {
-      setData(prev => ({
-        ...prev,
-        saveDate: newSaveDate,
-      }));
-    }
-
-    if (shouldUpdateTempData && tempData) {
+    if (hasCheckedSets && !data.saveDate) {
       const findData = tempData.find(item => item.routine_list_idx === data.routine_list_idx);
       const diffDate = findData?.saveDate ? getTimeDifference(findData.saveDate).days : 0;
       
-      setTempData(prev => {
-        const existingIndex = prev.findIndex(item => item.routine_list_idx === data.routine_list_idx);
-
-        if (diffDate < 1 && existingIndex !== -1) {
-          const existing = prev[existingIndex];
-          if (JSON.stringify(existing) !== JSON.stringify(data)) {
-            return prev.map((item, index) =>
-              index === existingIndex ? data : item
-            );
-          }
-        } else {
-          return [...prev, data];
-        }
-        return prev;
-      });
+      if (diffDate > 0 || !findData) {
+        setData(prev => ({
+          ...prev,
+          saveDate: formatDate(),
+        }));
+      } else if (findData) {
+        setData(prev => ({
+          ...prev,
+          saveDate: findData.saveDate,
+        }));
+      }
     }
-  }, [data, tempData]); // 필요한 의존성만 추가
+  }, [routine_list_idx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      // RoutineDetail에서 나갈 때 routineData만 초기화 (tempData는 보존)
+      console.log('RoutineDetail 언마운트 - 모든 상태 초기화');
+      // RoutineDetail에서 나갈 때 모든 상태 초기화
       setRoutineData({
         routine_name: '',
         member_idx: '',
         routines: [],
       });
-      // init과 data는 다음 진입 시 새로 설정되므로 초기화하지 않음
+      setIsEdit(false);
+      // 추가로 전역 상태도 초기화
+      if (typeof setInit === 'function') {
+        setInit(null);
+      }
     };
-  }, [setRoutineData]);
+  }, [setRoutineData, setIsEdit, setInit]);
 
-  // 데이터 로드 useEffect (중복 제거하고 하나만)
+  // 데이터 로드 useEffect - 간소화로 무한 루프 방지
   useEffect(() => {
+    console.log('데이터 로드 useEffect 실행:', { 
+      routine_list_idx, 
+      targetIdx, 
+      isLoading 
+    });
+    
     const fetchRoutine = async () => {
       try {
+        console.log('루틴 데이터 fetch 시작');
         setIsLoading(true);
 
         const url = targetIdx
           ? `/routine/trainer/${routine_list_idx}/${targetIdx}`
           : `/routine/${routine_list_idx}`;
 
+        console.log('요청 URL:', url);
         const response = await axios.get(url, { withCredentials: true });
         const result = response.data;
+        console.log('서버 응답:', result);
 
         if (result.success) {
           const newData = {
@@ -741,14 +704,16 @@ const RoutineDetail = () => {
             }))
           };
 
+          console.log('새 데이터 설정:', newData);
           setData(newData);
           setInit(result.vo);
+          setLocalInit(result.vo); // 로컬 init도 설정
           setRoutineData(result.vo);
         } else {
           alert(result.msg);
         }
       } catch (err) {
-        console.error(err);
+        console.error('루틴 로딩 에러:', err);
         alert("루틴 정보를 불러오지 못했습니다.");
       } finally {
         setIsLoading(false);
@@ -756,81 +721,31 @@ const RoutineDetail = () => {
     };
 
     if (routine_list_idx === 'custom') {
-      console.log('빠간기록 진입 - 현재 routineData:', routineData);
-      
-      // 빠간기록에서 운동 추가 후 돌아온 경우가 아닐 때만 초기화
-      const hasRoutines = routineData && routineData.routines && routineData.routines.length > 0;
-      
-      if (!hasRoutines) {
-        console.log('운동이 없어서 routineData 초기화');
-        setRoutineData({
-          routine_name: '',
-          member_idx: '',
-          routines: [],
-        });
-      } else {
-        console.log('이미 운동이 있어서 routineData 보존');
-      }
-      
-      // targetDate가 있으면 해당 날짜의 기존 데이터 찾기
-      if (targetDate && tempData && tempData.length > 0) {
-        console.log('기존 데이터 찾기 시도 - targetDate:', targetDate);
-        const existingData = tempData.find(item => item.saveDate === targetDate);
-        console.log('찾은 기존 데이터:', existingData);
-        
-        if (existingData) {
-          console.log('기존 데이터로 설정');
-          setData(existingData);
-          setInit(existingData);
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // 운동이 있는 경우 routineData를 data로 설정
-      if (hasRoutines) {
-        console.log('routineData에서 data로 설정');
-        const customDataFromRoutine = {
-          ...routineData,
-          routine_list_idx: 'custom',
-          routine_name: routineData.routine_name || '자유 운동',
-          saveDate: targetDate || null
-        };
-        setData(customDataFromRoutine);
-        setInit(customDataFromRoutine);
-        setIsLoading(false);
-        return;
-      }
-      
-      // 기존 데이터가 없으면 새로운 커스텀 데이터로 설정
+      console.log('빠간기록 모드');
+      // 빠간기록은 단순하게 처리
       const customData = {
         routine_list_idx: 'custom',
         routine_name: '자유 운동',
-        routines: [],
+        routines: routineData?.routines || [],
         saveDate: targetDate || null
       };
+      console.log('커스텀 데이터 설정:', customData);
       setData(customData);
       setInit(customData);
+      setLocalInit(customData); // 로컬 init도 설정
       setIsLoading(false);
       return;
     }
 
     if (routine_list_idx && routine_list_idx !== 'custom') {
-      const isSameRoutine = routineData && routineInit && 
-        JSON.stringify(omitChecked(routineData)) === JSON.stringify(omitChecked(routineInit));
-      
-      if (!isSameRoutine && !targetIdx && routineData) {
-        setData(routineData);
-        setIsLoading(false);
-        return;
-      }
-
+      console.log('일반 루틴 모드 - fetch 실행');
       fetchRoutine();
     } else {
+      console.log('기타 경우 - 로딩 종료');
       setIsLoading(false);
     }
 
-  }, [routine_list_idx, targetIdx]);
+  }, [routine_list_idx, targetIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 체크 상태 관리
   useEffect(() => {
@@ -844,7 +759,7 @@ const RoutineDetail = () => {
       });
       checkedSetsRef.current = newChecked;
     }
-  }, [data?.routines?.length]);
+  }, [data]);
 
   // 로딩 처리
   if (isLoading) {
@@ -910,9 +825,16 @@ const RoutineDetail = () => {
               }}
             /> : <h3>{data.routine_name}</h3>}
 
-          <EditCTA className={isEdit ? "edit" : ""} onClick={isEdit ? handleUpdateData : () => setIsEdit(!isEdit)}>
-            {isEdit ? "업데이트" : <SettingsIcon />}
-          </EditCTA>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {isEdit && (
+              <EditCTA onClick={handleCancel}>
+                취소
+              </EditCTA>
+            )}
+            <EditCTA className={isEdit ? "edit" : ""} onClick={isEdit ? handleUpdateData : () => setIsEdit(!isEdit)}>
+              {isEdit ? "업데이트" : <SettingsIcon />}
+            </EditCTA>
+          </div>
         </RoutineTop>
         : <></>}
 
