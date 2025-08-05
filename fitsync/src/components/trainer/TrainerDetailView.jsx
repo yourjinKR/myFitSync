@@ -137,66 +137,87 @@ const TrainerDetailView = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isConsultLoading, setIsConsultLoading] = useState(false); // 상담 버튼 로딩 상태
 
-  useEffect(() => {
-    async function fetchData() {
+useEffect(() => {
+  async function fetchData() {
+    try {
+      const res = await axios.get(`/trainer/profile/${trainerIdx}`);
+      const data = res.data;
+
+      // 이미지 idx만 배열로 가져옴
+      const imageIdxList = data.member_info_image
+        ? data.member_info_image.split(',').map(idx => parseInt(idx)).filter(idx => !isNaN(idx))
+        : [];
+      let imageUrls = [];
+
       try {
-        const res = await axios.get(`/trainer/profile/${trainerIdx}`);
-        const data = res.data;
-        const trainerData = {
-          member_idx: data.member_idx,
-          member_email: data.member_email,
-          name: data.member_name,
-          images: data.member_info_image ? data.member_info_image.split(',') : [],
-          description: data.member_info,
-          certifications: data.awards ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`) : [],
-          availableTime: data.member_time ? `월~토 ${data.member_time} (일요일 휴무)` : '',
-          priceBase: data.member_price || 0,
-          reviewList: data.reviews || [],
-          intro: data.member_intro || '',
-          specialties: data.specialties || [],
-          profile_image: data.member_image,
-          gym_idx : data.gym_idx,
-          gymInfo : data.gymInfo,
-          member_hidden : data.member_hidden,
-          
-          // 채팅방 생성 시 필요한 필드들
-          member_name: data.member_name,
-          member_image: data.member_image,
-          member_gender: data.member_gender,
-          member_birth: data.member_birth,
-          member_type: data.member_type || 'trainer',
-          member_info: data.member_info,
-          member_purpose: data.member_purpose,
-          member_time: data.member_time,
-          member_activity_area: data.member_activity_area,
-          member_intro: data.member_intro,
-          member_disease: data.member_disease
-        };
+        if (imageIdxList.length > 0) {
 
-        console.log('트레이너 데이터 확인:', {
-          member_idx: data.member_idx,
-          member_name: data.member_name,
-          member_gender: data.member_gender,
-          member_birth: data.member_birth,
-          member_image: data.member_image
-        });
+          const imageRes = await axios.post(`/trainer/images`, imageIdxList);
+          const urls = imageRes.data; // ["url1", "url2", ...]
 
-        console.log(trainerData);
-        
-        // 레슨 데이터도 함께 불러오기
-        const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
-        const lessons = lessonRes.data || [];
-        
-        // state 세팅
-        setTrainer({ ...trainerData, lessons });
-        setEditedTrainer({ ...trainerData, lessons });
+          // id와 url 매핑하여 객체 배열 생성
+          imageUrls = imageIdxList.map((id, idx) => ({
+            id,
+            url: urls[idx]
+          }));
+        }
       } catch (error) {
-        console.error(error);
+        console.error('이미지 URL 가져오기 실패:', error);
+        imageUrls = [];
       }
-    }
 
-    fetchData();
-  }, [trainerIdx]);
+      const trainerData = {
+        member_idx: data.member_idx,
+        member_email: data.member_email,
+        name: data.member_name,
+        images: imageUrls,  // 수정된 부분 반영
+        description: data.member_info,
+        certifications: data.awards
+          ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`)
+          : [],
+        availableTime: data.member_time
+          ? `월~토 ${data.member_time} (일요일 휴무)`
+          : '',
+        priceBase: data.member_price || 0,
+        reviewList: data.reviews || [],
+        intro: data.member_intro || '',
+        specialties: data.specialties || [],
+        profile_image: data.member_image,
+        gym_idx: data.gym_idx,
+        gymInfo: data.gymInfo,
+        member_hidden: data.member_hidden,
+
+        // 채팅방 생성 시 필요한 필드들
+        member_name: data.member_name,
+        member_image: data.member_image,
+        member_gender: data.member_gender,
+        member_birth: data.member_birth,
+        member_type: data.member_type || 'trainer',
+        member_info: data.member_info,
+        member_purpose: data.member_purpose,
+        member_time: data.member_time,
+        member_activity_area: data.member_activity_area,
+        member_intro: data.member_intro,
+        member_disease: data.member_disease
+      };
+
+      // 레슨 데이터도 함께 불러오기
+      const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
+      const lessons = lessonRes.data || [];
+
+      setTrainer({ ...trainerData, lessons });
+      setEditedTrainer({ ...trainerData, lessons });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  fetchData();
+}, [trainerIdx]);
+
+
+
+
 
   const isLoggedIn = !!loginUserId;
 

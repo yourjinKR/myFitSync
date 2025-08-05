@@ -6,7 +6,6 @@ import Review from '../review/Review';
 import ReviewInsert from '../review/ReviewInsert';
 import styled from 'styled-components';
 
-// --- 스타일 정의 ---
 const Section = styled.section`
   padding: 22px 0 18px 0;
   border-bottom: 1.5px solid var(--border-light);
@@ -58,32 +57,34 @@ const ReviewList = styled.div`
   margin-top: 10px;
 `;
 
-const TrainerReviewSection = () => {
+const TrainerReviewSection = ({ reviews: propReviews }) => {
   const { trainerIdx } = useParams();
   const memberIdx = useSelector(state => state.user.user?.member_idx);
 
   const [reviews, setReviews] = useState([]);
   const [canWriteReview, setCanWriteReview] = useState(false);
   const [showInsert, setShowInsert] = useState(false);
-  console.log('리뷰 목록 확인:', reviews);
 
   useEffect(() => {
+    if (propReviews && Array.isArray(propReviews)) {
+      setReviews(propReviews.filter(r => r !== undefined && r !== null));
+      return;
+    }
+
     if (!trainerIdx || !memberIdx) return;
 
-    // 리뷰 목록 불러오기
     axios.get(`/trainer/reviews/${trainerIdx}`)
-    .then(res => {
-      console.log('서버 응답 리뷰:', res.data);
-      setReviews(res.data);
-    });
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data.filter(r => r !== undefined && r !== null) : [];
+        setReviews(data);
+      });
 
-    // 리뷰 작성 가능 여부 체크
     axios.get(`/user/check-review-eligibility`, {
       params: { trainerIdx, memberIdx }
     })
-      .then(res => setCanWriteReview(res.data === true))
-      .catch(err => console.error('작성 가능 여부 요청 실패:', err));
-  }, [trainerIdx, memberIdx]);
+    .then(res => setCanWriteReview(res.data === true))
+    .catch(err => console.error('작성 가능 여부 요청 실패:', err));
+  }, [trainerIdx, memberIdx, propReviews]);
 
   return (
     <Section>
@@ -106,11 +107,7 @@ const TrainerReviewSection = () => {
         {reviews.map((r, index) => (
           <Review
             key={r.review_idx ?? index}
-            score={r.review_star}
-            content={r.review_content}
-            title={r.review_title}
-            memberName={r.member_name}
-            review_idx={r.review_idx}
+            review={r}
           />
         ))}
       </ReviewList>
