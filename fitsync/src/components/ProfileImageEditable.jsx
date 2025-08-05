@@ -23,10 +23,9 @@ const HiddenInput = styled.input`
   display: none;
 `;
 
-// 리팩토링된 컴포넌트
-const ProfileImageEditor = ({ imageUrl, onSuccess = () => {} }) => {
+const ProfileImageEditor = ({ profileImage, onSuccess = () => {} }) => {
   const fileInputRef = useRef();
-
+  
   const handleClick = () => {
     fileInputRef.current?.click();
   };
@@ -62,7 +61,7 @@ const ProfileImageEditor = ({ imageUrl, onSuccess = () => {} }) => {
   return (
     <Wrapper onClick={handleClick}>
       <Image
-        src={imageUrl || '/default-profile.png'} // fallback 이미지
+        src={profileImage || '/default-profile.png'} // fallback 이미지
         alt="프로필 이미지"
       />
       <HiddenInput

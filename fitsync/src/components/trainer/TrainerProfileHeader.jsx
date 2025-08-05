@@ -3,8 +3,8 @@ import styled from 'styled-components';
 import { MdEdit, MdCheck, MdReport, MdVisibility, MdVisibilityOff, MdCameraAlt } from 'react-icons/md';
 import Switch from '@mui/material/Switch';
 import SettingsIcon from '@mui/icons-material/Settings';
-import ProfileImageEditable from '../ProfileImageEditable';
 import axios from 'axios';
+import ProfileImageEditor from '../ProfileImageEditable';
 
 // --- 스타일: 카드 크기 확대, 인스타 느낌, 모든 기능 포함 ---
 const InstaProfileHeader = styled.div`
@@ -235,28 +235,27 @@ const TrainerProfileHeader = ({
     }
   };
 
-  // 프로필 이미지 변경
-  const handleImageChange = (file) => {
-    if (onImageChange) onImageChange(file);
+  // 프로필 이미지 변경 시 성공 콜백
+  const handleImageChangeSuccess = (updatedImageData) => {
+    // 서버에서 받은 새 이미지 URL을 localTrainer 상태에 반영
+    setLocalTrainer(prev => ({
+      ...prev,
+      profile_image: updatedImageData.image || updatedImageData.imageUrl || profileImage,
+    }));
   };
-
-  return (
+  console.log(localTrainer);
+  
+   return (
     <InstaProfileHeader>
       <InstaProfileImgWrap>
-        <InstaProfileImg src={profileImage || '/default-profile.png'} alt="프로필" />
-        {isMine && (
-          <EditImgButton onClick={() => document.getElementById('profile-img-input').click()} title="프로필 이미지 변경">
-            <MdCameraAlt size={20} />
-            <input
-              id="profile-img-input"
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={e => e.target.files && handleImageChange(e.target.files[0])}
-            />
-          </EditImgButton>
-        )}
+        <ProfileImageEditor
+          memberIdx={localTrainer?.member_idx}
+          profileImage={localTrainer?.member_image}
+          isMine={isMine}
+          onSuccess={handleImageChangeSuccess}
+        />
       </InstaProfileImgWrap>
+
       <InstaProfileInfo>
         <InstaNameRow>
           <InstaName>
@@ -298,7 +297,6 @@ const TrainerProfileHeader = ({
             </InstaSwitchLabel>
           </InstaSwitchRow>
         )}
-
       </InstaProfileInfo>
 
       {/* 신고 모달 */}
@@ -313,6 +311,7 @@ const TrainerProfileHeader = ({
             justifyContent: 'center',
             alignItems: 'center'
           }}
+          onClick={() => setShowReportModal(false)}
         >
           <div
             style={{
@@ -367,6 +366,7 @@ const TrainerProfileHeader = ({
           </div>
         </div>
       )}
+
       {!isTrainer && (
         <ButtonEdit onClick={() => setIsInfoEdit(true)} title="프로필 설정">
           <SettingsIcon />
