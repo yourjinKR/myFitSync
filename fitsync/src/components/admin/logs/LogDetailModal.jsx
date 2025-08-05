@@ -760,7 +760,9 @@ const LogDetailModal = ({
                                             {workoutResult.muscleGroups.map((muscle, index) => (
                                                 <MuscleGroupTag key={index}>{muscle}</MuscleGroupTag>
                                             ))}
-                                            <DownloadIcon onClick={() => handleSaveResult()}><FaDownload size={15} color='var(--primary-blue)'/></DownloadIcon>
+                                            {log.apilog_status === 'success' && (
+                                                <DownloadIcon onClick={() => handleSaveResult()}><FaDownload size={15} color='var(--primary-blue)'/></DownloadIcon>
+                                            )}
                                         </MuscleGroupList>
                                     </MuscleGroupContainer>
                                 )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 
 /**
  * 탭 네비게이션 컴포넌트
@@ -15,33 +16,67 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
     ];
 
     return (
-        <div style={{ 
-            display: 'flex', 
-            gap: '0.5rem', 
-            marginBottom: '2rem', 
-            borderBottom: '1px solid #e5e7eb' 
-        }}>
+        <TabContainer>
             {tabs.map(tab => (
-                <button
+                <TabButton
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    style={{
-                        padding: '0.75rem 1.5rem',
-                        border: 'none',
-                        background: activeTab === tab.id ? '#4f46e5' : 'transparent',
-                        color: activeTab === tab.id ? 'white' : '#6b7280',
-                        borderRadius: '0.5rem 0.5rem 0 0',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        fontWeight: activeTab === tab.id ? '600' : '400',
-                        transition: 'all 0.2s'
-                    }}
+                    isActive={activeTab === tab.id}
                 >
                     {tab.label}
-                </button>
+                </TabButton>
             ))}
-        </div>
+        </TabContainer>
     );
 };
+
+const TabContainer = styled.div`
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 3.2rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0;
+    
+    @media (max-width: 768px) {
+        gap: 0.4rem;
+        margin-bottom: 2.4rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+`;
+
+const TabButton = styled.button`
+    padding: 1.2rem 2.4rem;
+    border: none;
+    background: ${props => props.isActive ? 'var(--primary-blue)' : 'var(--bg-secondary)'};
+    color: ${props => props.isActive ? 'var(--text-primary)' : 'var(--text-secondary)'};
+    border-radius: 0.8rem 0.8rem 0 0;
+    cursor: pointer;
+    font-size: 1.4rem;
+    font-weight: ${props => props.isActive ? '600' : '400'};
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-width: fit-content;
+    
+    &:hover {
+        background: ${props => props.isActive ? 'var(--primary-blue-hover)' : 'var(--bg-tertiary)'};
+        color: var(--text-primary);
+    }
+    
+    &:focus {
+        outline: 2px solid var(--primary-blue);
+        outline-offset: 2px;
+    }
+    
+    @media (max-width: 768px) {
+        padding: 1rem 1.6rem;
+        font-size: 1.2rem;
+    }
+`;
 
 export default TabNavigation;

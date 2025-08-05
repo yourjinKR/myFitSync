@@ -54,6 +54,7 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
                                 key={log.apilog_idx || index}
                                 onClick={() => setSelectedLog?.(log)}
                             >
+                                
                                 <LogTime>
                                     {new Date(log.apilog_request_time).toLocaleString('ko-KR')}
                                 </LogTime>
@@ -85,7 +86,8 @@ const TabContainer = styled.div`
 const TabHeader = styled.div`
   background: var(--bg-secondary);
   padding: 24px;
-  border-bottom: 1px solid var(--border-light);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
 `;
 
 const TabTitle = styled.h2`
@@ -103,7 +105,7 @@ const TabDescription = styled.p`
 
 const TabContent = styled.div`
   flex: 1;
-  padding: 24px;
+  padding: 2rem 0;
   overflow-y: auto;
 `;
 

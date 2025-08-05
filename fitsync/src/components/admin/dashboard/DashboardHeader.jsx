@@ -21,7 +21,7 @@ const DashboardHeader = ({ autoRefresh, setAutoRefresh }) => {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '0.5rem', 
-                    fontSize: '0.9rem' 
+                    fontSize: '1.6rem' 
                 }}>
                     <input 
                         type="checkbox" 

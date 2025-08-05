@@ -528,10 +528,10 @@ const TabDescription = styled.p`
 `;
 
 const TabContent = styled.div`
-  padding: 2.5rem;
+  padding: 2.5rem 0;
   
   @media (max-width: 768px) {
-    padding: 2rem;
+    padding: 2rem 0;
   }
 `;
 
