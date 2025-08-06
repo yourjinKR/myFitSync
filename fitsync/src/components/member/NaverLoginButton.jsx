@@ -12,43 +12,40 @@ const SpinnerAnimation = keyframes`
 
 const LoginButton = styled.button`
   width: 100%;
-  height: 56px;
-  background-color: #03C75A;
+  height: 68px;
+  background: #03C75A;
   color: white;
-  border: 2px solid #03C75A;
-  border-radius: 12px;
-  font-size: 1.6rem;
-  font-weight: 500;
+  border: 1px solid #03C75A;
+  border-radius: 16px;
+  font-size: 1.8rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 16px;
+  transition: background-color 0.2s ease;
   cursor: pointer;
-  padding: 16px 24px;
+  padding: 20px 32px;
 
-  &:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  &:hover {
+    background: #02b350;
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    transform: none;
   }
 `;
 
 const NaverIcon = styled.svg`
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 `;
 
 const Spinner = styled.div`
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top: 2px solid white;
   border-radius: 50%;
@@ -57,8 +54,9 @@ const Spinner = styled.div`
 `;
 
 const ButtonText = styled.span`
-  font-weight: 500;
-  font-size: 1.6rem;
+  font-weight: 600;
+  font-size: 1.8rem;
+  letter-spacing: -0.02em;
 `;
 
 const NaverLoginButton = ({ setLoading }) => {

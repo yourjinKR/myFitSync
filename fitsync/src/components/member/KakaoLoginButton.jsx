@@ -11,38 +11,35 @@ const SpinnerAnimation = keyframes`
 `;
 
 const KakaoButton = styled.button`
-  background-color: #fee500;
+  background: #fee500;
   color: #000000;
-  border: 2px solid #fee500;
-  border-radius: 12px;
-  padding: 16px 24px;
-  font-size: 1.6rem;
-  font-weight: 500;
+  border: 1px solid #fee500;
+  border-radius: 16px;
+  padding: 20px 32px;
+  font-size: 1.8rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  transition: all 0.2s ease;
-  height: 56px;
+  gap: 16px;
+  transition: background-color 0.2s ease;
+  height: 68px;
   width: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  &:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  &:hover {
+    background: #fdd700;
   }
   
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    transform: none;
   }
 `;
 
 const KakaoIcon = styled.svg`
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   path {
     color : var(--text-black);
@@ -50,8 +47,8 @@ const KakaoIcon = styled.svg`
 `;
 
 const Spinner = styled.div`
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border: 2px solid rgba(0, 0, 0, 0.1);
   border-top: 2px solid #000000;
   border-radius: 50%;
@@ -60,9 +57,10 @@ const Spinner = styled.div`
 `;
 
 const ButtonText = styled.span`
-  font-weight: 500;
-  font-size: 1.6rem;
+  font-weight: 600;
+  font-size: 1.8rem;
   color: var(--text-black);
+  letter-spacing: -0.02em;
 `;
 
 const KakaoLoginButton = ({ onLoginSuccess, onLoginFailure, setLoading }) => {

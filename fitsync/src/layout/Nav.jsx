@@ -11,7 +11,7 @@ const NavWrapper = styled.nav`
   display: flex;
   width: 100%;
   max-width: 750px;
-  height: 80px;
+  height: 85px;
   margin: 0 auto;
   background: linear-gradient(135deg, #232946 0%, #1e243a 100%);
   backdrop-filter: blur(20px);
@@ -27,7 +27,6 @@ const NavWrapper = styled.nav`
 
   @media (max-width: 750px) {
     width: 100vw;
-    height: 85px;
     padding: 0 16px;
     left: 0;
     transform: none;

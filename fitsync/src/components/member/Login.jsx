@@ -12,68 +12,89 @@ const LoginContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background: var(--bg-primary);
 `;
 
 const LoginForm = styled.div`
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 4rem 3rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-light);
+  background: transparent;
+  border-radius: 24px;
+  padding: 5rem 4.5rem;
+  backdrop-filter: blur(25px);
   width: 100%;
-  max-width: 400px;
+  max-width: 560px;
   position: relative;
+  z-index: 1;
   
   &::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%);
-    border-radius: 16px 16px 0 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 6px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      var(--primary-blue) 30%, 
+      var(--primary-blue-light) 70%, 
+      transparent 100%
+    );
+    border-radius: 0 0 24px 24px;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 420px;
+    padding: 4rem 3rem;
+  }
+
+  @media (max-width: 480px) {
+    max-width: 100%;
+    padding: 3.5rem 2.5rem;
+    margin: 1rem;
   }
 `;
 
 const LogoSection = styled.div`
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 `;
 
 const Logo = styled.h1`
-  font-size: 3.2rem;
-  font-weight: 700;
+  font-size: 4.2rem;
+  font-weight: 800;
   color: var(--primary-blue);
-  margin-bottom: 0.8rem;
-  letter-spacing: -0.02em;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.03em;
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   color: var(--text-secondary);
   font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.9;
+  margin-top: 1.5rem;
 `;
 
 const LoginSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 2rem;
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.4rem;
+  font-weight: 700;
   color: var(--text-primary);
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
 `;
 
 const SocialButtonWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1.8rem;
 `;
 
 const ButtonContainer = styled.div`
@@ -81,25 +102,28 @@ const ButtonContainer = styled.div`
 `;
 
 const WelcomeMessage = styled.div`
-  background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--primary-blue) 100%);
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: rgba(74, 144, 226, 0.08);
+  border-radius: 16px;
+  padding: 2.5rem;
+  margin-bottom: 3rem;
   text-align: center;
-  border: 1px solid var(--primary-blue-dark);
+  border: 1px solid rgba(74, 144, 226, 0.2);
 `;
 
 const WelcomeTitle = styled.h3`
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.8rem;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--primary-blue-light);
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.5px;
 `;
 
 const WelcomeSubtitle = styled.p`
-  font-size: 1.4rem;
-  color: var(--text-white);
-  opacity: 0.9;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  opacity: 0.95;
+  line-height: 1.5;
+  font-weight: 400;
 `;
 
 const Login = () => {
