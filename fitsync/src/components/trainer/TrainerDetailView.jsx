@@ -459,10 +459,11 @@ const TrainerDetailView = () => {
 
   if (!trainer || !editedTrainer) return <div style={{ fontSize: '1.1rem' }}>로딩 중...</div>;
 
-  // 레슨 정렬: 횟수 적은 순으로
-  const sortedLessons = (isEditMode ? editedTrainer.lessons : trainer.lessons)
-    .slice()
-    .sort((a, b) => (a.lesson_num || 0) - (b.lesson_num || 0));
+  // 레슨 정렬: 편집 모드가 아닐 때만 정렬
+  const lessons = isEditMode ? editedTrainer.lessons : trainer.lessons;
+  const sortedLessons = isEditMode 
+    ? lessons 
+    : lessons.slice().sort((a, b) => (a.lesson_num || 0) - (b.lesson_num || 0));
 
   return (
     <Container>

@@ -102,7 +102,7 @@ const AwardIconCircle = styled.span`
   vertical-align: middle;
   box-shadow: 0 0.15em 0.5em rgba(0,0,0,0.2);
   color: #fff;
-  font-size: 2em;
+  font-size: 2rem;
   
   @media (max-width: 500px) {
     width: 2.8em;
@@ -525,9 +525,9 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
           {awards.map((a, i) => (
             <li key={i} onClick={() => setSelectedAward(a)}>
               <AwardIconCircle category={a.awards_category}>
-                {a.awards_category === '자격증' && <WorkspacePremiumIcon />}
-                {a.awards_category === '학위' && <SchoolIcon />}
-                {a.awards_category === '수상경력' && <EmojiEventsIcon />}
+                {a.awards_category === '자격증' && <WorkspacePremiumIcon style={{ fontSize: '3.5rem' }}/>}
+                {a.awards_category === '학위' && <SchoolIcon style={{ fontSize: '3.5rem' }}/>}
+                {a.awards_category === '수상경력' && <EmojiEventsIcon style={{ fontSize: '3.5rem' }} />}
               </AwardIconCircle>
               <AwardName>{a.awards_name}</AwardName>
             </li>

@@ -186,9 +186,6 @@ const WorkoutRecordModal = ({ records, onClose }) => {
         {recordDetails.map((detail, idx) => (
             <div key={idx} style={{ marginBottom: '3rem' }}>
               <SectionTitle>{detail.pt.pt_name}</SectionTitle>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '1.4rem' }}>
-                <strong>루틴:</strong> {detail.record.routine_title}
-              </p>
               <SectionTitle>세트 목록</SectionTitle>
               <SetList>
                 {detail.sets.map((set, i) => (
