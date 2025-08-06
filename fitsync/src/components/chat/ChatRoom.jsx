@@ -9,8 +9,9 @@ import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import ChatLoading from '../../components/ChatLoading';
 import ChatRoomHeader from './ChatRoomHeader';
-import BarbellLoading from '../BarbellLoading';
+import FirstVisitModal from './FirstVisitModal';
 import { maskEmail } from '../../utils/EmailMasking';
+import { hasVisitedChatRoom, markChatRoomAsVisited } from '../../utils/CookieUtils';
 
 const Container = styled.div`
   position: fixed;
@@ -151,6 +152,10 @@ const ChatRoom = () => {
   const [isMatchingCheckComplete, setIsMatchingCheckComplete] = useState(true);
   const [isMatchingCheckLoading, setIsMatchingCheckLoading] = useState(false);
 
+  // FirstVisitModal 관련 상태
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [showFirstVisitModal, setShowFirstVisitModal] = useState(false);
+
   // ref 관리
   const initialReadDone = useRef(false);
   const messagesEndRef = useRef(null);
@@ -224,7 +229,7 @@ const ChatRoom = () => {
       return enhancedRoomData;
     }
 
-    // TrainerInfo에서 온 경우 - 완전한 roomData 생성
+    // roomData 생성
     const trainerInfo = location.state?.trainerInfo;
     
     if (trainerInfo) {
@@ -260,14 +265,14 @@ const ChatRoom = () => {
           user_idx: user.member_idx,
           trainer_name: trainerInfo.member_name || '트레이너',
           trainer_image: trainerInfo.member_image,
-          trainer_gender: trainerInfo.member_gender, // 성별
-          trainer_birth: trainerInfo.member_birth, // 생년월일
+          trainer_gender: trainerInfo.member_gender,
+          trainer_birth: trainerInfo.member_birth,
           trainer_email: trainerInfo.member_email,
           trainer_type: trainerInfo.member_type || 'trainer',
           user_name: user.member_name || '회원',
           user_image: user.member_image,
-          user_gender: user.member_gender, // 현재 사용자 성별
-          user_birth: user.member_birth, // 현재 사용자 생년월일
+          user_gender: user.member_gender,
+          user_birth: user.member_birth,
           user_email: user.member_email,
           user_type: user.member_type || 'user'
         };
@@ -333,6 +338,59 @@ const ChatRoom = () => {
       setIsMatchingCheckLoading(false);
     }
   }, [roomData, user?.member_idx, user?.member_type]);
+
+  // 첫 방문 모달 확인 함수
+  const checkFirstVisit = useCallback(() => {
+    if (!roomId) return;
+    
+    try {
+      const hasVisited = hasVisitedChatRoom(roomId);
+      console.log(`채팅방 ${roomId} 방문 기록 확인:`, hasVisited ? '방문한 적 있음' : '첫 방문');
+      
+      if (!hasVisited) {
+        setIsFirstVisit(true);
+        // 채팅방 데이터 로딩 완료 후 모달 표시
+        setTimeout(() => {
+          setShowFirstVisitModal(true);
+        }, 500); // 로딩 완료 후 약간의 지연
+      } else {
+        setIsFirstVisit(false);
+      }
+    } catch (error) {
+      console.warn('첫 방문 확인 실패:', error);
+      setIsFirstVisit(false);
+    }
+  }, [roomId]);
+
+  // 첫 방문 모달 닫기 핸들러
+  const handleFirstVisitModalClose = useCallback(() => {
+    try {
+      setShowFirstVisitModal(false);
+      
+      // 방문 기록을 쿠키에 저장
+      if (roomId) {
+        markChatRoomAsVisited(roomId);
+        console.log(`채팅방 ${roomId} 방문 기록 저장 완료`);
+      }
+    } catch (error) {
+      console.warn('방문 기록 저장 실패:', error);
+    }
+  }, [roomId]);
+
+  // 상대방 이름 추출 함수 (모달용)
+  const getOtherPersonName = useCallback(() => {
+    if (!roomData || !user) return null;
+
+    const currentMemberIdx = user.member_idx;
+    
+    if (roomData.trainer_idx === currentMemberIdx) {
+      // 내가 트레이너인 경우 → 회원 이름 반환
+      return roomData.user_name || '회원';
+    } else {
+      // 내가 회원인 경우 → 트레이너 이름 반환
+      return roomData.trainer_name || '트레이너';
+    }
+  }, [roomData, user]);
 
   // 읽지 않은 메시지 위치로 스크롤하는 함수
   const scrollToUnreadSeparatorTop = useCallback(async (targetMessageIdx, retryCount = 0) => {
@@ -663,15 +721,22 @@ const ChatRoom = () => {
       setIsMatchingCheckComplete(true);
       setIsMatchingCheckLoading(false);
 
+      // FirstVisitModal 상태 초기화
+      setIsFirstVisit(false);
+      setShowFirstVisitModal(false);
+
       const memberIdx = await getMemberIdxForChat();
       if (!memberIdx) return;
 
-      // 향상된 roomData 설정
+      // roomData 설정
       const enhancedRoomData = createEnhancedRoomData();
       setRoomData(enhancedRoomData);
 
       // 필터링된 메시지 로드 (초기 로드)
       await loadMessages(memberIdx, false);
+
+      // 첫 방문 확인 (로딩 완료 후)
+      checkFirstVisit();
     };
 
     initializeChatRoom();
@@ -682,7 +747,7 @@ const ChatRoom = () => {
         clearTimeout(scrollAdjustmentTimerRef.current);
       }
     };
-  }, [roomId, user, navigate, location.state, createEnhancedRoomData, filterRecentMessages, roomEnterTime]);
+  }, [roomId, user, navigate, location.state, createEnhancedRoomData, filterRecentMessages, roomEnterTime, checkFirstVisit]);
 
   // roomData가 설정된 후 매칭 상태 확인
   useEffect(() => {
@@ -1214,7 +1279,7 @@ const ChatRoom = () => {
           roomData={null}
           onSendMessage={null}
         />
-        <BarbellLoading />
+        <ChatLoading />
       </Container>
     );
   }
@@ -1275,6 +1340,13 @@ const ChatRoom = () => {
           blockDate={blockDate}
         />
       </InputWrapper>
+
+      <FirstVisitModal
+        isOpen={showFirstVisitModal}
+        onClose={handleFirstVisitModalClose}
+        trainerName={getOtherPersonName()}
+        isTrainer={user?.member_type === 'trainer'}
+      />
     </Container>
   );
 };
