@@ -27,7 +27,7 @@ const Wrapper = styled.div`
   font-size: 1.4rem;
   background: transparent;
   color: var(--text-primary);
-  min-height: 100vh;
+  min-height: ${autoHeight => autoHeight ? autoHeight : '100vh'};
   max-width: 1200px;
   margin: 0 auto;
 `;
@@ -737,7 +737,7 @@ const ScheduleContent = styled.div`
   }
 `;
 
-const TrainerCalendarView = () => {
+const TrainerCalendarView = ({autoHeight}) => {
   const { trainerIdx } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.user);
@@ -1016,7 +1016,7 @@ useEffect(() => {
   const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(currentWeekStart, i), 'yyyy-MM-dd'));
 
   return (
-    <Wrapper>
+    <Wrapper autoHeight={autoHeight}>
       {isTrainer ? (
         <>
           <TopBar>
@@ -1443,7 +1443,7 @@ useEffect(() => {
           <MonthTitle>
             <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}></button>
             {format(currentMonth, 'MMM yyyy')}
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>{'>'}</button>
+            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}></button>
           </MonthTitle>
 
           <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
