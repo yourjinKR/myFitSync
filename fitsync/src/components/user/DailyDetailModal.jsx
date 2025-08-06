@@ -9,108 +9,132 @@ import ScheduleDetailModal from './ScheduleDetailModal';
 // 모달 전체 배경
 const ModalBackdrop = styled.div`
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
   background: rgba(0,0,0,0.55);
   z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
 `;
 
 // 모달 컨테이너
 const ModalWrapper = styled.div`
   background: var(--bg-secondary);
-  border-radius: 1.2rem;
-  padding: 2.4rem 2rem 2rem 2rem;
-  width: 420px;
-  max-width: 96vw;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  width: 450px;
+  max-width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
   color: var(--text-primary);
-  box-shadow: 0 0.2rem 1.2rem rgba(0,0,0,0.22);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  margin: auto;
 
   @media (max-width: 600px) {
-    width: 99vw;
-    padding: 1.2rem 0.7rem 1.2rem 0.7rem;
-    border-radius: 0.8rem;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    max-height: 85vh;
   }
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  right: 1.2rem;
-  top: 1.2rem;
-  font-size: 2.2rem;
-  background: none;
-  border: none;
+  right: 1.5rem;
+  top: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  font-size: 2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
   &:hover {
+    background: rgba(74, 144, 226, 0.15);
     color: var(--primary-blue);
+    border-color: var(--primary-blue);
   }
 `;
 
 const Title = styled.h3`
-  font-size: 2.1rem;
-  margin-bottom: 2rem;
+  font-size: 2.4rem;
+  margin-bottom: 2.5rem;
   color: var(--primary-blue);
   text-align: center;
   letter-spacing: -0.02em;
   font-weight: 700;
+  text-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
 
   @media (max-width: 600px) {
-    font-size: 1.3rem;
-    margin-bottom: 1.2rem;
+    font-size: 2rem;
+    margin-bottom: 2rem;
   }
 `;
 
 const Section = styled.section`
-  margin-bottom: 2.4rem;
+  margin-bottom: 3rem;
 
   h4 {
     color: var(--primary-blue-light);
-    font-size: 1.15rem;
-    margin-bottom: 0.7rem;
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+    text-shadow: 0 1px 3px rgba(74, 144, 226, 0.1);
   }
 
   p {
     color: var(--text-secondary);
-    font-size: 1.08rem;
-    margin: 0.5rem 0;
+    font-size: 1.4rem;
+    margin: 0.8rem 0;
     font-weight: 400;
     letter-spacing: -0.01em;
   }
 `;
 
 const List = styled.ul`
-  border-radius: 0.7rem;
-  background: var(--bg-tertiary);
-  box-shadow: 0 0.05rem 0.3rem rgba(0,0,0,0.08);
-  padding: 0.2rem 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  overflow: hidden;
 `;
 
 const ListItem = styled.li`
-  padding: 1rem 1.2rem;
+  padding: 1.5rem 2rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
-  font-size: 1.15rem;
-  border-radius: 0.5rem 0.5rem 0 0;
-  transition: background 0.15s, color 0.15s;
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
   background: transparent;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.8rem;
+  line-height: 1.4;
 
   &:hover, &:focus {
-    background: var(--primary-blue-light);
-    color: var(--bg-primary);
+    background: rgba(74, 144, 226, 0.12);
+    color: var(--primary-blue-light);
     outline: none;
   }
 
@@ -119,16 +143,20 @@ const ListItem = styled.li`
   }
 
   @media (max-width: 600px) {
-    font-size: 1rem;
-    padding: 0.7rem 0.7rem;
+    font-size: 1.4rem;
+    padding: 1.2rem 1.5rem;
   }
 `;
 
 const EmptyText = styled.p`
   color: var(--text-tertiary);
   text-align: center;
-  font-size: 1.08rem;
-  margin: 1.2rem 0;
+  font-size: 1.4rem;
+  margin: 2rem 0;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
 `;
 
 const DailyDetailModal = ({ date, onClose }) => {

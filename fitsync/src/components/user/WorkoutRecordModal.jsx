@@ -4,107 +4,137 @@ import axios from 'axios';
 
 const ModalBackdrop = styled.div`
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
   background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  padding: 2rem;
+  box-sizing: border-box;
 `;
 
 const ModalContainer = styled.div`
   background: var(--bg-secondary);
-  border-radius: 1.2rem;
-  padding: 2.4rem 2rem 2rem 2rem;
-  width: 420px;
-  max-width: 96vw;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  width: 450px;
+  max-width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   color: var(--text-primary);
-  box-shadow: 0 0.2rem 1.2rem rgba(0,0,0,0.22);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
   position: relative;
+  margin: auto;
 
   @media (max-width: 600px) {
-    width: 99vw;
-    padding: 1.2rem 0.7rem 1.2rem 0.7rem;
-    border-radius: 0.8rem;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    max-height: 85vh;
   }
 `;
 
 const Title = styled.h2`
-  margin-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
   color: var(--primary-blue);
   text-align: center;
-  font-size: 1.7rem;
+  font-size: 2.4rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+  
   @media (max-width: 600px) {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
+    font-size: 2rem;
+    margin-bottom: 2rem;
   }
 `;
 
 const SectionTitle = styled.h3`
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.2rem;
   color: var(--primary-blue-light);
-  font-size: 1.15rem;
+  font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  text-shadow: 0 1px 3px rgba(74, 144, 226, 0.1);
 `;
 
 const SetList = styled.ul`
-  margin-top: 10px;
+  margin-top: 1.5rem;
   padding-left: 0;
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   color: var(--text-primary);
 `;
 
 const SetItem = styled.li`
-  padding: 0.8rem 1rem;
-  border-bottom: 1px solid var(--border-light);
-  border-radius: 0.5rem 0.5rem 0 0;
-  background: var(--bg-tertiary);
-  margin-bottom: 0.5rem;
-  font-size: 1.08rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  margin-bottom: 0.8rem;
+  font-size: 1.5rem;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  transition: background 0.15s, color 0.15s;
+  gap: 1rem;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  &:hover {
+    background: rgba(74, 144, 226, 0.08);
+  }
 
   &:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 0;
   }
 `;
 
 const MemoBox = styled.div`
-  margin-top: 16px;
-  background: var(--bg-tertiary);
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 1.08rem;
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem;
+  border-radius: 12px;
+  font-size: 1.4rem;
   color: var(--text-primary);
   word-break: break-all;
+  line-height: 1.5;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
-  background: var(--warning);
-  color: var(--text-primary);
-  border: none;
-  border-radius: 0.7rem;
-  padding: 0.5rem 1.2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  font-size: 2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  &:hover, &:focus {
-    background: var(--primary-blue);
-    color: var(--text-primary);
-    outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(74, 144, 226, 0.15);
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
   }
 `;
 
@@ -151,35 +181,35 @@ const WorkoutRecordModal = ({ records, onClose }) => {
   return (
     <ModalBackdrop onClick={onClose}>
       <ModalContainer onClick={e => e.stopPropagation()}>
-        <CloseButton onClick={onClose}>닫기</CloseButton>
+        <CloseButton onClick={onClose}>×</CloseButton>
         <Title>{formatDate(records[0].record_date)} 운동 기록</Title>
         {recordDetails.map((detail, idx) => (
-          <div key={idx} style={{ marginBottom: '2rem' }}>
-            <SectionTitle>{detail.pt.pt_name}</SectionTitle>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              <strong>루틴:</strong> {detail.record.routine_title}
-            </p>
-            <SectionTitle>세트 목록</SectionTitle>
-            <SetList>
-              {detail.sets.map((set, i) => (
-                <SetItem key={i}>
-                  <span style={{ color: 'var(--primary-blue-light)', fontWeight: 700 }}>
-                    {set.set_num}세트
-                  </span>
-                  <span>{set.set_volume}kg</span>
-                  <span>x</span>
-                  <span>{set.set_count}회</span>
-                </SetItem>
-              ))}
-            </SetList>
-            {detail.record.routinept_memo && (
-              <>
-                <SectionTitle>메모</SectionTitle>
-                <MemoBox>{detail.record.routinept_memo}</MemoBox>
-              </>
-            )}
-          </div>
-        ))}
+            <div key={idx} style={{ marginBottom: '3rem' }}>
+              <SectionTitle>{detail.pt.pt_name}</SectionTitle>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '1.4rem' }}>
+                <strong>루틴:</strong> {detail.record.routine_title}
+              </p>
+              <SectionTitle>세트 목록</SectionTitle>
+              <SetList>
+                {detail.sets.map((set, i) => (
+                  <SetItem key={i}>
+                    <span style={{ color: 'var(--primary-blue-light)', fontWeight: 700 }}>
+                      {set.set_num}세트
+                    </span>
+                    <span>{set.set_volume}kg</span>
+                    <span>x</span>
+                    <span>{set.set_count}회</span>
+                  </SetItem>
+                ))}
+              </SetList>
+              {detail.record.routinept_memo && (
+                <>
+                  <SectionTitle>메모</SectionTitle>
+                  <MemoBox>{detail.record.routinept_memo}</MemoBox>
+                </>
+              )}
+            </div>
+          ))}
       </ModalContainer>
     </ModalBackdrop>
   );

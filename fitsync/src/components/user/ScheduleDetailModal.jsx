@@ -6,25 +6,33 @@ import styled from 'styled-components';
 // 모달 배경
 const ModalBackdrop = styled.div`
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
   background: rgba(0,0,0,0.55);
   z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
 `;
 
 // 모달 컨테이너
 const ModalWrapper = styled.div`
   background: var(--bg-secondary);
-  border-radius: 1.2rem;
-  padding: 2.2rem 2rem 2rem 2rem;
-  width: 370px;
-  max-width: 96vw;
-  box-shadow: 0 0.2rem 1.2rem rgba(0,0,0,0.22);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  width: 420px;
+  max-width: 100%;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
   position: relative;
   color: var(--text-primary);
+  margin: auto;
   animation: modalPop 0.22s cubic-bezier(.4,2,.6,1) both;
 
   @keyframes modalPop {
@@ -33,81 +41,100 @@ const ModalWrapper = styled.div`
   }
 
   @media (max-width: 600px) {
-    width: 98vw;
-    padding: 1.2rem 0.7rem 1.2rem 0.7rem;
-    border-radius: 0.8rem;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
   }
 `;
 
 const Title = styled.h3`
-  font-size: 1.5rem;
+  font-size: 2.2rem;
   color: var(--primary-blue);
   text-align: center;
   font-weight: 700;
-  margin-bottom: 1.2rem;
+  margin-bottom: 2rem;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
 `;
 
 const Message = styled.p`
   color: var(--text-secondary);
-  font-size: 1.08rem;
+  font-size: 1.6rem;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   font-weight: 500;
+  line-height: 1.5;
 `;
 
 const ButtonRow = styled.div`
   display: flex;
-  gap: 0.7rem;
+  gap: 1.2rem;
   justify-content: center;
-  margin-top: 1.2rem;
+  margin-top: 2rem;
 `;
 
 const MainButton = styled.button`
-  background: var(--primary-blue);
-  color: var(--text-primary);
-  border-radius: 0.8rem;
-  padding: 0.7rem 1.6rem;
-  font-size: 1.08rem;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+  color: white;
+  border-radius: 12px;
+  padding: 1.2rem 2.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
   border: none;
-  box-shadow: 0 0.05rem 0.2rem rgba(74,144,226,0.10);
-  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 8px 24px rgba(74, 144, 226, 0.25);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
   &:hover, &:focus {
-    background: var(--primary-blue-hover);
-    color: var(--bg-primary);
+    background: linear-gradient(135deg, var(--primary-blue-hover), var(--primary-blue));
+    box-shadow: 0 12px 32px rgba(74, 144, 226, 0.35);
+    transform: translateY(-2px);
     outline: none;
   }
+  
   &:disabled {
     background: var(--border-light);
     color: var(--text-tertiary);
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 `;
 
 const CloseButton = styled.button`
-  background: var(--warning);
-  color: var(--text-primary);
-  border-radius: 0.8rem;
-  padding: 0.7rem 1.6rem;
-  font-size: 1.08rem;
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  border-radius: 12px;
+  padding: 1.2rem 2.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  border: none;
-  margin-top: 0.5rem;
-  transition: background 0.18s, color 0.18s;
+  margin-top: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
   &:hover, &:focus {
-    background: var(--primary-blue-light);
-    color: var(--bg-primary);
+    background: var(--warning);
+    color: white;
     outline: none;
   }
 `;
 
 const RemainInfo = styled.div`
-  margin-top: 1.2rem;
+  margin-top: 2rem;
   text-align: center;
   color: var(--primary-blue-light);
-  font-size: 1.02rem;
-  font-weight: 500;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 1.5rem;
+  background: rgba(74, 144, 226, 0.08);
+  border-radius: 10px;
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  
+  b {
+    color: var(--primary-blue);
+    font-size: 1.8rem;
+  }
 `;
 
 const ScheduleDetailModal = ({ schedule, onClose }) => {

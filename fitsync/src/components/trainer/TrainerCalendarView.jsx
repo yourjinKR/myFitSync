@@ -1012,7 +1012,7 @@ useEffect(() => {
   };
 
   const hours = Array.from({ length: 19 }, (_, i) => `${(6 + i).toString().padStart(2, '0')}:00`);
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; // 요일을 3글자로 변경
+  const days = ['일', '월', '화', '수', '목', '금', '토']; // 요일을 한글로 변경
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const lastDate = new Date(year, month + 1, 0).getDate();
@@ -1024,504 +1024,508 @@ useEffect(() => {
   const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(currentWeekStart, i), 'yyyy-MM-dd'));
 
   return (
-    <Wrapper autoHeight={autoHeight}>
-      {isTrainer ? (
-        <>
-          <TopBar>
-            {view === 'week' ? (
-              <MonthTitle>
-                <button onClick={() => setCurrentWeekStart(subDays(currentWeekStart, 7))}></button>
-                <span className="month-label">
-                  {(() => {
-                    // 1주차 계산 함수
-                    const getWeekOfMonth = (date) => {
-                      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-                      const firstDayOfWeek = firstDay.getDay();
-                      const offsetDate = date.getDate() + firstDayOfWeek - 1;
-                      return Math.floor(offsetDate / 7) + 1;
-                    };
-                    const weekNum = getWeekOfMonth(currentWeekStart);
-                    const year = currentWeekStart.getFullYear();
-                    const month = currentWeekStart.getMonth() + 1;
-                    return `${year}년 ${month}월 ${weekNum}주차`;
-                  })()}
-                </span>
-                <button onClick={() => setCurrentWeekStart(addDays(currentWeekStart, 7))}></button>
-              </MonthTitle>
-            ) : (
-              <MonthTitle>
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}></button>
-                <span className="month-label">{format(currentMonth, 'MMM yyyy')}</span> {/* 월을 축약형으로 표시 */}
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}></button>
-              </MonthTitle>
-            )}
-
-            <Toggle>
-              <button
-                type="button"
-                data-active={view === 'week'}
-                onClick={() => setView('week')}
-              >
-                주간 보기
-              </button>
-              <button
-                type="button"
-                data-active={view === 'month'}
-                onClick={() => setView('month')}
-              >
-                월간 보기
-              </button>
-            </Toggle>
-          </TopBar>
-
-          {view === 'week' ? (
-            <>
-              <ScheduleBox style={{ 
-                borderRadius: '16px',
-                background: 'rgba(255, 255, 255, 0.04)',
-                backdropFilter: 'blur(25px)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                boxShadow: `
-                  0 25px 60px rgba(0, 0, 0, 0.18),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.15)
-                `,
-                overflow: 'hidden'
-              }}>
-                <WeekdaysRow
-                  weekmode={true}
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(74, 144, 226, 0.05))',
-                    padding: '1.5rem 0',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    gridTemplateColumns: '8rem repeat(7, 1fr)',
-                    fontSize: '1.4rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  <div style={{ 
-                    color: 'var(--text-secondary)', 
-                    fontSize: '1.3rem',
-                    fontWeight: '600',
-                    textAlign: 'center'
-                  }}>Time</div>
-                  {days.map((day, idx) => (
-                    <div key={idx} style={{
-                      textAlign: 'center'
-                    }}>
-                      <div style={{ fontSize: '1.4rem', fontWeight: '600', marginBottom: '0.3rem' }}>{day}</div>
-                      <div style={{ 
-                        fontSize: '1.2rem', 
-                        opacity: 0.7,
-                        color: 'var(--primary-blue)'
-                      }}>{format(new Date(weekDates[idx]), 'MM/dd')}</div>
-                    </div>
-                  ))}
-                </WeekdaysRow>
-
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '8rem repeat(7, 1fr)'
-                }}>
-                  {hours.map((hour, idx) => (
-                    <React.Fragment key={idx}>
-                      {/* 시간 표시 셀 */}
-                      <div
-                        style={{
-                          fontSize: '1.2rem',
-                          textAlign: 'center',
-                          color: 'var(--text-secondary)',
-                          lineHeight: '4rem',
-                          fontWeight: '500',
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {hour}
-                      </div>
-
-                      {/* 요일별 셀 */}
-                      {days.map((_, dayIdx) => {
-                        const clickedDate = format(addDays(currentWeekStart, dayIdx), 'yyyy-MM-dd');
-                        const hourNum = parseInt(hour.split(':')[0], 10);
-                        const key = `${dayIdx}-${hour}`;
-                        const schedule = weekSchedules[key];
-                        const todayStr = format(new Date(), 'yyyy-MM-dd');
-                        const isToday = clickedDate === todayStr;
-
-                        const isStart =
-                          !!schedule && parseInt(schedule.schedule_stime.split(':')[0], 10) === hourNum;
-
-                        let duration = 1;
-                        if (isStart) {
-                          const start = parseInt(schedule.schedule_stime.split(':')[0], 10);
-                          const end = parseInt(schedule.schedule_etime.split(':')[0], 10);
-                          duration = Math.max(end - start, 1);
-                        }
-
-                        return (
-                          <div
-                            key={dayIdx}
-                            style={{
-                              borderLeft: dayIdx === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-                              height: '5rem',
-                              position: 'relative',
-                              cursor: 'pointer',
-                              background: isToday 
-                                ? 'rgba(74, 144, 226, 0.06)' 
-                                : 'transparent',
-                              transition: 'background-color 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isStart) {
-                                e.target.style.background = 'rgba(74, 144, 226, 0.08)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isStart) {
-                                e.target.style.background = isToday ? 'rgba(74, 144, 226, 0.06)' : 'transparent';
-                              }
-                            }}
-                            onClick={() => {
-                              setSelectedDate(clickedDate);
-                              setSelectedStime(hour);
-                              const nextHour = (hourNum + 1).toString().padStart(2, '0') + ':00';
-                              setSelectedEtime(nextHour);
-                              setShowInsertModal(true);
-                            }}
-                          >
-                            {isStart && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  top: '0',
-                                  left: '2px',
-                                  right: '2px',
-                                  height: `${duration * 5}rem`,
-                                  background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.8), rgba(74, 144, 226, 0.6))',
-                                  color: 'white',
-                                  fontSize: '1.3rem',
-                                  borderRadius: '8px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  padding: '0.6rem',
-                                  boxSizing: 'border-box',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                                  boxShadow: '0 2px 8px rgba(74, 144, 226, 0.25)',
-                                  zIndex: 2,
-                                  fontWeight: '500',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.target.style.transform = 'translateY(-1px)';
-                                  e.target.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.35)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.transform = 'translateY(0)';
-                                  e.target.style.boxShadow = '0 2px 8px rgba(74, 144, 226, 0.25)';
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMemberClick(schedule);
-                                }}
-                              >
-                                {schedule.user_idx
-                                  ? memberMap[schedule.user_idx]
-                                  : schedule.user_name || schedule.schedule_content}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </React.Fragment>
-                  ))}
-                </div>
-                
-                <style jsx>{`
-                  .schedule-cell:hover {
-                    background: rgba(74, 144, 226, 0.1) !important;
-                  }
-                `}</style>
-              </ScheduleBox>
-            </>
-          ) : (
-            <>
-              <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
-                <div style={{ flex: 1, minWidth: '350px' }}>
-
-                <WeekdaysRow>
-                  {days.map((day, idx) => (
-                    <div key={idx}>{day}</div>
-                  ))}
-                </WeekdaysRow>
-
-                <CustomCalendar>
-                  {dates.map((day, index) => {
-                    const dateStr =
-                      day != null
-                        ? `${year}-${(month + 1).toString().padStart(2, '0')}-${day
-                            .toString()
-                            .padStart(2, '0')}`
-                        : null;
-                    const isSelected = dateStr && selectedDate === dateStr;
-                    const dayOfWeek = index % 7;
-                    const scheduleColors = dateStr ? getScheduleColorsByDate(dateStr) : [];
-                    const todayStr = format(new Date(), 'yyyy-MM-dd');
-                    const isToday = dateStr === todayStr;
-
-                    return (
-                      <DayCellBox
-                        key={index}
-                        isSelected={isSelected}
-                        isToday={isToday}
-                        isSunday={dayOfWeek === 0}
-                        isSaturday={dayOfWeek === 6}
-                        isClickable={!!dateStr}
-                        tabIndex={!!dateStr ? 0 : -1}
-                        aria-label={dateStr ? `${day}일` : ''}
-                        onClick={() => dateStr && handleDayClick(dateStr)}
-                        onKeyDown={e => {
-                          if ((e.key === 'Enter' || e.key === ' ') && dateStr) handleDayClick(dateStr);
-                        }}
-                      >
-                        <div style={{
-                          fontSize: '1.5rem',
-                          fontWeight: isSelected ? '600' : isToday ? '500' : '400',
-                          marginBottom: '6px',
-                          textShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
-                          letterSpacing: isSelected ? '0.5px' : '0'
-                        }}>
-                          {day || ''}
-                        </div>
-                        <DotWrapper>
-                          {[...new Set(scheduleColors)].map((color) => (
-                            <ScheduleDot
-                              key={color}
-                              color={
-                                color === 'green'
-                                  ? 'var(--check-green)'
-                                  : color === 'red'
-                                  ? 'var(--warning)'
-                                  : color === 'yellow'
-                                  ? '#FFEB3B'
-                                  : 'gray'
-                              }
-                            />
-                          ))}
-                        </DotWrapper>
-                      </DayCellBox>
-                    );
-                  })}
-                </CustomCalendar>
-                </div>
-                
-                <LegendContainer>
-                  <Legend>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }} >
-                      <ScheduleDot color="#F44336" /> PT 일정
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }} >
-                      <ScheduleDot color="#4CAF50" /> 운동기록
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }} >
-                      <ScheduleDot color="#FFEB3B" /> 외부 일정
-                    </div>
-                  </Legend>
-                </LegendContainer>
-              </ScheduleBox>
-
-              {showPanel && (
-                <SlidePanel initial={{ y: 50 }} animate={{ y: 0 }} exit={{ y: 50 }}>
-                  <SlidePanelHeader>
-                    <h3>{selectedDate} 일정</h3>
-                    <ButtonGroup>
-                      {!isDeleteMode && <button className="primary" onClick={handleAddSchedule}>일정 추가</button>}
-                      {!isDeleteMode && <button className="secondary" onClick={toggleDeleteMode}>일정 삭제</button>}
-                    </ButtonGroup>
-                  </SlidePanelHeader>
-
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                    <DateCircle>{selectedDate.split('-')[2]}</DateCircle>
-                    <div style={{ flex: 1 }}>
-                      {monthSchedules[selectedDate] && monthSchedules[selectedDate].length > 0 ? (
-                        monthSchedules[selectedDate]
-                          .slice()
-                          .sort((a, b) => a.schedule_stime.localeCompare(b.schedule_stime))
-                          .map(schedule => (
-                            <ScheduleLabel key={schedule.schedule_idx}>
-                              {isDeleteMode && (
-                                <input
-                                  type="checkbox"
-                                  checked={selectedDeleteIds.includes(schedule.schedule_idx)}
-                                  onChange={() => handleCheckboxChange(schedule.schedule_idx)}
-                                  style={{ marginRight: '8px' }}
-                                />
-                              )}
-                              <ScheduleContent
-                                isDeleteMode={isDeleteMode}
-                                onClick={() => !isDeleteMode && handleMemberClick(schedule)}
-                                title={!isDeleteMode ? '운동 추가' : ''}
-                              >
-                                <div className="schedule-title">
-                                  {/* user_idx가 있으면 memberMap에서 문자열로 조회 */}
-                                  {schedule.user_idx
-                                    ? memberMap[String(schedule.user_idx)]
-                                    : schedule.user_name || '일정 없음'}
-                                </div>
-                                <div className="schedule-time">
-                                  {schedule.schedule_stime} ~ {schedule.schedule_etime}
-                                </div>
-                                <div className="schedule-content">
-                                  {schedule.schedule_content}
-                                </div>
-                              </ScheduleContent>
-                            </ScheduleLabel>
-                          ))
-                      ) : (
-                        <div style={{
-                          fontSize: '2rem',
-                          color: 'var(--text-secondary)',
-                          textAlign: 'center',
-                          padding: '2rem 0',
-                          fontWeight: 600,
-                          letterSpacing: '0.02em',
-                        }}>일정이 없습니다.</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {isDeleteMode && (
-                    <ButtonGroup style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
-                      <button 
-                        className="primary" 
-                        onClick={handleDeleteSelectedSchedules} 
-                        disabled={selectedDeleteIds.length === 0}
-                      >
-                        선택 삭제
-                      </button>
-                      <button className="secondary" onClick={toggleDeleteMode}>삭제 취소</button>
-                    </ButtonGroup>
-                  )}
-                </SlidePanel>
+    <>
+      <Wrapper autoHeight={autoHeight}>
+        {isTrainer ? (
+          <>
+            <TopBar>
+              {view === 'week' ? (
+                <MonthTitle>
+                  <button onClick={() => setCurrentWeekStart(subDays(currentWeekStart, 7))}></button>
+                  <span className="month-label">
+                    {(() => {
+                      // 1주차 계산 함수
+                      const getWeekOfMonth = (date) => {
+                        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                        const firstDayOfWeek = firstDay.getDay();
+                        const offsetDate = date.getDate() + firstDayOfWeek - 1;
+                        return Math.floor(offsetDate / 7) + 1;
+                      };
+                      const weekNum = getWeekOfMonth(currentWeekStart);
+                      const year = currentWeekStart.getFullYear();
+                      const month = currentWeekStart.getMonth() + 1;
+                      return `${year}년 ${month}월 ${weekNum}주차`;
+                    })()}
+                  </span>
+                  <button onClick={() => setCurrentWeekStart(addDays(currentWeekStart, 7))}></button>
+                </MonthTitle>
+              ) : (
+                <MonthTitle>
+                  <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}></button>
+                  <span className="month-label">{`${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`}</span> {/* '년월'을 한글로 표시 */}
+                  <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}></button>
+                </MonthTitle>
               )}
-            </>
-          )}
-          {showInsertModal  && (
-            <ScheduleInsertModal
-              onClose={() => setShowInsertModal(false)}
-              onInsert={handleInsertSchedule}
-              members={members}
-              selectedDate={selectedDate}
-              selectedStime={selectedStime}
-              selectedEtime={selectedEtime}
-              trainerIdx={trainerIdx}
-              schedulesForDate={monthSchedules[selectedDate] || []}
-            />
-          )}
 
+              <Toggle>
+                <button
+                  type="button"
+                  data-active={view === 'week'}
+                  onClick={() => setView('week')}
+                >
+                  주간 보기
+                </button>
+                <button
+                  type="button"
+                  data-active={view === 'month'}
+                  onClick={() => setView('month')}
+                >
+                  월간 보기
+                </button>
+              </Toggle>
+            </TopBar>
 
-          {showWorkoutInsert && selectedSchedule && (
-            <WorkoutInsert
-              onClose={closeWorkoutModal}
-              onUpdate={fetchSchedules}
-              memberName={
-                selectedSchedule.user_name ||
-                memberMap[String(selectedSchedule.user_idx)] ||
-                ''
-              }
-              memberIdx={selectedSchedule.user_idx}
-              trainerIdx={trainerIdx}
-              date={format(new Date(selectedSchedule.schedule_date), 'yyyy-MM-dd')}
-              stime={selectedSchedule.schedule_stime}
-              etime={selectedSchedule.schedule_etime}
-              memo={selectedSchedule.schedule_content}
-              scheduleIdx={selectedSchedule.schedule_idx}
-            />
-          )}
-        </>
-      ) : isUser ? (
-        <>
-          <MonthTitle>
-            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}></button>
-            {format(currentMonth, 'MMM yyyy')}
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}></button>
-          </MonthTitle>
-
-          <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
-            <WeekdaysRow>
-              {days.map((day, idx) => (
-                <div key={idx}>{day}</div>
-              ))}
-            </WeekdaysRow>
-
-            <CustomCalendar>
-              {dates.map((day, index) => {
-                const dateStr =
-                  day != null
-                    ? `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
-                    : null;
-                const isSelected = dateStr && selectedDate === dateStr;
-                const dayOfWeek = index % 7;
-                const scheduleColors = dateStr ? getScheduleColorsByDate(dateStr) : [];
-
-                return (
-                  <DayCellBox
-                    key={index}
-                    isSelected={isSelected}
-                    isSunday={dayOfWeek === 0}
-                    isSaturday={dayOfWeek === 6}
-                    isClickable={!!dateStr}
-                    onClick={() => dateStr && handleDayClick(dateStr)}
+            {view === 'week' ? (
+              <>
+                <ScheduleBox style={{ 
+                  borderRadius: '16px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  backdropFilter: 'blur(25px)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: `
+                    0 25px 60px rgba(0, 0, 0, 0.18),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.15)
+                  `,
+                  overflow: 'hidden'
+                }}>
+                  <WeekdaysRow
+                    weekmode={true}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(74, 144, 226, 0.05))',
+                      padding: '1.5rem 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                      gridTemplateColumns: '8rem repeat(7, 1fr)',
+                      fontSize: '1.4rem',
+                      fontWeight: '500'
+                    }}
                   >
-                    {day || ''}
-                    <DotWrapper>
-                      {[...new Set(scheduleColors)].map((color) => (
-                        <ScheduleDot
-                          key={color}
-                          color={
-                            color === 'green'
-                              ? '#4CAF50'
-                              : color === 'red'
-                              ? '#F44336'
-                              : '#FFC107'
+                    <div style={{ 
+                      color: 'var(--text-secondary)', 
+                      fontSize: '1.3rem',
+                      fontWeight: '600',
+                      textAlign: 'center'
+                    }}>Time</div>
+                    {days.map((day, idx) => (
+                      <div key={idx} style={{
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: '600', marginBottom: '0.3rem' }}>{day}</div>
+                        <div style={{ 
+                          fontSize: '1.2rem', 
+                          opacity: 0.7,
+                          color: 'var(--primary-blue)'
+                        }}>{format(new Date(weekDates[idx]), 'MM/dd')}</div>
+                      </div>
+                    ))}
+                  </WeekdaysRow>
+
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '8rem repeat(7, 1fr)'
+                  }}>
+                    {hours.map((hour, idx) => (
+                      <React.Fragment key={idx}>
+                        {/* 시간 표시 셀 */}
+                        <div
+                          style={{
+                            fontSize: '1.2rem',
+                            textAlign: 'center',
+                            color: 'var(--text-secondary)',
+                            lineHeight: '4rem',
+                            fontWeight: '500',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {hour}
+                        </div>
+
+                        {/* 요일별 셀 */}
+                        {days.map((_, dayIdx) => {
+                          const clickedDate = format(addDays(currentWeekStart, dayIdx), 'yyyy-MM-dd');
+                          const hourNum = parseInt(hour.split(':')[0], 10);
+                          const key = `${dayIdx}-${hour}`;
+                          const schedule = weekSchedules[key];
+                          const todayStr = format(new Date(), 'yyyy-MM-dd');
+                          const isToday = clickedDate === todayStr;
+
+                          const isStart =
+                            !!schedule && parseInt(schedule.schedule_stime.split(':')[0], 10) === hourNum;
+
+                          let duration = 1;
+                          if (isStart) {
+                            const start = parseInt(schedule.schedule_stime.split(':')[0], 10);
+                            const end = parseInt(schedule.schedule_etime.split(':')[0], 10);
+                            duration = Math.max(end - start, 1);
                           }
-                        />
-                      ))}
-                    </DotWrapper>
-                  </DayCellBox>
-                );
-              })}
-            </CustomCalendar>
-              
-            {showModal && (
-              <DailyDetailModal
-                date={selectedDate}
-                schedules={monthSchedules[selectedDate] || []}
-                onClose={() => setShowModal(false)}
+
+                          return (
+                            <div
+                              key={dayIdx}
+                              style={{
+                                borderLeft: dayIdx === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                                height: '5rem',
+                                position: 'relative',
+                                cursor: 'pointer',
+                                background: isToday 
+                                  ? 'rgba(74, 144, 226, 0.06)' 
+                                  : 'transparent',
+                                transition: 'background-color 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isStart) {
+                                  e.target.style.background = 'rgba(74, 144, 226, 0.08)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isStart) {
+                                  e.target.style.background = isToday ? 'rgba(74, 144, 226, 0.06)' : 'transparent';
+                                }
+                              }}
+                              onClick={() => {
+                                setSelectedDate(clickedDate);
+                                setSelectedStime(hour);
+                                const nextHour = (hourNum + 1).toString().padStart(2, '0') + ':00';
+                                setSelectedEtime(nextHour);
+                                setShowInsertModal(true);
+                              }}
+                            >
+                              {isStart && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '0',
+                                    left: '2px',
+                                    right: '2px',
+                                    height: `${duration * 5}rem`,
+                                    background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.8), rgba(74, 144, 226, 0.6))',
+                                    color: 'white',
+                                    fontSize: '1.3rem',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '0.6rem',
+                                    boxSizing: 'border-box',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    boxShadow: '0 2px 8px rgba(74, 144, 226, 0.25)',
+                                    zIndex: 2,
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.transform = 'translateY(-1px)';
+                                    e.target.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.35)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = '0 2px 8px rgba(74, 144, 226, 0.25)';
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMemberClick(schedule);
+                                  }}
+                                >
+                                  {schedule.user_idx
+                                    ? memberMap[schedule.user_idx]
+                                    : schedule.user_name || schedule.schedule_content}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  
+                  <style jsx>{`
+                    .schedule-cell:hover {
+                      background: rgba(74, 144, 226, 0.1) !important;
+                    }
+                  `}</style>
+                </ScheduleBox>
+              </>
+            ) : (
+              <>
+                <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
+                  <div style={{ flex: 1, minWidth: '350px' }}>
+
+                  <WeekdaysRow>
+                    {days.map((day, idx) => (
+                      <div key={idx}>{day}</div>
+                    ))}
+                  </WeekdaysRow>
+
+                  <CustomCalendar>
+                    {dates.map((day, index) => {
+                      const dateStr =
+                        day != null
+                          ? `${year}-${(month + 1).toString().padStart(2, '0')}-${day
+                              .toString()
+                              .padStart(2, '0')}`
+                          : null;
+                      const isSelected = dateStr && selectedDate === dateStr;
+                      const dayOfWeek = index % 7;
+                      const scheduleColors = dateStr ? getScheduleColorsByDate(dateStr) : [];
+                      const todayStr = format(new Date(), 'yyyy-MM-dd');
+                      const isToday = dateStr === todayStr;
+
+                      return (
+                        <DayCellBox
+                          key={index}
+                          isSelected={isSelected}
+                          isToday={isToday}
+                          isSunday={dayOfWeek === 0}
+                          isSaturday={dayOfWeek === 6}
+                          isClickable={!!dateStr}
+                          tabIndex={!!dateStr ? 0 : -1}
+                          aria-label={dateStr ? `${day}일` : ''}
+                          onClick={() => dateStr && handleDayClick(dateStr)}
+                          onKeyDown={e => {
+                            if ((e.key === 'Enter' || e.key === ' ') && dateStr) handleDayClick(dateStr);
+                          }}
+                        >
+                          <div style={{
+                            fontSize: '1.5rem',
+                            fontWeight: isSelected ? '600' : isToday ? '500' : '400',
+                            marginBottom: '6px',
+                            textShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                            letterSpacing: isSelected ? '0.5px' : '0'
+                          }}>
+                            {day || ''}
+                          </div>
+                          <DotWrapper>
+                            {[...new Set(scheduleColors)].map((color) => (
+                              <ScheduleDot
+                                key={color}
+                                color={
+                                  color === 'green'
+                                    ? 'var(--check-green)'
+                                    : color === 'red'
+                                    ? 'var(--warning)'
+                                    : color === 'yellow'
+                                    ? '#FFEB3B'
+                                    : 'gray'
+                                }
+                              />
+                            ))}
+                          </DotWrapper>
+                        </DayCellBox>
+                      );
+                    })}
+                  </CustomCalendar>
+                  </div>
+                  
+                  <LegendContainer>
+                    <Legend>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }} >
+                        <ScheduleDot color="#F44336" /> PT 일정
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }} >
+                        <ScheduleDot color="#4CAF50" /> 운동기록
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }} >
+                        <ScheduleDot color="#FFEB3B" /> 외부 일정
+                      </div>
+                    </Legend>
+                  </LegendContainer>
+                </ScheduleBox>
+
+                {showPanel && (
+                  <SlidePanel initial={{ y: 50 }} animate={{ y: 0 }} exit={{ y: 50 }}>
+                    <SlidePanelHeader>
+                      <h3>{selectedDate} 일정</h3>
+                      <ButtonGroup>
+                        {!isDeleteMode && <button className="primary" onClick={handleAddSchedule}>일정 추가</button>}
+                        {!isDeleteMode && <button className="secondary" onClick={toggleDeleteMode}>일정 삭제</button>}
+                      </ButtonGroup>
+                    </SlidePanelHeader>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                      <DateCircle>{selectedDate.split('-')[2]}</DateCircle>
+                      <div style={{ flex: 1 }}>
+                        {monthSchedules[selectedDate] && monthSchedules[selectedDate].length > 0 ? (
+                          monthSchedules[selectedDate]
+                            .slice()
+                            .sort((a, b) => a.schedule_stime.localeCompare(b.schedule_stime))
+                            .map(schedule => (
+                              <ScheduleLabel key={schedule.schedule_idx}>
+                                {isDeleteMode && (
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedDeleteIds.includes(schedule.schedule_idx)}
+                                    onChange={() => handleCheckboxChange(schedule.schedule_idx)}
+                                    style={{ marginRight: '8px' }}
+                                  />
+                                )}
+                                <ScheduleContent
+                                  isDeleteMode={isDeleteMode}
+                                  onClick={() => !isDeleteMode && handleMemberClick(schedule)}
+                                  title={!isDeleteMode ? '운동 추가' : ''}
+                                >
+                                  <div className="schedule-title">
+                                    {/* user_idx가 있으면 memberMap에서 문자열로 조회 */}
+                                    {schedule.user_idx
+                                      ? memberMap[String(schedule.user_idx)]
+                                      : schedule.user_name || '일정 없음'}
+                                  </div>
+                                  <div className="schedule-time">
+                                    {schedule.schedule_stime} ~ {schedule.schedule_etime}
+                                  </div>
+                                  <div className="schedule-content">
+                                    {schedule.schedule_content}
+                                  </div>
+                                </ScheduleContent>
+                              </ScheduleLabel>
+                            ))
+                        ) : (
+                          <div style={{
+                            fontSize: '2rem',
+                            color: 'var(--text-secondary)',
+                            textAlign: 'center',
+                            padding: '2rem 0',
+                            fontWeight: 600,
+                            letterSpacing: '0.02em',
+                          }}>일정이 없습니다.</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {isDeleteMode && (
+                      <ButtonGroup style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
+                        <button 
+                          className="primary" 
+                          onClick={handleDeleteSelectedSchedules} 
+                          disabled={selectedDeleteIds.length === 0}
+                        >
+                          선택 삭제
+                        </button>
+                        <button className="secondary" onClick={toggleDeleteMode}>삭제 취소</button>
+                      </ButtonGroup>
+                    )}
+                  </SlidePanel>
+                )}
+              </>
+            )}
+            {showInsertModal  && (
+              <ScheduleInsertModal
+                onClose={() => setShowInsertModal(false)}
+                onInsert={handleInsertSchedule}
+                members={members}
+                selectedDate={selectedDate}
+                selectedStime={selectedStime}
+                selectedEtime={selectedEtime}
+                trainerIdx={trainerIdx}
+                schedulesForDate={monthSchedules[selectedDate] || []}
               />
             )}
+
+
+            {showWorkoutInsert && selectedSchedule && (
+              <WorkoutInsert
+                onClose={closeWorkoutModal}
+                onUpdate={fetchSchedules}
+                memberName={
+                  selectedSchedule.user_name ||
+                  memberMap[String(selectedSchedule.user_idx)] ||
+                  ''
+                }
+                memberIdx={selectedSchedule.user_idx}
+                trainerIdx={trainerIdx}
+                date={format(new Date(selectedSchedule.schedule_date), 'yyyy-MM-dd')}
+                stime={selectedSchedule.schedule_stime}
+                etime={selectedSchedule.schedule_etime}
+                memo={selectedSchedule.schedule_content}
+                scheduleIdx={selectedSchedule.schedule_idx}
+              />
+            )}
+          </>
+        ) : isUser ? (
+          <>
+            <MonthTitle>
+              <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}></button>
+              {`${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`}
+              <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}></button>
+            </MonthTitle>
+
+            <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
+              <WeekdaysRow>
+                {days.map((day, idx) => (
+                  <div key={idx}>{day}</div>
+                ))}
+              </WeekdaysRow>
+
+              <CustomCalendar>
+                {dates.map((day, index) => {
+                  const dateStr =
+                    day != null
+                      ? `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+                      : null;
+                  const isSelected = dateStr && selectedDate === dateStr;
+                  const dayOfWeek = index % 7;
+                  const scheduleColors = dateStr ? getScheduleColorsByDate(dateStr) : [];
+
+                  return (
+                    <DayCellBox
+                      key={index}
+                      isSelected={isSelected}
+                      isSunday={dayOfWeek === 0}
+                      isSaturday={dayOfWeek === 6}
+                      isClickable={!!dateStr}
+                      onClick={() => dateStr && handleDayClick(dateStr)}
+                    >
+                      {day || ''}
+                      <DotWrapper>
+                        {[...new Set(scheduleColors)].map((color) => (
+                          <ScheduleDot
+                            key={color}
+                            color={
+                              color === 'green'
+                                ? '#4CAF50'
+                                : color === 'red'
+                                ? '#F44336'
+                                : '#FFC107'
+                            }
+                          />
+                        ))}
+                      </DotWrapper>
+                    </DayCellBox>
+                  );
+                })}
+              </CustomCalendar>
+                
             
-            <LegendContainer>
-              <Legend>
-                <div>
-                  <ScheduleDot color="#F44336" /> 스케줄
-                </div>
-                <div>
-                  <ScheduleDot color="#4CAF50" /> 운동기록
-                </div>
-              </Legend>
-            </LegendContainer>
-          </ScheduleBox>
-        </>
-      ) : null}
-    </Wrapper>
+              
+              <LegendContainer>
+                <Legend>
+                  <div>
+                    <ScheduleDot color="#F44336" /> 스케줄
+                  </div>
+                  <div>
+                    <ScheduleDot color="#4CAF50" /> 운동기록
+                  </div>
+                </Legend>
+              </LegendContainer>
+            </ScheduleBox>
+          </>
+        ) : null}
+      </Wrapper>
+       {showModal && (
+          <DailyDetailModal
+            date={selectedDate}
+            schedules={monthSchedules[selectedDate] || []}
+            onClose={() => setShowModal(false)}
+          />
+        )}
+    </>
+    
   );
 };
 
