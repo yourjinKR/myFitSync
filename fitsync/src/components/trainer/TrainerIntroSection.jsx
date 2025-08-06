@@ -6,31 +6,102 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import TrainerMapContainer from './TrainerMapContainer';
 import Review from '../review/Review';
+import SchoolIcon from '@mui/icons-material/School';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'; // 수료증(자격증) 아이콘
 
 // Styled Components
 const Section = styled.section`
   padding: 22px 0 18px 0;
-  border-bottom: 1.5px solid var(--border-light);
   background: var(--bg-secondary);
+  position: relative;
 
-  &:last-of-type {
+  &:not(:last-of-type) {
     border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  & + & {
+    /* 어두운 회색 막대형 구분선 */
+    margin-top: 0;
+    border-top: 0;
+    &::before {
+      content: '';
+      display: block;
+      width: calc(100% - 1px); // 좌우 여백을 주어 섹션 크기에 맞게
+      height: 14px;
+      background: #23272f;
+      position: absolute;
+      top: -7px;
+      border-radius: 7px;
+      z-index: 1;
+    }
   }
 
   @media (max-width: 500px) {
     padding: 16px 0 12px 0;
+    & + &::before {
+      width: calc(100% - 16px);
+      height: 9px;
+      left: 8px;
+      top: -4px;
+    }
   }
 `;
 
+// SectionTitle과 내용 구분선
 const SectionTitle = styled.h3`
   font-weight: 800;
   margin-bottom: 13px;
   font-size: 2.22rem;
   color: var(--primary-blue);
   letter-spacing: -0.01em;
+  position: relative;
+  z-index: 2;
+  padding-left: 20px; // 제목을 오른쪽으로 이동
+
+  &::after {
+    content: '';
+    display: block;
+    width: calc(100% - 40px); // 전체 너비에서 좌우 잘라냄
+    height: 3px;
+    background: var(--primary-blue-light);
+    border-radius: 2px;
+    margin: 10px 0 0 0;
+    margin-left: 0; // 왼쪽 정렬
+    position: relative;
+    left: 0;
+  }
+
   @media (max-width: 500px) {
     font-size: 2.09rem;
+    padding-left: 8px;
+    &::after {
+      width: calc(100% - 16px);
+      height: 2px;
+      margin-top: 7px;
+      left: 0;
+    }
   }
+`;
+
+// 자격사항 아이콘
+const AwardIconCircle = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1em;
+  height: 2.1em;
+  border-radius: 50%;
+  background: ${({ category }) =>
+    category === '자격증' ? '#4A90E2'
+    : category === '학위' ? '#FFB800'
+    : '#A259FF'};
+  margin-right: 0.7em;
+  vertical-align: middle;
+  box-shadow: 0 0.08em 0.3em rgba(0,0,0,0.10);
+  color: #fff;
+  font-size: 1.3em;
 `;
 
 const CertList = styled.ul`
@@ -383,7 +454,12 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
           {awards.length === 0 && <li>데이터가 없습니다.</li>}
           {awards.map((a, i) => (
             <li key={i} onClick={() => setSelectedAward(a)}>
-              📜 [{a.awards_category}] {a.awards_name}
+              <AwardIconCircle category={a.awards_category}>
+                {a.awards_category === '자격증' && <WorkspacePremiumIcon />}
+                {a.awards_category === '학위' && <SchoolIcon />}
+                {a.awards_category === '수상경력' && <EmojiEventsIcon />}
+              </AwardIconCircle>
+               {a.awards_name}
             </li>
           ))}
         </CertList>
@@ -430,7 +506,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
       )}
 
       <Section>
-        <SectionTitle>레슨 가능 시간</SectionTitle>
+        <SectionTitle>레슨 스케줄</SectionTitle>
         {isEdit ? (
           <>
             <div style={{ marginBottom: '8px', fontWeight: 600, color: 'var(--primary-blue-light)' }}>가능 요일</div>
