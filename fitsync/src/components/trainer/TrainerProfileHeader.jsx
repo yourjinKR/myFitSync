@@ -431,7 +431,8 @@ const TrainerProfileHeader = ({
         {localTrainer?.gymInfo?.gym_name && (
           <InstaGymInfo>{localTrainer.gymInfo.gym_name}</InstaGymInfo>
         )}
-        <InstaIntro>{localTrainer?.member_intro}</InstaIntro>
+        <InstaIntro>{localTrainer?.member_intro || '소개글을 작성해주세요'}</InstaIntro>
+        {mode === 'trainer' && (
         <PurposeRow>
           {purposeList.map(({ key, color }) => (
             (isEdit || selectedPurpose.includes(key)) && (
@@ -451,6 +452,7 @@ const TrainerProfileHeader = ({
             )
           ))}
         </PurposeRow>
+        )}
       </InstaProfileInfo>
 
       {/* 신고 모달 */}

@@ -122,6 +122,20 @@ export const PrimaryButton = styled(BaseButton)`
   }
 `;
 
+// 플로팅 버튼 스타일
+const FloatingButton = styled.div`
+  position: fixed;
+  bottom: 100px;
+  right: 50%;
+  z-index: 1000;
+  margin-right : -350px;
+  
+  @media (max-width: 750px) {
+    right: 5%;
+    margin-right : 0;
+  }
+`;
+
 const RoutineView = () => {
   const { tempData, setTempData } = useOutletContext();
   const [isView, setIsView] = useState(2); // 최대 노출 개수
@@ -167,6 +181,19 @@ const RoutineView = () => {
           </GradientButton>
         )}
       </ButtonContainer>
+
+      {/* 구독자가 아닐 때 플로팅 버튼 표시 */}
+      {!isSubscriber && (
+        <FloatingButton>
+          <GradientButton 
+            circular={true} 
+            size="large" 
+            onClick={() => nav('/subscription')}
+          >
+            <BsStars style={{ fontSize: "2.2rem" }} />
+          </GradientButton>
+        </FloatingButton>
+      )}
       
       {tempData && tempData.length > 0 ?
         <>
