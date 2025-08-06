@@ -15,6 +15,8 @@ import LogsTab from './tabs/LogsTab';
 import TokenAnalyticsTab from './tabs/TokenAnalyticsTab';
 import LogDetailModal from './logs/LogDetailModal';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
+import { PaymentUtil } from '../../utils/PaymentUtil';
 
 const AdminApiContainer = () => {
     const user = useSelector(state => state.user);
@@ -24,6 +26,19 @@ const AdminApiContainer = () => {
     
     // 운동명 데이터 (커스텀 훅 사용)
     const { rawDataMap, rawData, rawDataIdx } = useWorkoutNames();
+
+    // 구독자 정보 상태
+    const [subscriberInfo, setSubscriberInfo] = useState({total : 0});
+
+    // 구독자 정보 불러오기
+    const fetchSubscriberInfo = async () => {
+        try {
+            const data = await PaymentUtil.getSubscriberNow();
+            setSubscriberInfo({total : data});
+        } catch (error) {
+            console.error('구독자 정보 불러오기 실패:', error);
+        }
+    };
 
     // 필터링 관련 상태 (커스텀 훅 사용)
     const {
@@ -99,6 +114,11 @@ const AdminApiContainer = () => {
         };
     }, [refreshInterval]);
 
+    // 컴포넌트 마운트 시 구독자 정보 불러오기
+    useEffect(() => {
+        fetchSubscriberInfo();
+    }, []);
+
     return (
         <Container>
             <Inner>
@@ -139,6 +159,7 @@ const AdminApiContainer = () => {
                         stats={stats}
                         isLoading={loading}
                         dateRange={dateRange}
+                        subscriberInfo={subscriberInfo}
                     />
                 )}
 

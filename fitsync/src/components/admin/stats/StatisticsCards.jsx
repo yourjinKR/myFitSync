@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 // 주요 통계 카드 컴포넌트
-const StatisticsCards = ({ stats, isLoading }) => {
+const StatisticsCards = ({ stats, isLoading, subscriberInfo }) => {
     if (isLoading) {
         return (
             <CardsContainer>
@@ -98,7 +98,7 @@ const StatisticsCards = ({ stats, isLoading }) => {
 
             {/* 토큰 사용량 */}
             <StatCard>
-                <CardIcon>💎</CardIcon>
+                <CardIcon>💰</CardIcon>
                 <CardContent>
                     <CardTitle>총 토큰</CardTitle>
                     <CardValue>{totalTokens.toLocaleString()}</CardValue>
@@ -112,11 +112,21 @@ const StatisticsCards = ({ stats, isLoading }) => {
             <StatCard>
                 <CardIcon>👥</CardIcon>
                 <CardContent>
-                    <CardTitle>고유 사용자</CardTitle>
+                    <CardTitle>누적 사용자</CardTitle>
                     <CardValue>{uniqueUsers.toLocaleString()}</CardValue>
                     <CardSubtext>
                         평균: {uniqueUsers > 0 ? (totalRequests / uniqueUsers).toFixed(1) : 0}요청/사용자
                     </CardSubtext>
+                </CardContent>
+            </StatCard>
+
+            {/* 현재 구독자 수 */}
+            <StatCard>
+                <CardIcon>💎</CardIcon>
+                <CardContent>
+                    <CardTitle>현재 구독자</CardTitle>
+                    <CardValue>{subscriberInfo?.total?.toLocaleString() || 0}</CardValue>
+                    <CardSubtext>FitSync Premium 구독자</CardSubtext>
                 </CardContent>
             </StatCard>
 
@@ -130,18 +140,6 @@ const StatisticsCards = ({ stats, isLoading }) => {
                         {totalTimeNumber >= 3600 ? `${(totalTimeNumber / 3600).toFixed(1)}시간` :
                             totalTimeNumber >= 60 ? `${(totalTimeNumber / 60).toFixed(1)}분` : '1분 미만'}
                     </CardSubtext>
-                </CardContent>
-            </StatCard>
-
-            {/* 처리율 */}
-            <StatCard>
-                <CardIcon>📈</CardIcon>
-                <CardContent>
-                    <CardTitle>처리율</CardTitle>
-                    <CardValue>
-                        {totalTimeNumber > 0 ? (totalRequests / totalTimeNumber * 60).toFixed(1) : 0}
-                    </CardValue>
-                    <CardSubtext>요청/분</CardSubtext>
                 </CardContent>
             </StatCard>
         </CardsContainer>

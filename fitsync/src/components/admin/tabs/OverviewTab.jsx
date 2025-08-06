@@ -8,7 +8,8 @@ const OverviewTab = ({
     filteredLogs,
     stats,
     isLoading,
-    dateRange
+    dateRange,
+    subscriberInfo
 }) => {
     return (
         <TabContainer>
@@ -26,6 +27,7 @@ const OverviewTab = ({
                     <StatisticsCards
                         stats={stats}
                         isLoading={isLoading}
+                        subscriberInfo={subscriberInfo}
                     />
                 </Section>
             </TabContent>

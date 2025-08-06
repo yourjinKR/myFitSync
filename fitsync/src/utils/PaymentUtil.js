@@ -442,6 +442,19 @@ export const PaymentUtil = {
         }
     },
 
+    /** 구독자 수 불러오기 */ 
+    getSubscriberNow : async () => {
+        try {
+            const response = await axios.get('/admin/subscription/count');
+
+            console.log("구독자 수 : ", response.data);
+            return response.data;
+
+        } catch (error) {
+            console.error('구독자 수 불러오지 못함 :', error);
+            throw error;
+        }
+    },
 }
 
 
