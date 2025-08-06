@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { MdEdit, MdCheck, MdReport, MdVisibility, MdVisibilityOff, MdCameraAlt } from 'react-icons/md';
+import { MdEdit, MdCheck, MdReport } from 'react-icons/md';
 import Switch from '@mui/material/Switch';
 import SettingsIcon from '@mui/icons-material/Settings';
 import axios from 'axios';
@@ -201,6 +201,37 @@ const InstaIntro = styled.div`
   }
 `;
 
+const InstaIntroInput = styled.textarea`
+  font-size: 1.18rem;
+  color: var(--text-primary);
+  margin-top: 0.2rem;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-light);
+  border-radius: 0.8rem;
+  padding: 0.8rem 1rem;
+  resize: none;
+  min-height: 60px;
+  max-height: 60px;
+  height: 60px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  
+  &:focus {
+    border-color: var(--primary-blue);
+  }
+  
+  &::placeholder {
+    color: var(--text-secondary);
+  }
+  
+  @media (max-width: 600px) {
+    text-align: center;
+  }
+`;
+
 const ButtonEdit = styled.button`
   position: absolute;
   top: 15px;
@@ -287,9 +318,11 @@ const TrainerProfileHeader = ({
 }) => {
   const isTrainer = mode === 'trainer';
   const [localTrainer, setLocalTrainer] = useState(trainer);
+  
   useEffect(() => {
     setLocalTrainer(trainer);
   }, [trainer]);
+  
   const [updating, setUpdating] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -357,6 +390,7 @@ const TrainerProfileHeader = ({
         : [];
 
   const [selectedPurpose, setSelectedPurpose] = useState(memberPurpose);
+  const [introValue, setIntroValue] = useState('');
 
   useEffect(() => {
     setSelectedPurpose(
@@ -366,7 +400,18 @@ const TrainerProfileHeader = ({
           ? trainer.member_purpose.split(',').map(p => p.trim()).filter(Boolean)
           : []
     );
-  }, [trainer.member_purpose, isEdit]);
+  }, [trainer.member_purpose]);
+
+  // TrainerDetailView 패턴에 맞춘 intro 관리
+  useEffect(() => {
+    if (isEdit) {
+      // 수정 모드: trainer.intro 값 사용 (editedTrainer의 intro)
+      setIntroValue(trainer?.intro || '');
+    } else {
+      // 일반 모드: trainer.member_intro 값 사용 (저장된 최신 값)
+      setIntroValue(trainer?.member_intro || '');
+    }
+  }, [isEdit, trainer?.intro, trainer?.member_intro]);
 
   const handlePurposeClick = (purpose) => {
     if (!isEdit) return;
@@ -380,6 +425,14 @@ const TrainerProfileHeader = ({
     // TrainerDetailView에서 onChange로 업데이트
     if (typeof onChange === 'function') {
       onChange('member_purpose', newPurpose.join(','));
+    }
+  };
+
+  const handleIntroChange = (e) => {
+    const newIntro = e.target.value;
+    setIntroValue(newIntro);
+    if (typeof onChange === 'function') {
+      onChange('intro', newIntro); // TrainerDetailView에서 intro 필드 사용
     }
   };
 
@@ -431,7 +484,16 @@ const TrainerProfileHeader = ({
         {localTrainer?.gymInfo?.gym_name && (
           <InstaGymInfo>{localTrainer.gymInfo.gym_name}</InstaGymInfo>
         )}
-        <InstaIntro>{localTrainer?.member_intro || '소개글을 작성해주세요'}</InstaIntro>
+        {isEdit ? (
+          <InstaIntroInput
+            value={introValue}
+            onChange={handleIntroChange}
+            placeholder="자기소개를 입력해주세요..."
+            maxLength={500}
+          />
+        ) : (
+          <InstaIntro>{trainer?.member_intro || '소개글을 작성해주세요'}</InstaIntro>
+        )}
         {mode === 'trainer' && (
         <PurposeRow>
           {purposeList.map(({ key, color }) => (

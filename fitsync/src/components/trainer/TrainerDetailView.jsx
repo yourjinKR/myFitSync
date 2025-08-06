@@ -262,7 +262,7 @@ const TrainerDetailView = () => {
           gym_idx: data.gym_idx,
           gymInfo: data.gymInfo,
           member_hidden: data.member_hidden,
-          member_purpose : data.member_purpose,
+          member_purpose: data.member_purpose,
           member_day: data.member_day,
 
           // 채팅방 생성 시 필요한 필드들
@@ -272,8 +272,7 @@ const TrainerDetailView = () => {
           member_birth: data.member_birth,
           member_type: data.member_type || 'trainer',
           member_info: data.member_info,
-          member_purpose: data.member_purpose,
-          member_time: data.member_time,
+            member_time: data.member_time,
           member_activity_area: data.member_activity_area,
           member_intro: data.member_intro,
           member_disease: data.member_disease
@@ -421,7 +420,24 @@ const TrainerDetailView = () => {
         await axios.post(`/trainer/lesson/${trainerIdx}`, editedTrainer.lessons, {
           withCredentials: true,
         });
-        setTrainer(editedTrainer);
+        
+        // editedTrainer의 필드를 trainer 형태로 변환하여 상태 업데이트
+        const updatedTrainer = {
+          ...trainer,
+          member_intro: editedTrainer.intro || '',
+          member_info: editedTrainer.description || '',
+          member_info_image: editedTrainer.images?.map(img => img.id).join(',') || '',
+          gym_idx: editedTrainer.gymInfo?.gym_idx || editedTrainer.gym_idx || null,
+          gymInfo: editedTrainer.gymInfo || trainer.gymInfo,
+          member_purpose: editedTrainer.member_purpose || '',
+          member_day: editedTrainer.member_day || '',
+          member_time: editedTrainer.member_time || '',
+          lessons: editedTrainer.lessons || trainer.lessons,
+          images: editedTrainer.images || trainer.images
+        };
+        
+        setTrainer(updatedTrainer);
+        console.log('[수정 완료] 업데이트된 trainer:', updatedTrainer);
       } catch (err) {
         alert('수정 중 오류가 발생했습니다.');
         console.error('[프론트] 수정 실패:', err);
