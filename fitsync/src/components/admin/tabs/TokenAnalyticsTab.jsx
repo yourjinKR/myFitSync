@@ -334,7 +334,6 @@ const TokenAnalyticsTab = ({ logs, filteredLogs, isLoading, dateRange }) => {
 };
 
 const Container = styled.div`
-    padding: 20px;
     color: var(--text-primary);
 `;
 

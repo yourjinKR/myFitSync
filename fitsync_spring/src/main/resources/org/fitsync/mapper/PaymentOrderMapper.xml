@@ -195,6 +195,22 @@
         WHERE ROWNUM = 1
         ]]>
     </select>
+    
+	<!-- 현재 유효한 구독자 수 반환 -->
+	<select id="countActiveSubscribers" resultType="int">
+	    <![CDATA[
+	    SELECT COUNT(DISTINCT member_idx)
+	    FROM payment_order
+	    WHERE 
+	        (order_status = 'PAID' 
+	         AND order_paydate IS NOT NULL 
+	         AND order_paydate + 31 >= SYSDATE)
+	    OR
+	        (order_type = 'SCHEDULE' 
+	         AND order_status = 'READY' 
+	         AND schedule_date >= SYSDATE)
+	    ]]>
+	</select>
 
     <!-- 최근 구독 결제 내역 조회 (상세 정보용) -->
     <select id="selectLatestSubscriptionPayment" parameterType="int" resultType="org.fitsync.domain.PaymentOrderVO">

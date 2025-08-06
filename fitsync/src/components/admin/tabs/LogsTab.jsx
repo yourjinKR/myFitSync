@@ -1,9 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
 
-// 로그 탭 컴포넌트 (간단한 버전)
+// 토큰 비용 계산 함수
+const calculateTokenCost = (inputTokens, outputTokens, model) => {
+    const pricing = model?.includes('gpt-4') ? 
+        { input: 0.005, output: 0.015 } : 
+        { input: 0.0005, output: 0.0015 };
+    
+    const cost = (inputTokens * pricing.input + outputTokens * pricing.output) / 1000 * 1300;
+    return Math.round(cost);
+};
+
 const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading, stats, memberType }) => {
-    // props 안전성을 위한 기본값 설정
     const logs = filteredLogs || [];
 
     return (
@@ -48,34 +56,108 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
                 ) : logs.length === 0 ? (
                     <EmptyMessage>표시할 로그가 없습니다.</EmptyMessage>
                 ) : (
-                    <LogList>
-                        {logs.map((log, index) => (
-                            <LogItem
-                                key={log.apilog_idx || index}
-                                onClick={() => setSelectedLog?.(log)}
-                            >
-                                
-                                <LogTime>
-                                    {new Date(log.apilog_request_time).toLocaleString('ko-KR')}
-                                </LogTime>
-                                <LogStatus status={log.apilog_status}>
-                                    {log.apilog_status}
-                                </LogStatus>
-                                <LogModel>{log.apilog_model || '-'}</LogModel>
-                                <LogResponseTime>
-                                    {/* 응답 시간 X.XX 초, 소수점 2자리 */}
-                                    {log.apilog_total_time ? log.apilog_total_time.toFixed(2) : '-'}초
-                                </LogResponseTime>
-                            </LogItem>
-                        ))}
-                    </LogList>
+                    <LogContainer>
+                        <LogHeader>
+                            <HeaderCell>시간</HeaderCell>
+                            <HeaderCell>상태</HeaderCell>
+                            <HeaderCell>모델</HeaderCell>
+                            {memberType === 'admin' && <HeaderCell>사용자</HeaderCell>}
+                            <HeaderCell>토큰</HeaderCell>
+                            <HeaderCell>비용</HeaderCell>
+                            <HeaderCell>응답시간</HeaderCell>
+                            <HeaderCell>피드백</HeaderCell>
+                            <HeaderCell>버전</HeaderCell>
+                        </LogHeader>
+                        
+                        <LogList>
+                            {logs.map((log, index) => (
+                                <LogItem
+                                    key={log.apilog_idx || index}
+                                    onClick={() => setSelectedLog?.(log)}
+                                    status={log.apilog_status}
+                                > 
+                                    <LogTime>
+                                        <div>{new Date(log.apilog_request_time).toLocaleDateString('ko-KR')}</div>
+                                        <div className="time-detail">
+                                            {new Date(log.apilog_request_time).toLocaleTimeString('ko-KR')}
+                                        </div>
+                                    </LogTime>
+                                    
+                                    <LogStatus status={log.apilog_status}>
+                                        <StatusBadge status={log.apilog_status}>
+                                            {log.apilog_status === 'success' ? '✅' : 
+                                             log.apilog_status === 'error' ? '❌' : '⚠️'}
+                                            {log.apilog_status}
+                                        </StatusBadge>
+                                        {log.apilog_status_reason && (
+                                            <StatusReason title={log.apilog_status_reason}>
+                                                ⓘ
+                                            </StatusReason>
+                                        )}
+                                    </LogStatus>
+                                    
+                                    <LogModel>
+                                        <ModelBadge model={log.apilog_model}>
+                                            {log.apilog_model || '-'}
+                                        </ModelBadge>
+                                    </LogModel>
+                                    
+                                    {memberType === 'admin' && (
+                                        <LogUser>
+                                            <UserBadge>#{log.member_idx}</UserBadge>
+                                        </LogUser>
+                                    )}
+                                    
+                                    <LogTokens>
+                                        <TokenTotal>
+                                            {((log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0)).toLocaleString()}
+                                        </TokenTotal>
+                                        <TokenDetail>
+                                            입력: {(log.apilog_input_tokens || 0).toLocaleString()} | 
+                                            출력: {(log.apilog_output_tokens || 0).toLocaleString()}
+                                        </TokenDetail>
+                                    </LogTokens>
+                                    
+                                    <LogCost>
+                                        <CostAmount>
+                                            {calculateTokenCost(
+                                                log.apilog_input_tokens || 0,
+                                                log.apilog_output_tokens || 0,
+                                                log.apilog_model
+                                            ).toLocaleString()}원
+                                        </CostAmount>
+                                    </LogCost>
+                                    
+                                    <LogResponseTime>
+                                        <ResponseTime fast={log.apilog_total_time < 5}>
+                                            {log.apilog_total_time ? log.apilog_total_time.toFixed(2) : '-'}초
+                                        </ResponseTime>
+                                    </LogResponseTime>
+                                    
+                                    <LogFeedback>
+                                        {log.apilog_feedback === 'LIKE' ? (
+                                            <FeedbackIcon positive title="좋아요">👍</FeedbackIcon>
+                                        ) : log.apilog_feedback === 'DISLIKE' ? (
+                                            <FeedbackIcon negative title={`싫어요: ${log.apilog_feedback_reason || ''}`}>👎</FeedbackIcon>
+                                        ) : (
+                                            <FeedbackIcon neutral>➖</FeedbackIcon>
+                                        )}
+                                    </LogFeedback>
+                                    
+                                    <LogVersion>
+                                        <VersionBadge>v{log.apilog_version || '0.0.0'}</VersionBadge>
+                                    </LogVersion>
+                                </LogItem>
+                            ))}
+                        </LogList>
+                    </LogContainer>
                 )}
             </TabContent>
         </TabContainer>
     );
 };
 
-// 스타일 컴포넌트
+// 스타일 컴포넌트들
 const TabContainer = styled.div`
   background: var(--bg-primary);
   height: 100%;
@@ -151,58 +233,190 @@ const EmptyMessage = styled.div`
   font-size: 16px;
 `;
 
-const LogList = styled.div`
+const LogContainer = styled.div`
   background: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border-light);
 `;
 
+const LogHeader = styled.div`
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 0.8fr 1.2fr 0.8fr 0.8fr 0.6fr 0.6fr;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 2px solid var(--border-light);
+  font-weight: 600;
+  font-size: 12px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr 0.8fr 0.8fr 0.6fr 1fr;
+    gap: 8px;
+  }
+`;
+
+const HeaderCell = styled.div`
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const LogList = styled.div`
+  overflow-y: auto;
+`;
+
 const LogItem = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 16px;
-  padding: 12px 16px;
+  grid-template-columns: 1.5fr 1fr 1fr 0.8fr 1.2fr 0.8fr 0.8fr 0.6fr 0.6fr;
+  gap: 12px;
+  padding: 16px;
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: var(--bg-tertiary);
-  }
+  transition: all 0.2s ease;
+  align-items: center;
   
   &:last-child {
     border-bottom: none;
+  }
+  
+  ${props => props.status === 'success' && `
+    border-left: 3px solid var(--success);
+  `}
+  
+  ${props => props.status === 'error' && `
+    border-left: 3px solid var(--warning);
+  `}
+  
+  ${props => props.status === 'exception' && `
+    border-left: 3px solid #f59e0b;
+  `}
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr 0.8fr 0.8fr 0.6fr 1fr;
+    gap: 8px;
   }
 `;
 
 const LogTime = styled.div`
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  
+  .time-detail {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
 `;
 
 const LogStatus = styled.div`
-  font-size: 12px;
-  font-weight: 600;
-  color: ${props => {
-        switch (props.status) {
-            case 'success': return 'var(--success)';
-            case 'error': return 'var(--warning)';
-            case 'exception': return '#f59e0b';
-            default: return 'var(--text-tertiary)';
-        }
-    }};
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
-const LogModel = styled.div`
+const StatusBadge = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: ${props => {
+    switch (props.status) {
+      case 'success': return 'rgba(46, 139, 87, 0.2)';
+      case 'error': return 'rgba(244, 67, 54, 0.2)';
+      case 'exception': return 'rgba(245, 158, 11, 0.2)';
+      default: return 'var(--bg-tertiary)';
+    }
+  }};
+  color: ${props => {
+    switch (props.status) {
+      case 'success': return 'var(--success)';
+      case 'error': return 'var(--warning)';
+      case 'exception': return '#f59e0b';
+      default: return 'var(--text-tertiary)';
+    }
+  }};
+`;
+
+const StatusReason = styled.span`
+  color: var(--warning);
+  cursor: help;
+  font-size: 12px;
+`;
+
+const LogModel = styled.div``;
+
+const ModelBadge = styled.span`
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: ${props => props.model?.includes('gpt-4') ? 
+    'rgba(74, 144, 226, 0.2)' : 'rgba(46, 139, 87, 0.2)'};
+  color: ${props => props.model?.includes('gpt-4') ? 
+    'var(--primary-blue)' : 'var(--success)'};
+  font-weight: 500;
+`;
+
+const LogUser = styled.div``;
+
+const UserBadge = styled.span`
+  font-size: 11px;
+  font-family: monospace;
+  background: var(--bg-tertiary);
+  padding: 4px 6px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+`;
+
+const LogTokens = styled.div``;
+
+const TokenTotal = styled.div`
   font-size: 13px;
+  font-weight: 600;
   color: var(--text-primary);
 `;
 
-const LogResponseTime = styled.div`
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-align: right;
+const TokenDetail = styled.div`
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+`;
+
+const LogCost = styled.div``;
+
+const CostAmount = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-blue);
+`;
+
+const LogResponseTime = styled.div``;
+
+const ResponseTime = styled.div`
+  font-size: 12px;
+  color: ${props => props.fast ? 'var(--success)' : 'var(--text-secondary)'};
+  font-weight: ${props => props.fast ? '600' : '400'};
+`;
+
+const LogFeedback = styled.div`
+  text-align: center;
+`;
+
+const FeedbackIcon = styled.span`
+  font-size: 16px;
+  cursor: ${props => props.neutral ? 'default' : 'help'};
+  opacity: ${props => props.neutral ? '0.5' : '1'};
+`;
+
+const LogVersion = styled.div``;
+
+const VersionBadge = styled.span`
+  font-size: 10px;
+  font-family: monospace;
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-tertiary);
 `;
 
 export default LogsTab;

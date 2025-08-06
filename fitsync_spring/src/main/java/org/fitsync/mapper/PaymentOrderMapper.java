@@ -43,6 +43,9 @@ public interface PaymentOrderMapper {
     // 구독자 판별
     PaymentOrderVO selectActiveSubscription(int member_idx);
     
+    // 총 구독자 수
+    int countActiveSubscribers();
+    
     // 구독자 상태 상세 조회 (최근 결제 내역 + 예약 내역 포함)
     PaymentOrderVO selectLatestSubscriptionPayment(int member_idx);
 

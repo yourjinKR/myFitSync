@@ -42,7 +42,7 @@ const FilterPanel = ({
                     <FilterLabel>검색어</FilterLabel>
                     <SearchInput
                         type="text"
-                        placeholder="ID, 모델명 검색..."
+                        placeholder="멤버 ID"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -167,7 +167,7 @@ const FilterContainer = styled.div`
 `;
 
 const FilterHeader = styled.h3`
-  font-size: 1rem;
+  font-size: 2rem;
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--text-primary);

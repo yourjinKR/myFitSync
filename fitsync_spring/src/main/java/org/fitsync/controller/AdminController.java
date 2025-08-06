@@ -61,9 +61,14 @@ public class AdminController {
         return ResponseEntity.ok("test");
     }
 	
-    @GetMapping(value = "/getAllApi", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/apis", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<List<ApiLogVO>> getAllApi() {
         return ResponseEntity.ok(apiLogService.selectApiList());
+    }
+    
+    @GetMapping(value = "/subscription/count", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<Integer> getSubscriberCount() {
+    	return ResponseEntity.ok(apiLogService.countTotalSubscriber());
     }
     
     @GetMapping(value = "/api/stats", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

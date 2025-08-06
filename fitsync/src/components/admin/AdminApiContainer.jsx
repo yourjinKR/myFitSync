@@ -18,8 +18,6 @@ import { useSelector } from 'react-redux';
 
 const AdminApiContainer = () => {
     const user = useSelector(state => state.user);
-    // 멤버 타입
-    console.log(user.user.member_type);
 
     // API 로그 관련 상태 (커스텀 훅 사용)
     const { apiLogs, loading, fetchApiLogs } = useApiLogs();

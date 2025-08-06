@@ -649,13 +649,13 @@ const StepResult = ({ result, onSave, onFeedback, onRetry, onIgnore, onSubmit, f
                             $isAnimating={isLikeAnimating}
                             disabled={feedbackStatus !== null}
                         >
-                            👍 좋아요
+                            👍
                         </FeedbackButton>
                         <FeedbackButton 
                             onClick={handleNegativeFeedback}
                             disabled={feedbackStatus !== null}
                         >
-                            👎 개선 필요
+                            👎
                         </FeedbackButton>
                     </FeedbackButtons>
                 )}

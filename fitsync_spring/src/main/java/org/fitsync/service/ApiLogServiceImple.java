@@ -11,6 +11,7 @@ import org.fitsync.domain.ApiLogStatsDTO;
 import org.fitsync.domain.ApiLogVO;
 import org.fitsync.domain.PtVO;
 import org.fitsync.mapper.ApiLogMapper;
+import org.fitsync.mapper.PaymentOrderMapper;
 import org.fitsync.mapper.PtMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ public class ApiLogServiceImple implements ApiLogService{
 	ApiLogMapper apiLogMapper;
 	@Autowired
 	PtMapper ptMapper;
+	@Autowired
+	PaymentOrderMapper payOrderMapper;
 	
 	@Override
 	public void insertApiLog(ApiLogVO log) {
@@ -89,6 +92,11 @@ public class ApiLogServiceImple implements ApiLogService{
 	    }
 
 	    return list;
+	}
+	
+	@Override
+	public int countTotalSubscriber() {
+		return payOrderMapper.countActiveSubscribers();
 	}
 	
 	@Override

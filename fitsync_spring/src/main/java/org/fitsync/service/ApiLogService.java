@@ -13,6 +13,8 @@ public interface ApiLogService {
     
     List<ApiLogVO> selectApiList();
     
+    int countTotalSubscriber();
+    
     ApiLogStatsDTO selectApiLogStats(ApiLogSearchCriteria cri);
     
     void updateExceptionReason(ApiLogVO log);
