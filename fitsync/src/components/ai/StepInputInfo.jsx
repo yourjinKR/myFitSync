@@ -993,10 +993,51 @@ const ChatHighlight = styled.span`
     font-size : inherit;
 `;
 
+// 말풍선 내 구독 버튼 스타일
+const SubscriptionButton = styled.button`
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-hover));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s;
+    }
+    
+    &:active {
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 1.4rem;
+        padding: 0.7rem 1.2rem;
+        margin-top: 0.8rem;
+    }
+`;
+
 // ...existing code...
 
 const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }) => {
     const [showTyping, setShowTyping] = useState(true);
+    const nav = useNavigate();
     
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -1054,6 +1095,9 @@ const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }
                     안녕하세요! <ChatHighlight>{formData.name}</ChatHighlight>님! 👋<br/>
                     AI 루틴 추천서비스를 이용하기 위해서는<br/>
                     구독이 필요해요😂<br/>
+                    <SubscriptionButton onClick={()=> nav('/subscription')}>
+                        구독하기
+                    </SubscriptionButton>
                 </>
             );
         }

@@ -295,8 +295,7 @@ const SearchContainer = styled.div`
   select {
     padding: 1.4rem 1.6rem;
     border-radius: 0.8rem;
-    border: 2px solid var(--border-light);
-    background: var(--bg-primary);
+    background: var(--bg-tertiary);
     color: var(--text-primary);
     font-size: 1.6rem;
     font-weight: 500;
