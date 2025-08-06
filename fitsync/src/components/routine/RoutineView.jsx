@@ -147,11 +147,6 @@ const RoutineView = () => {
   
   const { 
     isSubscriber, 
-    totalCost, 
-    lastPaymentDate, 
-    loading, 
-    error, 
-    reload 
   } = useSubscription();
   
   const nav = useNavigate();

@@ -11,6 +11,9 @@ import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import HealingIcon from '@mui/icons-material/Healing';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import GradientButton from '../ai/GradientButton';
+import { useNavigate } from 'react-router-dom';
+import { useSubscription } from '../../hooks/useSubscription';
 
 // --- 스타일: 카드 크기 확대, 인스타 느낌, 모든 기능 포함 ---
 const InstaProfileHeader = styled.div`
@@ -108,7 +111,6 @@ const InstaProfileInfo = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
 
   @media (max-width: 600px) {
     align-items: center;
@@ -304,6 +306,53 @@ const PurposeRow = styled.div`
   overflow-x: visible; // 스크롤 제거
 `;
 
+// 사용자 모드일 때 버튼 컨테이너
+const UserButtonContainer = styled.div`
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  
+  button {
+    font-size: 1.2rem;
+    padding: 0.4rem 1rem;
+    min-height: auto;
+    height: 3.4rem;
+    
+    /* 비구독자일 때 일반 블루 색상 적용 */
+    ${props => !props.$isSubscriber && `
+      background: var(--primary-blue) !important;
+      border: 2px solid var(--primary-blue) !important;
+      
+      &:active {
+        background: var(--primary-blue-dark) !important;
+        border-color: var(--primary-blue-dark) !important;
+      }
+      
+      &::before, &::after {
+        display: none !important;
+      }
+    `}
+    
+    @media (max-width: 900px) {
+      font-size: 1rem;
+      padding: 0.35rem 0.8rem;
+      height: 2.2rem;
+    }
+    
+    @media (max-width: 600px) {
+      font-size: 0.95rem;
+      padding: 0.3rem 0.7rem;
+      height: 2rem;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    justify-content: center;
+    margin-top: 1rem;
+  }
+`;
+
 // --- 컴포넌트 ---
 const TrainerProfileHeader = ({
   trainer,
@@ -332,6 +381,28 @@ const TrainerProfileHeader = ({
   const isMine = loginUserId && (localTrainer?.member_email === loginUserId || user?.member_email === loginUserId);
   const isHidden = localTrainer?.member_hidden === 1;
   const targetMember = localTrainer || user;
+
+  const nav = useNavigate();
+
+  const { 
+    isSubscriber, 
+    totalCost, 
+    lastPaymentDate, 
+    loading, 
+    error, 
+    reload 
+  } = useSubscription();
+
+  // 핸들러
+  const subScriptionPagehandler = () => {
+    console.log(isSubscriber);
+    
+    if (isSubscriber) {
+      nav('/ai/userLog');
+    } else {
+      nav('/subscription');
+    }
+  }
   
   // 공개/비공개 토글
   const handleToggleVisibility = async () => {
@@ -484,7 +555,7 @@ const TrainerProfileHeader = ({
         {localTrainer?.gymInfo?.gym_name && (
           <InstaGymInfo>{localTrainer.gymInfo.gym_name}</InstaGymInfo>
         )}
-        {isEdit ? (
+        {isEdit && mode === 'trainer' ? (
           <InstaIntroInput
             value={introValue}
             onChange={handleIntroChange}
@@ -495,25 +566,37 @@ const TrainerProfileHeader = ({
           <InstaIntro>{trainer?.member_intro || '소개글을 작성해주세요'}</InstaIntro>
         )}
         {mode === 'trainer' && (
-        <PurposeRow>
-          {purposeList.map(({ key, color }) => (
-            (isEdit || selectedPurpose.includes(key)) && (
-              <PurposeTag
-                key={key}
-                color={color}
-                $edit={isEdit}
-                $selected={selectedPurpose.includes(key)}
-                type={isEdit ? 'button' : 'span'}
-                onClick={() => handlePurposeClick(key)}
-                tabIndex={isEdit ? 0 : -1}
-                aria-pressed={selectedPurpose.includes(key)}
-              >
-                {purposeIcons[key]}
-                {key}
-              </PurposeTag>
-            )
-          ))}
-        </PurposeRow>
+          <>
+            <PurposeRow>
+              {purposeList.map(({ key, color }) => (
+                (isEdit || selectedPurpose.includes(key)) && (
+                  <PurposeTag
+                    key={key}
+                    color={color}
+                    $edit={isEdit}
+                    $selected={selectedPurpose.includes(key)}
+                    type={isEdit ? 'button' : 'span'}
+                    onClick={() => handlePurposeClick(key)}
+                    tabIndex={isEdit ? 0 : -1}
+                    aria-pressed={selectedPurpose.includes(key)}
+                  >
+                    {purposeIcons[key]}
+                    {key}
+                  </PurposeTag>
+                )
+              ))}
+            </PurposeRow>          
+          </>
+        )}
+        {mode === 'user' && (
+          <UserButtonContainer $isSubscriber={isSubscriber}>
+            <GradientButton 
+              size='small' 
+              animate={isSubscriber} 
+              onClick={() => subScriptionPagehandler()}>
+              {isSubscriber ? ('FitSync Premium') : ('구독 및 결제')}
+            </GradientButton>
+          </UserButtonContainer>
         )}
       </InstaProfileInfo>
 

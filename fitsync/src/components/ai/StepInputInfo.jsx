@@ -1037,15 +1037,23 @@ const SubscriptionButton = styled.button`
 
 const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }) => {
     const [showTyping, setShowTyping] = useState(true);
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
     const nav = useNavigate();
     
+    // available과 isSubscriber 값이 정상적으로 로드될 때까지 대기
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowTyping(false);
-        }, 2500);
-        
-        return () => clearTimeout(timer);
-    }, []);
+        // available과 isSubscriber가 boolean 값으로 제대로 설정되었는지 확인
+        if (typeof available === 'boolean' && typeof isSubscriber === 'boolean') {
+            setIsDataLoaded(true);
+            setShowTyping(true);
+            
+            const timer = setTimeout(() => {
+                setShowTyping(false);
+            }, 2500);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [available, isSubscriber]);
 
     const getBMIStatus = (bmi) => {
         if (bmi < 18.5) return { text: '저체중', color: '#2196F3' };
@@ -1116,9 +1124,15 @@ const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }
                 <StyledImage src="/fitsyncAI.png" alt="FitSync AI" />
                 <ChatContainer>
                     <ChatBubble>
-                        <ChatText className={showTyping ? 'typing' : ''}>
-                            {getPersonalizedGreeting()}
-                        </ChatText>
+                        {isDataLoaded ? (
+                            <ChatText className={showTyping ? 'typing' : ''}>
+                                {getPersonalizedGreeting()}
+                            </ChatText>
+                        ) : (
+                            <ChatText>
+                                로딩 중...
+                            </ChatText>
+                        )}
                     </ChatBubble>
                 </ChatContainer>
             </ImageContainer>

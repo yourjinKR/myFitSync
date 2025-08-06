@@ -36,7 +36,7 @@ export const useSubscription = () => {
     subscriptionData: data,
     memberIdx: data?.memberIdx,
     isSubscriber: data?.isSubscriber ?? false,
-    isLog: data?.isLog ?? false,
+    isLog: data?.isLog ?? true,
     lastPaymentDate: data?.lastPaymentDate || null,
     totalCost: data?.totalCost || 0,
     loading,

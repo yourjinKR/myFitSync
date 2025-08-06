@@ -6,6 +6,9 @@ import { useSelector } from 'react-redux';
 import axios from 'axios';
 import TrainerCalendarView from './trainer/TrainerCalendarView';
 import chatApi from '../utils/ChatApi';
+import GradientButton from './ai/GradientButton';
+import { BsStars } from 'react-icons/bs';
+import { useSubscription } from '../hooks/useSubscription';
 
 const MainWrapper = styled.div`
   position:relative;
@@ -144,6 +147,10 @@ const Main = () => {
   const [nextSchedule, setNextSchedule] = useState(null);
   const { user } = useSelector(state => state.user);
 
+  const { isLog } = useSubscription();
+  console.log(isLog);
+  
+
   // 트레이너면 강제로 트레이너 메인페이지로 이동
   useEffect(() => {
     if (isLogin && member_type === 'trainer' && member_idx) {
@@ -241,6 +248,9 @@ const Main = () => {
 
 return (
   <>
+    <div style={{padding:'0 2rem 2rem'}}>
+      <TrainerCalendarView autoHeight={'auto'}/>
+    </div>
     <MainWrapper>
       {!isLogin && (
         <>
@@ -291,14 +301,24 @@ return (
             <FindTrainerCTA onClick={handleCTA}>
               PT찾기
             </FindTrainerCTA>
+            {isLog !== undefined && isLog === false && (
+              <GradientButton 
+                fullWidth 
+                onClick={() => nav("/ai/routine")}
+                style={{ 
+                  padding: '30px', 
+                  fontSize: '3rem', 
+                  margin: '15px 0',
+                  width : '100%',
+                }}
+              >
+                1회 무료 루틴 추천받기<BsStars/>
+              </GradientButton>
+            )}
           </>
         )
       )}
     </MainWrapper>
-
-    <div style={{padding:'0 2rem 2rem'}}>
-      <TrainerCalendarView autoHeight={'auto'}/>
-    </div>
   </>
 );
 

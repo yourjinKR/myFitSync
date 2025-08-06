@@ -213,8 +213,8 @@ const UserApiLogContainer = () => {
                             AI가 추천한 개인 맞춤 루틴을 확인하고 관리하세요
                         </Description>
                     </HeaderText>
-                    <GradientButton onClick={handleCreateNewRoutine} size="small" circular>
-                        <PiStarFourFill style={{ position: "relative", zIndex: 2 }}/>
+                    <GradientButton onClick={handleCreateNewRoutine} size="small">
+                      새 요청&emsp;<PiStarFourFill style={{ position: "relative", zIndex: 2 }}/>
                     </GradientButton>
                 </HeaderContent>
                 
@@ -763,8 +763,11 @@ const Description = styled.p`
   color: var(--text-secondary);
   line-height: 1.6;
 
-  @media (max-width: 768px) {
+  @media (max-width: 750px) {
     font-size: 14px;
+  }
+  @media (max-width: 420px) {
+    font-size: 12px;
   }
 `;
 
