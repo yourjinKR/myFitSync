@@ -45,6 +45,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser, setUser } from '../action/userAction';
 import UserApiLogContainer from '../components/ai/UserApiLogContainer';
 import AiRoutineServiceContainer from '../components/ai/AiRoutineServiceContainer';
+import { useWebSocket } from '../hooks/UseWebSocket';
 
 const DisplayWrapper = styled.div`
   ${props => props.$isAdmin ? '' : 'max-width: 750px;'}
@@ -73,6 +74,9 @@ const Display = () => {
   const [isOpen, setIsOpen] = useState(false);
   const intervalRef = useRef(null);
 
+  // WebSocket 훅 사용
+  const { disconnect: disconnectWebSocket, connected } = useWebSocket();
+
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
     initializeApp();
@@ -84,13 +88,20 @@ const Display = () => {
       startAuthCheck();
     } else {
       stopAuthCheck();
+      // 로그아웃 시 WebSocket 연결 해제
+      if (disconnectWebSocket) {
+        disconnectWebSocket();
+        
+        // 세션 스토리지도 함께 정리
+        sessionStorage.removeItem('chat_member_idx');
+      }
     }
 
     // 컴포넌트 언마운트 시 타이머 정리
     return () => {
       stopAuthCheck();
     };
-  }, [user.isLogin]);
+  }, [user.isLogin, disconnectWebSocket]);
 
   const initializeApp = async () => {
     try {
@@ -110,12 +121,30 @@ const Display = () => {
     // 30분마다 인증 확인
     intervalRef.current = setInterval(async () => {
       try {
-        const response = await axios.get('/auth/check', { 
+        const response = await axios.get('/member/check', { 
           withCredentials: true,
-          timeout: 10000 // 10초 타임아웃
+          timeout: 10000, // 10초 타임아웃
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
         });
 
+        // 응답 검증
+        if (!response.data || typeof response.data !== 'object') {
+          console.warn('인증 확인 응답 형식 오류');
+          throw new Error('Invalid response format');
+        }
+
         if (!response.data.isLogin) {
+          // 로그인이 만료된 경우 WebSocket 연결 해제
+          if (disconnectWebSocket) {
+            disconnectWebSocket();
+          }
+
+          // 세션 스토리지 정리
+          sessionStorage.removeItem('chat_member_idx');
+
           // 로그인이 만료된 경우
           alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
 
@@ -130,19 +159,39 @@ const Display = () => {
       } catch (error) {
         console.error('인증 확인 중 오류:', error);
         
-        // 네트워크 오류나 서버 오류 시에는 경고만 표시
+        // 에러 타입별 처리
         if (error.code === 'ECONNABORTED') {
           console.warn('인증 확인 요청 타임아웃');
         } else if (error.response?.status === 401) {
-          // 401 오류 시 로그아웃 처리
+          // 401 오류 시 WebSocket 연결 해제 및 로그아웃 처리
+          if (disconnectWebSocket) {
+            disconnectWebSocket();
+          }
+
+          // 세션 스토리지 정리
+          sessionStorage.removeItem('chat_member_idx');
+
           alert('세션이 만료되었습니다. 다시 로그인해주세요.');
           
           dispatch(logoutUser());
 
           navigate('/login');
           stopAuthCheck();
+        } else if (error.message === 'Invalid response format') {
+          // HTML 응답을 받은 경우 (로그인 페이지 리다이렉트)
+          console.warn('인증 확인 시 HTML 응답 수신 - 로그인 필요');
+          
+          if (disconnectWebSocket) {
+            disconnectWebSocket();
+          }
+          
+          sessionStorage.removeItem('chat_member_idx');
+          
+          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+          dispatch(logoutUser());
+          navigate('/login');
+          stopAuthCheck();
         }
-        // 다른 오류는 무시 (서버 일시적 장애 등)
       }
     }, 30 * 60 * 1000); // 30분마다
   };

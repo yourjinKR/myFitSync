@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../action/userAction';
 import axios from 'axios';
 import { persistor } from '../reducers/store';
+import { useWebSocket } from '../hooks/UseWebSocket';
 
 const HeaderWrapper = styled.header`
   display: flex;
@@ -90,14 +91,61 @@ const Header = ({setIsOpen}) => {
   const { user } = useSelector(state => state.user);
   const nav = useNavigate();
 
+  // WebSocket 훅 사용
+  const { disconnect: disconnectWebSocket, connected } = useWebSocket();
+
   const navigator = async (path) => {
     if (path === "/logout") {
       if (window.confirm("로그아웃 하시겠습니까?")) {
-        const res = await axios.get("/member/logout", { withCredentials: true });
-        dispatch(logoutUser());
-        persistor.purge();
-        alert(res.data.message);
-        nav("/");
+        try {
+          // 로그아웃 전 WebSocket 연결 상태 확인 후 해제
+          if (disconnectWebSocket) {
+            disconnectWebSocket();
+          }
+
+          // 세션 스토리지 정리 (채팅 관련) - WebSocket 해제 후 즉시 처리
+          sessionStorage.removeItem('chat_member_idx');
+
+          // 약간의 지연을 두어 WebSocket 정리가 완료
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // 백엔드 로그아웃 처리
+          const res = await axios.get("/member/logout", { 
+            withCredentials: true,
+            timeout: 5000 // 5초 타임아웃 설정
+          });
+          
+          // Redux 상태 정리
+          dispatch(logoutUser());
+          
+          // 영구 저장소 정리
+          persistor.purge();
+          alert(res.data.message);
+          nav("/");
+          
+        } catch (error) {
+          console.error('로그아웃 처리 중 오류:', error);
+          
+          // 오류가 발생해도 강제 로그아웃 처리
+          if (disconnectWebSocket) {
+            disconnectWebSocket();
+          }
+          
+          dispatch(logoutUser());
+          persistor.purge();
+          sessionStorage.removeItem('chat_member_idx');
+          
+          // 네트워크 오류 vs 서버 오류 구분
+          if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            alert('로그아웃 요청 시간이 초과되었지만 로그아웃되었습니다.');
+          } else if (error.response?.status === 401) {
+            alert('이미 로그아웃되었습니다.');
+          } else {
+            alert('로그아웃되었습니다.');
+          }
+          
+          nav("/");
+        }
       }
     } else {
       nav(path);

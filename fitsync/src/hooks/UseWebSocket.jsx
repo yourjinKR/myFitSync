@@ -13,11 +13,91 @@ export const useWebSocket = () => {
   const isConnectingRef = useRef(false);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
+  const shouldReconnectRef = useRef(true); // 재연결 여부 제어
+  const isManuallyDisconnectedRef = useRef(false); // 수동 해제 여부
   
   // 메시지 중복 처리 방지용 ref
   const processedMessagesRef = useRef(new Set());
   const messageProcessingTimerRef = useRef(null);
-  
+
+  // 인증 상태 확인 함수
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/member/check', {
+        credentials: 'include',
+        timeout: 5000,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // 응답 상태 코드 먼저 확인
+      if (!response.ok) {
+        console.warn('인증 확인 응답 오류:', response.status, response.statusText);
+        return false;
+      }
+      
+      // Content-Type 헤더 확인
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('인증 확인 응답이 JSON이 아님:', contentType);
+        return false;
+      }
+      
+      // 응답 텍스트 먼저 가져와서 검증
+      const responseText = await response.text();
+      
+      // HTML 응답인지 확인 (< 문자로 시작하면 HTML)
+      if (responseText.trim().startsWith('<')) {
+        console.warn('인증 확인 응답이 HTML임 (로그인 페이지 리다이렉트)');
+        return false;
+      }
+      
+      // JSON 파싱 시도
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.warn('인증 응답 JSON 파싱 실패:', jsonError.message);
+        console.warn('응답 내용:', responseText.substring(0, 100));
+        return false;
+      }
+      
+      return data.isLogin === true;
+    } catch (error) {
+      console.warn('인증 상태 확인 실패:', error.message);
+      return false;
+    }
+  }, []);
+
+  // 연결 해제 함수
+  const forceDisconnect = useCallback(() => {
+    // 재연결 방지
+    shouldReconnectRef.current = false;
+    isManuallyDisconnectedRef.current = true;
+    isConnectingRef.current = false;
+    reconnectAttemptsRef.current = maxReconnectAttempts; // 재연결 시도 최대치로 설정
+    
+    // 기존 클라이언트 정리
+    if (clientRef.current) {
+      try {
+        // STOMP 클라이언트 해제
+        if (clientRef.current.active) {
+          clientRef.current.deactivate();
+        }
+        // deactivate()가 내부적으로 disconnect와 forceDisconnect를 처리함
+      } catch (error) {
+        console.warn('클라이언트 강제 해제 중 오류:', error);
+      }
+      clientRef.current = null;
+    }
+    
+    // 상태 초기화
+    setClient(null);
+    setConnected(false);
+  }, []);
+
   // WebSocket 연결 설정 및 초기화 - 컴포넌트 마운트 시 자동으로 연결 시도
   useEffect(() => {
     // 중복 연결 방지
@@ -26,6 +106,25 @@ export const useWebSocket = () => {
     }
 
     const connect = async () => {
+      // 로그아웃 상태 체크
+      const isAuthenticated = await checkAuthStatus();
+      if (!isAuthenticated) {
+        console.warn('인증되지 않은 상태 - WebSocket 연결 중단');
+        shouldReconnectRef.current = false;
+        return;
+      }
+
+      if (!shouldReconnectRef.current || isManuallyDisconnectedRef.current) {
+        return;
+      }
+
+      // 재연결 시도 횟수 체크
+      if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+        console.warn('최대 재연결 시도 횟수 초과 - 연결 중단');
+        shouldReconnectRef.current = false;
+        return;
+      }
+
       isConnectingRef.current = true;
       
       // 동적 WebSocket URL 생성 - 개발/프로덕션 환경에 따라 적절한 URL 반환
@@ -56,18 +155,53 @@ export const useWebSocket = () => {
         heartbeatOutgoing: 4000,     // 서버로 하트비트 간격
         
         // WebSocket 연결 종료 시 처리
-        onWebSocketClose: () => {
+        onWebSocketClose: async () => {
           setConnected(false);
           isConnectingRef.current = false;
           
-          // 재연결 시도 (최대 횟수 제한)
-          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-            reconnectAttemptsRef.current += 1;
-            setTimeout(() => {
-              if (!connected && !isConnectingRef.current) {
-                connect();
-              }
-            }, 3000);
+          // 수동 해제인 경우 재연결하지 않음
+          if (isManuallyDisconnectedRef.current || !shouldReconnectRef.current) {
+            return;
+          }
+          
+          // 재연결 시도 횟수 체크
+          if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+            console.warn('최대 재연결 시도 횟수 초과');
+            shouldReconnectRef.current = false;
+            forceDisconnect();
+            return;
+          }
+          
+          // 재연결 전 인증 상태 확인
+          const isAuthenticated = await checkAuthStatus();
+          if (!isAuthenticated) {
+            console.warn('인증 만료 - 재연결 중단');
+            shouldReconnectRef.current = false;
+            forceDisconnect();
+            return;
+          }
+          
+          // 재연결 시도
+          reconnectAttemptsRef.current += 1;
+          setTimeout(() => {
+            if (!connected && !isConnectingRef.current && shouldReconnectRef.current) {
+              connect();
+            }
+          }, 3000);
+        },
+
+        // WebSocket 에러 처리
+        onWebSocketError: async (event) => {
+          console.error('WebSocket 에러:', event);
+          isConnectingRef.current = false;
+          setConnected(false);
+          
+          // 인증 오류인 경우 재연결 중단
+          const isAuthenticated = await checkAuthStatus();
+          if (!isAuthenticated) {
+            console.warn('인증 오류로 인한 WebSocket 에러 - 재연결 중단');
+            shouldReconnectRef.current = false;
+            forceDisconnect();
           }
         }
       });
@@ -82,17 +216,18 @@ export const useWebSocket = () => {
       };
 
       // STOMP 에러 처리
-      stompClient.onStompError = (frame) => {
+      stompClient.onStompError = async (frame) => {
         console.error('STOMP 에러:', frame.headers['message']);
         isConnectingRef.current = false;
         setConnected(false);
-      };
-
-      // WebSocket 에러 처리
-      stompClient.onWebSocketError = (event) => {
-        console.error('WebSocket 에러:', event);
-        isConnectingRef.current = false;
-        setConnected(false);
+        
+        // 인증 관련 에러인 경우 재연결 중단
+        const errorMessage = frame.headers['message'] || '';
+        if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+          console.warn('인증 오류 - 재연결 중단');
+          shouldReconnectRef.current = false;
+          forceDisconnect();
+        }
       };
 
       // 연결 해제 시 처리
@@ -107,13 +242,27 @@ export const useWebSocket = () => {
         console.error('STOMP 클라이언트 활성화 실패:', error);
         isConnectingRef.current = false;
         setConnected(false);
+        
+        // 활성화 실패 시에도 인증 상태 확인
+        const isAuthenticated = await checkAuthStatus();
+        if (!isAuthenticated) {
+          shouldReconnectRef.current = false;
+          forceDisconnect();
+        }
       }
     };
 
+    // 초기 연결 시 인증 상태 확인
+    shouldReconnectRef.current = true;
+    isManuallyDisconnectedRef.current = false;
+    
     connect();
 
     // 컴포넌트 언마운트 시 정리 작업
     return () => {
+      // 재연결 방지
+      shouldReconnectRef.current = false;
+      isManuallyDisconnectedRef.current = true;
       isConnectingRef.current = false;
       
       if (messageProcessingTimerRef.current) {
@@ -122,13 +271,21 @@ export const useWebSocket = () => {
       processedMessagesRef.current.clear();
       
       if (clientRef.current) {
-        clientRef.current.deactivate();
+        try {
+          // STOMP 클라이언트 정리
+          if (clientRef.current.active) {
+            clientRef.current.deactivate();
+          }
+          // forceDisconnect는 이미 deactivate()에 포함되어 있으므로 중복 호출 방지
+        } catch (error) {
+          console.warn('정리 중 오류:', error);
+        }
         clientRef.current = null;
       }
       setClient(null);
       setConnected(false);
     };
-  }, []);
+  }, [checkAuthStatus, forceDisconnect]);
 
   // 메시지 중복 처리 방지 함수 - 동일한 메시지 ID로 여러 번 처리되는 것을 방지
   const isMessageProcessed = useCallback((messageId) => {
@@ -192,9 +349,13 @@ export const useWebSocket = () => {
       
       // 구독 해제 함수 반환
       return () => {
-        messageSubscription.unsubscribe();
-        readSubscription.unsubscribe();
-        deleteSubscription.unsubscribe();
+        try {
+          messageSubscription.unsubscribe();
+          readSubscription.unsubscribe();
+          deleteSubscription.unsubscribe();
+        } catch (error) {
+          console.warn('구독 해제 중 오류:', error);
+        }
       };
     } else {
       console.warn('WebSocket 연결되지 않음 - 구독 불가');
@@ -248,9 +409,13 @@ export const useWebSocket = () => {
       
       // 구독 해제 함수 반환
       return () => {
-        processedMatchingUpdates.clear();
-        matchingSubscription.unsubscribe();
-        roomsMatchingSubscription.unsubscribe();
+        try {
+          processedMatchingUpdates.clear();
+          matchingSubscription.unsubscribe();
+          roomsMatchingSubscription.unsubscribe();
+        } catch (error) {
+          console.warn('매칭 구독 해제 중 오류:', error);
+        }
       };
     } else {
       console.warn('WebSocket 연결되지 않음 - 매칭 구독 불가');
@@ -459,6 +624,11 @@ export const useWebSocket = () => {
     };
   }, []);
 
+  // 수동 연결 해제 함수(외부에서 호출 가능)
+  const disconnect = useCallback(() => {
+    forceDisconnect();
+  }, [forceDisconnect]);
+
   // 훅에서 제공하는 API 반환
   return {
     connected,                    // WebSocket 연결 상태
@@ -467,6 +637,7 @@ export const useWebSocket = () => {
     sendMessage,                 // 메시지 전송
     markAsRead,                  // 읽음 처리
     sendDeleteNotification,      // 삭제 알림
-    broadcastMatchingStatus      // 매칭 상태 브로드캐스트
+    broadcastMatchingStatus,     // 매칭 상태 브로드캐스트
+    disconnect                   // 수동 연결 해제 함수
   };
 };
