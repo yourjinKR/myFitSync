@@ -77,6 +77,7 @@ public class AuthTokenFilter implements Filter {
             "/login",          // 로그인 페이지
             "/register",       // 회원가입 페이지
             "/member/register", // 회원가입 API 추가
+            "/member/trainers", // 트레이너 목록 조회 (공개)
             "/static",         // 정적 리소스
             "/css",           // CSS 파일
             "/js",            // JavaScript 파일

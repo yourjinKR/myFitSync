@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import HomeIcon from '@mui/icons-material/Home';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PersonIcon from '@mui/icons-material/Person';
@@ -22,12 +23,10 @@ const NavWrapper = styled.nav`
   left: 50%;
   transform: translateX(-50%);
   z-index: 999;
-  padding: 0 12px;
   border-top: 1px solid rgba(238, 187, 195, 0.1);
 
   @media (max-width: 750px) {
     width: 100vw;
-    padding: 0 16px;
     left: 0;
     transform: none;
     padding-bottom: env(safe-area-inset-bottom);
@@ -108,6 +107,9 @@ const Nav = () => {
       case 'mypage':
         isTrainer ? nav(`/trainer/view/${memberIdx}`) : nav('/mypage');
         break;
+      case 'matching' :
+        nav('/trainer/search');
+        break;
       default:
         nav('/');
     }
@@ -115,14 +117,20 @@ const Nav = () => {
 
   return (
     <NavWrapper>
-      <NavButton onClick={() => handleNav('home')}>
-        <HomeIcon />
-        홈
-      </NavButton>
-      <Divider />
       <NavButton onClick={() => handleNav('routine')}>
         <FitnessCenterIcon />
         운동
+      </NavButton>
+      {!isTrainer && (
+        <NavButton onClick={() => handleNav('matching')}>
+          <PersonSearchIcon />
+          매칭
+        </NavButton>
+      )}
+      <Divider />
+      <NavButton onClick={() => handleNav('home')}>
+        <HomeIcon />
+        홈
       </NavButton>
       <Divider />
       <NavButton onClick={() => handleNav('chat')}>
