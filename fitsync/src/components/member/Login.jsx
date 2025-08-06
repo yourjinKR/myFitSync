@@ -16,10 +16,9 @@ const LoginContainer = styled.div`
 `;
 
 const LoginForm = styled.div`
-  background: transparent;
   border-radius: 24px;
   padding: 5rem 4.5rem;
-  backdrop-filter: blur(25px);
+  backdrop-filter: blur(20px);
   width: 100%;
   max-width: 560px;
   position: relative;
@@ -65,6 +64,7 @@ const Logo = styled.h1`
   color: var(--primary-blue);
   margin-bottom: 1.2rem;
   letter-spacing: -0.03em;
+  text-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 `;
 
 const Subtitle = styled.p`
@@ -99,6 +99,11 @@ const SocialButtonWrapper = styled.div`
 
 const ButtonContainer = styled.div`
   position: relative;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
 `;
 
 const WelcomeMessage = styled.div`

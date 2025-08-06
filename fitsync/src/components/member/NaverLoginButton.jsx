@@ -23,12 +23,14 @@ const LoginButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 16px;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
   padding: 20px 32px;
+  box-shadow: 0 2px 8px rgba(3, 199, 90, 0.15);
 
   &:hover {
     background: #02b350;
+    box-shadow: 0 4px 12px rgba(3, 199, 90, 0.25);
   }
 
   &:disabled {

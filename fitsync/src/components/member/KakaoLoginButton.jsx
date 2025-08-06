@@ -23,12 +23,14 @@ const KakaoButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 16px;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   height: 68px;
   width: 100%;
+  box-shadow: 0 2px 8px rgba(254, 229, 0, 0.15);
 
   &:hover {
     background: #fdd700;
+    box-shadow: 0 4px 12px rgba(254, 229, 0, 0.25);
   }
   
   &:disabled {

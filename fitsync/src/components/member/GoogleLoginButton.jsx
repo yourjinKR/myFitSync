@@ -23,12 +23,14 @@ const GoogleButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 16px;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   height: 68px;
   width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   
   &:hover {
     background: #f8f9fa;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   }
   
   &:disabled {
