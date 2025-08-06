@@ -3,6 +3,28 @@ import axios from 'axios';
 // 모든 요청에 쿠키 포함
 axios.defaults.withCredentials = true;
 
+// API Base URL 동적 설정 함수 - 환경별로 자동 구분
+export const getApiBaseUrl = () => {
+  // 개발 환경 (localhost:3000)에서는 package.json proxy 사용
+  if (process.env.NODE_ENV === 'development') {
+    return '';  // 로컬에서는 proxy 사용 (package.json에서 처리)
+  }
+  
+  // 프로덕션 환경에서는 우선 vercel.json rewrites 시도
+  // 실패하면 Vercel API Routes 사용 (/api 경로)
+  return '';
+};
+
+// Google Auth 전용 URL (Vercel API Routes 사용)
+export const getGoogleAuthUrl = () => {
+  if (process.env.NODE_ENV === 'development') {
+    return '/auth/google';  // 로컬에서는 proxy 사용
+  }
+  
+  // 프로덕션에서는 Vercel API Routes 사용
+  return '/api/auth/google';
+};
+
 // 매칭 상태 조회 캐시 관리
 const matchingStatusCache = new Map();
 const CACHE_EXPIRY_TIME = 30000; // 30초
@@ -12,7 +34,7 @@ const chatApi = {
   
   // 채팅방 생성 또는 조회
   registerRoom: async (trainer_idx, user_idx, room_name) => {
-    const response = await axios.post('/api/chat/room', {
+    const response = await axios.post(`${getApiBaseUrl()}/api/chat/room`, {
       trainer_idx,
       room_name
     }, { withCredentials: true });
@@ -21,7 +43,7 @@ const chatApi = {
 
   // 사용자 채팅방 목록 조회
   readRoomList: async () => {
-    const response = await axios.get('/api/chat/rooms', {
+    const response = await axios.get(`${getApiBaseUrl()}/api/chat/rooms`, {
       withCredentials: true
     });
     return response.data;
@@ -29,7 +51,7 @@ const chatApi = {
 
   // 채팅방 메시지 목록 조회
   readMessageList: async (room_idx, page = 0, size = 50) => {
-    const response = await axios.get(`/api/chat/room/${room_idx}/messages`, {
+    const response = await axios.get(`${getApiBaseUrl()}/api/chat/room/${room_idx}/messages`, {
       params: { page, size },
       withCredentials: true
     });
@@ -38,7 +60,7 @@ const chatApi = {
 
   // 메시지 검색
   searchMessage: async (room_idx, keyword) => {
-    const response = await axios.get(`/api/chat/room/${room_idx}/search`, {
+    const response = await axios.get(`${getApiBaseUrl()}/api/chat/room/${room_idx}/search`, {
       params: { keyword },
       withCredentials: true
     });
@@ -47,7 +69,7 @@ const chatApi = {
 
   // 읽지 않은 메시지 수 조회
   unreadCount: async (room_idx) => {
-    const response = await axios.get(`/api/chat/room/${room_idx}/unread`, {
+    const response = await axios.get(`${getApiBaseUrl()}/api/chat/room/${room_idx}/unread`, {
       withCredentials: true
     });
     return response.data;
@@ -59,7 +81,7 @@ const chatApi = {
     formData.append('file', file);
     formData.append('message_idx', message_idx);
 
-    const response = await axios.post('/api/chat/upload', formData, {
+    const response = await axios.post(`${getApiBaseUrl()}/api/chat/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       withCredentials: true
     });
@@ -68,7 +90,7 @@ const chatApi = {
 
   // 첨부파일 삭제
   deleteFile: async (attach_idx) => {
-    const response = await axios.delete(`/api/chat/file/${attach_idx}`, {
+    const response = await axios.delete(`${getApiBaseUrl()}/api/chat/file/${attach_idx}`, {
       withCredentials: true
     });
     return response.data;
@@ -76,7 +98,7 @@ const chatApi = {
 
   // 메시지 첨부파일 조회
   readFile: async (message_idx) => {
-    const response = await axios.get(`/api/chat/message/${message_idx}/files`, {
+    const response = await axios.get(`${getApiBaseUrl()}/api/chat/message/${message_idx}/files`, {
       withCredentials: true
     });
     return response.data;
@@ -84,7 +106,7 @@ const chatApi = {
 
   // 매칭 요청 생성
   createMatching: async (user_idx, matching_total) => {
-    const response = await axios.post('/api/chat/matching', {
+    const response = await axios.post(`${getApiBaseUrl()}/api/chat/matching`, {
       user_idx,
       matching_total
     }, { withCredentials: true });
@@ -96,7 +118,7 @@ const chatApi = {
     // 수락 시 해당 매칭의 캐시 무효화
     matchingStatusCache.delete(matching_idx);
     
-    const response = await axios.put(`/api/chat/accept/${matching_idx}`, {}, {
+    const response = await axios.put(`${getApiBaseUrl()}/api/chat/accept/${matching_idx}`, {}, {
       withCredentials: true
     });
     return response.data;
@@ -104,7 +126,7 @@ const chatApi = {
 
   // 특정 트레이너-회원간 완료된 매칭 존재 여부 확인
   checkCompletedMatchingBetween: async (trainer_idx, user_idx) => {
-    const response = await axios.get(`/api/chat/check-completed/${trainer_idx}/${user_idx}`, {
+    const response = await axios.get(`${getApiBaseUrl()}/api/chat/check-completed/${trainer_idx}/${user_idx}`, {
       withCredentials: true
     });
     return response.data;
@@ -127,7 +149,7 @@ const chatApi = {
     }
 
     try {
-      const response = await axios.get(`/api/chat/matching/${matching_idx}/status`, {
+      const response = await axios.get(`${getApiBaseUrl()}/api/chat/matching/${matching_idx}/status`, {
         withCredentials: true
       });
 
@@ -154,7 +176,7 @@ const chatApi = {
   // 복합 할인 매칭 가격 계산 API
   calculateMatchingPrice: async (matching_total) => {
     try {
-      const response = await axios.get(`/api/chat/matching/price/${matching_total}`, {
+      const response = await axios.get(`${getApiBaseUrl()}/api/chat/matching/price/${matching_total}`, {
         withCredentials: true
       });
       
@@ -167,8 +189,6 @@ const chatApi = {
       throw error;
     }
   },
-
-  
 
   // 매칭 상태 캐시 전체 삭제
   clearMatchingStatusCache: () => {

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/auth/google",
+      "destination": "https://chen-creature-receiving-media.trycloudflare.com/auth/google"
+    },
+    {
+      "source": "/auth/google/callback",
+      "destination": "https://chen-creature-receiving-media.trycloudflare.com/auth/google/callback"
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": "https://chen-creature-receiving-media.trycloudflare.com/auth/$1"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "https://chen-creature-receiving-media.trycloudflare.com/api/$1"
+    },
+    {
+      "source": "/member/(.*)",
+      "destination": "https://chen-creature-receiving-media.trycloudflare.com/member/$1"
+    },
+    {
+      "source": "/((?!api|auth|member|_next|favicon\\.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|map)).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/auth/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://fitsyncproject.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With, Cookie, Set-Cookie"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://fitsyncproject.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With, Cookie, Set-Cookie"
+        }
+      ]
+    },
+    {
+      "source": "/member/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://fitsyncproject.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With, Cookie, Set-Cookie"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "app/index.html": {
+      "maxDuration": 30
+    }
+  }
+}

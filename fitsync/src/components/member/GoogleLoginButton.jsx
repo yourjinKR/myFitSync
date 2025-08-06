@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../action/userAction';
+import { getGoogleAuthUrl } from '../../utils/ChatApi';
 
 const SpinnerAnimation = keyframes`
   0% { transform: rotate(0deg);}
@@ -194,6 +195,7 @@ const GoogleLoginButton = ({ setLoading }) => {
 
   const fetchUserInfo = async (accessToken) => {
     try {
+      // 1단계: Google에서 사용자 정보 가져오기
       const response = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
       
       if (!response.ok) {
@@ -202,43 +204,93 @@ const GoogleLoginButton = ({ setLoading }) => {
 
       const userInfo = await response.json();
       
-      // 사용자 정보를 백엔드로 전송
-      const result = await axios.post('/auth/google', {
-        email: userInfo.email,
-        name: userInfo.name,
-        picture: userInfo.picture
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
+      // 2단계: 백엔드로 사용자 정보 전송
+      const apiUrl = getGoogleAuthUrl(); // ChatApi에서 환경별 URL 가져오기
+      console.log('Google Auth API URL:', apiUrl);
+      
+      let result;
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      // 재시도 로직 (vercel.json rewrites 실패 시 API Routes로 폴백)
+      while (retryCount <= maxRetries) {
+        try {
+          // axios 사용 (withCredentials 자동 적용)
+          result = await axios.post(apiUrl, {
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture
+          });
+          
+          break; // 성공하면 루프 종료
+          
+        } catch (error) {
+          console.error(`시도 ${retryCount + 1} 실패:`, error);
+          
+          if (error.response?.status === 405 && retryCount === 0) {
+            // 첫 번째 시도에서 405 오류 시 API Routes로 폴백
+            console.log('Rewrites 실패, API Routes로 폴백 시도...');
+            retryCount++;
+            
+            // 프로덕션에서 API Routes 사용
+            const fallbackUrl = process.env.NODE_ENV === 'development' 
+              ? '/auth/google' 
+              : '/api/auth/google';
+            
+            try {
+              result = await axios.post(fallbackUrl, {
+                email: userInfo.email,
+                name: userInfo.name,
+                picture: userInfo.picture
+              });
+              break;
+            } catch (fallbackError) {
+              console.error('API Routes 폴백도 실패:', fallbackError);
+              throw fallbackError;
+            }
+          } else {
+            throw error;
+          }
         }
-      });
+      }
 
-      if (result.data.success) {
-        await dispatch(setUser(result.data.user));
+      const data = result.data;
+
+      if (data.success) {
+        await dispatch(setUser(data.user));
         
         // 약간의 지연 후 페이지 이동 (Redux 상태 업데이트 완료 대기)
         setTimeout(() => {
-          if (!result.data.user.isLogin) {
+          if (!data.user.isLogin) {
             nav('/register');
           } else {
-            // 저장된 리다이렉트 경로가 있으면 해당 경로로, 없으면 홈으로
-            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
-            if (redirectPath) {
-              sessionStorage.removeItem('redirectAfterLogin');
-              nav(redirectPath);
-            } else {
-              nav('/');
-            }
+            nav('/');
           }
         }, 50);
       } else {
-        console.error('백엔드 로그인 실패:', result.data.message);
-        alert(result.data.message || 'Google 로그인에 실패했습니다.');
+        console.error('백엔드 로그인 실패:', data.message);
+        alert(data.message || 'Google 로그인에 실패했습니다.');
       }
     } catch (error) {
       console.error('사용자 정보 가져오기 오류:', error);
-      alert('사용자 정보를 가져오는 중 오류가 발생했습니다.');
+      if (error.response) {
+        // 백엔드 서버 응답 오류
+        if (error.response.status === 405) {
+          alert('서버 설정 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } else if (error.response.status === 500) {
+          alert('서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } else if (error.response.status === 502 || error.response.status === 503) {
+          alert('백엔드 서버에 연결할 수 없습니다. Cloudflare Tunnel이 실행 중인지 확인해주세요.');
+        } else {
+          alert(`로그인 처리 중 오류가 발생했습니다. (${error.response.status})`);
+        }
+      } else if (error.request) {
+        // 네트워크 오류
+        alert('네트워크 연결을 확인해주세요.');
+      } else {
+        // 기타 오류
+        alert('Google 로그인 중 예상치 못한 오류가 발생했습니다.');
+      }
     } finally {
       setLocalLoading(false);
       setLoading && setLoading(false);
