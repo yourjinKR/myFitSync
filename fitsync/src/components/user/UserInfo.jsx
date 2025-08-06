@@ -65,8 +65,8 @@ const TimeSeparator = styled.span`
   padding: 0 4px;
 `;
 
-const UserInfo = ({ user, setIsInfoEdit }) => {
-  const [userData, setUserData] = useState(user);
+const UserInfo = ({ user, setIsInfoEdit, setUser }) => {
+  // userData 제거, props user 직접 사용
   const [edited, setEdited] = useState({});
   const [areaInfo, setAreaInfo] = useState({});
   const inputRefs = useRef({});
@@ -75,7 +75,7 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
 
   useEffect(() => {
     if (user === null) return;
-    setUserData(user);
+    // userData 제거
     
     // 활동지역이 있으면 시/도, 군/구로 분리
     if (user.member_activity_area) {
@@ -89,7 +89,7 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
       if (sido) {
         // 해당 시/도의 군/구 목록 인덱스 찾기
         const sidoIndex = area0.indexOf(sido);
-        const areaKey = `area${sidoIndex - 1}`;
+        const areaKey = `area${sidoIndex}`;
         const gugunArray = areaAll[areaKey] || [];
         
         // 구/군 찾기 (해당 지역의 구/군 목록에서 일치하는 것 찾기)
@@ -147,9 +147,9 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
   const handleSave = async () => {
     try {
       // 필수 필드 검증
-      const purpose = edited.member_purpose || userData.member_purpose;
-      const timeStart = edited.member_time_start || (userData.member_time && userData.member_time.split("~")[0]);
-      const timeEnd = edited.member_time_end || (userData.member_time && userData.member_time.split("~")[1]);
+      const purpose = edited.member_purpose || user.member_purpose;
+      const timeStart = edited.member_time_start || (user.member_time && user.member_time.split("~")[0]);
+      const timeEnd = edited.member_time_end || (user.member_time && user.member_time.split("~")[1]);
       
       // 활동지역: areaInfo에서 가져오거나 기존 값 사용
       let activityArea;
@@ -160,7 +160,7 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
           activityArea = areaInfo.sido1;
         }
       } else {
-        activityArea = edited.member_activity_area || userData.member_activity_area || '';
+        activityArea = edited.member_activity_area || user.member_activity_area || '';
       }
       
       // 필수 필드 검증
@@ -185,7 +185,7 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
       const postData = {
         member_purpose: purpose,
         member_time: member_time,
-        member_disease: edited.member_disease || userData.member_disease || '없음',
+        member_disease: edited.member_disease || user.member_disease || '없음',
         member_activity_area: activityArea
       }
       
@@ -194,6 +194,16 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
         alert(response.data.message || '정보 저장에 실패했습니다.');
         return;
       }else{
+        // 저장 성공 시 최신 user 데이터 재조회
+        try {
+          const userRes = await axios.get('/user/profile', { withCredentials: true });
+          setUser && setUser(userRes.data);
+          // 편집 상태 초기화
+          setEdited({});
+          // areaInfo는 useEffect에서 자동으로 갱신됨
+        } catch (err) {
+          // 조회 실패 시 무시
+        }
         setIsInfoEdit(false);
       }
     } catch (err) {
@@ -207,7 +217,7 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
       <Row>
         <Label>운동목적</Label>
         {
-          <Select name="member_purpose" value={edited.member_purpose || userData.member_purpose || ''} onChange={handleChange}>
+          <Select name="member_purpose" value={edited.member_purpose || user.member_purpose || ''} onChange={handleChange}>
             <option value="">선택</option>
             <option value="체중 관리">체중 관리</option>
             <option value="근육 증가">근육 증가</option>
@@ -222,17 +232,17 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
         <Label>운동시간대</Label>
         {
           <TimeInputWrapper>
-            <TimeSelect name="member_time_start" value={edited.member_time_start || (userData.member_time && userData.member_time.split("~")[0]) || ''} onChange={handleChange}>
+            <TimeSelect name="member_time_start" value={edited.member_time_start || (user.member_time && user.member_time.split("~")[0]) || ''} onChange={handleChange}>
               <option value="">시작 시간</option>
               {timeOptions.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </TimeSelect>
             <TimeSeparator>~</TimeSeparator>
-            <TimeSelect name="member_time_end" value={edited.member_time_end || (userData.member_time && userData.member_time.split("~")[1]) || ''} onChange={handleChange}>
+            <TimeSelect name="member_time_end" value={edited.member_time_end || (user.member_time && user.member_time.split("~")[1]) || ''} onChange={handleChange}>
               <option value="">종료 시간</option>
               {timeOptions
-                .filter(t => !(edited.member_time_start || (userData.member_time && userData.member_time.split("~")[0])) || t > (edited.member_time_start || userData.member_time.split("~")[0]))
+                .filter(t => !(edited.member_time_start || (user.member_time && user.member_time.split("~")[0])) || t > (edited.member_time_start || user.member_time.split("~")[0]))
                 .map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
@@ -243,7 +253,7 @@ const UserInfo = ({ user, setIsInfoEdit }) => {
       <Row>
         <Label>불편사항</Label>
         {
-          <Select name="member_disease" value={edited.member_disease || userData.member_disease || ''} onChange={handleChange}>
+          <Select name="member_disease" value={edited.member_disease || user.member_disease || ''} onChange={handleChange}>
             <option value="없음">없음</option>
             <option value="손목">손목</option>
             <option value="팔꿈치">팔꿈치</option>

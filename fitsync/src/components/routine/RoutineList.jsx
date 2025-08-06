@@ -34,21 +34,70 @@ const RoutineListWrapper = styled.div`
     
     /* Sortable 애니메이션을 위한 스타일 */
     .sortable-ghost {
-      opacity: 0.4;
-      background: var(--primary-blue);
-      transform: scale(1.05);
+      opacity: 0.8 !important;
+      transform: scale(0.97) !important;
+      border: 2px solid var(--primary-blue) !important;
+      border-radius: 16px !important;
+      background: linear-gradient(135deg, rgba(74, 144, 226, 0.15), rgba(74, 144, 226, 0.25)) !important;
+      box-shadow: 
+        0 8px 32px rgba(74, 144, 226, 0.25),
+        0 4px 16px rgba(74, 144, 226, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      backdrop-filter: blur(8px) !important;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, var(--primary-blue), rgba(74, 144, 226, 0.6));
+        border-radius: 18px;
+        z-index: -1;
+        opacity: 0.6;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      
+      * {
+        opacity: 0.9 !important;
+        visibility: visible !important;
+      }
     }
     
     .sortable-chosen {
       cursor: grabbing !important;
-      transform: scale(1.02);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      z-index: 1000;
+      opacity: 0.4 !important;
+      transform: scale(0.98);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: blur(1px);
     }
     
     .sortable-drag {
-      opacity: 0.8;
-      transform: rotate(2deg);
+      opacity: 0.95 !important;
+      transform: scale(1.02) rotate(1deg) !important;
+      box-shadow: 
+        0 12px 48px rgba(0, 0, 0, 0.2),
+        0 8px 24px rgba(74, 144, 226, 0.15) !important;
+      border: 1px solid rgba(74, 144, 226, 0.3) !important;
+      z-index: 9999 !important;
+      transition: none !important;
+    }
+    
+    /* 부드러운 트랜지션 */
+    > * {
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 0.4;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+      }
     }
   }
 `;
@@ -170,16 +219,22 @@ const RoutineList = ({ handleAddRoutine, targetMemberIdx }) => {
           <ReactSortable
             list={routinelist}
             setList={handleSort}
-            animation={200}
-            easing="cubic-bezier(1, 0, 0, 1)"
+            animation={400}
+            easing="cubic-bezier(0.25, 0.8, 0.25, 1)"
             className="routine-list"
             filter=".no-drag"
             preventOnFilter={false}
             ghostClass="sortable-ghost"
             chosenClass="sortable-chosen"
             dragClass="sortable-drag"
-            forceFallback={true}
-            fallbackTolerance={5}
+            forceFallback={false}
+            fallbackOnBody={true}
+            swapThreshold={0.6}
+            invertSwap={true}
+            delayOnTouchStart={true}
+            delay={80}
+            touchStartThreshold={8}
+            removeCloneOnHide={false}
           >
             {
               routinelist.map((routine, idx) => (
