@@ -45,7 +45,6 @@ const TrainerCard = styled.div`
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    margin-right: 2rem;
     object-fit: cover;
     box-shadow: 0 2px 8px rgba(74,144,226,0.15);
     border: 2px solid var(--primary-blue-light);
