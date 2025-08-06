@@ -260,7 +260,7 @@ const MyPage = () => {
       {isInfoEdit && (
         <Section>
           <SectionTitle>개인정보 수정</SectionTitle>
-          <UserInfo user={user} setIsInfoEdit={setIsInfoEdit}/>
+          <UserInfo user={user} setIsInfoEdit={setIsInfoEdit} setUser={setUser}/>
         </Section>
       )}
       <Section>

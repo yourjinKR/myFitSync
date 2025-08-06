@@ -55,7 +55,7 @@ const AreaDropDown = ({handleChange, invalid, inputRefs, info, variant}) => {
     // 시/도에 해당하는 구/군 목록 가져오기
     const sidoIndex = area0.indexOf(info.sido1);
     if (sidoIndex > 0) {
-      const areaKey = `area${sidoIndex - 1}`;
+      const areaKey = `area${sidoIndex}`;
       const options = [...areaAll[areaKey]] || ['구/군 선택'];
       
       // 기존 gugun1 값이 옵션에 없으면 추가
