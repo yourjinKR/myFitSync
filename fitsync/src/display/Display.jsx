@@ -74,8 +74,32 @@ const Display = () => {
   const [isOpen, setIsOpen] = useState(false);
   const intervalRef = useRef(null);
 
-  // WebSocket 훅 사용
-  const { disconnect: disconnectWebSocket, connected } = useWebSocket();
+  // 컴포넌트가 마운트될 때 로그인 상태를 한 번 확인하고 그 이후에만 WebSocket 훅 사용
+  const [isInitialLoginChecked, setIsInitialLoginChecked] = useState(false);
+  const [shouldUseWebSocket, setShouldUseWebSocket] = useState(false);
+
+  // 초기 로그인 상태 확인
+  useEffect(() => {
+    if (!isInitialLoginChecked) {
+      // Redux 상태에서 로그인 여부 확인
+      const isLoggedIn = user && user.isLogin;
+      setShouldUseWebSocket(isLoggedIn);
+      setIsInitialLoginChecked(true);
+    }
+  }, [user, isInitialLoginChecked]);
+
+  // 로그인 상태 변경 시 WebSocket 사용 여부 업데이트
+  useEffect(() => {
+    if (isInitialLoginChecked) {
+      const isLoggedIn = user && user.isLogin;
+      setShouldUseWebSocket(isLoggedIn);
+    }
+  }, [user?.isLogin, isInitialLoginChecked]);
+
+  // 조건부 WebSocket 훅 사용
+  const webSocketResult = useWebSocket(shouldUseWebSocket);
+  const disconnectWebSocket = webSocketResult?.disconnect || null;
+  const connected = webSocketResult?.connected || false;
 
   useEffect(() => {
     // 앱 시작 시 Google API 미리 로드
@@ -84,7 +108,7 @@ const Display = () => {
 
   useEffect(() => {
     // 로그인 상태일 때만 인증 확인 타이머 시작
-    if (user.isLogin) {
+    if (user && user.isLogin) {
       startAuthCheck();
     } else {
       stopAuthCheck();
@@ -101,7 +125,7 @@ const Display = () => {
     return () => {
       stopAuthCheck();
     };
-  }, [user.isLogin, disconnectWebSocket]);
+  }, [user?.isLogin, disconnectWebSocket]);
 
   const initializeApp = async () => {
     try {
@@ -112,6 +136,7 @@ const Display = () => {
     }
   };
 
+  // 인증 확인 함수
   const startAuthCheck = () => {
     // 기존 타이머가 있다면 정리
     if (intervalRef.current) {
@@ -132,7 +157,6 @@ const Display = () => {
 
         // 응답 검증
         if (!response.data || typeof response.data !== 'object') {
-          console.warn('인증 확인 응답 형식 오류');
           throw new Error('Invalid response format');
         }
 
@@ -145,9 +169,7 @@ const Display = () => {
           // 세션 스토리지 정리
           sessionStorage.removeItem('chat_member_idx');
 
-          // 로그인이 만료된 경우
-          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-
+          // 로그아웃 처리
           dispatch(logoutUser());
 
           // 로그인 페이지로 이동
@@ -157,37 +179,27 @@ const Display = () => {
           stopAuthCheck();
         }
       } catch (error) {
-        console.error('인증 확인 중 오류:', error);
-        
         // 에러 타입별 처리
         if (error.code === 'ECONNABORTED') {
+          // 타임아웃은 일시적 문제일 수 있으므로 로그만 출력
           console.warn('인증 확인 요청 타임아웃');
         } else if (error.response?.status === 401) {
-          // 401 오류 시 WebSocket 연결 해제 및 로그아웃 처리
+          // 401 오류 시
           if (disconnectWebSocket) {
             disconnectWebSocket();
           }
 
-          // 세션 스토리지 정리
           sessionStorage.removeItem('chat_member_idx');
-
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-          
           dispatch(logoutUser());
-
           navigate('/login');
           stopAuthCheck();
         } else if (error.message === 'Invalid response format') {
           // HTML 응답을 받은 경우 (로그인 페이지 리다이렉트)
-          console.warn('인증 확인 시 HTML 응답 수신 - 로그인 필요');
-          
           if (disconnectWebSocket) {
             disconnectWebSocket();
           }
           
           sessionStorage.removeItem('chat_member_idx');
-          
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
           dispatch(logoutUser());
           navigate('/login');
           stopAuthCheck();

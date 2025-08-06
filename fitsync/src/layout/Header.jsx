@@ -91,8 +91,9 @@ const Header = ({setIsOpen}) => {
   const { user } = useSelector(state => state.user);
   const nav = useNavigate();
 
-  // WebSocket 훅 사용
-  const { disconnect: disconnectWebSocket, connected } = useWebSocket();
+  // 로그인된 사용자만 WebSocket 훅 사용
+  const isLoggedIn = user && user.isLogin;
+  const { disconnect: disconnectWebSocket, connected } = useWebSocket(isLoggedIn);
 
   const navigator = async (path) => {
     if (path === "/logout") {
@@ -120,6 +121,7 @@ const Header = ({setIsOpen}) => {
           
           // 영구 저장소 정리
           persistor.purge();
+          // 성공 메시지는 유지 (사용자가 의도한 로그아웃이므로)
           alert(res.data.message);
           nav("/");
           
@@ -135,11 +137,11 @@ const Header = ({setIsOpen}) => {
           persistor.purge();
           sessionStorage.removeItem('chat_member_idx');
           
-          // 네트워크 오류 vs 서버 오류 구분
+          // 에러 상황별 메시지
           if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
             alert('로그아웃 요청 시간이 초과되었지만 로그아웃되었습니다.');
           } else if (error.response?.status === 401) {
-            alert('이미 로그아웃되었습니다.');
+            // 이미 로그아웃된 상태 처리
           } else {
             alert('로그아웃되었습니다.');
           }

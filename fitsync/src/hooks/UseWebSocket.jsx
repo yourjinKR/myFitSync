@@ -3,7 +3,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
 // WebSocket 연결 및 실시간 채팅을 위한 커스텀 훅
-export const useWebSocket = () => {
+export const useWebSocket = (shouldConnect = true) => {
   // 연결 상태 관리
   const [client, setClient] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -32,8 +32,11 @@ export const useWebSocket = () => {
         }
       });
       
-      // 응답 상태 코드 먼저 확인
+      // 401 에러
       if (!response.ok) {
+        if (response.status === 401) {
+          return false; // 로그인하지 않은 상태
+        }
         console.warn('인증 확인 응답 오류:', response.status, response.statusText);
         return false;
       }
@@ -41,7 +44,6 @@ export const useWebSocket = () => {
       // Content-Type 헤더 확인
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.warn('인증 확인 응답이 JSON이 아님:', contentType);
         return false;
       }
       
@@ -50,7 +52,6 @@ export const useWebSocket = () => {
       
       // HTML 응답인지 확인 (< 문자로 시작하면 HTML)
       if (responseText.trim().startsWith('<')) {
-        console.warn('인증 확인 응답이 HTML임 (로그인 페이지 리다이렉트)');
         return false;
       }
       
@@ -59,14 +60,11 @@ export const useWebSocket = () => {
       try {
         data = JSON.parse(responseText);
       } catch (jsonError) {
-        console.warn('인증 응답 JSON 파싱 실패:', jsonError.message);
-        console.warn('응답 내용:', responseText.substring(0, 100));
         return false;
       }
       
       return data.isLogin === true;
     } catch (error) {
-      console.warn('인증 상태 확인 실패:', error.message);
       return false;
     }
   }, []);
@@ -100,16 +98,21 @@ export const useWebSocket = () => {
 
   // WebSocket 연결 설정 및 초기화 - 컴포넌트 마운트 시 자동으로 연결 시도
   useEffect(() => {
+    // shouldConnect가 false면 아예 실행하지 않음
+    if (!shouldConnect) {
+      return;
+    }
+
     // 중복 연결 방지
     if (isConnectingRef.current || connected || clientRef.current) {
       return;
     }
 
     const connect = async () => {
-      // 로그아웃 상태 체크
+      // 로그인 상태 체크
       const isAuthenticated = await checkAuthStatus();
       if (!isAuthenticated) {
-        console.warn('인증되지 않은 상태 - WebSocket 연결 중단');
+        // 연결 중단
         shouldReconnectRef.current = false;
         return;
       }
@@ -120,7 +123,6 @@ export const useWebSocket = () => {
 
       // 재연결 시도 횟수 체크
       if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-        console.warn('최대 재연결 시도 횟수 초과 - 연결 중단');
         shouldReconnectRef.current = false;
         return;
       }
@@ -166,7 +168,6 @@ export const useWebSocket = () => {
           
           // 재연결 시도 횟수 체크
           if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-            console.warn('최대 재연결 시도 횟수 초과');
             shouldReconnectRef.current = false;
             forceDisconnect();
             return;
@@ -175,7 +176,6 @@ export const useWebSocket = () => {
           // 재연결 전 인증 상태 확인
           const isAuthenticated = await checkAuthStatus();
           if (!isAuthenticated) {
-            console.warn('인증 만료 - 재연결 중단');
             shouldReconnectRef.current = false;
             forceDisconnect();
             return;
@@ -199,7 +199,6 @@ export const useWebSocket = () => {
           // 인증 오류인 경우 재연결 중단
           const isAuthenticated = await checkAuthStatus();
           if (!isAuthenticated) {
-            console.warn('인증 오류로 인한 WebSocket 에러 - 재연결 중단');
             shouldReconnectRef.current = false;
             forceDisconnect();
           }
@@ -224,7 +223,6 @@ export const useWebSocket = () => {
         // 인증 관련 에러인 경우 재연결 중단
         const errorMessage = frame.headers['message'] || '';
         if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-          console.warn('인증 오류 - 재연결 중단');
           shouldReconnectRef.current = false;
           forceDisconnect();
         }
@@ -285,7 +283,7 @@ export const useWebSocket = () => {
       setClient(null);
       setConnected(false);
     };
-  }, [checkAuthStatus, forceDisconnect]);
+  }, [checkAuthStatus, forceDisconnect, shouldConnect]);
 
   // 메시지 중복 처리 방지 함수 - 동일한 메시지 ID로 여러 번 처리되는 것을 방지
   const isMessageProcessed = useCallback((messageId) => {
@@ -628,6 +626,20 @@ export const useWebSocket = () => {
   const disconnect = useCallback(() => {
     forceDisconnect();
   }, [forceDisconnect]);
+
+  // WebSocket 연결이 비활성화된 경우 기본값 반환
+  if (!shouldConnect) {
+    return {
+      connected: false,
+      subscribeToRoom: () => null,
+      subscribeToMatchingUpdates: () => null,
+      sendMessage: () => {},
+      markAsRead: () => {},
+      sendDeleteNotification: () => {},
+      broadcastMatchingStatus: () => {},
+      disconnect: () => {}
+    };
+  }
 
   // 훅에서 제공하는 API 반환
   return {
