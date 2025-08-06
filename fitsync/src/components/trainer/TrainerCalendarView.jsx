@@ -1103,8 +1103,41 @@ useEffect(() => {
                       color: 'var(--text-secondary)', 
                       fontSize: '1.3rem',
                       fontWeight: '600',
-                      textAlign: 'center'
-                    }}>Time</div>
+                      textAlign: 'center',
+                      position: 'relative',
+                      background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.05), rgba(74, 144, 226, 0.02))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '0.8rem',
+                        right: '1rem',
+                        fontSize: '1.1rem',
+                        fontWeight: '500',
+                        color: 'var(--primary-blue)',
+                        zIndex: 2
+                      }}>Day</div>
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0.8rem',
+                        left: '1rem',
+                        fontSize: '1.1rem',
+                        fontWeight: '500',
+                        color: 'var(--primary-blue)',
+                        zIndex: 2
+                      }}>Time</div>
+                      <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(45deg, transparent 48%, rgba(74, 144, 226, 0.3) 49%, rgba(74, 144, 226, 0.3) 51%, transparent 52%)',
+                        zIndex: 1
+                      }}></div>
+                    </div>
                     {days.map((day, idx) => (
                       <div key={idx} style={{
                         textAlign: 'center'

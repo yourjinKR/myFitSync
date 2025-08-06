@@ -160,7 +160,7 @@ const EmptyText = styled.p`
 `;
 
 const DailyDetailModal = ({ date, onClose }) => {
-  const { member_idx } = useSelector((state) => state.user.user);
+  const { member_idx, member_type } = useSelector((state) => state.user.user);
   const [records, setRecords] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [selectedRecordGroup, setSelectedRecordGroup] = useState(null);
@@ -168,14 +168,22 @@ const DailyDetailModal = ({ date, onClose }) => {
 
   const ymd = format(date, 'yyyy-MM-dd');
   const displayDate = format(date, 'yyyy.MM.dd');
+  const isTrainer = member_type === 'trainer';
 
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const [res1, res2] = await Promise.all([
-          axios.get(`/user/${member_idx}/records?date=${ymd}`),
-          axios.get(`/user/${member_idx}/schedules?date=${ymd}`)
-        ]);
+        // 운동 기록은 항상 가져오기
+        const recordsPromise = axios.get(`/user/${member_idx}/records?date=${ymd}`);
+        
+        // 트레이너가 아닐 때만 스케줄 가져오기
+        const promises = [recordsPromise];
+        if (!isTrainer) {
+          promises.push(axios.get(`/user/${member_idx}/schedules?date=${ymd}`));
+        }
+
+        const responses = await Promise.all(promises);
+        const [res1, res2] = responses;
 
         // ✅ 중복된 record_date를 기준으로 그룹핑
         const groupedByDate = {};
@@ -202,13 +210,19 @@ const DailyDetailModal = ({ date, onClose }) => {
           });
 
         setRecords(displayList);
-        setSchedules(res2.data);
+        
+        // 트레이너가 아닐 때만 스케줄 설정
+        if (!isTrainer && res2) {
+          setSchedules(res2.data);
+        } else {
+          setSchedules([]);
+        }
       } catch (error) {
         console.error('상세 내역 불러오기 실패:', error);
       }
     };
     fetchDetail();
-  }, [member_idx, ymd]);
+  }, [member_idx, ymd, isTrainer]);
 
   return (
     <ModalBackdrop>
@@ -240,32 +254,35 @@ const DailyDetailModal = ({ date, onClose }) => {
           )}
         </Section>
 
-        <Section>
-          <h4>📅 PT 예약</h4>
-          {schedules.length === 0 ? (
-            <EmptyText>예약 없음</EmptyText>
-          ) : (
-            <List>
-              {schedules.map((schedule, i) => (
-                <ListItem
-                  key={i}
-                  tabIndex={0}
-                  onClick={() => setSelectedSchedule(schedule)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setSelectedSchedule(schedule);
-                    }
-                  }}
-                >
-                  {schedule.schedule_stime} ~ {schedule.schedule_etime}
-                  <span style={{ color: 'var(--primary-blue-light)', fontWeight: 400 }}>
-                    / 트레이너: {schedule.trainer_name}
-                  </span>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Section>
+        {/* 트레이너가 아닐 때만 PT 예약 섹션 표시 */}
+        {!isTrainer && (
+          <Section>
+            <h4>📅 PT 예약</h4>
+            {schedules.length === 0 ? (
+              <EmptyText>예약 없음</EmptyText>
+            ) : (
+              <List>
+                {schedules.map((schedule, i) => (
+                  <ListItem
+                    key={i}
+                    tabIndex={0}
+                    onClick={() => setSelectedSchedule(schedule)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        setSelectedSchedule(schedule);
+                      }
+                    }}
+                  >
+                    {schedule.schedule_stime} ~ {schedule.schedule_etime}
+                    <span style={{ color: 'var(--primary-blue-light)', fontWeight: 400 }}>
+                      / 트레이너: {schedule.trainer_name}
+                    </span>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Section>
+        )}
 
         {selectedRecordGroup && (
           <WorkoutRecordModal
