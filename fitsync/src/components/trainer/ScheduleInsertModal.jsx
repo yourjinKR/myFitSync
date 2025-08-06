@@ -5,96 +5,166 @@ import styled from 'styled-components';
 
 const Backdrop = styled.div`
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999; /* 좀 더 높게 */
+  z-index: 1000;
+  animation: backdropFade 0.3s ease-out;
+
+  @keyframes backdropFade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const Modal = styled.div`
-  background: var(--bg-secondary);
-  padding: 2rem 2.5rem;
-  border-radius: 1.2rem;
-  box-shadow: 0 0.2rem 1rem rgba(0, 0, 0, 0.15);
+  background: var(--bg-primary);
+  border-radius: 10px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(74, 144, 226, 0.1);
+  padding: 3rem;
+  width: 90%;
+  max-width: 520px;
   color: var(--text-primary);
-  min-width: 340px;
-  width: 100%;
-  max-width: 420px;
-`;
+  animation: modalAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
 
-const Title = styled.h3`
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-bottom: 1.6rem;
-  color: var(--primary-blue);
+  @keyframes modalAppear {
+    from {
+      opacity: 0;
+      transform: scale(0.9) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
 `;
 
 const Field = styled.div`
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.8rem;
 
   label {
     display: block;
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--primary-blue);
+    font-size: 2.2rem; /* 글자 크기 1.6rem으로 설정 */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  select, input, textarea {
+  input, select, textarea {
+    font-size: 2rem; /* select 글자 크기 1.4rem으로 설정 */
     width: 100%;
-    padding: 0.6rem 1rem;
-    border-radius: 0.8rem;
-    border: 1px solid var(--border-light);
-    background: var(--bg-primary);
+    padding: 1rem;
+    border: 2px solid rgba(74, 144, 226, 0.2);
+    border-radius: 5px;
+    background: rgba(74, 144, 226, 0.05);
     color: var(--text-primary);
-    font-size: 1.2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: var(--primary-blue);
+      background: rgba(74, 144, 226, 0.1);
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+    }
+
+    &:read-only {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
   }
 
-  input::placeholder, textarea::placeholder {
-    color: var(--text-tertiary);
+  select {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 1);
+  }
+
+  option {
+    color: rgba(255, 255, 255, 1); /* 옵션 글자색을 완전히 밝게 설정 */
+    background: rgba(0, 0, 0, 0.8); /* 옵션 배경색을 완전히 어둡게 설정 */
+    font-size: 1.6rem; /* 옵션 글자 크기 크게 설정 */
   }
 
   textarea {
-    resize: vertical;
-    min-height: 60px;
+    min-height: 150px;
+    resize: none;
+    font-family: inherit;
+
+  }
+`;
+
+const Title = styled.h2`
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  color: var(--primary-blue);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light));
+    border-radius: 2px;
   }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
   justify-content: flex-end;
-  gap: 0.8rem;
-  margin-top: 1.6rem;
+`;
 
-  button {
-    padding: 0.6rem 1.4rem;
-    border: none;
-    border-radius: 0.8rem;
-    font-size: 1.2rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
+const Button = styled.button`
+  padding: 1rem 2rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 100px;
+
+  &.primary {
+    color: white;
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+
+    &:hover {
+      box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+    }
   }
 
-  button:first-child {
-    background: var(--primary-blue);
-    color: var(--text-primary);
-  }
-
-  button:first-child:hover {
-    background: var(--primary-blue-hover);
-  }
-
-  button:last-child {
-    background: var(--bg-tertiary);
+  &.secondary {
     color: var(--text-secondary);
-  }
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-medium);
 
-  button:last-child:hover {
-    background: var(--bg-hover);
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 `;
 
@@ -257,7 +327,6 @@ const ScheduleInsertModal = ({
             type="text"
             value={endTime}
             readOnly
-            style={{ background: '#eee', color: '#888' }}
           />
         </Field>
 
@@ -273,8 +342,12 @@ const ScheduleInsertModal = ({
 
         {/* 버튼 */}
         <ButtonGroup>
-          <button onClick={handleSubmit}>추가</button>
-          <button onClick={onClose}>취소</button>
+          <Button className="secondary" onClick={onClose}>
+            취소
+          </Button>
+          <Button className="primary" onClick={handleSubmit}>
+            추가
+          </Button>
         </ButtonGroup>
       </Modal>
     </Backdrop>
