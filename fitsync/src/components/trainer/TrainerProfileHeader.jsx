@@ -5,57 +5,56 @@ import Switch from '@mui/material/Switch';
 import SettingsIcon from '@mui/icons-material/Settings';
 import axios from 'axios';
 import ProfileImageEditor from '../ProfileImageEditable';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import ScaleIcon from '@mui/icons-material/Scale';
+import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import HealingIcon from '@mui/icons-material/Healing';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 // --- 스타일: 카드 크기 확대, 인스타 느낌, 모든 기능 포함 ---
 const InstaProfileHeader = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 2.2rem;
-  padding: 2.5rem 2rem 2rem 2rem;
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  grid-template-rows: auto 1fr;
+  padding: 3.5rem 3rem 3rem 3rem;
   background: linear-gradient(120deg, var(--bg-secondary) 70%, var(--bg-primary) 100%);
-  border-radius: 2.2rem;
-  box-shadow: 0 0.3rem 1.5rem rgba(0,0,0,0.13);
-  max-width: 715px;
+  border-radius: 2.8rem;
+  box-shadow: 0 0.5rem 2.2rem rgba(0,0,0,0.15);
+  max-width: 950px;
   min-width: 0;
   position: relative;
 
+  @media (max-width: 900px) {
+    max-width: 99vw;
+    gap: 1.2rem 1.8rem;
+    padding: 2.2rem 1rem 2.2rem 1rem;
+    border-radius: 1.8rem;
+    grid-template-columns: 120px 1fr;
+  }
   @media (max-width: 600px) {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1.5rem 0.7rem 1.5rem 0.7rem;
+    padding: 1.7rem 0.7rem 1.7rem 0.7rem;
     border-radius: 1.2rem;
-    max-width: 99vw;
     gap: 1.2rem;
   }
 `;
 
-const InstaProfileImgWrap = styled.div`
-  position: relative;
-  width: 110px;
-  height: 110px;
-  min-width: 110px;
-  min-height: 110px;
+// 오른쪽 상단 버튼 그룹
+const TopRightGroup = styled.div`
+  position: absolute;
+  top: 18px;
+  right: 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.3rem;
+  z-index: 2;
 `;
 
-const InstaProfileImg = styled.img`
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid var(--primary-blue);
+const IconButton = styled.button`
   background: var(--bg-tertiary);
-  box-shadow: 0 0.12rem 0.7rem rgba(74,144,226,0.13);
-`;
-
-const EditImgButton = styled.button`
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  background: var(--primary-blue);
-  color: #fff;
   border: none;
   border-radius: 50%;
   width: 2.6rem;
@@ -63,30 +62,74 @@ const EditImgButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
-  box-shadow: 0 0.05rem 0.2rem rgba(74,144,226,0.18);
+  font-size: 1.45rem;
+  color: var(--primary-blue);
   cursor: pointer;
-  transition: background 0.18s;
-  &:hover { background: var(--primary-blue-hover); }
+  box-shadow: 0 0.05rem 0.2rem rgba(74,144,226,0.10);
+  transition: background 0.18s, color 0.18s;
+  &:hover, &:focus {
+    background: var(--primary-blue-light);
+    color: #fff;
+    outline: none;
+  }
+`;
+
+const InstaProfileImgWrap = styled.div`
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  position: relative;
+  width: 150px;
+  height: 150px;
+  min-width: 150px;
+  min-height: 150px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  @media (max-width: 900px) {
+    width: 120px;
+    height: 120px;
+    min-width: 120px;
+    min-height: 120px;
+  }
+  @media (max-width: 600px) {
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    height: 110px;
+    min-width: 110px;
+    min-height: 110px;
+  }
 `;
 
 const InstaProfileInfo = styled.div`
+  grid-column: 2 / 3;
+  grid-row: 1 / 3;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 1.2rem;
+
+  @media (max-width: 600px) {
+    align-items: center;
+    text-align: center;
+  }
 `;
 
 const InstaNameRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 1.2rem;
   flex-wrap: wrap;
+  min-height: 3.2rem;
+  @media (max-width: 600px) {
+    justify-content: center;
+    width: 100%;
+  }
 `;
 
 const InstaName = styled.h2`
-  font-size: 2.1rem;
+  font-size: 2.8rem;
   font-weight: 900;
   color: var(--primary-blue);
   letter-spacing: -0.02em;
@@ -94,12 +137,6 @@ const InstaName = styled.h2`
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-`;
-
-const InstaButtonGroup = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
 `;
 
 const InstaButton = styled.button`
@@ -130,32 +167,38 @@ const InstaButton = styled.button`
 `;
 
 const InstaEmail = styled.div`
-  font-size: 1.13rem;
+  font-size: 1.45rem;
   color: var(--text-secondary);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  @media (max-width: 600px) {
+    width: 100%;
+    text-align: center;
+  }
 `;
 
 const InstaGymInfo = styled.div`
-  font-size: 1.13rem;
+  font-size: 1.35rem;
   color: var(--primary-blue-light);
   margin-top: 0.2rem;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  @media (max-width: 600px) {
+    width: 100%;
+    text-align: center;
+  }
 `;
 
-const InstaSwitchRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
+const InstaIntro = styled.div`
+  font-size: 1.18rem;
+  color: var(--text-primary);
   margin-top: 0.2rem;
-`;
-
-const InstaSwitchLabel = styled.span`
-  font-size: 1.08rem;
-  color: var(--text-tertiary);
+  @media (max-width: 600px) {
+    width: 100%;
+    text-align: center;
+  }
 `;
 
 const ButtonEdit = styled.button`
@@ -168,6 +211,72 @@ const ButtonEdit = styled.button`
     color: var(--text-secondary);
   }
 `;
+const SwitchWrap = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: 0.2rem;
+  .MuiSwitch-root {
+    margin-right: 0;
+  }
+`;
+
+const purposeList = [
+  { key: '체중관리', color: '#4A90E2' },
+  { key: '근육증가', color: '#7ED957' },
+  { key: '체형교정', color: '#FFB800' },
+  { key: '체력증진', color: '#FF6F61' },
+  { key: '재활', color: '#A259FF' },
+  { key: '바디프로필', color: '#00C2C7' }
+];
+
+// 목적별 아이콘 매핑
+const purposeIcons = {
+  '체중관리': <ScaleIcon style={{ fontSize: '1.2em', marginRight: '0.4em' }} />,
+  '근육증가': <FitnessCenterIcon style={{ fontSize: '1.2em', marginRight: '0.4em' }} />,
+  '체형교정': <AccessibilityNewIcon style={{ fontSize: '1.2em', marginRight: '0.4em' }} />,
+  '체력증진': <DirectionsRunIcon style={{ fontSize: '1.2em', marginRight: '0.4em' }} />,
+  '재활': <HealingIcon style={{ fontSize: '1.2em', marginRight: '0.4em' }} />,
+  '바디프로필': <PhotoCameraIcon style={{ fontSize: '1.2em', marginRight: '0.4em' }} />,
+};
+
+const PurposeTag = styled.button`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0;
+  margin-bottom: 0;
+  padding: 0.28rem 0.9rem;
+  border-radius: 1.1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  background: ${({ color }) => color};
+  border: none;
+  cursor: ${({ $edit }) => ($edit ? 'pointer' : 'default')};
+  opacity: ${({ $selected }) => ($selected ? 1 : 0.45)};
+  box-shadow: ${({ $selected }) => ($selected ? '0 0.05rem 0.2rem rgba(0,0,0,0.10)' : 'none')};
+  transition: opacity 0.18s, box-shadow 0.18s;
+  text-shadow:
+    -1px -1px 0 #222,
+     1px -1px 0 #222,
+    -1px  1px 0 #222,
+     1px  1px 0 #222;
+  &:hover {
+    opacity: 1;
+    box-shadow: 0 0.08rem 0.3rem rgba(0,0,0,0.13);
+    border: 2px solid #fff;
+  }
+`;
+
+const PurposeRow = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  min-height: 2.2rem;
+  width: 100%;
+  white-space: nowrap;
+  overflow-x: visible; // 스크롤 제거
+`;
 
 // --- 컴포넌트 ---
 const TrainerProfileHeader = ({
@@ -178,7 +287,6 @@ const TrainerProfileHeader = ({
   onEditToggle,
   loginUserId,
   mode = 'trainer',
-  onImageChange,
   onVisibilityToggle,
   setIsInfoEdit
 }) => {
@@ -196,7 +304,7 @@ const TrainerProfileHeader = ({
   const isMine = loginUserId && (localTrainer?.member_email === loginUserId || user?.member_email === loginUserId);
   const isHidden = localTrainer?.member_hidden === 1;
   const targetMember = localTrainer || user;
-
+  
   // 공개/비공개 토글
   const handleToggleVisibility = async () => {
     if (updating || !localTrainer?.member_idx) return;
@@ -245,8 +353,69 @@ const TrainerProfileHeader = ({
   };
   console.log(localTrainer);
   
+  // member_purpose 처리
+  const memberPurpose =
+    Array.isArray(trainer.member_purpose)
+      ? trainer.member_purpose
+      : typeof trainer.member_purpose === 'string'
+        ? trainer.member_purpose.split(',').map(p => p.trim()).filter(Boolean)
+        : [];
+
+  const [selectedPurpose, setSelectedPurpose] = useState(memberPurpose);
+
+  useEffect(() => {
+    setSelectedPurpose(
+      Array.isArray(trainer.member_purpose)
+        ? trainer.member_purpose
+        : typeof trainer.member_purpose === 'string'
+          ? trainer.member_purpose.split(',').map(p => p.trim()).filter(Boolean)
+          : []
+    );
+  }, [trainer.member_purpose, isEdit]);
+
+  const handlePurposeClick = (purpose) => {
+    if (!isEdit) return;
+    let newPurpose;
+    if (selectedPurpose.includes(purpose)) {
+      newPurpose = selectedPurpose.filter(p => p !== purpose);
+    } else {
+      newPurpose = [...selectedPurpose, purpose];
+    }
+    setSelectedPurpose(newPurpose);
+    // TrainerDetailView에서 onChange로 업데이트
+    if (typeof onChange === 'function') {
+      onChange('member_purpose', newPurpose.join(','));
+    }
+  };
+
    return (
     <InstaProfileHeader>
+      {/* 오른쪽 상단 버튼 그룹 */}
+      <TopRightGroup>
+        {isTrainer && isMine && (
+          <IconButton onClick={onEditToggle} title={isEdit ? '저장' : '수정'}>
+            {isEdit ? <MdCheck /> : <MdEdit />}
+          </IconButton>
+        )}
+        {!isMine && (
+          <IconButton onClick={() => setShowReportModal(true)} title="신고">
+            <MdReport />
+          </IconButton>
+        )}
+        {isTrainer && isMine && (
+          <SwitchWrap>
+            <Switch
+              checked={!isHidden}
+              onChange={handleToggleVisibility}
+              color="primary"
+              size="small"
+              inputProps={{ 'aria-label': '공개/비공개 전환' }}
+              disabled={updating}
+            />
+          </SwitchWrap>
+        )}
+      </TopRightGroup>
+
       <InstaProfileImgWrap>
         <ProfileImageEditor
           memberIdx={localTrainer?.member_idx}
@@ -262,41 +431,31 @@ const TrainerProfileHeader = ({
             {name}
             {isTrainer ? ' 선생님' : ''}
           </InstaName>
-          <InstaButtonGroup>
-            {isTrainer && isMine && (
-              <InstaButton $primary onClick={onEditToggle}>
-                {isEdit ? <MdCheck /> : <MdEdit />}
-                {isEdit ? '저장' : '수정'}
-              </InstaButton>
-            )}
-            {!isMine && (
-              <InstaButton onClick={() => setShowReportModal(true)}>
-                <MdReport />
-                신고
-              </InstaButton>
-            )}
-          </InstaButtonGroup>
         </InstaNameRow>
         <InstaEmail>{localTrainer?.member_email}</InstaEmail>
         {localTrainer?.gymInfo?.gym_name && (
           <InstaGymInfo>{localTrainer.gymInfo.gym_name}</InstaGymInfo>
         )}
-        {isTrainer && isMine && (
-          <InstaSwitchRow>
-            <Switch
-              checked={!isHidden}
-              onChange={handleToggleVisibility}
-              color="primary"
-              size="small"
-              inputProps={{ 'aria-label': '공개/비공개 전환' }}
-              disabled={updating}
-            />
-            <InstaSwitchLabel>
-              {isHidden ? <MdVisibilityOff size={18} /> : <MdVisibility size={18} />}
-              {isHidden ? '비공개' : '공개'}
-            </InstaSwitchLabel>
-          </InstaSwitchRow>
-        )}
+        <InstaIntro>{localTrainer?.member_intro}</InstaIntro>
+        <PurposeRow>
+          {purposeList.map(({ key, color }) => (
+            (isEdit || selectedPurpose.includes(key)) && (
+              <PurposeTag
+                key={key}
+                color={color}
+                $edit={isEdit}
+                $selected={selectedPurpose.includes(key)}
+                type={isEdit ? 'button' : 'span'}
+                onClick={() => handlePurposeClick(key)}
+                tabIndex={isEdit ? 0 : -1}
+                aria-pressed={selectedPurpose.includes(key)}
+              >
+                {purposeIcons[key]}
+                {key}
+              </PurposeTag>
+            )
+          ))}
+        </PurposeRow>
       </InstaProfileInfo>
 
       {/* 신고 모달 */}

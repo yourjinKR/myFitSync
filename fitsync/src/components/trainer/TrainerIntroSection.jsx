@@ -201,12 +201,69 @@ const EditFileInput = styled.input`
   }
 `;
 
-const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, onLessonsChange }) => {
+// 요일 버튼 스타일
+const DayButton = styled.button`
+  background: ${({ selected }) => (selected ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
+  color: ${({ selected }) => (selected ? '#fff' : 'var(--text-primary)')};
+  border: 1.5px solid var(--border-light);
+  border-radius: 7px;
+  padding: 7px 14px;
+  margin-right: 7px;
+  margin-bottom: 7px;
+  font-size: 1.01rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  &:hover {
+    background: var(--primary-blue-light);
+    color: #fff;
+  }
+`;
+
+// 시간 선택 셀렉트 스타일
+const TimeSelect = styled.select`
+  font-size: 1.09rem;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-right: 10px;
+  margin-bottom: 7px;
+  transition: border 0.18s, background 0.18s;
+  &:focus {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-secondary);
+  }
+`;
+
+const TimeRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+`;
+
+const daysKor = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+
+// 시간 옵션 생성 함수 (중복 제거)
+const getTimeOptions = () => {
+  const options = [];
+  for (let h = 6; h <= 23; h++) {
+    const label = `${h.toString().padStart(2, '0')}:00`;
+    options.push(label);
+  }
+  return options;
+};
+const timeOptions = getTimeOptions();
+
+const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, onLessonsChange, onTimeChange }) => {
   const { trainerIdx } = useParams();
   const [awards, setAwards] = useState([]);
   const [selectedAward, setSelectedAward] = useState(null);
   const [newAward, setNewAward] = useState({ category: '', name: '', file: null });
-  
+
   useEffect(() => {
     const fetchAwards = async () => {
       try {
@@ -262,9 +319,50 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
   };
 
   const normalizedImages = (trainer.images || []).map(img => {
-  if (typeof img === 'object' && img.url) return img;  // 이미 url이 있으면 그대로
-  return { id: img, url: null };  // attach_idx 문자열이라면 객체로 변환
-});
+    if (typeof img === 'object' && img.url) return img;
+    return { id: img, url: null };
+  });
+
+  const [selectedDays, setSelectedDays] = useState(() =>
+    trainer.member_day ? trainer.member_day.split(',').map(d => d.trim()) : []
+  );
+  const [startTime, setStartTime] = useState(() =>
+    trainer.member_time ? trainer.member_time.split('~')[0]?.trim() : ''
+  );
+  const [endTime, setEndTime] = useState(() =>
+    trainer.member_time ? trainer.member_time.split('~')[1]?.trim() : ''
+  );
+
+  useEffect(() => {
+    if (isEdit) {
+      setSelectedDays(trainer.member_day ? trainer.member_day.split(',').map(d => d.trim()) : []);
+      setStartTime(trainer.member_time ? trainer.member_time.split('~')[0]?.trim() : '');
+      setEndTime(trainer.member_time ? trainer.member_time.split('~')[1]?.trim() : '');
+    }
+  }, [isEdit, trainer.member_day, trainer.member_time]);
+
+  const handleDayClick = (day) => {
+    let newDays;
+    if (selectedDays.includes(day)) {
+      newDays = selectedDays.filter(d => d !== day);
+    } else {
+      newDays = [...selectedDays, day];
+    }
+    setSelectedDays(newDays);
+    onChange('member_day', newDays.join(','));
+  };
+
+  const handleTimeChange = (type, value) => {
+    if (type === 'start') {
+      const newStart = value;
+      setStartTime(newStart);
+      if (onTimeChange) onTimeChange(newStart, endTime);
+    } else {
+      const newEnd = value;
+      setEndTime(newEnd);
+      if (onTimeChange) onTimeChange(startTime, newEnd);
+    }
+  };
 
   return (
     <>
@@ -326,27 +424,68 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         <ModalOverlay onClick={() => setSelectedAward(null)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <h4 style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>{selectedAward.awards_name}</h4>
-            <img
-              src={selectedAward.awards_certificate}
-              alt={`${selectedAward.awards_name} 증명서`}
-            />
+            <img src={selectedAward.awards_certificate} alt={`${selectedAward.awards_name} 증명서`} />
           </ModalContent>
         </ModalOverlay>
       )}
 
       <Section>
         <SectionTitle>레슨 가능 시간</SectionTitle>
-        <InfoContent>{trainer.availableTime}</InfoContent>
+        {isEdit ? (
+          <>
+            <div style={{ marginBottom: '8px', fontWeight: 600, color: 'var(--primary-blue-light)' }}>가능 요일</div>
+            <TimeRow>
+              {daysKor.map((day) => (
+                <DayButton
+                  key={day}
+                  type="button"
+                  selected={selectedDays.includes(day)}
+                  onClick={() => handleDayClick(day)}
+                >
+                  {day}
+                </DayButton>
+              ))}
+            </TimeRow>
+            <div style={{ marginBottom: '8px', fontWeight: 600, color: 'var(--primary-blue-light)' }}>가능 시간</div>
+            <TimeRow>
+              <TimeSelect
+                value={startTime}
+                onChange={e => handleTimeChange('start', e.target.value)}
+              >
+                <option value="">시작 시간</option>
+                {timeOptions.map(opt => (
+                  <option key={`start-${opt}`} value={opt}>{opt}</option>
+                ))}
+              </TimeSelect>
+              ~
+              <TimeSelect
+                value={endTime}
+                onChange={e => handleTimeChange('end', e.target.value)}
+              >
+                <option value="">종료 시간</option>
+                {timeOptions.map(opt => (
+                  <option key={`end-${opt}`} value={opt}>{opt}</option>
+                ))}
+              </TimeSelect>
+            </TimeRow>
+          </>
+        ) : (
+          <InfoContent>
+            {trainer.member_day && trainer.member_time
+              ? `${trainer.member_day} / ${trainer.member_time}`
+              : trainer.availableTime || '정보 없음'}
+          </InfoContent>
+        )}
       </Section>
 
       <Section>
         <SectionTitle>최근 후기</SectionTitle>
-          {trainer.reviewList
-            ?.sort((a, b) => b.review_idx - a.review_idx)
-            .slice(0, 2)
-            .map((review) => (
-              <Review key={review.review_idx} review={review} />
-            ))}
+        {trainer.reviewList
+          ?.sort((a, b) => b.review_idx - a.review_idx)
+          .slice(0, 2)
+          .map((review) => (
+            <Review key={review.review_idx} review={review} />
+          ))}
         <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
       </Section>
 

@@ -5,38 +5,63 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 
 const ReviewWrapper = styled.div`
-  border-radius: 10px;
-  box-shadow: 5px 5px 5px rgba(0,0,0,0.1);
+  border-radius: 14px;
+  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.10);
   width: 100%;
-  padding: 15px;
-  border: 1px solid #ccc;
+  padding: 22px 18px 18px 18px;
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-tertiary);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  margin-bottom: 22px;
+  position: relative;
 
-  & .review-top {
+  .review-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 
     h3 {
-      font-size: 2.2rem;
+      font-size: 1.13rem;
       margin: 0;
-    }
-
-    button {
-      background: transparent;
-      border: none;
-      color: red;
-      font-size: 1.2rem;
-      cursor: pointer;
+      color: var(--primary-blue);
+      font-weight: 700;
+      letter-spacing: -0.01em;
     }
   }
 
-  p {
-    font-size: 1.4rem;
+  .review-title {
+    font-size: 1.09rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 7px 0 5px 0;
+    word-break: break-all;
+  }
+
+  .review-content {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+    word-break: break-all;
+  }
+`;
+
+const ReportBtn = styled.button`
+  background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 1.01rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  &:hover, &:focus {
+    background: var(--primary-blue-hover);
+    color: #fff;
   }
 `;
 
@@ -180,11 +205,11 @@ const Review = ({ review = {} }) => {
       <ReviewWrapper>
         <div className="review-top">
           <h3>{member_name} 회원님</h3>
-          <button onClick={openModal}>신고</button>
+          <ReportBtn onClick={openModal}>신고</ReportBtn>
         </div>
         <ReviewScore score={review_star} />
-        <div>{review_title}</div>
-        <p>{review_content}</p>
+        <div className="review-title">{review_title}</div>
+        <div className="review-content">{review_content}</div>
       </ReviewWrapper>
 
       {modalVisible && (

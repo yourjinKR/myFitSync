@@ -165,7 +165,8 @@ useEffect(() => {
         console.error('이미지 URL 가져오기 실패:', error);
         imageUrls = [];
       }
-
+      
+      
       const trainerData = {
         member_idx: data.member_idx,
         member_email: data.member_email,
@@ -176,7 +177,7 @@ useEffect(() => {
           ? data.awards.map(a => `${a.awards_category} - ${a.awards_name}`)
           : [],
         availableTime: data.member_time
-          ? `월~토 ${data.member_time} (일요일 휴무)`
+          ? `${data.member_time}`
           : '',
         priceBase: data.member_price || 0,
         reviewList: data.reviews || [],
@@ -186,6 +187,8 @@ useEffect(() => {
         gym_idx: data.gym_idx,
         gymInfo: data.gymInfo,
         member_hidden: data.member_hidden,
+        member_purpose : data.member_purpose,
+        member_day: data.member_day,
 
         // 채팅방 생성 시 필요한 필드들
         member_name: data.member_name,
@@ -200,7 +203,7 @@ useEffect(() => {
         member_intro: data.member_intro,
         member_disease: data.member_disease
       };
-
+      console.log(trainerData);
       // 레슨 데이터도 함께 불러오기
       const lessonRes = await axios.get(`/trainer/lesson/${trainerIdx}`);
       const lessons = lessonRes.data || [];
@@ -320,7 +323,11 @@ useEffect(() => {
         member_info: editedTrainer.description || '',
         member_info_image: editedTrainer.images?.map(img => img.id).join(',') || '',
         gym_idx: editedTrainer.gymInfo?.gym_idx || editedTrainer.gym_idx || null,
+        member_purpose: editedTrainer.member_purpose || '',
+        member_day: editedTrainer.member_day || '',
+        member_time: editedTrainer.member_time || '',
       };
+      console.log('[payload]', payload);
       try {
         await axios.put(`/trainer/update/${trainerIdx}`, payload, {
           withCredentials: true,
@@ -386,6 +393,7 @@ useEffect(() => {
           onMoreClick={() => setActiveTab('후기')}
           lessons={sortedLessons}
           onLessonsChange={newLessons => handleChange('lessons', newLessons)}
+          onTimeChange={(start, end) => handleChange('member_time', `${start}~${end}`)}
         />
       )}
 

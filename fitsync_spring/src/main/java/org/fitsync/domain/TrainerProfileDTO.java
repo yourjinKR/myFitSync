@@ -13,7 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 public class TrainerProfileDTO {
     private int member_idx, member_price, gym_idx, member_hidden;
-    private String member_name, member_image, member_info, member_info_image, member_time, member_intro, member_email;
+    private String member_name, member_image, member_info, member_info_image, member_time, 
+    			   member_intro, member_email, member_purpose, member_day;
 
     // 연관 VO들
     private List<AwardsVO> awards;
@@ -32,5 +33,7 @@ public class TrainerProfileDTO {
         this.member_email = vo.getMember_email();
         this.gym_idx = vo.getGym_idx();
         this.member_hidden = vo.getMember_hidden();
+        this.member_purpose = vo.getMember_purpose();
+        this.member_day = vo.getMember_day();
         }
 }

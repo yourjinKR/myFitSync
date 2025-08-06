@@ -123,6 +123,9 @@
 	    <if test="member_info != null">member_info = #{member_info},</if>
 	    <if test="member_info_image != null">member_info_image = #{member_info_image},</if>
 	    <if test="gym_idx != null">gym_idx = #{gym_idx},</if>
+	    <if test="member_day != null">member_day = #{member_day},</if>
+	    <if test="member_time != null">member_time = #{member_time},</if>
+	    <if test="member_purpose != null">member_purpose = #{member_purpose},</if>
 	  </set>
 	  WHERE member_idx = #{member_idx}
 	</update>
