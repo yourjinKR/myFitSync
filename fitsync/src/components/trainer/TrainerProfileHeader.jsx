@@ -222,11 +222,11 @@ const SwitchWrap = styled.div`
 
 const purposeList = [
   { key: '체중관리', color: '#4A90E2' },
-  { key: '근육증가', color: '#7ED957' },
-  { key: '체형교정', color: '#FFB800' },
-  { key: '체력증진', color: '#FF6F61' },
-  { key: '재활', color: '#A259FF' },
-  { key: '바디프로필', color: '#00C2C7' }
+  { key: '근육증가', color: '#4A90E2' },
+  { key: '체형교정', color: '#4A90E2' },
+  { key: '체력증진', color: '#4A90E2' },
+  { key: '재활', color: '#4A90E2' },
+  { key: '바디프로필', color: '#4A90E2' }
 ];
 
 // 목적별 아이콘 매핑
@@ -254,17 +254,12 @@ const PurposeTag = styled.button`
   cursor: ${({ $edit }) => ($edit ? 'pointer' : 'default')};
   opacity: ${({ $selected }) => ($selected ? 1 : 0.45)};
   box-shadow: ${({ $selected }) => ($selected ? '0 0.05rem 0.2rem rgba(0,0,0,0.10)' : 'none')};
-  transition: opacity 0.18s, box-shadow 0.18s;
+  transition: none;
   text-shadow:
     -1px -1px 0 #222,
      1px -1px 0 #222,
     -1px  1px 0 #222,
      1px  1px 0 #222;
-  &:hover {
-    opacity: 1;
-    box-shadow: 0 0.08rem 0.3rem rgba(0,0,0,0.13);
-    border: 2px solid #fff;
-  }
 `;
 
 const PurposeRow = styled.div`

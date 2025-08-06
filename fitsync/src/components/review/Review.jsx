@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 const ReviewWrapper = styled.div`
   border-radius: 14px;
   box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.10);
-  width: 100%;
+  width: 92%;
   padding: 22px 18px 18px 18px;
   border: 1.5px solid var(--border-light);
   background: var(--bg-tertiary);
@@ -15,28 +15,57 @@ const ReviewWrapper = styled.div`
   display: flex;
   flex-direction: column;
   margin-bottom: 22px;
+  margin-left: 18px;
   position: relative;
 
   .review-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    gap: 12px;
+  }
 
-    h3 {
-      font-size: 1.13rem;
-      margin: 0;
-      color: var(--primary-blue);
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
+  .profile-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .profile-image {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-light);
+    background: var(--bg-secondary);
+  }
+
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .member-name {
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--primary-blue);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .review-date {
+    font-size: 0.9rem;
+    color: var(--text-tertiary);
+    margin: 0;
   }
 
   .review-title {
-    font-size: 1.09rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     color: var(--text-primary);
-    margin: 7px 0 5px 0;
+    margin: 12px 0 6px 55px;
     word-break: break-all;
   }
 
@@ -44,7 +73,7 @@ const ReviewWrapper = styled.div`
     font-size: 1.05rem;
     color: var(--text-secondary);
     line-height: 1.7;
-    margin: 0;
+    margin: 0 0 0 55px;
     word-break: break-all;
   }
 `;
@@ -58,6 +87,7 @@ const ReportBtn = styled.button`
   font-size: 1.01rem;
   font-weight: 700;
   cursor: pointer;
+  margin-bottom: 14px;
   transition: background 0.18s, color 0.18s;
   &:hover, &:focus {
     background: var(--primary-blue-hover);
@@ -159,11 +189,12 @@ const Button = styled.button`
 
 const Review = ({ review = {} }) => {
   const {
-    review_idx,
+    matching_idx,
     review_title,
     review_content,
     review_star,
-    member_name
+    member_name,
+    member_image,
   } = review;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -183,7 +214,7 @@ const Review = ({ review = {} }) => {
     }
 
     const reportData = {
-      idx_num: review_idx,
+      idx_num: matching_idx,
       report_category: 'review',
       report_content: reportReason,
       report_hidden: 0,
@@ -204,10 +235,22 @@ const Review = ({ review = {} }) => {
     <>
       <ReviewWrapper>
         <div className="review-top">
-          <h3>{member_name} 회원님</h3>
+          <div className="profile-section">
+            <img 
+              className="profile-image" 
+              src={member_image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDUiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCA0NSA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjIuNSIgY3k9IjIyLjUiIHI9IjIyLjUiIGZpbGw9IiNGNUY1RjUiLz4KPGNpcmNsZSBjeD0iMjIuNSIgY3k9IjE3IiByPSI4IiBmaWxsPSIjQzRDNEM0Ii8+CjxwYXRoIGQ9Ik0zNiA0MEMzNiAzMi4yNjggMjkuNzMyIDI2IDIyIDI2UzggMzIuMjY4IDggNDBIMzZaIiBmaWxsPSIjQzRDNEM0Ii8+Cjwvc3ZnPgo='} 
+              alt={`${member_name || '익명'} 프로필`}
+              onError={(e) => {
+                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDUiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCA0NSA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjIuNSIgY3k9IjIyLjUiIHI9IjIyLjUiIGZpbGw9IiNGNUY1RjUiLz4KPGNpcmNsZSBjeD0iMjIuNSIgY3k9IjE3IiByPSI4IiBmaWxsPSIjQzRDNEM0Ii8+CjxwYXRoIGQ9Ik0zNiA0MEMzNiAzMi4yNjggMjkuNzMyIDI2IDIyIDI2UzggMzIuMjY4IDggNDBIMzZaIiBmaWxsPSIjQzRDNEM0Ii8+Cjwvc3ZnPgo=';
+              }}
+            />
+            <div className="profile-info">
+              <h3 className="member-name">{member_name || '익명'} 회원님</h3>
+              <ReviewScore score={review_star} />
+            </div>
+          </div>
           <ReportBtn onClick={openModal}>신고</ReportBtn>
         </div>
-        <ReviewScore score={review_star} />
         <div className="review-title">{review_title}</div>
         <div className="review-content">{review_content}</div>
       </ReviewWrapper>

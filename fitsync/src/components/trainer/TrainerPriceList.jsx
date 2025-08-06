@@ -2,6 +2,15 @@ import React from 'react';
 import styled from 'styled-components';
 
 // TrainerIntroSection과 통일된 스타일
+const Container = styled.div`
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+`;
+
 const Section = styled.section`
   padding: 22px 0 18px 0;
   border-bottom: 1.5px solid var(--border-light);
@@ -171,9 +180,7 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
     : lessons;
 
   return (
-    <Section>
-      <SectionTitle>가격표</SectionTitle>
-
+    <Container>
       {isEdit && (
         <>
           <Label>기본 회당 가격</Label>
@@ -247,7 +254,7 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
       {!isEdit && sortedLessons.length === 0 && (
         <p style={{ color: 'var(--text-tertiary)' }}>가격표가 등록되지 않았습니다.</p>
       )}
-    </Section>
+    </Container>
   );
 };
 

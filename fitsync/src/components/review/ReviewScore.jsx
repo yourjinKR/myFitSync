@@ -6,8 +6,8 @@ import styled from 'styled-components';
 
 const StarScore = styled.div`
   svg {
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
   }
   path {
     color: gold;

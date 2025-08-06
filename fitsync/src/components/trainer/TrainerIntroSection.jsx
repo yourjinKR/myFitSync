@@ -54,7 +54,7 @@ const SectionTitle = styled.h3`
   font-weight: 800;
   margin-bottom: 13px;
   font-size: 2.22rem;
-  color: var(--primary-blue);
+  color: white;
   letter-spacing: -0.01em;
   position: relative;
   z-index: 2;
@@ -69,6 +69,7 @@ const SectionTitle = styled.h3`
     border-radius: 2px;
     margin: 10px 0 0 0;
     margin-left: 0; // 왼쪽 정렬
+    margin-bottom: 30px;
     position: relative;
     left: 0;
   }
@@ -106,7 +107,8 @@ const AwardIconCircle = styled.span`
 
 const CertList = styled.ul`
   list-style: none;
-  padding-left: 0;
+  padding-left: 20px;
+  padding-right: 20px;
   font-size: 1.09rem;
   color: var(--text-primary);
   margin-bottom: 0.7rem;
@@ -116,6 +118,10 @@ const CertList = styled.ul`
     transition: color 0.18s;
     &:hover { color: var(--primary-blue); }
   }
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 `;
 
 const InfoContent = styled.div`
@@ -124,13 +130,17 @@ const InfoContent = styled.div`
   line-height: 1.7;
   white-space: pre-line;
   margin-bottom: 0.5rem;
+  padding-left: 20px;
+  padding-right: 20px;
   @media (max-width: 500px) {
     font-size: 0.98rem;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 `;
 
 const ReviewItem = styled.div`
-  padding: 12px;
+  padding: 12px 20px;
   margin-bottom: 10px;
   background-color: var(--bg-tertiary);
   border-radius: 8px;
@@ -152,6 +162,10 @@ const ReviewItem = styled.div`
     font-weight: bold;
     color: var(--primary-blue);
   }
+
+  @media (max-width: 500px) {
+    padding: 12px 8px;
+  }
 `;
 
 const MoreButton = styled.button`
@@ -168,6 +182,15 @@ const MoreButton = styled.button`
   &:hover {
     color: var(--primary-blue-hover);
     background: var(--bg-tertiary);
+  }
+`;
+
+const MoreButtonContainer = styled.div`
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
   }
 `;
 
@@ -205,6 +228,12 @@ const NoGym = styled.div`
   font-size: 1.01rem;
   text-align: center;
   margin: 1.2rem 0 1.5rem 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 `;
 
 const EditField = styled.input`
@@ -314,6 +343,33 @@ const TimeRow = styled.div`
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+`;
+
+const EditContainer = styled.div`
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+`;
+
+const TimeLabel = styled.div`
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--primary-blue-light);
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 `;
 
 const daysKor = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
@@ -334,6 +390,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
   const [awards, setAwards] = useState([]);
   const [selectedAward, setSelectedAward] = useState(null);
   const [newAward, setNewAward] = useState({ category: '', name: '', file: null });
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     const fetchAwards = async () => {
@@ -344,7 +401,21 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         console.error('Failed to fetch awards:', err);
       }
     };
-    if (trainerIdx) fetchAwards();
+    
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`/trainer/reviews/${trainerIdx}`);
+        const reviewData = Array.isArray(res.data) ? res.data : [];
+        setReviews(reviewData);
+      } catch (err) {
+        console.error('Failed to fetch reviews:', err);
+      }
+    };
+    
+    if (trainerIdx) {
+      fetchAwards();
+      fetchReviews();
+    }
   }, [trainerIdx]);
 
   const handleAwardChange = (field, value) => setNewAward(prev => ({ ...prev, [field]: value }));
@@ -465,7 +536,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         </CertList>
 
         {isEdit && (
-          <div style={{ marginTop: '13px' }}>
+          <EditContainer style={{ marginTop: '13px' }}>
             <EditLabel>
               카테고리:
               <EditSelect
@@ -492,7 +563,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
               <EditFileInput type="file" onChange={handleAwardFileChange} />
             </EditLabel>
             <MoreButton onClick={handleAwardSubmit}>+ 자격 사항 추가</MoreButton>
-          </div>
+          </EditContainer>
         )}
       </Section>
 
@@ -509,7 +580,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
         <SectionTitle>레슨 스케줄</SectionTitle>
         {isEdit ? (
           <>
-            <div style={{ marginBottom: '8px', fontWeight: 600, color: 'var(--primary-blue-light)' }}>가능 요일</div>
+            <TimeLabel>가능 요일</TimeLabel>
             <TimeRow>
               {daysKor.map((day) => (
                 <DayButton
@@ -522,7 +593,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
                 </DayButton>
               ))}
             </TimeRow>
-            <div style={{ marginBottom: '8px', fontWeight: 600, color: 'var(--primary-blue-light)' }}>가능 시간</div>
+            <TimeLabel>가능 시간</TimeLabel>
             <TimeRow>
               <TimeSelect
                 value={startTime}
@@ -556,13 +627,15 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
 
       <Section>
         <SectionTitle>최근 후기</SectionTitle>
-        {trainer.reviewList
-          ?.sort((a, b) => b.review_idx - a.review_idx)
-          .slice(0, 2)
-          .map((review) => (
-            <Review key={review.review_idx} review={review} />
+          {reviews
+            ?.sort((a, b) => b.matching_idx - a.matching_idx)
+            .slice(0, 2)
+            .map((review) => (
+              <Review key={review.matching_idx} review={review} />
           ))}
-        <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
+        <MoreButtonContainer>
+          <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
+        </MoreButtonContainer>
       </Section>
 
       <Section>

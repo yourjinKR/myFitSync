@@ -397,7 +397,7 @@ useEffect(() => {
         />
       )}
 
-      {activeTab === '후기' && <TrainerReviewSection reviews={trainer.reviewList} />}
+      {activeTab === '후기' && <TrainerReviewSection />}
 
       {/* 상담 버튼 */}
       {loginUserId !== trainer.member_email && (

@@ -6,6 +6,15 @@ import { ButtonSubmit } from '../../styles/FormStyles';
 import { GymUtil } from '../../utils/GymUtils';
 import { interpolate } from 'framer-motion';
 
+const Container = styled.div`
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+`;
+
 const GymSearchContainer = styled.div`
   margin-bottom: 15px;
   border: 1.5px solid var(--border-light);
@@ -273,7 +282,7 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
     };
 
     return (
-        <div>
+        <Container>
             <div>
                 {/* 이름 */}
                 {gymInfo?.gym_name}
@@ -332,7 +341,7 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
                     <MapTest position={position}/>
                 </MapContainer>
             ) : (<></>)}
-        </div>
+        </Container>
     );
 };
 

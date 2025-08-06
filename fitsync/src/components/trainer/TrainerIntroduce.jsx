@@ -4,6 +4,15 @@ import styled from 'styled-components';
 import ImageModal from './ImageModal';
 
 // 기존 Section 스타일과 동기화된 입력/이미지 스타일
+const Container = styled.div`
+  padding-left: 20px;
+  padding-right: 20px;
+  @media (max-width: 500px) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+`;
+
 const ImageGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -161,7 +170,7 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
   };
 
   return (
-    <>
+    <Container>
       {isEdit ? (
         <>
           <ImageGrid>
@@ -224,7 +233,7 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
           )}
         </>
       )}
-    </>
+    </Container>
   );
 };
 
