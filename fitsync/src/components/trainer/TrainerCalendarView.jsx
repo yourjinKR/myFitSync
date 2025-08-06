@@ -273,6 +273,9 @@ const WeekdaysRow = styled.div`
     background: linear-gradient(90deg, transparent, var(--primary-blue), transparent);
   }
 
+  & > div {
+    font-size: 1.4rem;
+  }
   ${({ weekmode }) => weekmode && `
     & + div > div{
       top: 2.5rem;
@@ -596,7 +599,7 @@ const Legend = styled.div`
   color: var(--text-primary);
   margin: 0;
   font-weight: 500;
-
+  
   div {
     display: flex;
     align-items: center;
@@ -608,6 +611,11 @@ const Legend = styled.div`
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
   }
+
+  & > div {
+    font-size: 1.6rem;
+  }
+
 
   @media (max-width: 600px) {
     gap: 1.5rem;
