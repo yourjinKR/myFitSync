@@ -187,11 +187,7 @@ const GymWrapper = styled.div`
 `;
 
 const ModalContent = styled.div`
-  padding: 3.2rem;
-  border-radius: 1.2rem;
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
+
 `;
 
 const ModalHeader = styled.h3`
@@ -199,7 +195,6 @@ const ModalHeader = styled.h3`
   font-size: 2.8rem;
   font-weight: 700;
   margin-bottom: 3.2rem;
-  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,48 +202,22 @@ const ModalHeader = styled.h3`
 `;
 
 const Form = styled.form`
-  display: flex;
-  flex-direction: ${(props) => (props.column ? "column" : "row")};
-  gap: 1.6rem;
-  margin-bottom: ${(props) => (props.marginBottom ? "2.4rem" : "0")};
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1.2rem;
-  }
 `;
 
 const Input = styled.input`
-  flex: ${(props) => (props.flex ? 1 : "initial")};
-  padding: 1.4rem 1.6rem;
-  border-radius: 0.8rem;
-  border: 2px solid var(--border-light);
-  background: var(--bg-primary);
+  width : ${(props) => props.width || '100%'};
+  padding : 1.4rem, 2.4rem;
+  font-size : 1.6rem;
+`;
+
+const SearchButton = styled.button`
+  background: var(--primary-blue);
+  padding: 1.4rem 2.4rem;
   color: var(--text-primary);
+  border-radius: 0.8rem;
   font-size: 1.6rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  height: 5.2rem;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    background: var(--bg-secondary);
-  }
-  
-  &:hover {
-    border-color: var(--border-medium);
-    background: var(--bg-tertiary);
-  }
-  
-  &::placeholder {
-    color: var(--text-tertiary);
-    font-weight: 400;
-  }
-  
-  @media (max-width: 768px) {
-    height: 4.8rem;
-  }
+  font-weight: 600;
+  margin : 0px 5px;
 `;
 
 const SubmitButton = styled(ButtonSubmit)`
@@ -926,10 +895,11 @@ const Gym = () => {
             setNewGym(prev => ({ ...prev, gym_address: e.target.value }))
           }
           flex
+          width = {"80%"}
         />
-        <SubmitButton type="submit" disabled={isLoading}>
+        <SearchButton type="submit" disabled={isLoading}>
           {isLoading ? "검색중..." : "찾기"}
-        </SubmitButton>
+        </SearchButton>
       </Form>
 
       <MapContainer style={{ marginBottom: "20px" }}>
