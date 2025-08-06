@@ -7,40 +7,40 @@ import { GymUtil } from '../../utils/GymUtils';
 import { interpolate } from 'framer-motion';
 
 const Container = styled.div`
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const GymSearchContainer = styled.div`
-  margin-bottom: 15px;
-  border: 1.5px solid var(--border-light);
-  border-radius: 10px;
-  padding: 18px 12px 14px 12px;
+  margin-bottom: 18px;
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  padding: 22px 15px 18px 15px;
   background: var(--bg-tertiary);
-  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+  box-shadow: 0 0.1rem 0.6rem rgba(74,144,226,0.1);
 `;
 
 const SearchForm = styled.form`
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
 `;
 
 const SearchInput = styled.input`
   flex: 1;
-  padding: 10px 12px;
-  border: 1.5px solid var(--border-medium);
-  border-radius: 8px;
-  font-size: 1.09rem;
+  padding: 12px 15px;
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  font-size: 1.3rem;
   background: var(--bg-secondary);
   color: var(--text-primary);
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-tertiary);
   }
   &::placeholder {
@@ -50,13 +50,13 @@ const SearchInput = styled.input`
 `;
 
 const SearchButton = styled.button`
-  padding: 10px 18px;
+  padding: 12px 22px;
   background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
   color: var(--text-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1.09rem;
+  font-size: 1.3rem;
   font-weight: 700;
   transition: background 0.18s;
   &:hover {
@@ -72,17 +72,17 @@ const SearchButton = styled.button`
 
 const GymListContainer = styled.div`
   overflow-y: auto;
-  border: 1.5px solid var(--border-light);
-  border-radius: 8px;
+  border: 2px solid var(--border-light);
+  border-radius: 10px;
   background: var(--bg-secondary);
-  margin-top: 8px;
+  margin-top: 10px;
 `;
 
 const GymItem = styled.div`
-  padding: 13px 10px 10px 10px;
+  padding: 16px 12px 12px 12px;
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
-  font-size: 1.09rem;
+  font-size: 1.3rem;
   background: var(--bg-tertiary);
   transition: background 0.18s;
   &:hover {
@@ -94,12 +94,12 @@ const GymItem = styled.div`
   .gym-name {
     font-weight: bold;
     color: var(--primary-blue);
-    margin-bottom: 2px;
-    font-size: 1.09rem;
+    margin-bottom: 3px;
+    font-size: 1.3rem;
   }
   .gym-address {
     color: var(--text-secondary);
-    font-size: 0.98rem;
+    font-size: 1.15rem;
   }
 `;
 
@@ -107,19 +107,19 @@ const PaginationContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 10px;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
 `;
 
 const PageButton = styled.button`
-  padding: 7px 13px;
-  border: 1.5px solid var(--border-light);
+  padding: 9px 16px;
+  border: 2px solid var(--border-light);
   background: ${props => props.active ? 'var(--primary-blue)' : 'var(--bg-tertiary)'};
   color: ${props => props.active ? 'white' : 'var(--text-primary)'};
-  border-radius: 7px;
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 1.01rem;
+  font-size: 1.2rem;
   font-weight: 600;
   transition: background 0.18s, color 0.18s;
   &:hover:not(:disabled) {
@@ -133,19 +133,19 @@ const PageButton = styled.button`
 `;
 
 const NoResults = styled.div`
-  padding: 20px;
+  padding: 25px;
   text-align: center;
   color: var(--text-tertiary);
-  font-size: 1.01rem;
+  font-size: 1.2rem;
 `;
 
 const MapContainer = styled.div`
   width: 100%;
-  height: 300px;
-  margin-bottom: 10px;
-  border-radius: 12px;
+  height: 350px;
+  margin-bottom: 12px;
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.08);
+  box-shadow: 0 0.1rem 0.6rem rgba(74,144,226,0.1);
   background: var(--bg-tertiary);
 `;
 
@@ -293,7 +293,7 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
             </div>
             {isEdit && (
                 <GymSearchContainer>
-                    <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-primary)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: 'var(--text-primary)' }}>
                         체육관 변경
                     </h4>
                     {/* 체육관 검색 */}

@@ -12,7 +12,7 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'; // 수�
 
 // Styled Components
 const Section = styled.section`
-  padding: 22px 0 18px 0;
+  padding: 28px 0 22px 0;
   background: var(--bg-secondary);
   position: relative;
 
@@ -29,22 +29,22 @@ const Section = styled.section`
       content: '';
       display: block;
       width: calc(100% - 1px); // 좌우 여백을 주어 섹션 크기에 맞게
-      height: 14px;
+      height: 16px;
       background: #23272f;
       position: absolute;
-      top: -7px;
-      border-radius: 7px;
+      top: -8px;
+      border-radius: 8px;
       z-index: 1;
     }
   }
 
   @media (max-width: 500px) {
-    padding: 16px 0 12px 0;
+    padding: 20px 0 16px 0;
     & + &::before {
-      width: calc(100% - 16px);
-      height: 9px;
-      left: 8px;
-      top: -4px;
+      width: calc(100% - 20px);
+      height: 12px;
+      left: 10px;
+      top: -6px;
     }
   }
 `;
@@ -52,35 +52,35 @@ const Section = styled.section`
 // SectionTitle과 내용 구분선
 const SectionTitle = styled.h3`
   font-weight: 800;
-  margin-bottom: 13px;
-  font-size: 2.22rem;
+  margin-bottom: 16px;
+  font-size: 2.8rem;
   color: white;
   letter-spacing: -0.01em;
   position: relative;
   z-index: 2;
-  padding-left: 20px; // 제목을 오른쪽으로 이동
+  padding-left: 25px; // 제목을 오른쪽으로 이동
 
   &::after {
     content: '';
     display: block;
-    width: calc(100% - 40px); // 전체 너비에서 좌우 잘라냄
-    height: 3px;
+    width: calc(100% - 50px); // 전체 너비에서 좌우 잘라냄
+    height: 4px;
     background: var(--primary-blue-light);
     border-radius: 2px;
-    margin: 10px 0 0 0;
+    margin: 12px 0 0 0;
     margin-left: 0; // 왼쪽 정렬
-    margin-bottom: 30px;
+    margin-bottom: 35px;
     position: relative;
     left: 0;
   }
 
   @media (max-width: 500px) {
-    font-size: 2.09rem;
-    padding-left: 8px;
+    font-size: 2.4rem;
+    padding-left: 12px;
     &::after {
-      width: calc(100% - 16px);
-      height: 2px;
-      margin-top: 7px;
+      width: calc(100% - 24px);
+      height: 3px;
+      margin-top: 9px;
       left: 0;
     }
   }
@@ -91,93 +91,97 @@ const AwardIconCircle = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.1em;
-  height: 2.1em;
+  width: 2.8em;
+  height: 2.8em;
   border-radius: 50%;
   background: ${({ category }) =>
     category === '자격증' ? '#4A90E2'
     : category === '학위' ? '#FFB800'
     : '#A259FF'};
-  margin-right: 0.7em;
+  margin-right: 1em;
   vertical-align: middle;
-  box-shadow: 0 0.08em 0.3em rgba(0,0,0,0.10);
+  box-shadow: 0 0.12em 0.4em rgba(0,0,0,0.15);
   color: #fff;
-  font-size: 1.3em;
+  font-size: 1.8em;
 `;
 
 const CertList = styled.ul`
   list-style: none;
-  padding-left: 20px;
-  padding-right: 20px;
-  font-size: 1.09rem;
+  padding-left: 25px;
+  padding-right: 25px;
+  font-size: 1.6rem;
   color: var(--text-primary);
-  margin-bottom: 0.7rem;
+  margin-bottom: 1rem;
   li {
-    margin-bottom: 8px;
+    margin-bottom: 15px;
     cursor: pointer;
     transition: color 0.18s;
+    display: flex;
+    align-items: center;
     &:hover { color: var(--primary-blue); }
   }
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 1.4rem;
   }
 `;
 
 const InfoContent = styled.div`
-  font-size: 1.09rem;
-  color: var(--text-secondary);
+  font-size: 1.6rem;
+  color: white;
   line-height: 1.7;
   white-space: pre-line;
-  margin-bottom: 0.5rem;
-  padding-left: 20px;
-  padding-right: 20px;
+  margin-bottom: 0.8rem;
+  padding-left: 25px;
+  padding-right: 25px;
+  font-weight: 600;
   @media (max-width: 500px) {
-    font-size: 0.98rem;
-    padding-left: 8px;
-    padding-right: 8px;
+    font-size: 1.4rem;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const ReviewItem = styled.div`
-  padding: 12px 20px;
-  margin-bottom: 10px;
+  padding: 15px 25px;
+  margin-bottom: 12px;
   background-color: var(--bg-tertiary);
-  border-radius: 8px;
-  font-size: 1.05rem;
+  border-radius: 10px;
+  font-size: 1.25rem;
   color: var(--text-primary);
   line-height: 1.6;
 
   strong {
     display: block;
     color: var(--text-tertiary);
-    margin-bottom: 3px;
-    font-size: 0.89rem;
+    margin-bottom: 4px;
+    font-size: 1.05rem;
     font-weight: 600;
   }
 
   h4 {
-    margin: 3px 0 5px;
-    font-size: 1.09rem;
+    margin: 4px 0 6px;
+    font-size: 1.3rem;
     font-weight: bold;
     color: var(--primary-blue);
   }
 
   @media (max-width: 500px) {
-    padding: 12px 8px;
+    padding: 15px 12px;
   }
 `;
 
 const MoreButton = styled.button`
-  margin-top: 7px;
+  margin-top: 9px;
   background: none;
   border: none;
   color: var(--primary-blue);
-  font-size: 1.01rem;
+  font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
   padding: 0;
-  border-radius: 0.7rem;
+  border-radius: 0.8rem;
   transition: color 0.18s, background 0.18s;
   &:hover {
     color: var(--primary-blue-hover);
@@ -186,11 +190,11 @@ const MoreButton = styled.button`
 `;
 
 const MoreButtonContainer = styled.div`
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
@@ -209,8 +213,8 @@ const ModalOverlay = styled.div`
 
 const ModalContent = styled.div`
   background: var(--bg-secondary);
-  padding: 18px;
-  border-radius: 10px;
+  padding: 22px;
+  border-radius: 12px;
   max-width: 92vw;
   max-height: 90vh;
   text-align: center;
@@ -218,37 +222,37 @@ const ModalContent = styled.div`
   img {
     max-width: 100%;
     max-height: 60vh;
-    border-radius: 8px;
-    margin-top: 1rem;
+    border-radius: 10px;
+    margin-top: 1.2rem;
   }
 `;
 
 const NoGym = styled.div`
   color: var(--text-tertiary);
-  font-size: 1.01rem;
+  font-size: 1.2rem;
   text-align: center;
-  margin: 1.2rem 0 1.5rem 0;
-  padding-left: 20px;
-  padding-right: 20px;
+  margin: 1.5rem 0 1.8rem 0;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const EditField = styled.input`
   width: 100%;
-  font-size: 1.09rem;
+  font-size: 1.3rem;
   color: var(--text-primary);
   background: var(--bg-tertiary);
-  border: 1.5px solid var(--border-medium);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  margin-top: 4px;
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
+  margin-top: 6px;
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
   &::placeholder {
@@ -259,45 +263,45 @@ const EditField = styled.input`
 
 const EditSelect = styled.select`
   width: 100%;
-  font-size: 1.09rem;
+  font-size: 1.3rem;
   color: var(--text-primary);
   background: var(--bg-tertiary);
-  border: 1.5px solid var(--border-medium);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  margin-top: 4px;
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
+  margin-top: 6px;
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
 `;
 
 const EditLabel = styled.label`
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   color: var(--primary-blue-light);
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   display: block;
 `;
 
 const EditFileInput = styled.input`
-  margin-top: 4px;
-  margin-bottom: 10px;
+  margin-top: 6px;
+  margin-bottom: 12px;
   color: var(--text-primary);
   background: var(--bg-tertiary);
-  border-radius: 8px;
-  padding: 8px 0;
+  border-radius: 10px;
+  padding: 10px 0;
   &::file-selector-button {
     background: var(--primary-blue);
     color: #fff;
     border: none;
-    border-radius: 6px;
-    padding: 6px 14px;
-    font-size: 1.01rem;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 1.2rem;
     cursor: pointer;
-    margin-right: 10px;
+    margin-right: 12px;
   }
 `;
 
@@ -305,12 +309,12 @@ const EditFileInput = styled.input`
 const DayButton = styled.button`
   background: ${({ selected }) => (selected ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
   color: ${({ selected }) => (selected ? '#fff' : 'var(--text-primary)')};
-  border: 1.5px solid var(--border-light);
-  border-radius: 7px;
-  padding: 7px 14px;
-  margin-right: 7px;
-  margin-bottom: 7px;
-  font-size: 1.01rem;
+  border: 2px solid var(--border-light);
+  border-radius: 9px;
+  padding: 9px 16px;
+  margin-right: 9px;
+  margin-bottom: 9px;
+  font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.18s, color 0.18s, border 0.18s;
@@ -322,17 +326,17 @@ const DayButton = styled.button`
 
 // 시간 선택 셀렉트 스타일
 const TimeSelect = styled.select`
-  font-size: 1.09rem;
+  font-size: 1.3rem;
   color: var(--text-primary);
   background: var(--bg-tertiary);
-  border: 1.5px solid var(--border-medium);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin-right: 10px;
-  margin-bottom: 7px;
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  padding: 10px 15px;
+  margin-right: 12px;
+  margin-bottom: 9px;
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
 `;
@@ -340,35 +344,37 @@ const TimeSelect = styled.select`
 const TimeRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
-  padding-left: 20px;
-  padding-right: 20px;
+  margin-bottom: 12px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const EditContainer = styled.div`
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const TimeLabel = styled.div`
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--primary-blue-light);
-  padding-left: 20px;
-  padding-right: 20px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: white;
+  font-size: 1.5rem;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 1.3rem;
   }
 `;
 

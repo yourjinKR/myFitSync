@@ -3,17 +3,17 @@ import styled from 'styled-components';
 
 // TrainerIntroSection과 통일된 스타일
 const Container = styled.div`
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const Section = styled.section`
-  padding: 22px 0 18px 0;
-  border-bottom: 1.5px solid var(--border-light);
+  padding: 28px 0 22px 0;
+  border-bottom: 2px solid var(--border-light);
   background: var(--bg-secondary);
 
   &:last-of-type {
@@ -21,69 +21,69 @@ const Section = styled.section`
   }
 
   @media (max-width: 500px) {
-    padding: 16px 0 12px 0;
+    padding: 20px 0 16px 0;
   }
 `;
 
 const SectionTitle = styled.h3`
   font-weight: 800;
-  margin-bottom: 13px;
-  font-size: 1.22rem;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
   color: var(--primary-blue);
   letter-spacing: -0.01em;
   @media (max-width: 500px) {
-    font-size: 1.09rem;
+    font-size: 1.3rem;
   }
 `;
 
 const PriceItem = styled.div`
   background-color: var(--bg-tertiary);
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
   color: var(--text-primary);
-  font-size: 1.13rem;
+  font-size: 1.4rem;
   line-height: 1.6;
 
   strong {
-    font-size: 1.13rem;
+    font-size: 1.4rem;
     color: var(--primary-blue);
   }
 
   div {
-    margin-top: 6px;
+    margin-top: 8px;
   }
 `;
 
 const Input = styled.input`
   width: 100%;
-  font-size: 1.09rem;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border-medium);
+  font-size: 1.3rem;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border: 2px solid var(--border-medium);
   background: var(--bg-tertiary);
   color: var(--text-primary);
   box-sizing: border-box;
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
 `;
 
 const InlineInput = styled.input`
-  width: 90px;
-  font-size: 1.09rem;
-  padding: 7px 10px;
-  margin-right: 12px;
-  border-radius: 7px;
-  border: 1.5px solid var(--border-medium);
+  width: 100px;
+  font-size: 1.3rem;
+  padding: 9px 12px;
+  margin-right: 15px;
+  border-radius: 9px;
+  border: 2px solid var(--border-medium);
   background: var(--bg-tertiary);
   color: var(--text-primary);
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
 `;
@@ -91,22 +91,22 @@ const InlineInput = styled.input`
 const Controls = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 `;
 
 const AddButton = styled.button`
   background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
   color: var(--text-primary);
   border: none;
-  padding: 8px 16px;
-  font-size: 1.01rem;
-  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 700;
-  margin-top: 2px;
-  margin-bottom: 2px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   transition: background 0.18s;
   &:disabled {
     background: var(--border-medium);
@@ -118,19 +118,19 @@ const RemoveButton = styled.button`
   background-color: var(--warning);
   color: var(--text-primary);
   border: none;
-  padding: 7px 13px;
-  font-size: 0.98rem;
-  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 1.15rem;
+  border-radius: 9px;
   cursor: pointer;
   font-weight: 600;
-  margin-left: 8px;
+  margin-left: 10px;
 `;
 
 const Label = styled.label`
   color: var(--primary-blue-light);
   font-weight: 600;
-  margin-right: 6px;
-  font-size: 1.01rem;
+  margin-right: 8px;
+  font-size: 1.2rem;
 `;
 
 const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
@@ -252,7 +252,7 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
       })}
 
       {!isEdit && sortedLessons.length === 0 && (
-        <p style={{ color: 'var(--text-tertiary)' }}>가격표가 등록되지 않았습니다.</p>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '1.3rem' }}>가격표가 등록되지 않았습니다.</p>
       )}
     </Container>
   );

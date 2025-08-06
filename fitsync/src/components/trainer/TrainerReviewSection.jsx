@@ -7,7 +7,7 @@ import ReviewInsert from '../review/ReviewInsert';
 import styled from 'styled-components';
 
 const Section = styled.section`
-  padding: 22px 0 18px 0;
+  padding: 28px 0 22px 0;
   background: var(--bg-secondary);
   position: relative;
 
@@ -24,66 +24,66 @@ const Section = styled.section`
       content: '';
       display: block;
       width: calc(100% - 1px); // 좌우 여백을 주어 섹션 크기에 맞게
-      height: 14px;
+      height: 16px;
       background: #23272f;
       position: absolute;
-      top: -7px;
-      border-radius: 7px;
+      top: -8px;
+      border-radius: 8px;
       z-index: 1;
     }
   }
 
   @media (max-width: 500px) {
-    padding: 16px 0 12px 0;
+    padding: 20px 0 16px 0;
     & + &::before {
-      width: calc(100% - 16px);
-      height: 9px;
-      left: 8px;
-      top: -4px;
+      width: calc(100% - 20px);
+      height: 12px;
+      left: 10px;
+      top: -6px;
     }
   }
 `;
 
 const Container = styled.div`
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const SectionTitle = styled.h2`
   font-weight: 800;
-  margin-bottom: 13px;
-  font-size: 1.22rem;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
   color: white;
   letter-spacing: -0.01em;
   position: relative;
   z-index: 2;
-  padding-left: 20px;
+  padding-left: 25px;
 
   &::after {
     content: '';
     display: block;
-    width: calc(100% - 40px);
-    height: 3px;
+    width: calc(100% - 50px);
+    height: 4px;
     background: var(--primary-blue-light);
     border-radius: 2px;
-    margin: 10px 0 0 0;
+    margin: 12px 0 0 0;
     margin-left: 0;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
     position: relative;
     left: 0;
   }
 
   @media (max-width: 500px) {
-    font-size: 1.09rem;
-    padding-left: 8px;
+    font-size: 1.3rem;
+    padding-left: 12px;
     &::after {
-      width: calc(100% - 16px);
-      height: 2px;
-      margin-top: 7px;
+      width: calc(100% - 24px);
+      height: 3px;
+      margin-top: 9px;
       left: 0;
     }
   }
@@ -91,21 +91,21 @@ const SectionTitle = styled.h2`
 
 const ReviewCount = styled.p`
   color: var(--text-tertiary);
-  font-size: 1.01rem;
-  margin-bottom: 10px;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
 `;
 
 const WriteButton = styled.button`
   background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
   color: var(--text-primary);
   border: none;
-  padding: 9px 18px;
-  font-size: 1.01rem;
-  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 1.2rem;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 700;
-  margin-bottom: 18px;
-  margin-top: 2px;
+  margin-bottom: 22px;
+  margin-top: 4px;
   transition: background 0.18s;
   &:hover {
     background: var(--primary-blue-hover);
@@ -114,7 +114,7 @@ const WriteButton = styled.button`
 `;
 
 const ReviewList = styled.div`
-  margin-top: 10px;
+  margin-top: 15px;
 `;
 
 const TrainerReviewSection = () => {

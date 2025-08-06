@@ -5,36 +5,36 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 
 const ReviewWrapper = styled.div`
-  border-radius: 14px;
-  box-shadow: 0 0.08rem 0.5rem rgba(74,144,226,0.10);
+  border-radius: 16px;
+  box-shadow: 0 0.1rem 0.6rem rgba(74,144,226,0.12);
   width: 92%;
-  padding: 22px 18px 18px 18px;
-  border: 1.5px solid var(--border-light);
+  padding: 28px 22px 22px 22px;
+  border: 2px solid var(--border-light);
   background: var(--bg-tertiary);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  margin-bottom: 22px;
-  margin-left: 18px;
+  margin-bottom: 28px;
+  margin-left: 22px;
   position: relative;
 
   .review-top {
     display: flex;
     align-items: center;
-    margin-bottom: 12px;
-    gap: 12px;
+    margin-bottom: 15px;
+    gap: 15px;
   }
 
   .profile-section {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex: 1;
   }
 
   .profile-image {
-    width: 45px;
-    height: 45px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--border-light);
@@ -44,11 +44,11 @@ const ReviewWrapper = styled.div`
   .profile-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
 
   .member-name {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     margin: 0;
     color: var(--primary-blue);
     font-weight: 700;
@@ -56,24 +56,24 @@ const ReviewWrapper = styled.div`
   }
 
   .review-date {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     color: var(--text-tertiary);
     margin: 0;
   }
 
   .review-title {
-    font-size: 1.15rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: var(--text-primary);
-    margin: 12px 0 6px 55px;
+    margin: 15px 0 8px 67px;
     word-break: break-all;
   }
 
   .review-content {
-    font-size: 1.05rem;
+    font-size: 1.25rem;
     color: var(--text-secondary);
     line-height: 1.7;
-    margin: 0 0 0 55px;
+    margin: 0 0 0 67px;
     word-break: break-all;
   }
 `;
@@ -82,12 +82,12 @@ const ReportBtn = styled.button`
   background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
   color: var(--text-primary);
   border: none;
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: 1.01rem;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   transition: background 0.18s, color 0.18s;
   &:hover, &:focus {
     background: var(--primary-blue-hover);
@@ -107,21 +107,21 @@ const ModalOverlay = styled.div`
 
 const ModalBox = styled.div`
   background: var(--bg-secondary);
-  border-radius: 1.2rem;
-  padding: 2.2rem 1.5rem 1.5rem 1.5rem;
+  border-radius: 1.5rem;
+  padding: 2.8rem 1.8rem 1.8rem 1.8rem;
   width: 95vw;
-  max-width: 400px;
+  max-width: 450px;
   box-sizing: border-box;
-  box-shadow: 0 0.2rem 1.2rem rgba(0,0,0,0.18);
+  box-shadow: 0 0.25rem 1.5rem rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
   align-items: stretch;
 `;
 
 const ModalTitle = styled.h2`
-  margin: 0 0 1.2rem 0;
+  margin: 0 0 1.5rem 0;
   color: var(--primary-blue);
-  font-size: 1.4rem;
+  font-size: 1.7rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: -0.01em;
@@ -129,27 +129,27 @@ const ModalTitle = styled.h2`
 
 const ModalDesc = styled.div`
   color: var(--text-secondary);
-  font-size: 1.08rem;
+  font-size: 1.3rem;
   text-align: center;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
-  min-height: 90px;
+  min-height: 110px;
   resize: none;
-  margin-bottom: 1.2rem;
-  padding: 1rem;
-  font-size: 1.08rem;
-  border-radius: 0.7rem;
+  margin-bottom: 1.5rem;
+  padding: 1.2rem;
+  font-size: 1.3rem;
+  border-radius: 0.9rem;
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  border: 1.5px solid var(--border-light);
+  border: 2px solid var(--border-light);
   transition: border 0.18s, background 0.18s;
   outline: none;
 
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
 
@@ -161,19 +161,19 @@ const TextArea = styled.textarea`
 const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: 0.7rem;
+  gap: 0.9rem;
 `;
 
 const Button = styled.button`
-  padding: 0.7rem 1.6rem;
-  font-size: 1.08rem;
+  padding: 0.9rem 2rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  border-radius: 0.8rem;
+  border-radius: 1rem;
   border: none;
   background: ${({ primary }) =>
     primary ? 'linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%)' : 'var(--border-light)'};
   color: ${({ primary }) => (primary ? 'var(--text-primary)' : 'var(--text-secondary)')};
-  box-shadow: ${({ primary }) => primary ? '0 0.05rem 0.2rem rgba(74,144,226,0.10)' : 'none'};
+  box-shadow: ${({ primary }) => primary ? '0 0.06rem 0.25rem rgba(74,144,226,0.12)' : 'none'};
   transition: background 0.18s, color 0.18s;
   cursor: pointer;
 

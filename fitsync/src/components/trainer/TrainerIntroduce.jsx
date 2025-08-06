@@ -5,68 +5,69 @@ import ImageModal from './ImageModal';
 
 // 기존 Section 스타일과 동기화된 입력/이미지 스타일
 const Container = styled.div`
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
   @media (max-width: 500px) {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 `;
 
 const ImageGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 15px;
+  margin-bottom: 20px;
 `;
 
 const ImageBox = styled.div`
   position: relative;
   background-color: var(--bg-tertiary);
-  height: 80px;
+  width: 100%;
+  height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
-  font-size: 1.3rem;
-  border-radius: 8px;
+  font-size: 1.6rem;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1.5px solid var(--border-light);
+  border: 2px solid var(--border-light);
   transition: border 0.18s, background 0.18s;
   cursor: pointer;
 
   img {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
     object-fit: cover;
     background: var(--bg-tertiary);
   }
 
   &:hover {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
 `;
 
 const RemoveButton = styled.button`
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 6px;
+  right: 6px;
   background: rgba(0,0,0,0.7);
   border: none;
   color: #fff;
   font-weight: bold;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
-  line-height: 18px;
+  line-height: 20px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   z-index: 2;
   transition: background 0.18s;
   &:hover {
@@ -75,29 +76,32 @@ const RemoveButton = styled.button`
 `;
 
 const Description = styled.p`
-  font-size: 1.13rem;
-  color: var(--text-secondary);
+  font-size: 1.5rem;
+  color: var(--text-primary);
   line-height: 1.7;
   white-space: pre-line;
-  margin-top: 8px;
+  margin-top: 12px;
 `;
 
 const EditTextarea = styled.textarea`
   width: 100%;
-  font-size: 1.09rem;
+  font-size: 1.5rem;
   color: var(--text-primary);
   background: var(--bg-tertiary);
-  border: 1.5px solid var(--border-medium);
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 12px;
+  margin-bottom: 12px;
   line-height: 1.7;
-  resize: vertical;
-  min-height: 100px;
+  resize: none;
+  min-height: 140px;
+  max-height: 350px;
+  height: auto;
+  overflow-y: auto;
   transition: border 0.18s, background 0.18s;
   &:focus {
-    border: 1.5px solid var(--primary-blue);
+    border: 2px solid var(--primary-blue);
     background: var(--bg-secondary);
   }
   &::placeholder {
@@ -111,10 +115,29 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
   const [modalImgIndex, setModalImgIndex] = useState(0);
   const [resolvedImages, setResolvedImages] = useState(images);
   const inputRefs = useRef([]);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     setResolvedImages(images);
   }, [images]);
+
+  // 텍스트 영역 자동 높이 조절
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = '140px'; // 최소 높이로 초기화
+      const scrollHeight = textarea.scrollHeight;
+      const newHeight = Math.min(Math.max(scrollHeight, 140), 350);
+      textarea.style.height = newHeight + 'px';
+    }
+  };
+
+  // description이 변경될 때마다 높이 조절
+  useEffect(() => {
+    if (isEdit && textareaRef.current) {
+      setTimeout(adjustTextareaHeight, 0); // 다음 렌더링 사이클에서 실행
+    }
+  }, [description, isEdit]);
 
   const handleImageClick = (img, idx) => {
     if (!isEdit && img?.url) {
@@ -191,7 +214,7 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
                     </RemoveButton>
                   </>
                 ) : (
-                  <span style={{ fontSize: '2.2rem', color: 'var(--text-tertiary)' }}>+</span>
+                  <span style={{ fontSize: '2.8rem', color: 'var(--text-tertiary)' }}>+</span>
                 )}
                 <input
                   type="file"
@@ -204,8 +227,14 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
             ))}
           </ImageGrid>
           <EditTextarea
-            value={description}
-            onChange={(e) => onChange('description', e.target.value)}
+            ref={textareaRef}
+            value={description || ''}
+            onChange={(e) => {
+              onChange('description', e.target.value);
+              setTimeout(adjustTextareaHeight, 0);
+            }}
+            onInput={adjustTextareaHeight}
+            onFocus={adjustTextareaHeight}
             placeholder="선생님 소개를 입력해 주세요."
           />
         </>
@@ -222,7 +251,7 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
               </ImageBox>
             ))}
           </ImageGrid>
-          <Description>{description}</Description>
+          <Description>{description || '아직 소개글이 작성되지 않았습니다.'}</Description>
           {modalOpen && (
             <ImageModal
               images={resolvedImages}

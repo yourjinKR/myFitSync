@@ -15,8 +15,8 @@ import styled from 'styled-components';
 // 컨테이너
 const Container = styled.div`
   margin: 0 auto;
-  padding: 1.5rem;
-  font-size: 1.4rem;
+  padding: 2rem;
+  font-size: 1.6rem;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
@@ -26,7 +26,7 @@ const Container = styled.div`
 const TabMenu = styled.div`
   display: flex;
   border-bottom: 1px solid var(--border-light);
-  margin-top: 2rem;
+  margin-top: 2.5rem;
   background: var(--bg-secondary);
   border-radius: 1rem 1rem 0 0;
   overflow: hidden;
@@ -35,13 +35,13 @@ const TabMenu = styled.div`
 // 탭 버튼
 const TabButton = styled.button`
   flex: 1;
-  padding: 1rem 0;
+  padding: 1.5rem 0;
   border: none;
   background: ${({ $active }) => ($active ? 'var(--bg-tertiary)' : 'transparent')};
-  font-weight: 600;
-  font-size: 1.2rem;
+  font-weight: 700;
+  font-size: 1.6rem;
   color: ${({ $active }) => ($active ? 'var(--primary-blue)' : 'var(--text-secondary)')};
-  border-bottom: ${({ $active }) => ($active ? '0.2rem solid var(--primary-blue)' : 'transparent')};
+  border-bottom: ${({ $active }) => ($active ? '0.25rem solid var(--primary-blue)' : 'transparent')};
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 `;
@@ -49,21 +49,21 @@ const TabButton = styled.button`
 // 플로팅 버튼 (상담하기 버튼)
 const FloatingButton = styled.button`
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 4rem;
-  height: 4rem;
+  bottom: 2rem;
+  right: 2rem;
+  width: 5rem;
+  height: 5rem;
   border-radius: 50%;
   background: var(--primary-blue);
   color: var(--text-primary);
   border: none;
-  box-shadow: 0 0.2rem 0.6rem rgba(0,0,0,0.2);
+  box-shadow: 0 0.3rem 0.8rem rgba(0,0,0,0.25);
   cursor: pointer;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 2.5rem;
   transition: background 0.2s;
   
   &:hover {
@@ -91,25 +91,25 @@ const ModalBackdrop = styled.div`
 // 모달 박스
 const ModalBox = styled.div`
   background: var(--bg-secondary);
-  padding: 2rem;
-  border-radius: 1rem;
-  font-size: 1.1rem;
+  padding: 2.5rem;
+  border-radius: 1.2rem;
+  font-size: 1.4rem;
   color: var(--text-primary);
-  min-width: 260px;
-  box-shadow: 0 0.2rem 1rem rgba(0,0,0,0.15);
+  min-width: 320px;
+  box-shadow: 0 0.3rem 1.2rem rgba(0,0,0,0.2);
   text-align: center;
 `;
 
 // 모달 버튼
 const ModalButton = styled.button`
-  margin: 1rem 0.5rem 0 0;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.6rem;
+  margin: 1.2rem 0.6rem 0 0;
+  padding: 0.8rem 1.5rem;
+  border-radius: 0.8rem;
   border: none;
   background: var(--primary-blue);
   color: var(--text-primary);
-  font-size: 1.1rem;
-  font-weight: 500;
+  font-size: 1.3rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
@@ -424,6 +424,8 @@ const TrainerDetailView = () => {
         // editedTrainer의 필드를 trainer 형태로 변환하여 상태 업데이트
         const updatedTrainer = {
           ...trainer,
+          intro: editedTrainer.intro || '',
+          description: editedTrainer.description || '',
           member_intro: editedTrainer.intro || '',
           member_info: editedTrainer.description || '',
           member_info_image: editedTrainer.images?.map(img => img.id).join(',') || '',
@@ -437,6 +439,7 @@ const TrainerDetailView = () => {
         };
         
         setTrainer(updatedTrainer);
+        setEditedTrainer(updatedTrainer); // editedTrainer도 동기화
         console.log('[수정 완료] 업데이트된 trainer:', updatedTrainer);
       } catch (err) {
         alert('수정 중 오류가 발생했습니다.');
