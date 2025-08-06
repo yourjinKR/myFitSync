@@ -12,6 +12,7 @@ import OverviewTab from './tabs/OverviewTab';
 import AnalyticsTab from './tabs/AnalyticsTab';
 import PerformanceTab from './tabs/PerformanceTab';
 import LogsTab from './tabs/LogsTab';
+import TokenAnalyticsTab from './tabs/TokenAnalyticsTab';
 import LogDetailModal from './logs/LogDetailModal';
 import { useSelector } from 'react-redux';
 
@@ -113,6 +114,8 @@ const AdminApiContainer = () => {
                 <TabNavigation 
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    fetchApiLogs={fetchApiLogs}
+                    loading={loading}
                 />
                 
                 {/* 필터 패널 */}
@@ -121,7 +124,7 @@ const AdminApiContainer = () => {
                     setFilters={filterStates}
                     apiLogs={apiLogs}
                     loading={loading}
-                    fetchApiLogs={fetchApiLogs}
+                    activeTab={activeTab}
                 />
 
                 {/* 활성 필터 표시 */}
@@ -146,6 +149,15 @@ const AdminApiContainer = () => {
                         logs={apiLogs}
                         filteredLogs={filteredLogs}
                         stats={stats}
+                        isLoading={loading}
+                        dateRange={dateRange}
+                    />
+                )}
+
+                {activeTab === 'tokens' && (
+                    <TokenAnalyticsTab 
+                        logs={apiLogs}
+                        filteredLogs={filteredLogs}
                         isLoading={loading}
                         dateRange={dateRange}
                     />

@@ -13,7 +13,7 @@ export const useApiLogs = () => {
     const fetchApiLogs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/admin/getAllApi');
+            const response = await axios.get('/admin/apis');
             setApiLogs(response.data.map(item => AiUtil.parseApiLogData(item)));
         } catch (error) {
             console.error('API 로그 가져오기 실패:', error);

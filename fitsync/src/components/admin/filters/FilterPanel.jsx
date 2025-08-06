@@ -9,14 +9,14 @@ import { Button, Select } from '../../../styles/chartStyle';
  * @param {Object} props.setFilters - 필터 상태 변경 함수들
  * @param {Array} props.apiLogs - 전체 API 로그 데이터
  * @param {boolean} props.loading - 로딩 상태
- * @param {Function} props.fetchApiLogs - API 로그 새로고침 함수
+ * @param {string} props.activeTab - 현재 활성 탭
  */
-const FilterPanel = ({ 
+const FilterPanel = ({
     filters, 
     setFilters, 
     apiLogs, 
     loading, 
-    fetchApiLogs 
+    activeTab
 }) => {
     const {
         searchTerm, setSearchTerm,
@@ -28,6 +28,8 @@ const FilterPanel = ({
         dateRange, setDateRange
     } = filters;
 
+    console.log(activeTab);
+    
     return (
         <FilterContainer>
             <FilterHeader>
@@ -118,15 +120,17 @@ const FilterPanel = ({
                 </FilterGroup>
                 
                 {/* 정렬 */}
-                <FilterGroup>
-                    <FilterLabel>정렬</FilterLabel>
-                    <StyledSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                        <option value="newest">최신순</option>
-                        <option value="oldest">오래된순</option>
-                        <option value="tokens">토큰순</option>
-                        <option value="time">응답시간순</option>
-                    </StyledSelect>
-                </FilterGroup>
+                {activeTab === 'logs' && (
+                  <FilterGroup>
+                      <FilterLabel>정렬</FilterLabel>
+                      <StyledSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                          <option value="newest">최신순</option>
+                          <option value="oldest">오래된순</option>
+                          <option value="tokens">토큰순</option>
+                          <option value="time">응답시간순</option>
+                      </StyledSelect>
+                  </FilterGroup>
+                )}
                 
                 {/* 시작일 */}
                 <FilterGroup>
@@ -147,13 +151,6 @@ const FilterPanel = ({
                         onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
                     />
                 </FilterGroup>
-                
-                {/* 새로고침 버튼 */}
-                <RefreshButtonGroup>
-                    <RefreshButton onClick={fetchApiLogs} disabled={loading}>
-                        {loading ? '🔄 로딩 중...' : '🔄 새로고침'}
-                    </RefreshButton>
-                </RefreshButtonGroup>
             </FilterGrid>
         </FilterContainer>
     );
@@ -253,39 +250,6 @@ const DateInput = styled.input`
     outline: none;
     border-color: var(--primary-blue);
     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
-  }
-`;
-
-const RefreshButtonGroup = styled.div`
-  display: flex;
-  align-items: end;
-`;
-
-const RefreshButton = styled.button`
-  width: 100%;
-  padding: 0.5rem 1rem;
-  background: var(--primary-blue);
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
-  font-size: 1.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover:not(:disabled) {
-    background: var(--primary-blue-hover);
-    transform: translateY(-1px);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0);
   }
 `;
 
