@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../action/userAction';
-import { getGoogleAuthUrl } from '../../utils/ChatApi';
 
 const SpinnerAnimation = keyframes`
   0% { transform: rotate(0deg);}
@@ -196,74 +195,50 @@ const GoogleLoginButton = ({ setLoading }) => {
   const fetchUserInfo = async (accessToken) => {
     try {
       // 1단계: Google에서 사용자 정보 가져오기
+      console.log('Google에서 사용자 정보 가져오는 중...');
       const response = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
       
       if (!response.ok) {
-        throw new Error('사용자 정보를 가져오는데 실패했습니다.');
+        throw new Error('Google에서 사용자 정보를 가져오는데 실패했습니다.');
       }
 
       const userInfo = await response.json();
+      console.log('Google 사용자 정보:', userInfo);
       
       // 2단계: 백엔드로 사용자 정보 전송
-      const apiUrl = getGoogleAuthUrl(); // ChatApi에서 환경별 URL 가져오기
-      console.log('Google Auth API URL:', apiUrl);
+      // 프로덕션에서는 API Routes 우선 사용, 로컬에서는 proxy 사용
+      const apiUrl = process.env.NODE_ENV === 'development' 
+        ? '/auth/google'  // 로컬: package.json proxy
+        : '/api/auth/google';  // 프로덕션: Vercel API Routes
       
-      let result;
-      let retryCount = 0;
-      const maxRetries = 2;
+      console.log('백엔드 API URL:', apiUrl);
+      console.log('전송할 사용자 데이터:', {
+        email: userInfo.email,
+        name: userInfo.name,
+        picture: userInfo.picture
+      });
       
-      // 재시도 로직 (vercel.json rewrites 실패 시 API Routes로 폴백)
-      while (retryCount <= maxRetries) {
-        try {
-          // axios 사용 (withCredentials 자동 적용)
-          result = await axios.post(apiUrl, {
-            email: userInfo.email,
-            name: userInfo.name,
-            picture: userInfo.picture
-          });
-          
-          break; // 성공하면 루프 종료
-          
-        } catch (error) {
-          console.error(`시도 ${retryCount + 1} 실패:`, error);
-          
-          if (error.response?.status === 405 && retryCount === 0) {
-            // 첫 번째 시도에서 405 오류 시 API Routes로 폴백
-            console.log('Rewrites 실패, API Routes로 폴백 시도...');
-            retryCount++;
-            
-            // 프로덕션에서 API Routes 사용
-            const fallbackUrl = process.env.NODE_ENV === 'development' 
-              ? '/auth/google' 
-              : '/api/auth/google';
-            
-            try {
-              result = await axios.post(fallbackUrl, {
-                email: userInfo.email,
-                name: userInfo.name,
-                picture: userInfo.picture
-              });
-              break;
-            } catch (fallbackError) {
-              console.error('API Routes 폴백도 실패:', fallbackError);
-              throw fallbackError;
-            }
-          } else {
-            throw error;
-          }
-        }
-      }
+      // axios 사용 (withCredentials 자동 적용)
+      const result = await axios.post(apiUrl, {
+        email: userInfo.email,
+        name: userInfo.name,
+        picture: userInfo.picture
+      });
 
+      console.log('백엔드 응답:', result.data);
       const data = result.data;
 
       if (data.success) {
+        console.log('로그인 성공, Redux 상태 업데이트 중...');
         await dispatch(setUser(data.user));
         
         // 약간의 지연 후 페이지 이동 (Redux 상태 업데이트 완료 대기)
         setTimeout(() => {
           if (!data.user.isLogin) {
+            console.log('신규 사용자 - 회원가입 페이지로 이동');
             nav('/register');
           } else {
+            console.log('기존 사용자 - 메인 페이지로 이동');
             nav('/');
           }
         }, 50);
@@ -273,22 +248,27 @@ const GoogleLoginButton = ({ setLoading }) => {
       }
     } catch (error) {
       console.error('사용자 정보 가져오기 오류:', error);
+      
       if (error.response) {
         // 백엔드 서버 응답 오류
+        console.error('백엔드 응답 오류:', error.response.status, error.response.data);
+        
         if (error.response.status === 405) {
-          alert('서버 설정 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+          alert('서버 설정 오류가 발생했습니다. 관리자에게 문의하세요.');
         } else if (error.response.status === 500) {
           alert('서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } else if (error.response.status === 502 || error.response.status === 503) {
-          alert('백엔드 서버에 연결할 수 없습니다. Cloudflare Tunnel이 실행 중인지 확인해주세요.');
+          alert('백엔드 서버에 연결할 수 없습니다.\nCloudflare Tunnel과 백엔드 서버가 실행 중인지 확인해주세요.');
         } else {
-          alert(`로그인 처리 중 오류가 발생했습니다. (${error.response.status})`);
+          alert(`로그인 처리 중 오류가 발생했습니다. (${error.response.status})\n${error.response.data?.message || ''}`);
         }
       } else if (error.request) {
         // 네트워크 오류
+        console.error('네트워크 오류:', error.request);
         alert('네트워크 연결을 확인해주세요.');
       } else {
         // 기타 오류
+        console.error('기타 오류:', error.message);
         alert('Google 로그인 중 예상치 못한 오류가 발생했습니다.');
       }
     } finally {

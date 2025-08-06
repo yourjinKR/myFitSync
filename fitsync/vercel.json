@@ -22,7 +22,7 @@
       "destination": "https://chen-creature-receiving-media.trycloudflare.com/member/$1"
     },
     {
-      "source": "/((?!api|auth|member|_next|favicon\\.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|map)).*)",
+      "source": "/((?!api|auth|member|_next|static|favicon\\.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|map)).*)",
       "destination": "/index.html"
     }
   ],
