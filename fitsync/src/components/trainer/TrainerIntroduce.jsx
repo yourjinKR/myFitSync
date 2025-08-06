@@ -18,6 +18,11 @@ const ImageGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
   margin-bottom: 20px;
+  
+  /* 이미지가 4장 이상일 때 더보기 상태에서는 2행으로 표시 */
+  &.expanded {
+    grid-template-rows: repeat(2, 1fr);
+  }
 `;
 
 const ImageBox = styled.div`
@@ -75,6 +80,40 @@ const RemoveButton = styled.button`
   }
 `;
 
+const MoreOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+`;
+
+const MoreText = styled.div`
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+`;
+
+const MoreCount = styled.div`
+  font-size: 1.3rem;
+  opacity: 0.9;
+`;
+
 const Description = styled.p`
   font-size: 1.5rem;
   color: var(--text-primary);
@@ -114,11 +153,13 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
   const [modalOpen, setModalOpen] = useState(false);
   const [modalImgIndex, setModalImgIndex] = useState(0);
   const [resolvedImages, setResolvedImages] = useState(images);
+  const [showAllImages, setShowAllImages] = useState(false);
   const inputRefs = useRef([]);
   const textareaRef = useRef(null);
 
   useEffect(() => {
     setResolvedImages(images);
+    setShowAllImages(false); // 이미지가 변경될 때마다 더보기 상태 초기화
   }, [images]);
 
   // 텍스트 영역 자동 높이 조절
@@ -150,6 +191,13 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
     setModalOpen(false);
     setModalImgIndex(0);
   };
+
+  const handleShowMore = () => {
+    setShowAllImages(true);
+  };
+
+  const hasMoreImages = resolvedImages.length > 3;
+  const displayImages = showAllImages ? resolvedImages : resolvedImages.slice(0, 3);
 
   const handleFileChange = async (e, index) => {
     const file = e.target.files[0];
@@ -240,14 +288,28 @@ const TrainerIntroduce = ({ images = [], description, isEdit, onChange, onImageU
         </>
       ) : (
         <>
-          <ImageGrid>
-            {resolvedImages.map((img, i) => (
+          <ImageGrid className={showAllImages && hasMoreImages ? 'expanded' : ''}>
+            {displayImages.map((img, i) => (
               <ImageBox
                 key={i}
                 onClick={() => handleImageClick(img, i)}
-                style={{ cursor: img?.url ? 'pointer' : 'default' }}
+                style={{ cursor: img?.url ? 'pointer' : 'default', position: 'relative' }}
               >
-                {img?.url ? <img src={img.url} alt={`trainer-img-${i}`} /> : null}
+                {img?.url ? (
+                  <>
+                    <img src={img.url} alt={`trainer-img-${i}`} />
+                    {/* 3번째 이미지이고 더 많은 이미지가 있을 때 더보기 오버레이 표시 */}
+                    {i === 2 && hasMoreImages && !showAllImages && (
+                      <MoreOverlay onClick={(e) => {
+                        e.stopPropagation();
+                        handleShowMore();
+                      }}>
+                        <MoreText>더보기</MoreText>
+                        <MoreCount>+{resolvedImages.length - 3}장</MoreCount>
+                      </MoreOverlay>
+                    )}
+                  </>
+                ) : null}
               </ImageBox>
             ))}
           </ImageGrid>

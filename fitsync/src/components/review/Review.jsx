@@ -7,15 +7,14 @@ import { useSelector } from 'react-redux';
 const ReviewWrapper = styled.div`
   border-radius: 16px;
   box-shadow: 0 0.1rem 0.6rem rgba(74,144,226,0.12);
-  width: 92%;
-  padding: 28px 22px 22px 22px;
+  width: 100%;
+  padding: 24px 20px;
   border: 2px solid var(--border-light);
   background: var(--bg-tertiary);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  margin-bottom: 28px;
-  margin-left: 22px;
+  margin-bottom: 20px;
   position: relative;
 
   .review-top {
@@ -48,7 +47,7 @@ const ReviewWrapper = styled.div`
   }
 
   .member-name {
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     margin: 0;
     color: var(--primary-blue);
     font-weight: 700;
@@ -56,25 +55,54 @@ const ReviewWrapper = styled.div`
   }
 
   .review-date {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: var(--text-tertiary);
     margin: 0;
   }
 
   .review-title {
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 15px 0 8px 67px;
     word-break: break-all;
+    line-height: 1.4;
   }
 
   .review-content {
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     color: var(--text-secondary);
     line-height: 1.7;
     margin: 0 0 0 67px;
     word-break: break-all;
+  }
+  
+  @media (max-width: 500px) {
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    
+    .profile-image {
+      width: 50px;
+      height: 50px;
+    }
+    
+    .member-name {
+      font-size: 1.5rem;
+    }
+    
+    .review-date {
+      font-size: 1.1rem;
+    }
+    
+    .review-title {
+      font-size: 1.4rem;
+      margin: 12px 0 6px 62px;
+    }
+    
+    .review-content {
+      font-size: 1.3rem;
+      margin: 0 0 0 62px;
+    }
   }
 `;
 

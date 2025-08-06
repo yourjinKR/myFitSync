@@ -149,6 +149,54 @@ const MapContainer = styled.div`
   background: var(--bg-tertiary);
 `;
 
+const GymInfoContainer = styled.div`
+  margin-bottom: 20px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-light);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 0.1rem 0.6rem rgba(74,144,226,0.1);
+`;
+
+const GymNameText = styled.div`
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  &:before {
+    content: '🏋️';
+    font-size: 1.6rem;
+  }
+  
+  @media (max-width: 500px) {
+    font-size: 1.6rem;
+  }
+`;
+
+const GymAddressText = styled.div`
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  
+  &:before {
+    content: '📍';
+    font-size: 1.3rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  
+  @media (max-width: 500px) {
+    font-size: 1.3rem;
+  }
+`;
+
 const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
     const position = {lat : gymInfo?.gym_latitude, lng : gymInfo?.gym_longitude} || null;
 
@@ -283,17 +331,19 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
 
     return (
         <Container>
-            <div>
-                {/* 이름 */}
-                {gymInfo?.gym_name}
-            </div>
-            <div>
-                {/* 주소 */}
-                {gymInfo?.gym_address}
-            </div>
+            {gymInfo && (
+                <GymInfoContainer>
+                    <GymNameText>
+                        {gymInfo.gym_name}
+                    </GymNameText>
+                    <GymAddressText>
+                        {gymInfo.gym_address}
+                    </GymAddressText>
+                </GymInfoContainer>
+            )}
             {isEdit && (
                 <GymSearchContainer>
-                    <h4 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: 'var(--text-primary)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '1.6rem', color: 'var(--text-primary)', fontWeight: '700' }}>
                         체육관 변경
                     </h4>
                     {/* 체육관 검색 */}

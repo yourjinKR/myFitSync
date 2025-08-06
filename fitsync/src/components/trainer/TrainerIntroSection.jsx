@@ -91,8 +91,8 @@ const AwardIconCircle = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.8em;
-  height: 2.8em;
+  width: 3.2em;
+  height: 3.2em;
   border-radius: 50%;
   background: ${({ category }) =>
     category === '자격증' ? '#4A90E2'
@@ -100,20 +100,26 @@ const AwardIconCircle = styled.span`
     : '#A259FF'};
   margin-right: 1em;
   vertical-align: middle;
-  box-shadow: 0 0.12em 0.4em rgba(0,0,0,0.15);
+  box-shadow: 0 0.15em 0.5em rgba(0,0,0,0.2);
   color: #fff;
-  font-size: 1.8em;
+  font-size: 2em;
+  
+  @media (max-width: 500px) {
+    width: 2.8em;
+    height: 2.8em;
+    font-size: 1.8em;
+  }
 `;
 
 const CertList = styled.ul`
   list-style: none;
   padding-left: 25px;
   padding-right: 25px;
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   color: var(--text-primary);
   margin-bottom: 1rem;
   li {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
     cursor: pointer;
     transition: color 0.18s;
     display: flex;
@@ -123,7 +129,23 @@ const CertList = styled.ul`
   @media (max-width: 500px) {
     padding-left: 12px;
     padding-right: 12px;
-    font-size: 1.4rem;
+    font-size: 1.6rem;
+  }
+`;
+
+const AwardName = styled.span`
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  transition: color 0.18s ease;
+  
+  @media (max-width: 750px) {
+    font-size: 1.7rem;
+  }
+  
+  @media (max-width: 500px) {
+    font-size: 1.5rem;
   }
 `;
 
@@ -140,35 +162,6 @@ const InfoContent = styled.div`
     font-size: 1.4rem;
     padding-left: 12px;
     padding-right: 12px;
-  }
-`;
-
-const ReviewItem = styled.div`
-  padding: 15px 25px;
-  margin-bottom: 12px;
-  background-color: var(--bg-tertiary);
-  border-radius: 10px;
-  font-size: 1.25rem;
-  color: var(--text-primary);
-  line-height: 1.6;
-
-  strong {
-    display: block;
-    color: var(--text-tertiary);
-    margin-bottom: 4px;
-    font-size: 1.05rem;
-    font-weight: 600;
-  }
-
-  h4 {
-    margin: 4px 0 6px;
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: var(--primary-blue);
-  }
-
-  @media (max-width: 500px) {
-    padding: 15px 12px;
   }
 `;
 
@@ -536,7 +529,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
                 {a.awards_category === '학위' && <SchoolIcon />}
                 {a.awards_category === '수상경력' && <EmojiEventsIcon />}
               </AwardIconCircle>
-               {a.awards_name}
+              <AwardName>{a.awards_name}</AwardName>
             </li>
           ))}
         </CertList>
