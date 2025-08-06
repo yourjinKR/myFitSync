@@ -194,83 +194,51 @@ const GoogleLoginButton = ({ setLoading }) => {
 
   const fetchUserInfo = async (accessToken) => {
     try {
-      // 1단계: Google에서 사용자 정보 가져오기
-      console.log('Google에서 사용자 정보 가져오는 중...');
       const response = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
       
       if (!response.ok) {
-        throw new Error('Google에서 사용자 정보를 가져오는데 실패했습니다.');
+        throw new Error('사용자 정보를 가져오는데 실패했습니다.');
       }
 
       const userInfo = await response.json();
-      console.log('Google 사용자 정보:', userInfo);
       
-      // 2단계: 백엔드로 사용자 정보 전송
-      // 프로덕션에서는 API Routes 우선 사용, 로컬에서는 proxy 사용
-      const apiUrl = process.env.NODE_ENV === 'development' 
-        ? '/auth/google'  // 로컬: package.json proxy
-        : '/api/auth/google';  // 프로덕션: Vercel API Routes
-      
-      console.log('백엔드 API URL:', apiUrl);
-      console.log('전송할 사용자 데이터:', {
+      // 사용자 정보를 백엔드로 전송
+      const result = await axios.post('/auth/google', {
         email: userInfo.email,
         name: userInfo.name,
         picture: userInfo.picture
-      });
-      
-      // axios 사용 (withCredentials 자동 적용)
-      const result = await axios.post(apiUrl, {
-        email: userInfo.email,
-        name: userInfo.name,
-        picture: userInfo.picture
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      console.log('백엔드 응답:', result.data);
-      const data = result.data;
-
-      if (data.success) {
-        console.log('로그인 성공, Redux 상태 업데이트 중...');
-        await dispatch(setUser(data.user));
+      if (result.data.success) {
+        await dispatch(setUser(result.data.user));
         
         // 약간의 지연 후 페이지 이동 (Redux 상태 업데이트 완료 대기)
         setTimeout(() => {
-          if (!data.user.isLogin) {
-            console.log('신규 사용자 - 회원가입 페이지로 이동');
+          if (!result.data.user.isLogin) {
             nav('/register');
           } else {
-            console.log('기존 사용자 - 메인 페이지로 이동');
-            nav('/');
+            // 저장된 리다이렉트 경로가 있으면 해당 경로로, 없으면 홈으로
+            const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+            if (redirectPath) {
+              sessionStorage.removeItem('redirectAfterLogin');
+              nav(redirectPath);
+            } else {
+              nav('/');
+            }
           }
         }, 50);
       } else {
-        console.error('백엔드 로그인 실패:', data.message);
-        alert(data.message || 'Google 로그인에 실패했습니다.');
+        console.error('백엔드 로그인 실패:', result.data.message);
+        alert(result.data.message || 'Google 로그인에 실패했습니다.');
       }
     } catch (error) {
       console.error('사용자 정보 가져오기 오류:', error);
-      
-      if (error.response) {
-        // 백엔드 서버 응답 오류
-        console.error('백엔드 응답 오류:', error.response.status, error.response.data);
-        
-        if (error.response.status === 405) {
-          alert('서버 설정 오류가 발생했습니다. 관리자에게 문의하세요.');
-        } else if (error.response.status === 500) {
-          alert('서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-        } else if (error.response.status === 502 || error.response.status === 503) {
-          alert('백엔드 서버에 연결할 수 없습니다.\nCloudflare Tunnel과 백엔드 서버가 실행 중인지 확인해주세요.');
-        } else {
-          alert(`로그인 처리 중 오류가 발생했습니다. (${error.response.status})\n${error.response.data?.message || ''}`);
-        }
-      } else if (error.request) {
-        // 네트워크 오류
-        console.error('네트워크 오류:', error.request);
-        alert('네트워크 연결을 확인해주세요.');
-      } else {
-        // 기타 오류
-        console.error('기타 오류:', error.message);
-        alert('Google 로그인 중 예상치 못한 오류가 발생했습니다.');
-      }
+      alert('사용자 정보를 가져오는 중 오류가 발생했습니다.');
     } finally {
       setLocalLoading(false);
       setLoading && setLoading(false);

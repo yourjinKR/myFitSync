@@ -28,19 +28,15 @@ export const useWebSocket = () => {
     const connect = async () => {
       isConnectingRef.current = true;
       
-      // 동적 WebSocket URL 생성 - 환경에 따라 적절한 URL 반환
+      // 동적 WebSocket URL 생성 - 개발/프로덕션 환경에 따라 적절한 URL 반환
       const getWebSocketUrl = () => {
-        // 개발 환경 - localhost:7070 백엔드 서버 사용
-        if (process.env.NODE_ENV === 'development') {
-          return 'http://localhost:7070/chat';
-        }
+        const currentHost = window.location.hostname;
+        const protocol = window.location.protocol;
         
-        // 프로덕션 환경 - Cloudflare Tunnel URL 사용
-        return 'https://chen-creature-receiving-media.trycloudflare.com/chat';
+        return `${protocol}//${currentHost}:7070/chat`;
       };
       
       const websocketUrl = getWebSocketUrl();
-      console.log('WebSocket 연결 URL:', websocketUrl);
       
       // STOMP 클라이언트 생성 및 설정
       const stompClient = new Client({
@@ -61,28 +57,23 @@ export const useWebSocket = () => {
         
         // WebSocket 연결 종료 시 처리
         onWebSocketClose: () => {
-          console.log('WebSocket 연결 종료');
           setConnected(false);
           isConnectingRef.current = false;
           
           // 재연결 시도 (최대 횟수 제한)
           if (reconnectAttemptsRef.current < maxReconnectAttempts) {
             reconnectAttemptsRef.current += 1;
-            console.log(`재연결 시도 ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
             setTimeout(() => {
               if (!connected && !isConnectingRef.current) {
                 connect();
               }
             }, 3000);
-          } else {
-            console.error('최대 재연결 시도 횟수 초과');
           }
         }
       });
 
       // 연결 성공 시 처리
       stompClient.onConnect = (frame) => {
-        console.log('WebSocket 연결 성공:', frame);
         isConnectingRef.current = false;
         setConnected(true);
         setClient(stompClient);
@@ -106,13 +97,11 @@ export const useWebSocket = () => {
 
       // 연결 해제 시 처리
       stompClient.onDisconnect = () => {
-        console.log('WebSocket 연결 해제');
         isConnectingRef.current = false;
         setConnected(false);
       };
 
       try {
-        console.log('WebSocket 연결 시도...');
         stompClient.activate();
       } catch (error) {
         console.error('STOMP 클라이언트 활성화 실패:', error);
