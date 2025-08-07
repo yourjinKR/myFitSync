@@ -35,8 +35,8 @@ const MuscleInner = styled.label`
 const ImgBox = styled.div`
   border: 2px solid var(--border-light);
   background: var(--bg-primary);
-  width: 6rem;
-  height: 6rem;
+  width: 8rem;
+  height: 8rem;
   border-radius: 12px;
   overflow: hidden;
   display: flex;

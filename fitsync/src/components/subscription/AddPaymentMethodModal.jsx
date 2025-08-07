@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { PaymentUtil, KAKAOPAY, TOSSPAYMENTS } from '../../utils/PaymentUtil';
+import { KakaoIcon } from '../member/KakaoLoginButton';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -190,6 +191,19 @@ const SuccessMessage = styled.div`
   font-size: 16px;
 `;
 
+export const TossIcon = styled.svg`
+  width: 24px;
+  height: 24px;
+  color: #0064ff; /* Toss 공식 색상 */
+`;
+
+const TossImageIcon = styled.img`
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: inline-block;
+`;
+
 const AddPaymentMethodModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -292,15 +306,21 @@ const AddPaymentMethodModal = ({ isOpen, onClose, onSuccess }) => {
       type: KAKAOPAY,
       title: '카카오페이',
       description: '카카오톡으로 간편하게',
-      icon: '💛',
+      icon: (
+        <KakaoIcon viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z" />
+        </KakaoIcon>
+      ),
       bgColor: '#FEE500'
     },
     {
       type: TOSSPAYMENTS,
       title: '토스페이먼츠',
       description: '신용카드, 체크카드',
-      icon: '💳',
-      bgColor: '#0064FF'
+      icon: (
+        <TossImageIcon src="/toss.png" alt="tossIcon" />
+      ),
+      bgColor: 'white'
     }
   ];
 

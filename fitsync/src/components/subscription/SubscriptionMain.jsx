@@ -1186,6 +1186,20 @@ const SubscriptionMain = () => {
     });
   };
 
+  const getRemainingDays = (lastPaymentDate) => {
+    if (!lastPaymentDate) return '-';
+
+    const paymentDate = new Date(lastPaymentDate);
+    const expiryDate = new Date(paymentDate);
+    expiryDate.setDate(paymentDate.getDate() + 31);
+
+    const today = new Date();
+    const diffTime = expiryDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // 남은 날짜
+
+    return diffDays > 0 ? `${diffDays}` : '';
+  };
+
   const handleSubscribe = () => {
     // 구독 결제 페이지로 이동하거나 결제수단 선택 모달 열기
     navigate('/subscription/methods?showModal=true&directPay=true');
@@ -1313,12 +1327,10 @@ const SubscriptionMain = () => {
               
             </PaymentInfoTitle>
             <PaymentInfoDetails>
-              {formatDate(recentOrder.order_status === 'READY' ? 
-                recentOrder.schedule_date : 
-                subscriptionData.lastPaymentDate
-              )} {' '}
-              {recentOrder.order_price?.toLocaleString() || '0'}원 {' '}
-              {recentOrder.order_status === 'READY' ? ' 결제 예정 🗓️ ' : ' 결제 완료! ✅ '}
+              {recentOrder.order_status === 'READY'
+                ? `${formatDate(recentOrder.schedule_date)} ${recentOrder.order_price?.toLocaleString()}원 결제 예정 🗓️`
+                : `${getRemainingDays(subscriptionData.lastPaymentDate)}일 뒤 구독이 만료됩니다 😪`
+              }
             </PaymentInfoDetails>
           </PaymentInfoSection>
           

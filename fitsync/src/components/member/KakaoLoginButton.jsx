@@ -39,7 +39,7 @@ const KakaoButton = styled.button`
   }
 `;
 
-const KakaoIcon = styled.svg`
+export const KakaoIcon = styled.svg`
   width: 22px;
   height: 22px;
   flex-shrink: 0;
