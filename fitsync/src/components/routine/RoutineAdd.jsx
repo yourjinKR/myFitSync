@@ -110,7 +110,11 @@ const RoutineAdd = () => {
     }
   }, []);
 
-  const handleSearch = () => {};
+  const handleSearch = () => {
+    setList(init.filter(item => 
+      item.pt_name.toLowerCase().includes(document.querySelector('input').value.toLowerCase())
+    ));
+  };
 
   // 카테고리 열기
   const handleFilter = () => {
