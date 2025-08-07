@@ -504,22 +504,38 @@ const Main = () => {
   
   // 스크롤 애니메이션을 위한 Intersection Observer
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
+    // 로그인 상태가 아닐 때만 애니메이션 설정
+    if (!isLogin) {
+      // 먼저 모든 섹션의 visible 클래스를 제거하여 초기 상태로 리셋
+      const sections = document.querySelectorAll('.promo-section');
+      sections.forEach((section) => {
+        section.classList.remove('visible');
+      });
 
-    const sections = document.querySelectorAll('.promo-section');
-    sections.forEach((section) => observer.observe(section));
+      // Intersection Observer 설정
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
 
-    return () => observer.disconnect();
-  }, []);
+      // 약간의 딜레이 후 Observer 적용 (DOM 업데이트 후)
+      const timeoutId = setTimeout(() => {
+        const sectionsToObserve = document.querySelectorAll('.promo-section');
+        sectionsToObserve.forEach((section) => observer.observe(section));
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+        observer.disconnect();
+      };
+    }
+  }, [isLogin]); // isLogin 상태 변화에 따라 재실행
   
   // 트레이너면 강제로 트레이너 메인페이지로 이동
   useEffect(() => {
