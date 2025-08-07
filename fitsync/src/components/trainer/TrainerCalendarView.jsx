@@ -1409,7 +1409,7 @@ useEffect(() => {
                             .slice()
                             .sort((a, b) => a.schedule_stime.localeCompare(b.schedule_stime))
                             .map(schedule => (
-                              <ScheduleLabel key={schedule.schedule_idx}>
+                              <ScheduleLabel key={schedule.schedule_idx} onClick={() => !isDeleteMode && handleMemberClick(schedule)}>
                                 {isDeleteMode && (
                                   <input
                                     type="checkbox"
@@ -1420,7 +1420,7 @@ useEffect(() => {
                                 )}
                                 <ScheduleContent
                                   $isDeleteMode={isDeleteMode}
-                                  onClick={() => !isDeleteMode && handleMemberClick(schedule)}
+                                 
                                   title={!isDeleteMode ? '운동 추가' : ''}
                                 >
                                   <div className="schedule-title">
