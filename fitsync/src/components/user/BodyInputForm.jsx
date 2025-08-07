@@ -132,7 +132,6 @@ const BodyInputForm = ({ onSuccess }) => {
     e.preventDefault();
     try {
       await axios.post(`/user/body/${member_idx}`, bodyData);
-      alert('인바디 정보가 등록되었습니다.');
       onSuccess?.();
     } catch (err) {
       console.error('인바디 등록 실패:', err);

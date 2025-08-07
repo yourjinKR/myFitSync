@@ -987,7 +987,17 @@ useEffect(() => {
   // 날짜 클릭 핸들러
   const handleDayClick = (dateStr) => {
     setSelectedDate(dateStr);
-    setShowModal(true);
+    
+    // 트레이너의 경우 운동기록이 있는 날짜만 모달 열기
+    if (isTrainer) {
+      if (recordDates.includes(dateStr)) {
+        setShowModal(true);
+      } else {
+        setShowPanel(true);
+      }
+    } else {
+      setShowModal(true);
+    }
   };
 
   // 일정 추가 모달 열기

@@ -87,7 +87,7 @@ const chartColors = {
   bmi: '#00BCD4',         // 청록색
 };
 
-const BodyComparisonChart = () => {
+const BodyComparisonChart = ({ onUpdate }) => {
   const [bodyData, setBodyData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('weight');
@@ -242,6 +242,7 @@ const BodyComparisonChart = () => {
               <BodyInputForm onSuccess={() => {
                 setShowModal(false);
                 fetchData();
+                if (onUpdate) onUpdate();
               }} />
             </ModalContent>
           </ModalOverlay>
@@ -276,6 +277,7 @@ const BodyComparisonChart = () => {
             <BodyInputForm onSuccess={() => {
               setShowModal(false);
               fetchData();
+              if (onUpdate) onUpdate();
             }} />
           </ModalContent>
         </ModalOverlay>

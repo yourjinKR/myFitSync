@@ -271,11 +271,11 @@ const MyPage = () => {
       )}
       <Section>
         <SectionTitle>최근 인바디 정보</SectionTitle>
-        <LatestBodyInfo onUpdate={handleBodyUpdate} />
+        <LatestBodyInfo key={chartKey} onUpdate={handleBodyUpdate} />
       </Section>
       <Section>
         <SectionTitle>인바디 변화 그래프</SectionTitle>
-        <BodyComparisonChart key={chartKey} />
+        <BodyComparisonChart key={chartKey} onUpdate={handleBodyUpdate} />
       </Section>
       <RoutineSection>
         <SectionTitle>내 루틴</SectionTitle>
