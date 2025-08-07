@@ -585,7 +585,7 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
   useEffect(() => {
     const fetchAwards = async () => {
       try {
-        const res = await axios.get(`/trainer/${trainerIdx}/awards`);
+        const res = await axios.get(`/trainer/awards/${trainerIdx}`);
         setAwards(res.data);
       } catch (err) {
         console.error('Failed to fetch awards:', err);

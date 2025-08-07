@@ -87,7 +87,13 @@ public class AuthTokenFilter implements Filter {
             "/manifest.json", // PWA manifest
             "/public",        // public 폴더
             "/resources",     // 리소스 폴더
-            "/assets"         // 에셋 폴더
+            "/assets",         // 에셋 폴더
+            "/trainer/profile",
+            "/trainer/lesson",
+            "/trainer/awards",
+            "/trainer/gym",
+            "/trainer/reviews",
+            "/trainer/images"
         };
         
         for (String path : publicPaths) {

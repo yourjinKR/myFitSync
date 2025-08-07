@@ -344,7 +344,7 @@ public class TrainerController {
     }
 
     // 특정 트레이너의 승인된 수상 경력 리스트 조회
-    @GetMapping("/{trainerIdx}/awards")
+    @GetMapping("/awards/{trainerIdx}")
     public ResponseEntity<List<AwardsVO>> getApprovedAwards(@PathVariable int trainerIdx) {
         List<AwardsVO> awards = awardsService.getApprovedAwards(trainerIdx);
         return ResponseEntity.ok(awards);
