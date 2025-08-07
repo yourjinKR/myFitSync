@@ -113,13 +113,6 @@ export const PrimaryButton = styled(BaseButton)`
   background: var(--primary-blue);
   color: var(--text-primary);
   border: 2px solid var(--primary-blue);
-  
-  &:hover {
-    background: var(--primary-blue-hover);
-    border-color: var(--primary-blue-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-  }
 `;
 
 // 플로팅 버튼 스타일
@@ -146,7 +139,7 @@ const RoutineView = () => {
   const targetMemberIdx = state?.targetMember;
   
   const { 
-    isSubscriber, 
+    isSubscriber, isLog
   } = useSubscription();
   
   const nav = useNavigate();
@@ -169,7 +162,7 @@ const RoutineView = () => {
         <PrimaryButton onClick={() => handleAddRoutine("custom")}>
           빠른 기록&emsp;+
         </PrimaryButton>
-        {isSubscriber && (
+        {(isSubscriber || isLog === false) && (
           <GradientButton flex={true} onClick={() => nav('/ai/routine')}>
             AI 추천&emsp;
             <BsStars style={{ fontSize: "1.7rem", position: "relative", zIndex: 2}}/>
@@ -178,7 +171,7 @@ const RoutineView = () => {
       </ButtonContainer>
 
       {/* 구독자가 아닐 때 플로팅 버튼 표시 */}
-      {!isSubscriber && (
+      {!isSubscriber && isLog && (
         <FloatingButton>
           <GradientButton 
             circular={true} 

@@ -50,7 +50,7 @@ const NavButton = styled.button`
   border-radius: 16px;
   margin: 0 2px;
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease;  
 
   svg {
     margin-bottom: 4px;
