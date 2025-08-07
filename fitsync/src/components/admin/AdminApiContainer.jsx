@@ -179,6 +179,7 @@ const AdminApiContainer = () => {
                         filteredLogs={filteredLogs}
                         isLoading={loading}
                         dateRange={dateRange}
+                        subscriberInfo={subscriberInfo}
                     />
                 )}
 

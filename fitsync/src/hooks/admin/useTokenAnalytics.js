@@ -13,12 +13,12 @@ export const useTokenAnalytics = (apiLogs, filteredLogs) => {
         // GPT-4o 가격 정보 (USD)
         const PRICING = {
             'gpt-4o': {
-                input: 5 / 1000000,  // $5 per 1M input tokens
-                output: 15 / 1000000 // $15 per 1M output tokens
+                input: 2.5 / 1000000,   // $2.50 per 1 M tokens
+                output: 10 / 1000000    // $10.00 per 1 M tokens
             },
             'gpt-3.5-turbo': {
-                input: 0.5 / 1000000,  // $0.5 per 1M input tokens
-                output: 1.5 / 1000000  // $1.5 per 1M output tokens
+                input: 1.5 / 1000000,   // $1.50 per 1 M tokens
+                output: 2.0 / 1000000    // $2.00 per 1 M tokens
             },
             default: {
                 input: 2 / 1000000,
@@ -253,6 +253,62 @@ export const useTokenAnalytics = (apiLogs, filteredLogs) => {
             };
         };
 
+        // 오늘의 데이터 계산
+        const calculateTodayStats = () => {
+            const today = new Date().toISOString().split('T')[0];
+            const todayLogs = filteredLogs.filter(log => {
+                if (!log.apilog_request_time) return false;
+                
+                const logDate = new Date(log.apilog_request_time);
+                if (isNaN(logDate.getTime())) return false;
+                
+                const logDateString = logDate.toISOString().split('T')[0];
+                return logDateString === today;
+            });
+
+            if (todayLogs.length === 0) {
+                return {
+                    totalRequests: 0,
+                    totalTokens: 0,
+                    totalCostKRW: 0,
+                    totalCostUSD: 0,
+                    successRate: 0,
+                    avgResponseTime: 0
+                };
+            }
+
+            const totalInputTokens = todayLogs.reduce((sum, log) => sum + (log.apilog_input_tokens || 0), 0);
+            const totalOutputTokens = todayLogs.reduce((sum, log) => sum + (log.apilog_output_tokens || 0), 0);
+            const totalTokens = totalInputTokens + totalOutputTokens;
+
+            // 정확한 비용 계산 (각 로그의 모델에 따라)
+            let totalCostUSD = 0;
+            todayLogs.forEach(log => {
+                const model = log.apilog_model || 'default';
+                const pricing = PRICING[model] || PRICING.default;
+                const inputCost = (log.apilog_input_tokens || 0) * pricing.input;
+                const outputCost = (log.apilog_output_tokens || 0) * pricing.output;
+                totalCostUSD += inputCost + outputCost;
+            });
+
+            const successCount = todayLogs.filter(log => log.apilog_status === 'success').length;
+            const totalResponseTime = todayLogs.reduce((sum, log) => {
+                const responseTime = parseFloat(log.apilog_total_time) || 0;
+                return sum + responseTime;
+            }, 0);
+
+            return {
+                totalRequests: todayLogs.length,
+                totalTokens,
+                totalInputTokens,
+                totalOutputTokens,
+                totalCostKRW: Math.round(totalCostUSD * USD_TO_KRW),
+                totalCostUSD: parseFloat(totalCostUSD.toFixed(4)),
+                successRate: todayLogs.length > 0 ? parseFloat(((successCount / todayLogs.length) * 100).toFixed(1)) : 0,
+                avgResponseTime: todayLogs.length > 0 ? parseFloat((totalResponseTime / todayLogs.length).toFixed(2)) : 0
+            };
+        };
+
         // 모든 분석 실행
         const overallStats = calculateOverallStats();
         const dailyData = groupByPeriod('daily');
@@ -263,6 +319,7 @@ export const useTokenAnalytics = (apiLogs, filteredLogs) => {
         const modelAnalysis = analyzeByModel();
         const hourlyPattern = analyzeHourlyPattern();
         const projections = calculateProjections(dailyData);
+        const todayStats = calculateTodayStats();
 
         return {
             overallStats,
@@ -274,6 +331,7 @@ export const useTokenAnalytics = (apiLogs, filteredLogs) => {
             modelAnalysis,
             hourlyPattern,
             projections,
+            todayStats,
             pricing: PRICING,
             exchangeRate: USD_TO_KRW
         };

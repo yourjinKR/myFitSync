@@ -27,7 +27,7 @@ ChartJS.register(
     ArcElement
 );
 
-const TokenAnalyticsTab = ({ logs, filteredLogs, isLoading, dateRange }) => {
+const TokenAnalyticsTab = ({ logs, filteredLogs, isLoading, dateRange, subscriberInfo }) => {
     const tokenAnalytics = useTokenAnalytics(logs, filteredLogs);
     const [selectedPeriod, setSelectedPeriod] = useState('daily');
     const [selectedView, setSelectedView] = useState('cost'); // tokens, cost
@@ -40,7 +40,7 @@ const TokenAnalyticsTab = ({ logs, filteredLogs, isLoading, dateRange }) => {
         );
     }
 
-    const { overallStats, dailyData, weeklyData, monthlyData, userAnalysis, modelAnalysis, hourlyPattern, projections } = tokenAnalytics;
+    const { overallStats, dailyData, weeklyData, monthlyData, userAnalysis, modelAnalysis, hourlyPattern, projections, todayStats } = tokenAnalytics;
 
     // 기간별 데이터 선택
     const getPeriodData = () => {
@@ -157,6 +157,48 @@ const TokenAnalyticsTab = ({ logs, filteredLogs, isLoading, dateRange }) => {
 
     return (
         <Container>
+            {/* 오늘의 핵심 지표 */}
+            <TodaySection>
+                <TodaySectionTitle>📅 오늘의 핵심 지표</TodaySectionTitle>
+                <TodayStatsGrid>
+                    <TodayStatCard highlight>
+                        <TodayStatIcon>🔥</TodayStatIcon>
+                        <TodayStatContent>
+                            <TodayStatTitle>금일 총 요청</TodayStatTitle>
+                            <TodayStatValue>{todayStats.totalRequests.toLocaleString()}</TodayStatValue>
+                            <TodayStatSubtext>실시간 API 호출</TodayStatSubtext>
+                        </TodayStatContent>
+                    </TodayStatCard>
+
+                    <TodayStatCard>
+                        <TodayStatIcon>💰</TodayStatIcon>
+                        <TodayStatContent>
+                            <TodayStatTitle>금일 비용</TodayStatTitle>
+                            <TodayStatValue>₩{todayStats.totalCostKRW.toLocaleString()}</TodayStatValue>
+                            <TodayStatSubtext>${todayStats.totalCostUSD.toFixed(2)}</TodayStatSubtext>
+                        </TodayStatContent>
+                    </TodayStatCard>
+
+                    <TodayStatCard>
+                        <TodayStatIcon>🎯</TodayStatIcon>
+                        <TodayStatContent>
+                            <TodayStatTitle>금일 성공률</TodayStatTitle>
+                            <TodayStatValue>{todayStats.successRate}%</TodayStatValue>
+                            <TodayStatSubtext>평균 응답: {todayStats.avgResponseTime}초</TodayStatSubtext>
+                        </TodayStatContent>
+                    </TodayStatCard>
+
+                    <TodayStatCard>
+                        <TodayStatIcon>💳</TodayStatIcon>
+                        <TodayStatContent>
+                            <TodayStatTitle>현재 구독자</TodayStatTitle>
+                            <TodayStatValue>{subscriberInfo?.total?.toLocaleString() || 0}</TodayStatValue>
+                            <TodayStatSubtext>Premium 이용자</TodayStatSubtext>
+                        </TodayStatContent>
+                    </TodayStatCard>
+                </TodayStatsGrid>
+            </TodaySection>
+
             {/* 통계 요약 카드 */}
             <StatsGrid>
                 <StatCard>
@@ -510,6 +552,102 @@ const Table = styled.table`
     tr:hover {
         background: var(--bg-tertiary);
     }
+`;
+
+// 오늘의 데이터 관련 스타일
+const TodaySection = styled.div`
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    padding: 25px;
+    border-radius: 16px;
+    border: 2px solid var(--primary-blue);
+    margin-bottom: 30px;
+    box-shadow: 0 8px 24px rgba(74, 144, 226, 0.15);
+`;
+
+const TodaySectionTitle = styled.h2`
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+`;
+
+const TodayStatsGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+`;
+
+const TodayStatCard = styled.div`
+    background: ${props => props.highlight ? 
+        'linear-gradient(135deg, rgba(74, 144, 226, 0.15) 0%, rgba(74, 144, 226, 0.05) 100%)' : 
+        'var(--bg-primary)'};
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid ${props => props.highlight ? 'var(--primary-blue)' : 'var(--border-light)'};
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(74, 144, 226, 0.2);
+        border-color: var(--primary-blue);
+    }
+
+    ${props => props.highlight && `
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light));
+        }
+    `}
+`;
+
+const TodayStatIcon = styled.div`
+    font-size: 3.5rem;
+    min-width: 60px;
+    text-align: center;
+    filter: drop-shadow(0 2px 4px rgba(74, 144, 226, 0.3));
+`;
+
+const TodayStatContent = styled.div`
+    flex: 1;
+`;
+
+const TodayStatTitle = styled.h3`
+    font-size: 1.4rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+`;
+
+const TodayStatValue = styled.div`
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 5px;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
+`;
+
+const TodayStatSubtext = styled.div`
+    font-size: 1.2rem;
+    color: var(--text-tertiary);
+    font-weight: 400;
 `;
 
 export default TokenAnalyticsTab;
