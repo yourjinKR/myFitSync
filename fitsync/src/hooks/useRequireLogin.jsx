@@ -17,7 +17,6 @@ const useRequireLogin = () => {
       const currentPath = location.pathname + location.search;
       sessionStorage.setItem('redirectAfterLogin', currentPath);
 
-      alert('로그인이 필요한 서비스입니다!');
       navigate('/login');
     }
   }, [isLogin, location, navigate]);

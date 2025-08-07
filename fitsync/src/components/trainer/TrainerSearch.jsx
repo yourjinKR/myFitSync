@@ -602,6 +602,7 @@ const FilterModal = styled.div`
 `;
 
 const TrainerSearch = () => {
+  sessionStorage.removeItem('redirectAfterLogin');
   const [trainers, setTrainers] = useState([]);
   const [keyword, setKeyword] = useState('');
   const [filter, setFilter] = useState({ gender: null, time: null, startTime: '', endTime: '' });

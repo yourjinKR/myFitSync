@@ -495,6 +495,7 @@ const PrimaryButton = styled.button`
 
 const Main = () => {
   const nav = useNavigate();
+  sessionStorage.removeItem('redirectAfterLogin');
 
   const { isLogin, member_type, member_idx } = useSelector((state) => state.user.user);
   const [isMatched, setIsMatched] = useState(false);
