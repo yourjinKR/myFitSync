@@ -13,7 +13,7 @@ import { BsStars } from "react-icons/bs";
 import { PiStarFourFill } from "react-icons/pi";
 
 const UserApiLogContainer = () => {
-    useRequireLogin();
+    const isReady = useRequireLogin();
     const {member_idx} = useSelector(state => state.user?.user);
     const [subscriptionData, setSubscriptionData] = useState(null);
     // 구독 정보 가져오기
@@ -23,8 +23,10 @@ const UserApiLogContainer = () => {
     }
     // 불러오기
     useEffect(()=>{
-      loadSubscriptionData();
-    },[]);
+      if (isReady && member_idx) {
+        loadSubscriptionData();
+      }
+    },[isReady, member_idx]);
 
     // 사용자 로그 데이터 가져오기 (파싱 포함)
     const { apiLogs, loading } = useUserApiLogs(member_idx);
