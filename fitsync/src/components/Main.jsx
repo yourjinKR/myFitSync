@@ -521,7 +521,7 @@ const Main = () => {
     if (isLogin && member_type === 'trainer' && member_idx) {
       nav(`/trainer/${member_idx}`);
     }
-  }, [isLogin, member_type, member_idx, nav]);
+  }, [isLogin, member_type, member_idx, nav]) ;
 
   // 매칭 확인
   useEffect(() => {
@@ -529,30 +529,41 @@ const Main = () => {
       axios.get(`/user/matched-member/${member_idx}`)
         .then(res => {
           const matched = res.data && res.data.matching_complete === 1;
-          console.log('matched 상태:', matched);
           setIsMatched(matched);
         })
         .catch(err => {
-          console.error('매칭 확인 실패', err);
-          setIsMatched(false); // 실패 시 기본값 false
+          // 매칭되지 않은 상태는 정상적인 상황이므로 404 에러는 조용히 처리
+          if (err.response?.status === 404) {
+            setIsMatched(false);
+          } else {
+            console.error('매칭 확인 실패', err);
+            setIsMatched(false);
+          }
         });
     }
   }, [isLogin, member_type, member_idx]);
 
   // 트레이너 정보 및 스케줄 조회
   useEffect(() => {
-    if (isLogin && member_type === 'user' && member_idx) {
-      // 매칭된 트레이너 정보 조회
+    if (isLogin && member_type === 'user' && member_idx && isMatched) {
+      // 매칭된 경우에만 트레이너 정보 조회
       axios.get(`/user/${member_idx}/matched-trainer`)
         .then(res => setTrainerInfo(res.data))
-        .catch(err => console.error('트레이너 정보 조회 실패', err));
+        .catch(err => {
+          console.error('트레이너 정보 조회 실패', err);
+        });
 
-      // 다음 PT 스케줄 조회
+      // 매칭된 경우에만 다음 PT 스케줄 조회
       axios.get(`/user/${member_idx}/next-schedule`)
         .then(res => setNextSchedule(res.data))
-        .catch(err => console.error('다음 스케줄 조회 실패', err));
+        .catch(err => {
+          // 스케줄이 없는 상태는 정상적인 상황이므로 404 에러는 조용히 처리
+          if (err.response?.status !== 404) {
+            console.error('다음 스케줄 조회 실패', err);
+          }
+        });
     }
-  }, [isLogin, member_type, member_idx]);
+  }, [isLogin, member_type, member_idx, isMatched]);
 
   const handleChatCTA = async (trainer) => {
 
