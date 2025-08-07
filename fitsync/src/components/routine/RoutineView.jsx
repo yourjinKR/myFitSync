@@ -176,7 +176,7 @@ const RoutineView = () => {
           <GradientButton 
             circular={true} 
             size="large" 
-            onClick={() => nav('/subscription')}
+            onClick={() => nav('/ai/routine')}
           >
             <BsStars style={{ fontSize: "2.2rem" }} />
           </GradientButton>
