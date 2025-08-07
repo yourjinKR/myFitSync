@@ -23,23 +23,6 @@ const LoginForm = styled.div`
   max-width: 560px;
   position: relative;
   z-index: 1;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 6px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      var(--primary-blue) 30%, 
-      var(--primary-blue-light) 70%, 
-      transparent 100%
-    );
-    border-radius: 0 0 24px 24px;
-  }
 
   @media (max-width: 768px) {
     max-width: 420px;
