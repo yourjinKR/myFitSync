@@ -316,6 +316,8 @@ const EditableCardName = styled.input`
 const FloatingAddButton = styled.button`
   position: fixed;
   bottom: 100px;
+  right : 50%;
+  margin-right : -350px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
