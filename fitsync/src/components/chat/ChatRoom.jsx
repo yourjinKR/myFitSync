@@ -148,9 +148,9 @@ const ChatRoom = () => {
   const [roomEnterTime] = useState(new Date()); // 채팅방 접속 시간 고정
 
   // 매칭 상태 관리
-  const [hasCompletedMatchingWithTrainer, setHasCompletedMatchingWithTrainer] = useState(false);
-  const [isMatchingCheckComplete, setIsMatchingCheckComplete] = useState(true);
-  const [isMatchingCheckLoading, setIsMatchingCheckLoading] = useState(false);
+  const [hasAnyActiveMatching, setHasAnyActiveMatching] = useState(false);
+  const [isActiveMatchingCheckComplete, setIsActiveMatchingCheckComplete] = useState(true);
+  const [isActiveMatchingCheckLoading, setIsActiveMatchingCheckLoading] = useState(false);
 
   // FirstVisitModal 관련 상태
   const [isFirstVisit, setIsFirstVisit] = useState(false);
@@ -307,38 +307,33 @@ const ChatRoom = () => {
   }, [user, roomId, location.state]);
 
   // 매칭 상태 확인 함수
-  const checkCompletedMatchingWithTrainer = useCallback(async () => {
-    if (!roomData || !user?.member_idx || user?.member_type !== 'user') {
-      setIsMatchingCheckComplete(true);
+  const checkAnyActiveMatchingForUser = useCallback(async () => {
+    if (!user?.member_idx || user?.member_type !== 'user') {
+      setIsActiveMatchingCheckComplete(true);
       return;
     }
 
-    setIsMatchingCheckLoading(true);
-    setIsMatchingCheckComplete(false);
+    setIsActiveMatchingCheckLoading(true);
+    setIsActiveMatchingCheckComplete(false);
 
     try {
-      const currentTrainerIdx = roomData.trainer_idx;
-      
-      if (!currentTrainerIdx) {
-        setHasCompletedMatchingWithTrainer(false);
-        return;
-      }
-      
-      const result = await chatApi.checkCompletedMatchingBetween(currentTrainerIdx, user.member_idx);
+      // 모든 진행중인 매칭 확인
+      const result = await chatApi.checkAnyActiveMatching();
       
       if (result.success) {
-        setHasCompletedMatchingWithTrainer(result.hasCompletedMatching);
+        // 모든 트레이너와의 진행중인 매칭 여부 설정
+        setHasAnyActiveMatching(result.hasAnyActiveMatching);
       } else {
-        setHasCompletedMatchingWithTrainer(false);
+        setHasAnyActiveMatching(false);
       }
       
     } catch (error) {
-      setHasCompletedMatchingWithTrainer(false);
+      setHasAnyActiveMatching(false);
     } finally {
-      setIsMatchingCheckComplete(true);
-      setIsMatchingCheckLoading(false);
+      setIsActiveMatchingCheckComplete(true);
+      setIsActiveMatchingCheckLoading(false);
     }
-  }, [roomData, user?.member_idx, user?.member_type]);
+  }, [user?.member_idx, user?.member_type]);
 
   // 첫 방문 모달 확인 함수
   const checkFirstVisit = useCallback(() => {
@@ -718,9 +713,9 @@ const ChatRoom = () => {
       setIsLoadingOldMessages(false);
       
       // 매칭 상태 초기화
-      setHasCompletedMatchingWithTrainer(false);
-      setIsMatchingCheckComplete(true);
-      setIsMatchingCheckLoading(false);
+      setHasAnyActiveMatching(false);
+      setIsActiveMatchingCheckComplete(true);
+      setIsActiveMatchingCheckLoading(false);
 
       // FirstVisitModal 상태 초기화
       setIsFirstVisit(false);
@@ -752,10 +747,10 @@ const ChatRoom = () => {
 
   // roomData가 설정된 후 매칭 상태 확인
   useEffect(() => {
-    if (roomData && user?.member_type === 'user' && isMatchingCheckComplete) {
-      checkCompletedMatchingWithTrainer();
+    if (roomData && user?.member_type === 'user' && isActiveMatchingCheckComplete) {
+      checkAnyActiveMatchingForUser();
     }
-  }, [roomData, user?.member_type, checkCompletedMatchingWithTrainer]);
+  }, [roomData, user?.member_type, checkAnyActiveMatchingForUser]);
 
   // 모든 이미지 로딩 완료 후 스크롤 실행
   useEffect(() => {
@@ -900,12 +895,19 @@ const ChatRoom = () => {
           (matchingUpdate) => {
             // 매칭이 수락된 경우 상태 업데이트
             if (matchingUpdate.status_type === 'accepted') {
-              // 실시간으로 매칭 상태 업데이트
               if (matchingUpdate.user_idx === user.member_idx) {
-                setHasCompletedMatchingWithTrainer(true);
+                // 현재 사용자가 수락한 경우 - 즉시 상태 업데이트
+                console.log('현재 사용자 매칭 수락됨 - 상태 즉시 업데이트');
+                setHasAnyActiveMatching(true);
                 
-                // 다른 매칭 요청 메시지들도 즉시 업데이트되도록 메시지 리스트 갱신
+                // 메시지 리스트 갱신으로 UI 업데이트
                 setMessages(prevMessages => [...prevMessages]);
+              } else {
+                // 다른 사용자의 매칭 수락 - 1초 후 재확인
+                console.log('다른 사용자 매칭 변동 감지 - 1초 후 재확인');
+                setTimeout(() => {
+                  checkAnyActiveMatchingForUser();
+                }, 1000);
               }
             }
           }
@@ -914,7 +916,7 @@ const ChatRoom = () => {
         return unsubscribeMatching;
       }
     }
-  }, [connected, roomData, user?.member_type, user?.member_idx, subscribeToMatchingUpdates]);
+  }, [connected, roomData, user?.member_type, user?.member_idx, subscribeToMatchingUpdates, checkAnyActiveMatchingForUser]);
 
   // 특정 메시지로 스크롤 함수 (검색용)
   const scrollToMessage = useCallback((messageIdx, retryCount = 0) => {
@@ -1323,9 +1325,9 @@ const ChatRoom = () => {
             onDelete={handleDeleteMessage}
             onReport={handleReportMessage}
             onScrollToMessage={scrollToMessage}
-            hasCompletedMatchingWithTrainer={hasCompletedMatchingWithTrainer}
-            isMatchingCheckComplete={isMatchingCheckComplete}
-            isMatchingCheckLoading={isMatchingCheckLoading}
+            hasCompletedMatchingWithTrainer={hasAnyActiveMatching}
+            isMatchingCheckComplete={isActiveMatchingCheckComplete}
+            isMatchingCheckLoading={isActiveMatchingCheckLoading}
           />
           <div ref={messagesEndRef} />
         </MessagesContainer>

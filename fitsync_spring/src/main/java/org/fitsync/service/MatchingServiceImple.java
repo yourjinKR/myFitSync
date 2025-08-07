@@ -68,9 +68,9 @@ public class MatchingServiceImple implements MatchingService {
             return false;
         }
         
-        // 해당 트레이너와 이미 완료된 매칭이 있는지 확인
-        if (hasCompletedMatchingBetween(matching.getTrainer_idx(), user_idx)) {
-            log.warn("해당 트레이너와 이미 완료된 매칭이 존재합니다.");
+        // 모든 트레이너와 이미 완료된 매칭이 있는지 확인
+        if (hasAnyActiveMatchingForUser(user_idx)) {
+            log.warn("해당 회원에게 이미 진행중인 매칭이 존재합니다.");
             return false;
         }
         
@@ -84,11 +84,17 @@ public class MatchingServiceImple implements MatchingService {
         return mapper.getMatching(matching_idx);
     }
     
+    // 특정 회원의 모든 진행중인 매칭 확인
     @Override
-    public boolean hasCompletedMatchingBetween(int trainer_idx, int user_idx) {
+    public boolean hasAnyActiveMatchingForUser(int user_idx) {
+        log.info("회원의 모든 진행중인 매칭 확인: user_idx=" + user_idx);
         
-        int count = mapper.countCompletedMatchingBetween(trainer_idx, user_idx);
-        return count > 0;
+        int count = mapper.countAnyActiveMatchingForUser(user_idx);
+        boolean hasActiveMatching = count > 0;
+        
+        log.info("진행중인 매칭 개수: " + count + ", 존재여부: " + hasActiveMatching);
+        
+        return hasActiveMatching;
     }
     
     @Override
@@ -105,4 +111,5 @@ public class MatchingServiceImple implements MatchingService {
     public MemberVO getMatchedTrainerInfoByUserIdx(int userIdx) {
         return mapper.selectMatchedTrainerByUserIdx(userIdx);
     }
+    
 }

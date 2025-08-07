@@ -102,9 +102,9 @@ const chatApi = {
     return response.data;
   },
 
-  // 특정 트레이너-회원간 완료된 매칭 존재 여부 확인
-  checkCompletedMatchingBetween: async (trainer_idx, user_idx) => {
-    const response = await axios.get(`/api/chat/check-completed/${trainer_idx}/${user_idx}`, {
+  // 현재 회원의 모든 진행중인 매칭 확인
+  checkAnyActiveMatching: async () => {
+    const response = await axios.get('/api/chat/check-any-active-matching', {
       withCredentials: true
     });
     return response.data;
@@ -167,8 +167,6 @@ const chatApi = {
       throw error;
     }
   },
-
-  
 
   // 매칭 상태 캐시 전체 삭제
   clearMatchingStatusCache: () => {

@@ -102,16 +102,15 @@
         WHERE matching_idx = #{matching_idx}
     </update>
     
-    <!-- 특정 트레이너-회원간 완료된 매칭 개수 조회 -->
-    <select id="countCompletedMatchingBetween" parameterType="int" resultType="int">
-        SELECT COUNT(*) 
-        FROM matching 
-        WHERE trainer_idx = #{trainer_idx} 
-        AND user_idx = #{user_idx}
-        AND matching_complete = 1
-    </select>
+    <!-- 특정 회원의 모든 진행중인 매칭 확인 -->
+	<select id="countAnyActiveMatchingForUser" parameterType="int" resultType="int">
+	    SELECT COUNT(*) 
+	    FROM matching 
+	    WHERE user_idx = #{user_idx}
+	    AND matching_complete = 1
+	</select>
     
-	  	<!-- 2. 리뷰 작성 가능 여부 확인 -->
+	<!-- 리뷰 작성 가능 여부 확인 -->
   	<select id="countEligibleMatchingWithoutReview" resultType="int">
 	    SELECT COUNT(*)
 	    FROM matching m
@@ -125,6 +124,7 @@
 	      )
   	</select>
   	
+  	<!-- Main 화면용 매칭 조회 -->
   	<select id="selectCompletedMatchingByMemberIdx" parameterType="int" resultType="org.fitsync.domain.MatchingVO">
 		  SELECT *
 		  FROM matching

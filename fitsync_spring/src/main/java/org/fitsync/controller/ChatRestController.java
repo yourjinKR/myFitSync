@@ -408,11 +408,11 @@ public class ChatRestController {
                 return ResponseEntity.ok(result);
             }
             
-            // 해당 트레이너와 이미 완료된 매칭이 있는지 확인
-            boolean hasCompletedMatchingWithTrainer = matchingService.hasCompletedMatchingBetween(targetMatching.getTrainer_idx(), user_idx);
-            if (hasCompletedMatchingWithTrainer) {
+            // 모든 트레이너와의 진행중인 매칭이 있는지 확인
+            boolean hasAnyActiveMatching = matchingService.hasAnyActiveMatchingForUser(user_idx);
+            if (hasAnyActiveMatching) {
                 result.put("success", false);
-                result.put("message", "해당 트레이너와 이미 완료된 매칭이 존재합니다.");
+                result.put("message", "이미 진행중인 PT가 있어 새로운 매칭을 수락할 수 없습니다.");
                 return ResponseEntity.ok(result);
             }
             
@@ -439,24 +439,29 @@ public class ChatRestController {
         }
     }
     
-    // 특정 트레이너-회원간 완료된 매칭 존재 여부 확인 API
-    @GetMapping("/check-completed/{trainer_idx}/{user_idx}")
-    public ResponseEntity<Map<String, Object>> checkCompletedMatchingBetween(
-            @PathVariable int trainer_idx,
-            @PathVariable int user_idx,
-            HttpSession session) {
+    // 현재 회원의 모든 진행중인 매칭 확인 API
+    @GetMapping("/check-any-active-matching")
+    public ResponseEntity<Map<String, Object>> checkAnyActiveMatching(HttpSession session) {
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            System.out.println("특정 트레이너-회원간 완료된 매칭 확인 요청 - trainer_idx: " + trainer_idx + ", user_idx: " + user_idx);
+            Integer member_idx = (Integer) session.getAttribute("member_idx");
+            if (member_idx == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(result);
+            }
             
-            boolean hasCompleted = matchingService.hasCompletedMatchingBetween(trainer_idx, user_idx);
+            System.out.println("현재 회원의 모든 진행중인 매칭 확인 - user_idx: " + member_idx);
+            
+            // 현재 회원의 모든 진행중인 매칭 확인
+            boolean hasAnyActiveMatching = matchingService.hasAnyActiveMatchingForUser(member_idx);
             
             result.put("success", true);
-            result.put("hasCompletedMatching", hasCompleted);
+            result.put("hasAnyActiveMatching", hasAnyActiveMatching);
             
-            System.out.println("✅ 특정 매칭 확인 완료 - hasCompleted: " + hasCompleted);
+            System.out.println("✅ 진행중인 매칭 확인 완료 - hasAnyActiveMatching: " + hasAnyActiveMatching);
             
             return ResponseEntity.ok(result);
             
