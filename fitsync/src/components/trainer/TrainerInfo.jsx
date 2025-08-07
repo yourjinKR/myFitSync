@@ -30,12 +30,6 @@ const TrainerCard = styled.div`
     pointer-events: none;
   }
   
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-    border-color: rgba(59, 130, 246, 0.2);
-  }
-  
   &::after {
     content: '';
     position: absolute;
@@ -100,10 +94,6 @@ const ProfileImage = styled.div`
       return 'var(--primary-blue)';
     }};
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
-    
-    img {
-      transform: scale(1.02);
-    }
   }
   
   @media (min-width: 768px) {
