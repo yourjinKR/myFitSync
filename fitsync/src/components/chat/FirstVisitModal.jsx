@@ -111,6 +111,51 @@ const FeatureText = styled.span`
   line-height: 1.4;
 `;
 
+const WarningSection = styled.div`
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid var(--warning);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  text-align: left;
+`;
+
+const WarningTitle = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--warning);
+`;
+
+const WarningIcon = styled.span`
+  font-size: 1.6rem;
+  margin-right: 8px;
+`;
+
+const WarningList = styled.ul`
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+`;
+
+const WarningItem = styled.li`
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 8px 0;
+  position: relative;
+  
+  &::before {
+    content: '•';
+    color: var(--warning);
+    font-weight: bold;
+    position: absolute;
+    left: -12px;
+  }
+`;
+
 const CloseButton = styled.button`
   background: var(--primary-blue);
   color: white;
@@ -227,6 +272,19 @@ const FirstVisitModal = ({ isOpen, onClose, trainerName, isTrainer }) => {
             </FeatureItem>
           )}
         </FeatureList>
+
+        <WarningSection>
+          <WarningTitle>
+            <WarningIcon>⚠️</WarningIcon>
+            안전한 이용을 위한 주의사항
+          </WarningTitle>
+          <WarningList>
+            <WarningItem>등록된 체육관이 아닌 다른 곳에서의 만남은 조심하세요</WarningItem>
+            <WarningItem>개인정보(주소, 전화번호 등)는 신중히 공유해주세요</WarningItem>
+            <WarningItem>부적절한 대화나 행동은 신고 기능을 이용해주세요</WarningItem>
+            <WarningItem>금전 요구나 의심스러운 제안은 즉시 신고해주세요</WarningItem>
+          </WarningList>
+        </WarningSection>
 
         <CloseButton 
           onClick={onClose}
