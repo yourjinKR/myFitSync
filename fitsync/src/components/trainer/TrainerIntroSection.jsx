@@ -195,7 +195,7 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -205,32 +205,62 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: var(--bg-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 3rem 2.5rem;
+  position: relative;
   max-width: 90vw;
   max-height: 90vh;
-  text-align: center;
-  box-shadow: 
-    0 25px 60px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
   h4 {
-    color: var(--primary-blue);
+    color: white;
     font-weight: 700;
     font-size: 2rem;
     margin-bottom: 2rem;
-    text-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    text-align: center;
   }
 
   img {
-    max-width: 100%;
-    max-height: 60vh;
-    border-radius: 12px;
-    margin-top: 1.2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+`;
+
+const CloseButton = styled.button`
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  font-size: 2rem;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  font-weight: bold;
+  z-index: 2001;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+  }
+  
+  @media (max-width: 500px) {
+    top: 20px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    font-size: 1.8rem;
   }
 `;
 
@@ -735,8 +765,8 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
 
       {selectedAward && (
         <ModalOverlay onClick={() => setSelectedAward(null)}>
+          <CloseButton onClick={() => setSelectedAward(null)} aria-label="닫기">&times;</CloseButton>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <h4 style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>{selectedAward.awards_name}</h4>
             <img src={selectedAward.awards_certificate} alt={`${selectedAward.awards_name} 증명서`} />
           </ModalContent>
         </ModalOverlay>

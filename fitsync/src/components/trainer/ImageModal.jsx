@@ -21,46 +21,51 @@ const ModalContent = styled.div`
 `;
 
 const ImgBox = styled.div`
-  width: 380px;
-  height: 380px;
-  max-width: 80vw;
-  max-height: 80vw;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-tertiary);
-  border-radius: 12px;
-  overflow: hidden;
   position: relative;
-  @media (max-width: 500px) {
-    width: 90vw;
-    height: 90vw;
-    max-width: 95vw;
-    max-height: 95vw;
-  }
 `;
 
 const Img = styled.img`
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 90vw;
+  max-height: 90vh;
   object-fit: contain;
-  border-radius: 8px;
-  background: var(--bg-tertiary);
+  border-radius: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 `;
 
 const CloseButton = styled.button`
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: #fff;
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  background: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 50%;
-  font-size: 1.5rem;
-  width: 30px;
-  height: 30px;
+  font-size: 2rem;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   font-weight: bold;
-  z-index: 2;
+  z-index: 1001;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+  }
+  
+  @media (max-width: 500px) {
+    top: 20px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    font-size: 1.8rem;
+  }
 `;
 
 const NavButton = styled.button`
@@ -86,16 +91,16 @@ const NavButton = styled.button`
 `;
 
 const LeftNav = styled(NavButton)`
-  left: -48px;
-  @media (max-width: 500px) {
-    left: 2px;
+  left: -60px;
+  @media (max-width: 768px) {
+    left: 10px;
   }
 `;
 
 const RightNav = styled(NavButton)`
-  right: -48px;
-  @media (max-width: 500px) {
-    right: 2px;
+  right: -60px;
+  @media (max-width: 768px) {
+    right: 10px;
   }
 `;
 
@@ -125,6 +130,7 @@ const ImageModal = ({ images, index = 0, alt, onClose }) => {
 
   return (
     <Overlay onClick={onClose}>
+      <CloseButton onClick={onClose} aria-label="닫기">&times;</CloseButton>
       <ModalContent onClick={e => e.stopPropagation()}>
         {total > 1 && (
           <LeftNav onClick={handlePrev} aria-label="이전 이미지">
@@ -133,7 +139,6 @@ const ImageModal = ({ images, index = 0, alt, onClose }) => {
         )}
         <ImgBox>
           <Img src={imgSrc} alt={alt} />
-          <CloseButton onClick={onClose} aria-label="닫기">&times;</CloseButton>
         </ImgBox>
         {total > 1 && (
           <RightNav onClick={handleNext} aria-label="다음 이미지">
