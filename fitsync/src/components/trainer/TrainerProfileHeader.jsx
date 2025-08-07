@@ -539,7 +539,7 @@ const TrainerProfileHeader = ({
         <ProfileImageEditor
           memberIdx={localTrainer?.member_idx}
           profileImage={localTrainer?.member_image}
-          isMine={isMine}
+          isEditable={isMine}
           onSuccess={handleImageChangeSuccess}
         />
       </InstaProfileImgWrap>
@@ -555,15 +555,19 @@ const TrainerProfileHeader = ({
         {localTrainer?.gymInfo?.gym_name && (
           <InstaGymInfo>{localTrainer.gymInfo.gym_name}</InstaGymInfo>
         )}
-        {isEdit && mode === 'trainer' ? (
-          <InstaIntroInput
-            value={introValue}
-            onChange={handleIntroChange}
-            placeholder="자기소개를 입력해주세요..."
-            maxLength={500}
-          />
-        ) : (
-          <InstaIntro>{trainer?.member_intro || '소개글을 작성해주세요'}</InstaIntro>
+        {mode === 'trainer' && (
+          <>
+            {isEdit ? (
+              <InstaIntroInput
+                value={introValue}
+                onChange={handleIntroChange}
+                placeholder="자기소개를 입력해주세요..."
+                maxLength={500}
+              />
+            ) : (
+              <InstaIntro>{trainer?.member_intro || '소개글을 작성해주세요'}</InstaIntro>
+            )}
+          </>
         )}
         {mode === 'trainer' && (
           <>
