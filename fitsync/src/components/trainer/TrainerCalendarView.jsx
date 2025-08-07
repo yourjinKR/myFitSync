@@ -776,6 +776,11 @@ const TrainerCalendarView = ({autoHeight}) => {
   const isUser = user?.member_type === 'user';
   
 useEffect(() => {
+  // 사용자 정보가 완전히 로드될 때까지 대기
+  if (!user || Object.keys(user).length === 0) {
+    return;
+  }
+  
   if (!user?.isLogin) {
     alert('로그인이 필요합니다.');
     navigate('/');
@@ -789,10 +794,17 @@ useEffect(() => {
   }
 
   // trainer라면 trainerIdx 체크 (보안 강화)
-  if (user.member_type === 'trainer' && String(user.member_idx) !== trainerIdx) {
-    alert('다른 트레이너의 페이지에 접근할 수 없습니다.');
-    navigate('/');
-    return;
+  // trainerIdx가 없거나 undefined인 경우는 체크하지 않음 (아직 URL 파라미터가 로드되지 않은 상태)
+  if (user.member_type === 'trainer' && trainerIdx) {
+    const userTrainerIdx = user.member_idx; // 실제로는 member_idx에 트레이너 ID가 저장됨
+    const urlTrainerIdx = parseInt(trainerIdx, 10);
+    
+    // ID가 일치하지 않으면 접근 차단
+    if (userTrainerIdx !== urlTrainerIdx) {
+      alert('다른 트레이너의 페이지에 접근할 수 없습니다.');
+      navigate('/');
+      return;
+    }
   }
 }, [user, trainerIdx, navigate]);
 

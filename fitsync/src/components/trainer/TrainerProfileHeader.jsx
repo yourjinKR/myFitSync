@@ -450,7 +450,6 @@ const TrainerProfileHeader = ({
       profile_image: updatedImageData.image || updatedImageData.imageUrl || profileImage,
     }));
   };
-  console.log(localTrainer);
   
   // member_purpose 처리
   const memberPurpose =

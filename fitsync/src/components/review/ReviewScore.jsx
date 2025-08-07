@@ -21,11 +21,11 @@ const ReviewScore = ({score}) => {
       {
         Array.from({ length: 5 }, (_, i) => {
           if((i + 1) <= score){
-            return <StarIcon fontSize='large'/>;
+            return <StarIcon key={i} fontSize='large'/>;
           }else if((i + 1) - score === 0.5){
-            return <StarHalfIcon fontSize='large'/>;
+            return <StarHalfIcon key={i} fontSize='large'/>;
           }else{
-            return <StarBorderIcon fontSize='large'/>;
+            return <StarBorderIcon key={i} fontSize='large'/>;
           }
         })
       }
