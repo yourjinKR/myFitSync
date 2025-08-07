@@ -168,7 +168,8 @@ const ChatRoom = () => {
 
   // 최근 메시지 필터링 함수 - 채팅방 입장 시간을 기준으로 오래된 메시지와 최근 메시지를 구분
   const filterRecentMessages = useCallback((messageList, enterTime) => {
-    const OLD_MESSAGE_THRESHOLD = 3 * 30 * 24 * 60 * 60 * 1000; // 3달
+    // 3 * 30 * 24 * 60 * 60 * 1000 <- 3달
+    const OLD_MESSAGE_THRESHOLD = 3 * 24 * 60 * 60 * 1000; // 3일
     
     const recentMessages = [];
     let hasOldMessagesFound = false;
