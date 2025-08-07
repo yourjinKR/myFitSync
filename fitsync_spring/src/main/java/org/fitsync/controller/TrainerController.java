@@ -199,6 +199,7 @@ public class TrainerController {
             HttpSession session
     ) {
         Object sessionIdx = session.getAttribute("member_idx");
+        System.out.println("sessionIdx : " + sessionIdx);
         if (sessionIdx == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }

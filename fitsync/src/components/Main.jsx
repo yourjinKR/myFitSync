@@ -615,7 +615,7 @@ const Main = () => {
 return (
   <>
     {isLogin && (
-      <div style={{padding:'0 2rem 2rem'}}>
+      <div style={{padding:'2rem 2rem 0'}}>
         <TrainerCalendarView autoHeight={'auto'}/>
       </div>
     )}

@@ -17,7 +17,7 @@ const Wrapper = styled.div`
 const TabMenu = styled.div`
   display: flex;
   gap: 0.8rem;
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   padding: 1.5rem;

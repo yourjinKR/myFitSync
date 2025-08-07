@@ -45,7 +45,6 @@ const TopBar = styled.div`
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  margin-bottom: 1.5rem;
 `;
 
 const MonthTitle = styled.div`
@@ -402,7 +401,7 @@ const DayCellBox = styled.div.withConfig({
 `;
 
 const SlidePanel = styled(motion.div)`
-  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
   border-radius: 16px;
@@ -707,8 +706,7 @@ const ScheduleLabel = styled.label`
 `;
 
 const ScheduleContent = styled.div`
-  flex: 1;
-  cursor: ${({ isDeleteMode }) => (isDeleteMode ? 'default' : 'pointer')};
+  cursor: ${({ $isDeleteMode }) => ($isDeleteMode ? 'default' : 'pointer')};
   line-height: 1.6;
   font-size: 1.6rem;
   color: var(--text-primary);
@@ -1399,7 +1397,7 @@ useEffect(() => {
                                   />
                                 )}
                                 <ScheduleContent
-                                  isDeleteMode={isDeleteMode}
+                                  $isDeleteMode={isDeleteMode}
                                   onClick={() => !isDeleteMode && handleMemberClick(schedule)}
                                   title={!isDeleteMode ? '운동 추가' : ''}
                                 >
