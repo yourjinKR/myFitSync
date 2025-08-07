@@ -1,7 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const BaseButton = styled.button`
+// DOM에 전달하지 않을 props 정의
+const shouldForwardProp = (prop) =>
+  !['circular', 'fullWidth', 'flex', 'size', 'animate'].includes(prop);
+
+// 기본 버튼 스타일
+const BaseButton = styled.button.withConfig({ shouldForwardProp })`
   font-size: ${props => props.size === 'small' ? '1.4rem' : 
               props.size === 'large' ? '1.8rem' : '1.6rem'};
   font-weight: 600;
@@ -29,7 +34,7 @@ const BaseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -58,7 +63,8 @@ const BaseButton = styled.button`
   }
 `;
 
-const StyledGradientButton = styled(BaseButton)`
+// 그라데이션 버튼 스타일
+const StyledGradientButton = styled(BaseButton).withConfig({ shouldForwardProp })`
   background: linear-gradient(135deg, #7D93FF, #4A70F0, #6B7EFF, #3A5FE0);
   background-size: 300% 300%;
   color: white;
@@ -122,7 +128,7 @@ const StyledGradientButton = styled(BaseButton)`
       }
       return 'inherit';
     }};
-    
+
     @media (max-width: 480px) {
       font-size: ${props => {
         if (props.circular) {
@@ -136,18 +142,18 @@ const StyledGradientButton = styled(BaseButton)`
       }} !important;
     }
   }
-  
+
   @keyframes gradientWave {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
-  
+
   @keyframes shimmer {
     0% { left: -100%; }
     100% { left: 100%; }
   }
-  
+
   @keyframes mysticGlow {
     0% {
       opacity: 0.3;
@@ -213,6 +219,7 @@ const StyledGradientButton = styled(BaseButton)`
  * - type: 버튼 타입 (기본값: 'button')
  * - ...props: 기타 button 엘리먼트 속성들
  */
+// 버튼 컴포넌트 정의
 const GradientButton = ({
   children,
   onClick,

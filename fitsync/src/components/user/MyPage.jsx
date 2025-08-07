@@ -8,6 +8,7 @@ import TrainerProfileHeader from '../trainer/TrainerProfileHeader';
 import { useSelector } from 'react-redux';
 import { PrimaryButton, SecondaryButton, ButtonGroup } from '../../styles/commonStyle';
 import UserInfo from './UserInfo';
+import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
   display: flex;
@@ -179,6 +180,7 @@ const MyPage = () => {
   const [chartKey, setChartKey] = useState(0);
   const [showAllRoutines, setShowAllRoutines] = useState(false);
   const [isInfoEdit, setIsInfoEdit] = useState(false);
+  const nav = useNavigate ();
 
   useEffect(() => {
     if (loginUser) {
@@ -211,8 +213,12 @@ const MyPage = () => {
   };
 
   useEffect(() => {
+    if (!loginUser.isLogin) {
+      nav('/login'); // 로그인하지 않은 경우 홈으로 리다이렉트
+    }
     fetchUser();
   }, []);
+
 
   const onEditToggle = () => setIsEdit((prev) => !prev);
 
