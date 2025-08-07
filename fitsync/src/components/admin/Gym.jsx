@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 import Modal from "./Modal";
 import { ButtonSubmit } from "../../styles/FormStyles";
@@ -603,7 +603,7 @@ const Gym = () => {
   const [pageSize, setPageSize] = useState(10);
 
   // 체육관 목록 조회
-  const fetchGyms = async (page = currentPage, keyword = searchKeyword, keywordType = searchType, size = pageSize) => {
+  const fetchGyms = useCallback(async (page = currentPage, keyword = searchKeyword, keywordType = searchType, size = pageSize) => {
     try {
       setIsLoading(true);
       const response = await GymUtil.getGyms({
@@ -618,14 +618,19 @@ const Gym = () => {
         setTotalCount(response.totalCount || 0);
         setTotalPages(Math.ceil((response.totalCount || 0) / size));
         setCurrentPage(page);
+        // 성공적으로 데이터를 불러온 경우에만 에러 메시지 초기화
+        setError('');
       }
     } catch (error) {
       console.error("Failed to fetch gyms:", error);
-      setError("체육관 목록을 불러오는데 실패했습니다.");
+      // 삭제 후 목록 조회가 아닌 경우에만 에러 메시지 설정
+      if (!error.isDeleteRefresh) {
+        setError("체육관 목록을 불러오는데 실패했습니다.");
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, searchKeyword, searchType, pageSize]);
 
   useEffect(() => {
     fetchGyms();
@@ -666,7 +671,7 @@ const Gym = () => {
     setModalOpen(true);
   };
 
-  const handleEdit = async (gymIdx) => {
+  const handleEdit = useCallback(async (gymIdx) => {
     try {
       setIsLoading(true);
       const response = await GymUtil.getGym(gymIdx);
@@ -684,9 +689,12 @@ const Gym = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleDelete = async (gymIdx) => {
+  const handleDelete = useCallback(async (gymIdx, event) => {
+    // 이벤트 전파 방지 (테이블 행의 onClick 이벤트가 실행되지 않도록)
+    event.stopPropagation();
+    
     const confirmDelete = window.confirm('해당 체육관을 삭제하시겠습니까?');
     if (!confirmDelete) return;
 
@@ -694,6 +702,8 @@ const Gym = () => {
       setIsLoading(true);
       const response = await GymUtil.deleteGym(gymIdx);
       if (response.success) {
+        // 삭제 성공 시 에러 메시지 초기화
+        setError('');
         await fetchGyms(currentPage, searchKeyword, searchType);
       } else {
         setError("체육관 삭제에 실패했습니다.");
@@ -704,7 +714,7 @@ const Gym = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchGyms, currentPage, searchKeyword, searchType]);
 
   const handleSearchLocation = async (e) => {
     e.preventDefault();
@@ -1032,21 +1042,24 @@ const Gym = () => {
             </tr>
           ) : (
             gyms.map((gym) => (
-              <tr key={gym.gym_idx} onClick={() => handleEdit(gym.gym_idx)}>
+              <tr key={gym.gym_idx} onClick={(e) => handleEdit(gym.gym_idx)}>
                 <td>{gym.gym_idx}</td>
                 <td>{gym.gym_name}</td>
                 <td>{gym.gym_address}</td>
                 <td className="actions">
                   <button 
                     className="edit" 
-                    onClick={() => handleEdit(gym.gym_idx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(gym.gym_idx);
+                    }}
                     disabled={isLoading}
                   >
                     수정
                   </button>
                   <button 
                     className="delete" 
-                    onClick={() => handleDelete(gym.gym_idx)}
+                    onClick={(e) => handleDelete(gym.gym_idx, e)}
                     disabled={isLoading}
                   >
                     삭제
