@@ -245,14 +245,22 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
   };
 
   const getImageSrc = () => {
-    if (postData.pt_image[idx] && typeof postData.pt_image[idx] !== "string") {
-      return URL.createObjectURL(postData.pt_image[idx]);
+    const imgItem = postData.pt_image[idx];
+    if (imgItem && typeof imgItem !== "string") {
+      return URL.createObjectURL(imgItem);
     }
-    
+
+    // pt_image 배열에서 string 타입만 대상으로 includes 체크
     if (idx === 0) {
-      return postData.pt_image.find((img) => img.includes(".gif")) || blank_img;
+      const found = postData.pt_image.find(
+        (img) => typeof img === "string" && img.includes(".gif")
+      );
+      return found || blank_img;
     } else {
-      return postData.pt_image.find((img) => img.includes(".png")) || blank_img;
+      const found = postData.pt_image.find(
+        (img) => typeof img === "string" && img.includes(".png")
+      );
+      return found || blank_img;
     }
   };
 
@@ -279,7 +287,7 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
         accept={idx === 0 ? "image/gif" : "image/png"}
         onChange={handleImageChange}
       />
-      <small style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
+      <small style={{ color: 'white', fontSize: '1.2rem' }}>
         {idx === 0 ? 'GIF 파일만 가능' : 'PNG 파일만 가능'}
       </small>
     </div>
@@ -287,114 +295,130 @@ const ChangeImg = ({ postData, setPostData, idx }) => {
 };
 
 const ModalContainer = styled.div`
-  background: var(--bg-white);
+  background: var(--bg-secondary);
   border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
   padding: 24px;
-  
+  min-width: 340px;
+  border: 1px solid var(--border-light);
+  position: relative;
+  z-index: 10;
+
   .modal-header {
     text-align: center;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid var(--border-light);
-    
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+    background: none;
     h3 {
-      color: var(--text-black);
-      font-size: 2.4rem;
-      font-weight: 700;
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 600;
       margin: 0;
+      letter-spacing: -0.01em;
     }
   }
 
   table {
     width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 16px;
+    background: none;
     th, td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-light);
+      padding: 10px 12px;
       vertical-align: middle;
+      font-size: 1.4rem;
+      border-bottom: 1px solid var(--border-light);
     }
-    
     th {
       background: var(--bg-tertiary);
-      color: var(--text-black);
+      color: white;
       font-weight: 600;
       text-align: center;
-      width: 120px;
-      min-width: 120px;
+      width: 100px;
+      min-width: 100px;
+      font-size: 1.3rem;
+      letter-spacing: 0;
     }
-    
     td {
-      background: var(--bg-white);
-      
+      background: var(--bg-secondary);
       input, select, textarea {
         width: 100%;
-        padding: 8px 12px;
+        padding: 8px 10px;
         border: 1px solid var(--border-light);
         border-radius: 4px;
-        font-size: 1.4rem;
-        color: var(--text-black);
-        background: var(--bg-white);
-        
+        font-size: 1.3rem;
+        color: white;
+        background: var(--bg-tertiary);
+        transition: border-color 0.2s ease;
         &:focus {
           outline: none;
           border-color: var(--primary-blue);
         }
-        
         &::placeholder {
           color: var(--text-tertiary);
         }
       }
-      
       textarea {
-        min-height: 80px;
+        min-height: 70px;
         resize: vertical;
         font-family: inherit;
         line-height: 1.4;
       }
-      
       select {
         cursor: pointer;
-        
         option {
-          background: var(--bg-white);
-          color: var(--text-black);
+          background: var(--bg-secondary);
+          color: white;
         }
       }
     }
   }
-  
+
   .image-upload {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    
     label {
       cursor: pointer;
       display: block;
-      transition: all 0.2s ease;
-      
+      transition: opacity 0.2s ease;
       &:hover {
-        transform: scale(1.02);
+        opacity: 0.8;
       }
-      
       img {
-        border: 2px dashed var(--border-light);
-        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
         transition: border-color 0.2s ease;
-        
         &:hover {
           border-color: var(--primary-blue);
         }
       }
     }
-    
     small {
-      color: var(--text-secondary);
-      font-size: 1.2rem;
+      color: white;
+      font-size: 1.1rem;
       text-align: center;
+      font-weight: 400;
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding: 16px;
+    min-width: 0;
+    border-radius: 6px;
+    .modal-header h3 {
+      font-size: 1.6rem;
+    }
+    table th, table td {
+      font-size: 1.2rem;
+      padding: 8px 6px;
+    }
+    .image-upload label img {
+      width: 100px;
+      height: 100px;
     }
   }
 `;
@@ -418,7 +442,7 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
       <table>
         <tbody>
           <tr>
-            <th><label htmlFor="pt_name">운동명</label></th>
+            <th><label htmlFor="pt_name" style={{color: 'white'}}>운동명</label></th>
             <td>
               <input
                 type="text"
@@ -431,7 +455,7 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
             </td>
           </tr>
           <tr>
-            <th><label htmlFor="pt_category">카테고리</label></th>
+            <th><label htmlFor="pt_category" style={{color: 'white'}}>카테고리</label></th>
             <td>
               <select
                 name="pt_category"
@@ -451,7 +475,7 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
             </td>
           </tr>
           <tr>
-            <th><label htmlFor="pt_content">설명</label></th>
+            <th><label htmlFor="pt_content" style={{color: 'white'}}>설명</label></th>
             <td>
               <textarea
                 name="pt_content"
@@ -463,7 +487,9 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
             </td>
           </tr>
           <tr>
-            <th>이미지<br/>(gif)</th>
+            <th style={{color: 'white', fontSize: '1.7rem', fontWeight: 700}}>
+              <label htmlFor="file_image_0" style={{color: 'white', fontSize: '1.7rem', fontWeight: 700}}>이미지<br/>(gif)</label>
+            </th>
             <td>
               <div className="image-upload">
                 <ChangeImg postData={postData} setPostData={setPostData} idx={0} />
@@ -471,7 +497,9 @@ const ModalPostData = React.memo(({ postData, setPostData, onClose, onSubmit, mo
             </td>
           </tr>
           <tr>
-            <th>이미지<br/>(png)</th>
+            <th style={{color: 'white', fontSize: '1.7rem', fontWeight: 700}}>
+              <label htmlFor="file_image_1" style={{color: 'white', fontSize: '1.7rem', fontWeight: 700}}>이미지<br/>(png)</label>
+            </th>
             <td>
               <div className="image-upload">
                 <ChangeImg postData={postData} setPostData={setPostData} idx={1} />

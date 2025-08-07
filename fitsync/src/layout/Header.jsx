@@ -33,6 +33,12 @@ const Logo = styled.h1`
   margin: 0;
   cursor: pointer;
   transition: all 0.2s;
+  width: 100px;
+
+  img {
+    display: block;
+    width: 100%;
+  }
 
   &:active {
     color: var(--primary-blue);
@@ -159,7 +165,9 @@ const Header = ({setIsOpen}) => {
       <MenuButton onClick={()=>setIsOpen(true)}>
         <MenuIcon/>
       </MenuButton>
-      <Logo onClick={() => navigator(user.member_type === 'trainer' ? `/trainer/${user.member_idx}` : '/')}>로고</Logo>
+      <Logo onClick={() => navigator(user.member_type === 'trainer' ? `/trainer/${user.member_idx}` : '/')}>
+        <img src="https://res.cloudinary.com/dhupmoprk/image/upload/v1754536756/fitsync/chat_1754536757453.png" alt="로고" />
+      </Logo>
       {
         user == null || !user.isLogin ?
           <LoginButton onClick={() => navigator('/login')}>
