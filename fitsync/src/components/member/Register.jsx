@@ -66,12 +66,6 @@ const TypeButton = styled.button`
   position: relative;
   overflow: hidden;
   letter-spacing: 0.01em;
-  &:hover {
-    background: var(--primary-blue-hover);
-    color: var(--primary-blue-light);
-    box-shadow: 0 8px 24px rgba(74,144,226,0.18);
-    filter: brightness(1.07);
-  }
 `;
 
 
@@ -80,12 +74,12 @@ const Register = () => {
   const { user } = useSelector(state => state.user);
   const nav = useNavigate();
 
-  useEffect(()=>{
-    if(user.isLogin === true || user.member_email === '' ){
-      alert("잘못된 접근입니다.");
-      nav("/");
-    }
-  },[]);
+  // useEffect(()=>{
+  //   if(user.isLogin === true || user.member_email === '' ){
+  //     alert("잘못된 접근입니다.");
+  //     nav("/");
+  //   }
+  // },[]);
   
   useEffect(() => { 
   }, [isType]);
