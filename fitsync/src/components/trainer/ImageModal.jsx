@@ -25,13 +25,25 @@ const ImgBox = styled.div`
   align-items: center;
   justify-content: center;
   position: relative;
+  width: 80vw;
+  height: 80vh;
+  
+  @media (max-width: 768px) {
+    width: 85vw;
+    height: 70vh;
+  }
+  
+  @media (max-width: 500px) {
+    width: 90vw;
+    height: 60vh;
+  }
 `;
 
 const Img = styled.img`
-  max-width: 90vw;
-  max-height: 90vh;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 0;
+  border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 `;
 
@@ -91,16 +103,22 @@ const NavButton = styled.button`
 `;
 
 const LeftNav = styled(NavButton)`
-  left: -60px;
+  left: calc(10vw - 60px);
   @media (max-width: 768px) {
-    left: 10px;
+    left: calc(7.5vw - 50px);
+  }
+  @media (max-width: 500px) {
+    left: calc(5vw - 40px);
   }
 `;
 
 const RightNav = styled(NavButton)`
-  right: -60px;
+  right: calc(10vw - 60px);
   @media (max-width: 768px) {
-    right: 10px;
+    right: calc(7.5vw - 50px);
+  }
+  @media (max-width: 500px) {
+    right: calc(5vw - 40px);
   }
 `;
 

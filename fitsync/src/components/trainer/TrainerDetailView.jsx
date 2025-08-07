@@ -122,33 +122,51 @@ const TabButton = styled.button`
 // 플로팅 버튼 (상담하기 버튼)
 const FloatingButton = styled.button`
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 5rem;
-  height: 5rem;
-  border-radius: 50%;
-  background: var(--primary-blue);
-  color: var(--text-primary);
-  border: none;
-  box-shadow: 0 0.3rem 0.8rem rgba(0,0,0,0.25);
-  cursor: pointer;
+  bottom: 100px;
+  right: 50%;
   z-index: 1000;
+  margin-right: -350px;
+  
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+  color: white;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  transition: background 0.2s;
+  font-size: 2.6rem;
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+  transition: all 0.3s ease;
   
   &:hover {
-    background: var(--primary-blue-hover);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.5);
+    background: linear-gradient(135deg, var(--primary-blue-hover), var(--primary-blue));
+  }
+  
+  &:active {
+    transform: translateY(-1px) scale(0.98);
   }
   
   &:disabled {
-    opacity: 0.6;
     cursor: not-allowed;
-    background: var(--border-medium);
+    opacity: 0.7;
+    transform: none;
   }
+  
+  @media (max-width: 750px) {
+    right: 5%;
+    margin-right: 0;
+    width: 50px;
+    height: 50px;
+    font-size: 2.4rem;
+  }
+  z-index: 30;
 `;
+
 
 // 모달 백드롭
 const ModalBackdrop = styled.div`

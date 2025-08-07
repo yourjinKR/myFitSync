@@ -148,38 +148,29 @@ const InfoContent = styled.div`
 `;
 
 const MoreButton = styled.button`
-  margin-top: 1.5rem;
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
-  color: white;
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 1rem 2rem;
+  background: transparent;
   border: none;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-  }
-
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.8rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.2s ease;
+  
   &:hover {
-    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
-    transform: translateY(-2px);
-
-    &::before {
-      left: 100%;
+    color: var(--primary-blue);
+    
+    .arrow-icon {
+      transform: translateX(4px);
     }
+  }
+  
+  .arrow-icon {
+    font-size: 1.6rem;
+    transition: transform 0.2s ease;
   }
 `;
 
@@ -832,7 +823,10 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
                 <Review key={review.matching_idx} review={review} />
             ))}
             <MoreButtonContainer>
-              <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
+              <MoreButton onClick={onMoreClick}>
+                더보기
+                <span className="arrow-icon">↗</span>
+              </MoreButton>
             </MoreButtonContainer>
           </>
         ) : (

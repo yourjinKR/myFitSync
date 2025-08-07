@@ -483,8 +483,8 @@ const Main = () => {
   
   // 스크롤 애니메이션을 위한 Intersection Observer
   useEffect(() => {
-    // 로그인 상태가 아닐 때만 애니메이션 설정
-    if (!isLogin) {
+    // 로그인 상태가 아니거나 어드민일 때만 애니메이션 설정
+    if (!isLogin || member_type === 'admin') {
       // 먼저 모든 섹션의 visible 클래스를 제거하여 초기 상태로 리셋
       const sections = document.querySelectorAll('.promo-section');
       sections.forEach((section) => {
@@ -514,7 +514,7 @@ const Main = () => {
         observer.disconnect();
       };
     }
-  }, [isLogin]); // isLogin 상태 변화에 따라 재실행
+  }, [isLogin, member_type]); // member_type도 dependency에 추가
   
   // 트레이너면 강제로 트레이너 메인페이지로 이동
   useEffect(() => {
@@ -659,7 +659,7 @@ return (
       </div>
     )}
     <MainWrapper>
-      {!isLogin && (
+      {(!isLogin || member_type === 'admin') && (
         <>
           {/* 히어로 섹션 */}
           <PromoSection className="promo-section">

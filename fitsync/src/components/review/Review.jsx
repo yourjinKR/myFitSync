@@ -110,7 +110,7 @@ const ReviewWrapper = styled.div`
 
 const ReportBtn = styled.button`
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--warning);
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -123,7 +123,8 @@ const ReportBtn = styled.button`
   transition: color 0.18s, background 0.18s;
   &:hover, &:focus {
     background: var(--border-light);
-    color: var(--text-secondary);
+    color: var(--warning);
+    opacity: 0.8;
   }
 `;
 

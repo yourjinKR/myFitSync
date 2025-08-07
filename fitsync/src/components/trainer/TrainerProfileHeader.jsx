@@ -300,6 +300,7 @@ const PurposeRow = styled.div`
   flex-wrap: nowrap;
   gap: 0.5rem;
   margin-top: 0.7rem;
+  margin-left: -0.5rem;
   min-height: 2.2rem;
   width: 100%;
   white-space: nowrap;
