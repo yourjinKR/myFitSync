@@ -23,4 +23,6 @@ public interface RoutineListMapper {
 	public RoutineArrVO sortGet(int member_idx);
 	// 순서 테이블 생성
 	public int insertSort(RoutineArrVO vo);
+	
+	public int routineNameUpdate(RoutineListVO vo);
 }

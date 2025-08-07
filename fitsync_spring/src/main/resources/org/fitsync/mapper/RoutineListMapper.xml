@@ -143,6 +143,12 @@
 		WHERE MEMBER_IDX = #{member_idx}
 	</update>
 	
+	<update id="routineNameUpdate" parameterType="org.fitsync.domain.RoutineListVO">
+		UPDATE ROUTINELIST 
+		SET ROUTINE_NAME = #{routine_name} 
+		WHERE ROUTINE_LIST_IDX = #{routine_list_idx}
+	</update>
+	
 	<insert id="insertSort" parameterType="org.fitsync.domain.RoutineArrVO">
 		INSERT INTO ROUTINEARR 
 		VALUES(
