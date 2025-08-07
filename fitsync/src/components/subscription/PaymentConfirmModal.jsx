@@ -456,8 +456,6 @@ const PaymentConfirmModal = ({
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
               />
               <TermsText>
-                <button type="button" onClick={(e) => {e.stopPropagation(); /* 약관 모달 열기 */}}>이용약관</button> 및 
-                <button type="button" onClick={(e) => {e.stopPropagation(); /* 개인정보처리방침 모달 열기 */}}> 개인정보처리방침</button>에 동의하며,
                 매월 자동결제됨을 확인했습니다.
               </TermsText>
             </CheckboxContainer>

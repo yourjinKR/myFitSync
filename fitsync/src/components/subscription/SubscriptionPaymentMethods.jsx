@@ -153,6 +153,37 @@ const MenuOption = styled.div`
   }
 `;
 
+// 메뉴 아이콘 스타일 컴포넌트
+const MenuIcon = styled.div`
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  
+  @media (min-width: 375px) {
+    width: 18px;
+    height: 18px;
+    font-size: 16px;
+  }
+  
+  @media (min-width: 414px) {
+    width: 20px;
+    height: 20px;
+    font-size: 18px;
+  }
+`;
+
+// 메뉴 텍스트 스타일 컴포넌트
+const MenuText = styled.div`
+  font-size : 1.4rem;
+
+  @media (min-width: 414px) {
+    font-size : 1.4rem;
+  }
+`;
+
 // 카드 내용
 const CardContent = styled.div`
   padding: 16px 20px;
@@ -329,7 +360,7 @@ const FloatingAddButton = styled.button`
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
-  z-index: 1000;
+  z-index: 30;
   transition: all 0.3s ease;
   
   &:active {
@@ -758,7 +789,7 @@ const SubscriptionPaymentMethods = () => {
   // 결제하기 버튼 클릭 핸들러
   const handlePaymentStart = async (method) => {
     // 기존 예약건 변경
-    if (recentOrder.order_type === 'SCHEDULE') {
+    if (recentOrder && recentOrder.order_type === 'SCHEDULE') {
       console.log(recentOrder.method_idx);
       console.log(method.method_idx);
       const response = recentOrder.method_idx !== method.method_idx ? 
@@ -889,8 +920,8 @@ const SubscriptionPaymentMethods = () => {
                                 handleMenuClose();
                               }}
                             >
-                              <span>✏️</span>
-                              <span>이름 수정</span>
+                              <MenuIcon>✏️</MenuIcon>
+                              <MenuText>이름 수정</MenuText>
                             </MenuOption>
                             <MenuOption 
                               className="delete"
@@ -899,8 +930,8 @@ const SubscriptionPaymentMethods = () => {
                                 handleMenuClose();
                               }}
                             >
-                              <span>🗑️</span>
-                              <span>삭제</span>
+                              <MenuIcon>🗑️</MenuIcon>
+                              <MenuText>삭제</MenuText>
                             </MenuOption>
                           </DropdownMenu>
                         )}

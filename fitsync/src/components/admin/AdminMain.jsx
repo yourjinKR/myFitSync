@@ -34,19 +34,19 @@ const AdminContent = styled.div`
 const AdminMain = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.user);
+    
+    // memberType을 한 번만 계산하도록 최적화
+    const memberType = user?.member_type || sessionStorage.getItem("member_type");
 
     // 관리자 권한 체크
     useEffect(() => {
-        const memberType = user?.member_type || sessionStorage.getItem("member_type");
-        
         if (memberType !== "admin") {
             alert("관리자만 접근할 수 있습니다.");
             navigate("/"); // 홈으로 리다이렉트
         }
-    }, [user, navigate]);
+    }, [memberType, navigate]);
 
     // 관리자가 아니면 아무것도 렌더링하지 않음
-    const memberType = user?.member_type || sessionStorage.getItem("member_type");
     if (memberType !== "admin") {
         return null;
     }
@@ -54,7 +54,7 @@ const AdminMain = () => {
     return (
         <AdminMainWrapper>
             <AdminNav>
-                <Link to="/admin/ai">ai 이동</Link>
+                {/* <Link to="/admin/ai">ai 이동</Link> */}
                 <Link to="/admin/api">api 모니터링</Link>
                 <Link to="/admin/workout">운동관리</Link>
                 <Link to="/admin/awards">자격인증</Link>
