@@ -14,16 +14,16 @@ const NavWrapper = styled.nav`
   max-width: 750px;
   height: 85px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #232946 0%, #1e243a 100%);
+  background: var(--bg-secondary);
   backdrop-filter: blur(20px);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1), 
-              0 -1px 0 rgba(238, 187, 195, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2), 
+              0 -1px 0 var(--border-light);
   position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   z-index: 999;
-  border-top: 1px solid rgba(238, 187, 195, 0.1);
+  border-top: 1px solid var(--border-light);
 
   @media (max-width: 750px) {
     width: 100vw;
@@ -38,7 +38,7 @@ const NavButton = styled.button`
   background: none;
   border: none;
   outline: none;
-  color: #eebbc3;
+  color: var(--text-secondary);
   font-size: 1.6rem;
   font-weight: 500;
   display: flex;
@@ -50,11 +50,13 @@ const NavButton = styled.button`
   border-radius: 16px;
   margin: 0 2px;
   position: relative;
+  transition: all 0.2s ease;
 
   svg {
     margin-bottom: 4px;
     width: 24px;
     height: 24px;
+    transition: all 0.2s ease;
   }
 
   @media (max-width: 750px) {
@@ -73,7 +75,7 @@ const Divider = styled.div`
   width: 1px;
   background: linear-gradient(to bottom, 
     transparent 20%, 
-    rgba(238, 187, 195, 0.2) 50%, 
+    var(--border-light) 50%, 
     transparent 80%
   );
   margin: 16px 0;
