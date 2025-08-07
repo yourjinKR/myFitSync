@@ -28,20 +28,6 @@ const PriceItem = styled.div`
     border-color: var(--primary-blue);
   }
 
-  /* 인기 배지 */
-  .popular-badge {
-    position: absolute;
-    top: -1px;
-    right: 20px;
-    background: #f59e0b;
-    color: white;
-    padding: 6px 16px;
-    border-radius: 0 0 12px 12px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-  }
-
   /* 할인 배지 */
   .discount-badge {
     position: absolute;
@@ -161,12 +147,6 @@ const PriceItem = styled.div`
       .total-amount {
         font-size: 1.4rem;
       }
-    }
-    
-    .popular-badge {
-      right: 16px;
-      padding: 4px 12px;
-      font-size: 1.1rem;
     }
     
     .discount-badge {
@@ -319,12 +299,14 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
       [field]: val,
       lesson_price: basePrice,
     };
+    
     onLessonsChange(newLessons);
   };
 
-  // 항목 추가
+  // 항목 추가 - 추가 후 정렬하지 않음
   const handleAddLesson = () => {
     if (lessons.length >= 5) return;
+    
     onLessonsChange([
       ...lessons,
       { lesson_price: basePrice, lesson_percent: 0, lesson_num: 1 },
@@ -337,7 +319,7 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
     onLessonsChange(newLessons);
   };
 
-  // 정렬: 읽기 모드에서만 정렬, 편집 모드에서는 입력 순서 유지
+  // 편집 모드에서는 입력 순서 유지, 읽기 모드에서는 횟수 기준 정렬
   const displayLessons = isEdit ? lessons : [...lessons].sort((a, b) => (a.lesson_num || 0) - (b.lesson_num || 0));
 
   return (
@@ -348,9 +330,10 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
           <Input
             type="number"
             min="0"
-            value={basePrice}
+            value={basePrice || ''}
             onChange={(e) => handleBasePriceChange(e.target.value)}
             placeholder="기본 회당 가격을 입력하세요"
+            onWheel={(e) => e.target.blur()}
           />
 
           {displayLessons.map((lesson, index) => {
@@ -366,9 +349,10 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
                     <FormInput
                       type="number"
                       min="1"
-                      value={lesson.lesson_num}
+                      value={lesson.lesson_num || ''}
                       onChange={(e) => handleLessonChange(index, 'lesson_num', e.target.value)}
                       placeholder="횟수"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                   <div className="form-group">
@@ -377,20 +361,16 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
                       type="number"
                       min="0"
                       max="100"
-                      value={lesson.lesson_percent}
+                      value={lesson.lesson_percent || ''}
                       onChange={(e) => handleLessonChange(index, 'lesson_percent', e.target.value)}
                       placeholder="할인률"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                 </div>
 
                 {/* 미리보기 */}
                 <PriceItem style={{ marginBottom: 0, padding: '16px' }}>
-                  {/* 인기 상품 배지 */}
-                  {(lesson.lesson_num === 4 || lesson.lesson_num === 8) && (
-                    <div className="popular-badge">인기</div>
-                  )}
-
                   <div className="price-main">
                     <div className="lesson-count">
                       {lesson.lesson_num}<span className="count-text">회</span>
@@ -435,11 +415,6 @@ const TrainerPriceList = ({ lessons = [], isEdit, onLessonsChange }) => {
 
         return (
           <PriceItem key={index}>
-            {/* 인기 상품 배지 (4회 또는 8회일 때) */}
-            {(lesson.lesson_num === 4 || lesson.lesson_num === 8) && (
-              <div className="popular-badge">인기</div>
-            )}
-
             <div className="price-main">
               <div className="lesson-count">
                 {lesson.lesson_num}<span className="count-text">회</span>
