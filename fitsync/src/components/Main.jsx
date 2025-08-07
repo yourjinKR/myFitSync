@@ -98,21 +98,7 @@ const FindTrainerCTA = styled.button`
     transition: left 0.8s;
   }
   
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 2rem;
-    width: 20px;
-    height: 20px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z'/%3E%3C/svg%3E") no-repeat center;
-    background-size: contain;
-    transform: translateY(-50%) scale(0);
-    transition: all 0.4s ease;
-  }
-  
   &:hover {
-    transform: translateY(-5px) scale(1.02);
     box-shadow: 0 20px 60px rgba(74,144,226,0.4);
     
     &::before {
@@ -120,12 +106,10 @@ const FindTrainerCTA = styled.button`
     }
     
     &::after {
-      transform: translateY(-50%) scale(1);
     }
   }
   
   &:active {
-    transform: translateY(-3px) scale(1.01);
   }
   
   @media (max-width: 768px) {
@@ -161,7 +145,6 @@ const HighlightItem = styled.div`
   position: relative;
   
   &:hover {
-    transform: translateY(-3px);
     border-color: var(--primary-blue);
     box-shadow: 0 8px 25px rgba(74,144,226,0.15);
   }
@@ -290,7 +273,6 @@ const ChatButton = styled.button`
     background: linear-gradient(90deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%);
     color: #fff;
     box-shadow: 0 6px 24px rgba(74,144,226,0.28);
-    transform: translateY(-2px) scale(1.05);
     text-shadow: 0 4px 16px rgba(0,0,0,0.22);
   }
 `;
@@ -298,13 +280,11 @@ const ChatButton = styled.button`
 // 홍보 섹션 스타일
 const PromoSection = styled.section`
   opacity: 0;
-  transform: translateY(50px);
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   margin: 4rem 0;
   
   &.visible {
     opacity: 1;
-    transform: translateY(0);
   }
 `;
 
@@ -363,7 +343,6 @@ const FeatureCard = styled.div`
   position: relative;
   
   &:hover {
-    transform: translateY(-10px) scale(1.02);
     border-color: var(--primary-blue);
     box-shadow: 0 20px 40px rgba(74,144,226,0.2);
   }
@@ -483,7 +462,6 @@ const PrimaryButton = styled.button`
   }
   
   &:hover {
-    transform: translateY(-3px) scale(1.05);
     box-shadow: 0 15px 35px rgba(74,144,226,0.4);
     
     &::before {
