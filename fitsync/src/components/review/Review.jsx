@@ -6,11 +6,11 @@ import { useSelector } from 'react-redux';
 
 const ReviewWrapper = styled.div`
   border-radius: 16px;
-  box-shadow: 0 0.1rem 0.6rem rgba(74,144,226,0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   width: 100%;
-  padding: 24px 20px;
-  border: 2px solid var(--border-light);
-  background: var(--bg-tertiary);
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -20,7 +20,7 @@ const ReviewWrapper = styled.div`
   .review-top {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     gap: 15px;
   }
 
@@ -52,6 +52,7 @@ const ReviewWrapper = styled.div`
     color: var(--primary-blue);
     font-weight: 700;
     letter-spacing: -0.01em;
+    margin-bottom: 25px;
   }
 
   .review-date {
@@ -64,21 +65,22 @@ const ReviewWrapper = styled.div`
     font-size: 1.6rem;
     font-weight: 800;
     color: var(--text-primary);
-    margin: 15px 0 8px 67px;
+    margin: 5px 0 3px 67px;
     word-break: break-all;
     line-height: 1.4;
+    margin-top: -30px;
   }
 
   .review-content {
     font-size: 1.4rem;
     color: var(--text-secondary);
     line-height: 1.7;
-    margin: 0 0 0 67px;
+    margin: 15px 0 0 67px;
     word-break: break-all;
   }
   
   @media (max-width: 500px) {
-    padding: 20px 16px;
+    padding: 14px 16px;
     margin-bottom: 16px;
     
     .profile-image {
@@ -96,7 +98,7 @@ const ReviewWrapper = styled.div`
     
     .review-title {
       font-size: 1.4rem;
-      margin: 12px 0 6px 62px;
+      margin: 4px 0 2px 62px;
     }
     
     .review-content {
@@ -107,19 +109,21 @@ const ReviewWrapper = styled.div`
 `;
 
 const ReportBtn = styled.button`
-  background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
-  color: var(--text-primary);
+  background: transparent;
+  color: var(--text-tertiary);
   border: none;
-  border-radius: 10px;
-  padding: 9px 20px;
-  font-size: 1.2rem;
-  font-weight: 700;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  margin-bottom: 16px;
-  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  transition: color 0.18s, background 0.18s;
   &:hover, &:focus {
-    background: var(--primary-blue-hover);
-    color: #fff;
+    background: var(--border-light);
+    color: var(--text-secondary);
   }
 `;
 
@@ -274,10 +278,12 @@ const Review = ({ review = {} }) => {
             />
             <div className="profile-info">
               <h3 className="member-name">{member_name || '익명'} 회원님</h3>
-              <ReviewScore score={review_star} />
             </div>
           </div>
-          <ReportBtn onClick={openModal}>신고</ReportBtn>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px'}}>
+            <ReviewScore score={review_star} />
+            <ReportBtn onClick={openModal}>⚠</ReportBtn>
+          </div>
         </div>
         <div className="review-title">{review_title}</div>
         <div className="review-content">{review_content}</div>

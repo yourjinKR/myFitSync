@@ -619,7 +619,40 @@ const Main = () => {
   }
 
 return (
-  <>
+  <> 
+    {isMatched && (
+    <>
+    {/* <MatchedTrainerTitle>매칭된 트레이너와 함께<br />운동을 이어가보세요!</MatchedTrainerTitle> */}
+
+    {/* 매칭된 트레이너 정보 카드 */}
+    {trainerInfo && (
+      <TrainerCard>
+        <img src={trainerInfo.member_image} alt="트레이너 프로필" />
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems : 'center' , width: '100%'}}>
+          <div className="info">
+            <h3>{trainerInfo.member_name} 트레이너</h3>
+            <p>{trainerInfo.member_email}</p>
+          </div>
+          <ChatButton onClick={() => handleChatCTA(trainerInfo)}>
+            대화하기
+          </ChatButton>
+        </div>
+      </TrainerCard>
+    )}
+
+    {/* 다음 PT 스케줄 정보 카드 */}
+    {nextSchedule && (
+      <ScheduleCard>
+        <h4>다음 스케줄</h4>
+        <p>
+          {new Date(nextSchedule.schedule_date).toLocaleDateString()} (
+          {nextSchedule.schedule_stime} ~ {nextSchedule.schedule_etime})
+        </p>
+        <p>{nextSchedule.schedule_content}</p>
+      </ScheduleCard>
+    )}
+  </>
+    )}
     {isLogin && (
       <div style={{padding:'2rem 2rem 0'}}>
         <TrainerCalendarView autoHeight={'auto'}/>
@@ -771,10 +804,10 @@ return (
       {isLogin && member_type === 'user' && (
         isMatched ? (
           <>
-            <MatchedTrainerTitle>매칭된 트레이너와 함께<br />운동을 이어가보세요!</MatchedTrainerTitle>
+            {/* <MatchedTrainerTitle>매칭된 트레이너와 함께<br />운동을 이어가보세요!</MatchedTrainerTitle> */}
 
             {/* 매칭된 트레이너 정보 카드 */}
-            {trainerInfo && (
+            {/* {trainerInfo && (
               <TrainerCard>
                 <img src={trainerInfo.member_image} alt="트레이너 프로필" />
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems : 'center' , width: '100%'}}>
@@ -787,10 +820,10 @@ return (
                   </ChatButton>
                 </div>
               </TrainerCard>
-            )}
+            )} */}
 
             {/* 다음 PT 스케줄 정보 카드 */}
-            {nextSchedule && (
+            {/* {nextSchedule && (
               <ScheduleCard>
                 <h4>다음 스케줄</h4>
                 <p>
@@ -799,7 +832,7 @@ return (
                 </p>
                 <p>{nextSchedule.schedule_content}</p>
               </ScheduleCard>
-            )}
+            )} */}
           </>
         ) : (
           <>
