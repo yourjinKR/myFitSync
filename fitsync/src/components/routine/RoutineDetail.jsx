@@ -1000,11 +1000,6 @@ const RoutineDetail = () => {
             /> : <h3>{data.routine_name}</h3>}
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            {isEdit && (
-              <EditCTA onClick={handleCancel}>
-                취소
-              </EditCTA>
-            )}
             <EditCTA className={isEdit ? "edit" : ""} onClick={isEdit ? handleUpdateData : () => setIsEdit(!isEdit)}>
               {isEdit ? "업데이트" : <SettingsIcon />}
             </EditCTA>
