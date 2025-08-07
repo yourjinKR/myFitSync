@@ -1,5 +1,6 @@
 package org.fitsync.service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ public class RecordServiceImple implements RecordService {
 			boolean findCheck = findChecked(routines);
 			// 세트 완료 여부 확인
 			if(findCheck) {
+				Timestamp sysdate = new Timestamp(System.currentTimeMillis());
 				for (Map<String, Object> routine : routines) {
 					RecordVO vo = new RecordVO();
 					vo.setMember_idx(member_idx);
@@ -52,8 +54,10 @@ public class RecordServiceImple implements RecordService {
 					
 					// routine_name 변환 (routine에서 가져옴)
 					Object setRoutineName = routine.get("routine_name");
-					vo.setRoutine_name(setRoutineName != null ? setRoutineName.toString() : "");
 					
+					
+					vo.setRoutine_name(setRoutineName != null ? setRoutineName.toString() : "");
+					vo.setRecord_date(sysdate);
 					// Record 삽입
 					result = mapper.insertRecord(vo) > 0;
 					

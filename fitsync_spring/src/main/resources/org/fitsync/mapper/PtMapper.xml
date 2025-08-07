@@ -62,7 +62,7 @@
 			#{pt_image},
 			#{pt_content},
 			NULL,
-			0
+			1
 		)
 	</insert>
 

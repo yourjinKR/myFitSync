@@ -7,7 +7,7 @@
 		INSERT INTO RECORD VALUES(
 		    RECORD_SEQ.nextval,
 		    #{member_idx},
-		    sysdate,
+		    #{record_date},
 		    #{pt_idx},
 		    #{routine_memo},
 		    #{routine_name},

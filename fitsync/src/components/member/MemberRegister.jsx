@@ -17,7 +17,7 @@ const MemberRegisterWrapper = styled.div`
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
-  height: 100%;
+  height: calc(100vh - 150px);
 
   label { 
     font-size: 2.2rem;
