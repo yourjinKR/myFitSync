@@ -295,19 +295,7 @@ const ApprovalModalContainer = styled.div`
     margin-bottom: 20px;
     
     li {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      
-      &:hover {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        border-color: var(--primary-blue);
-        transform: translateX(4px);
-      }
+     
       
       input[type="radio"] {
         accent-color: var(--primary-blue);
@@ -317,6 +305,14 @@ const ApprovalModalContainer = styled.div`
       }
       
       label {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        cursor: pointer;
+
         color: var(--text-black);
         font-size: 2rem;
         cursor: pointer;
@@ -326,7 +322,10 @@ const ApprovalModalContainer = styled.div`
         
         &:hover {
           color: var(--primary-blue);
-        }
+          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+          border-color: var(--primary-blue);
+          transform: translateX(4px);
+        } 
       }
     }
   }
@@ -367,58 +366,64 @@ const ApprovalModal = ({ postData, setPostData, onApprove, onClose }) => (
     
     <ul className="reason-list">
       <li>
-        <input 
-          type="radio" 
-          onChange={(e) => handleInputChange(e, postData, setPostData)} 
-          name="reason" 
-          id="reason1" 
-        />
-        <label htmlFor="reason1">제출 서류 누락 또는 미비</label>
+        <label htmlFor="reason1">
+          <input 
+            type="radio" 
+            onChange={(e) => handleInputChange(e, postData, setPostData)} 
+            name="reason" 
+            id="reason1" 
+          />
+        제출 서류 누락 또는 미비</label>
       </li>
       <li>
-        <input 
-          type="radio" 
-          onChange={(e) => handleInputChange(e, postData, setPostData)} 
-          name="reason" 
-          id="reason2" 
-        />
-        <label htmlFor="reason2">서류 정보와 신청 정보 불일치</label>
+        <label htmlFor="reason2">
+          <input 
+            type="radio" 
+            onChange={(e) => handleInputChange(e, postData, setPostData)} 
+            name="reason" 
+            id="reason2" 
+          />
+        서류 정보와 신청 정보 불일치</label>
       </li>
       <li>
-        <input 
-          type="radio" 
-          onChange={(e) => handleInputChange(e, postData, setPostData)} 
-          name="reason" 
-          id="reason3" 
-        />
-        <label htmlFor="reason3">유효하지 않은 서류 제출</label>
+        <label htmlFor="reason3">
+          <input 
+            type="radio" 
+            onChange={(e) => handleInputChange(e, postData, setPostData)} 
+            name="reason" 
+            id="reason3" 
+          />
+        유효하지 않은 서류 제출</label>
       </li>
       <li>
-        <input 
-          type="radio" 
-          onChange={(e) => handleInputChange(e, postData, setPostData)} 
-          name="reason" 
-          id="reason4" 
-        />
-        <label htmlFor="reason4">자격 요건 미충족</label>
+        <label htmlFor="reason4">
+          <input 
+            type="radio" 
+            onChange={(e) => handleInputChange(e, postData, setPostData)} 
+            name="reason" 
+            id="reason4" 
+          />
+        자격 요건 미충족</label>
       </li>
       <li>
-        <input 
-          type="radio" 
-          onChange={(e) => handleInputChange(e, postData, setPostData)} 
-          name="reason" 
-          id="reason5" 
-        />
-        <label htmlFor="reason5">서류의 판독 불가 또는 해상도 저하</label>
+        <label htmlFor="reason5">
+          <input 
+            type="radio" 
+            onChange={(e) => handleInputChange(e, postData, setPostData)} 
+            name="reason" 
+            id="reason5" 
+          />
+        서류의 판독 불가 또는 해상도 저하</label>
       </li>
       <li>
-        <input 
-          type="radio" 
-          onChange={(e) => handleInputChange(e, postData, setPostData)} 
-          name="reason" 
-          id="reason6" 
-        />
-        <label htmlFor="reason6">기타 (직접 입력)</label>
+        <label htmlFor="reason6">
+          <input 
+            type="radio" 
+            onChange={(e) => handleInputChange(e, postData, setPostData)} 
+            name="reason" 
+            id="reason6" 
+          />
+        기타 (직접 입력)</label>
       </li>
     </ul>
     
