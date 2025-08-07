@@ -11,7 +11,7 @@ import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import Timer from '../Timer';
 import dateFormat from '../../utils/dateFormat';
 import WorkoutView from './WorkoutView';
-const { getTimeDifference } = dateFormat;
+const { getTimeDifference, formatDate } = dateFormat;
 
 const WorkoutSetWrapper = styled.div`
   padding: 16px;
@@ -584,7 +584,9 @@ const RoutineDetail = () => {
     setData(updatedData);
     
     // tempData 업데이트
-    updateTempData(updatedData);
+    if(routine_list_idx !== 'custom') {
+      updateTempData(updatedData);
+    }
   };
 
   // 세트 추가 핸들러
@@ -902,7 +904,7 @@ const RoutineDetail = () => {
       
       const customData = {
         routine_list_idx: 'custom',
-        routine_name: existingData?.routine_name || '자유 운동',
+        routine_name: formatDate(currentDate, "none"),
         routines: existingData?.routines || routineData?.routines || [],
         saveDate: currentDate // 강제로 currentDate만 사용
       };

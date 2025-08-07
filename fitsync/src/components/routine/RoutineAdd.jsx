@@ -101,7 +101,6 @@ const RoutineAdd = () => {
     } else {
       
       if (!routineData.routine_list_idx) {
-        console.log('routine_list_idx가 없어서 custom으로 설정');
         setRoutineData(prevData => ({
           ...prevData,
           routine_list_idx: 'custom',

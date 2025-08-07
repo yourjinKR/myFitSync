@@ -478,6 +478,8 @@ const handleRoutineResponse = async () => {
         // 운동 기록 시에만 tempData에서 제거
         if(routine_list_idx === 'custom') {
           const newLocalData = tempData.filter(item => {
+            console.log("🚀  :  item.saveDate:", item.saveDate)
+            console.log("🚀  :  postData.saveDate:", postData.saveDate)
             return item.saveDate !== postData.saveDate;
           });
           setTempData(newLocalData);
@@ -537,7 +539,6 @@ const handleRoutineResponse = async () => {
           );
           const result = response.data;
           if(result.success) {
-            alert(result.msg);
             setIsUpdate(false);
             setIsEdit(false);
             setInit(newData);
