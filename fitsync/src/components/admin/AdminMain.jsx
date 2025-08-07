@@ -54,7 +54,6 @@ const AdminMain = () => {
     return (
         <AdminMainWrapper>
             <AdminNav>
-                <Link to="/admin">관리자 대시보드</Link>
                 <Link to="/admin/ai">ai 이동</Link>
                 <Link to="/admin/api">api 모니터링</Link>
                 <Link to="/admin/workout">운동관리</Link>
