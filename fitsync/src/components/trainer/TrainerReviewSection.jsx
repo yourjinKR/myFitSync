@@ -7,114 +7,219 @@ import ReviewInsert from '../review/ReviewInsert';
 import styled from 'styled-components';
 
 const Section = styled.section`
-  padding: 28px 0 22px 0;
-  background: var(--bg-secondary);
+  background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(40, 44, 52, 0.95) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(74, 144, 226, 0.15);
+  padding: 32px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
 
-  &:not(:last-of-type) {
-    border-bottom: none;
-    margin-bottom: 0;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(74, 144, 226, 0.6) 20%, 
+      var(--primary-blue) 50%, 
+      rgba(74, 144, 226, 0.6) 80%, 
+      transparent
+    );
+    opacity: 0.8;
   }
-
-  & + & {
-    /* 어두운 회색 막대형 구분선 */
-    margin-top: 0;
-    border-top: 0;
-    &::before {
-      content: '';
-      display: block;
-      width: calc(100% - 1px); // 좌우 여백을 주어 섹션 크기에 맞게
-      height: 16px;
-      background: #23272f;
-      position: absolute;
-      top: -8px;
-      border-radius: 8px;
-      z-index: 1;
-    }
-  }
-
-  @media (max-width: 500px) {
-    padding: 20px 0 16px 0;
-    & + &::before {
-      width: calc(100% - 20px);
-      height: 12px;
-      left: 10px;
-      top: -6px;
-    }
+  
+  @media (max-width: 768px) {
+    padding: 24px;
+    border-radius: 12px;
   }
 `;
 
 const Container = styled.div`
-  padding-left: 25px;
-  padding-right: 25px;
-  @media (max-width: 500px) {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
+  /* 내부 패딩 제거 - Section에서 이미 padding 처리 */
 `;
 
 const SectionTitle = styled.h2`
-  font-weight: 800;
-  margin-bottom: 16px;
-  font-size: 1.5rem;
-  color: white;
-  letter-spacing: -0.01em;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+  padding-bottom: 12px;
+  border-bottom: 3px solid transparent;
+  background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light)) bottom;
+  background-size: 100% 3px;
+  background-repeat: no-repeat;
   position: relative;
-  z-index: 2;
-  padding-left: 25px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &::before {
+    content: '⭐';
+    font-size: 1.8rem;
+    filter: drop-shadow(0 2px 4px rgba(74, 144, 226, 0.3));
+  }
 
   &::after {
     content: '';
-    display: block;
-    width: calc(100% - 50px);
-    height: 4px;
-    background: var(--primary-blue-light);
-    border-radius: 2px;
-    margin: 12px 0 0 0;
-    margin-left: 0;
-    margin-bottom: 35px;
-    position: relative;
-    left: 0;
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      rgba(74, 144, 226, 0.3), 
+      transparent
+    );
+    margin-left: 12px;
   }
-
-  @media (max-width: 500px) {
-    font-size: 1.3rem;
-    padding-left: 12px;
-    &::after {
-      width: calc(100% - 24px);
-      height: 3px;
-      margin-top: 9px;
-      left: 0;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    
+    &::before {
+      font-size: 1.6rem;
     }
   }
 `;
 
-const ReviewCount = styled.p`
-  color: var(--text-tertiary);
-  font-size: 1.2rem;
-  margin-bottom: 12px;
+const ReviewCount = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  background: rgba(74, 144, 226, 0.08);
+  padding: 12px 20px;
+  border-radius: 25px;
+  border: 1px solid rgba(74, 144, 226, 0.15);
+  backdrop-filter: blur(10px);
+  width: fit-content;
+
+  &::before {
+    content: '💬';
+    font-size: 1.6rem;
+    filter: drop-shadow(0 2px 4px rgba(74, 144, 226, 0.2));
+  }
+
+  span {
+    font-weight: 600;
+    color: var(--primary-blue);
+  }
 `;
 
 const WriteButton = styled.button`
-  background: linear-gradient(90deg, var(--primary-blue) 60%, var(--primary-blue-light) 100%);
-  color: var(--text-primary);
-  border: none;
-  padding: 12px 22px;
-  font-size: 1.2rem;
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 700;
-  margin-bottom: 22px;
-  margin-top: 4px;
-  transition: background 0.18s;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 25px;
+  box-shadow: 
+    0 6px 20px rgba(74, 144, 226, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::before {
+    content: '✍️';
+    font-size: 1.2rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.25), 
+      transparent
+    );
+    transition: left 0.6s;
+  }
+
   &:hover {
-    background: var(--primary-blue-hover);
-    color: #fff;
+    box-shadow: 
+      0 8px 25px rgba(74, 144, 226, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+
+    &::after {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(-1px);
   }
 `;
 
 const ReviewList = styled.div`
-  margin-top: 15px;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  padding: 80px 40px;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  background: linear-gradient(145deg, 
+    rgba(74, 144, 226, 0.05) 0%, 
+    rgba(40, 44, 52, 0.8) 50%, 
+    rgba(74, 144, 226, 0.05) 100%
+  );
+  border-radius: 20px;
+  border: 2px dashed rgba(74, 144, 226, 0.25);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  
+  &::before {
+    content: '💬';
+    display: block;
+    font-size: 5rem;
+    margin-bottom: 20px;
+    opacity: 0.7;
+    filter: drop-shadow(0 6px 12px rgba(74, 144, 226, 0.3));
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  span {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 12px;
+    font-size: 1.3rem;
+    color: var(--primary-blue-light);
+    font-style: italic;
+    opacity: 0.9;
+    font-weight: 500;
+  }
 `;
 
 const TrainerReviewSection = () => {
@@ -159,7 +264,9 @@ const TrainerReviewSection = () => {
     <Section>
       <SectionTitle>리뷰</SectionTitle>
       <Container>
-        <ReviewCount>총 {reviews.length}개의 리뷰</ReviewCount>
+        <ReviewCount>
+          <span>{reviews.length}</span>개의 소중한 후기
+        </ReviewCount>
 
         {canWriteReview && (
           <WriteButton onClick={() => setShowInsert(true)}>리뷰 작성하기</WriteButton>
@@ -175,12 +282,19 @@ const TrainerReviewSection = () => {
       </Container>
 
       <ReviewList>
-        {reviews.map((r, index) => (
-          <Review
-            key={r.matching_idx || index}
-            review={r}
-          />
-        ))}
+        {reviews.length === 0 ? (
+          <EmptyMessage>
+            작성된 리뷰가 없습니다
+            <span>첫 번째 리뷰를 작성해보세요!</span>
+          </EmptyMessage>
+        ) : (
+          reviews.map((r, index) => (
+            <Review
+              key={r.matching_idx || index}
+              review={r}
+            />
+          ))
+        )}
       </ReviewList>
     </Section>
   );

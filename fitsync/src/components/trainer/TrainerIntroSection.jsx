@@ -12,77 +12,31 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'; // 수�
 
 // Styled Components
 const Section = styled.section`
-  padding: 28px 0 22px 0;
   background: var(--bg-secondary);
-  position: relative;
-
-  &:not(:last-of-type) {
-    border-bottom: none;
-    margin-bottom: 0;
-  }
-
-  & + & {
-    /* 어두운 회색 막대형 구분선 */
-    margin-top: 0;
-    border-top: 0;
-    &::before {
-      content: '';
-      display: block;
-      width: calc(100% - 1px); // 좌우 여백을 주어 섹션 크기에 맞게
-      height: 16px;
-      background: #23272f;
-      position: absolute;
-      top: -8px;
-      border-radius: 8px;
-      z-index: 1;
-    }
-  }
-
-  @media (max-width: 500px) {
-    padding: 20px 0 16px 0;
-    & + &::before {
-      width: calc(100% - 20px);
-      height: 12px;
-      left: 10px;
-      top: -6px;
-    }
+  border-radius: 12px;
+  border: 1px solid rgba(74, 144, 226, 0.1);
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+    border-radius: 10px;
   }
 `;
 
 // SectionTitle과 내용 구분선
-const SectionTitle = styled.h3`
-  font-weight: 800;
-  margin-bottom: 16px;
-  font-size: 2.8rem;
-  color: white;
-  letter-spacing: -0.01em;
-  position: relative;
-  z-index: 2;
-  padding-left: 25px; // 제목을 오른쪽으로 이동
-
-  &::after {
-    content: '';
-    display: block;
-    width: calc(100% - 50px); // 전체 너비에서 좌우 잘라냄
-    height: 4px;
-    background: var(--primary-blue-light);
-    border-radius: 2px;
-    margin: 12px 0 0 0;
-    margin-left: 0; // 왼쪽 정렬
-    margin-bottom: 35px;
-    position: relative;
-    left: 0;
-  }
-
-  @media (max-width: 500px) {
-    font-size: 2.4rem;
-    padding-left: 12px;
-    &::after {
-      width: calc(100% - 24px);
-      height: 3px;
-      margin-top: 9px;
-      left: 0;
-    }
+const SectionTitle = styled.h2`
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-blue);
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
   }
 `;
 
@@ -91,104 +45,148 @@ const AwardIconCircle = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.2em;
-  height: 3.2em;
+  width: 4rem;
+  height: 4rem;
   border-radius: 50%;
   background: ${({ category }) =>
-    category === '자격증' ? '#4A90E2'
-    : category === '학위' ? '#FFB800'
-    : '#A259FF'};
-  margin-right: 1em;
-  vertical-align: middle;
-  box-shadow: 0 0.15em 0.5em rgba(0,0,0,0.2);
+    category === '자격증' ? 'linear-gradient(135deg, #4A90E2, #6BA3E8)'
+    : category === '학위' ? 'linear-gradient(135deg, #FFB800, #FFC842)'
+    : 'linear-gradient(135deg, #A259FF, #B873FF)'};
+  margin-right: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   color: #fff;
   font-size: 2rem;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  }
   
   @media (max-width: 500px) {
-    width: 2.8em;
-    height: 2.8em;
-    font-size: 1.8em;
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.8rem;
+    margin-right: 1.2rem;
   }
 `;
 
 const CertList = styled.ul`
   list-style: none;
-  padding-left: 25px;
-  padding-right: 25px;
-  font-size: 1.8rem;
+  padding: 0;
+  font-size: 1.6rem;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  
   li {
-    margin-bottom: 18px;
+    margin-bottom: 2rem;
     cursor: pointer;
-    transition: color 0.18s;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    &:hover { color: var(--primary-blue); }
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    
+    &:hover { 
+      background: rgba(74, 144, 226, 0.08);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
+  
   @media (max-width: 500px) {
-    padding-left: 12px;
-    padding-right: 12px;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
+    
+    li {
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
   }
 `;
 
 const AwardName = styled.span`
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.4;
-  transition: color 0.18s ease;
-  
-  @media (max-width: 750px) {
-    font-size: 1.7rem;
-  }
+  transition: color 0.3s ease;
   
   @media (max-width: 500px) {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 `;
 
 const InfoContent = styled.div`
   font-size: 1.6rem;
-  color: white;
+  color: var(--text-secondary);
   line-height: 1.7;
   white-space: pre-line;
   margin-bottom: 0.8rem;
-  padding-left: 25px;
-  padding-right: 25px;
-  font-weight: 600;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+  
   @media (max-width: 500px) {
     font-size: 1.4rem;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding: 1.2rem;
   }
 `;
 
 const MoreButton = styled.button`
-  margin-top: 9px;
-  background: none;
-  border: none;
-  color: var(--primary-blue);
-  font-size: 1.2rem;
-  font-weight: 700;
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 600;
   cursor: pointer;
-  padding: 0;
-  border-radius: 0.8rem;
-  transition: color 0.18s, background 0.18s;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
   &:hover {
-    color: var(--primary-blue-hover);
-    background: var(--bg-tertiary);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+    transform: translateY(-2px);
+
+    &::before {
+      left: 100%;
+    }
   }
 `;
 
 const MoreButtonContainer = styled.div`
-  padding-left: 25px;
-  padding-right: 25px;
-  @media (max-width: 500px) {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
 `;
 
 const ModalOverlay = styled.div`
@@ -197,57 +195,171 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
+  padding: 2rem;
+  box-sizing: border-box;
 `;
 
 const ModalContent = styled.div`
   background: var(--bg-secondary);
-  padding: 22px;
-  border-radius: 12px;
-  max-width: 92vw;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  max-width: 90vw;
   max-height: 90vh;
   text-align: center;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  margin: auto;
+
+  h4 {
+    color: var(--primary-blue);
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    text-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+  }
 
   img {
     max-width: 100%;
     max-height: 60vh;
-    border-radius: 10px;
+    border-radius: 12px;
     margin-top: 1.2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const NoDataMessage = styled.div`
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  background: linear-gradient(145deg, var(--bg-tertiary) 0%, rgba(58, 58, 58, 0.8) 100%);
+  border-radius: 16px;
+  border: 2px dashed rgba(74, 144, 226, 0.3);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  
+  &::before {
+    content: '🏆';
+    display: block;
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.6;
+    filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3));
+  }
+  
+  span {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 8px;
+    font-size: 1.2rem;
+    color: var(--primary-blue-light);
+    font-style: italic;
+    opacity: 0.8;
+  }
+`;
+
+const NoReviews = styled.div`
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  background: linear-gradient(145deg, var(--bg-tertiary) 0%, rgba(58, 58, 58, 0.8) 100%);
+  border-radius: 16px;
+  border: 2px dashed rgba(74, 144, 226, 0.3);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  
+  &::before {
+    content: '💭';
+    display: block;
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.6;
+    filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3));
+  }
+  
+  span {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 8px;
+    font-size: 1.2rem;
+    color: var(--primary-blue-light);
+    font-style: italic;
+    opacity: 0.8;
   }
 `;
 
 const NoGym = styled.div`
-  color: var(--text-tertiary);
-  font-size: 1.2rem;
   text-align: center;
-  margin: 1.5rem 0 1.8rem 0;
-  padding-left: 25px;
-  padding-right: 25px;
-  @media (max-width: 500px) {
-    padding-left: 12px;
-    padding-right: 12px;
+  padding: 60px 32px;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  background: linear-gradient(145deg, var(--bg-tertiary) 0%, rgba(58, 58, 58, 0.8) 100%);
+  border-radius: 16px;
+  border: 2px dashed rgba(74, 144, 226, 0.3);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  
+  &::before {
+    content: '🏋️';
+    display: block;
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.6;
+    filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3));
+  }
+
+  
+  span {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 8px;
+    font-size: 1.2rem;
+    color: var(--primary-blue-light);
+    font-style: italic;
+    opacity: 0.8;
   }
 `;
 
 const EditField = styled.input`
   width: 100%;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border: 2px solid var(--border-medium);
-  border-radius: 10px;
-  padding: 12px 15px;
-  margin-bottom: 12px;
-  margin-top: 6px;
-  transition: border 0.18s, background 0.18s;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  
   &:focus {
-    border: 2px solid var(--primary-blue);
-    background: var(--bg-secondary);
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 0 0 3px rgba(74, 144, 226, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
   }
+  
   &::placeholder {
     color: var(--text-tertiary);
     opacity: 1;
@@ -256,96 +368,145 @@ const EditField = styled.input`
 
 const EditSelect = styled.select`
   width: 100%;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border: 2px solid var(--border-medium);
-  border-radius: 10px;
-  padding: 12px 15px;
-  margin-bottom: 12px;
-  margin-top: 6px;
-  transition: border 0.18s, background 0.18s;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  
   &:focus {
-    border: 2px solid var(--primary-blue);
-    background: var(--bg-secondary);
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 0 0 3px rgba(74, 144, 226, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
   }
 `;
 
 const EditLabel = styled.label`
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   color: var(--primary-blue-light);
   font-weight: 600;
-  margin-bottom: 3px;
+  margin-bottom: 0.5rem;
   display: block;
+  text-shadow: 0 1px 3px rgba(74, 144, 226, 0.1);
 `;
 
 const EditFileInput = styled.input`
-  margin-top: 6px;
-  margin-bottom: 12px;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
   color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border-radius: 10px;
-  padding: 10px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  width: 100%;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  
   &::file-selector-button {
-    background: var(--primary-blue);
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 8px 16px;
+    padding: 0.8rem 1.6rem;
     font-size: 1.2rem;
+    font-weight: 600;
     cursor: pointer;
-    margin-right: 12px;
+    margin-right: 1.2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+  }
+  
+  &::file-selector-button:hover {
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+    transform: translateY(-1px);
   }
 `;
 
 // 요일 버튼 스타일
 const DayButton = styled.button`
-  background: ${({ selected }) => (selected ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
+  background: ${({ selected }) => 
+    selected 
+      ? 'linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light))'
+      : 'rgba(255, 255, 255, 0.05)'
+  };
   color: ${({ selected }) => (selected ? '#fff' : 'var(--text-primary)')};
-  border: 2px solid var(--border-light);
-  border-radius: 9px;
-  padding: 9px 16px;
-  margin-right: 9px;
-  margin-bottom: 9px;
-  font-size: 1.2rem;
+  border: 1px solid ${({ selected }) => 
+    selected ? 'var(--primary-blue)' : 'rgba(255, 255, 255, 0.1)'
+  };
+  border-radius: 10px;
+  padding: 1rem 1.6rem;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, border 0.18s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: ${({ selected }) =>
+    selected 
+      ? '0 4px 12px rgba(74, 144, 226, 0.3)'
+      : '0 2px 8px rgba(0, 0, 0, 0.08)'
+  };
+  
   &:hover {
-    background: var(--primary-blue-light);
-    color: #fff;
+    background: ${({ selected }) => 
+      selected 
+        ? 'linear-gradient(135deg, var(--primary-blue-hover), var(--primary-blue))'
+        : 'rgba(74, 144, 226, 0.1)'
+    };
+    color: ${({ selected }) => (selected ? '#fff' : 'var(--primary-blue)')};
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
   }
 `;
 
 // 시간 선택 셀렉트 스타일
 const TimeSelect = styled.select`
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border: 2px solid var(--border-medium);
-  border-radius: 10px;
-  padding: 10px 15px;
-  margin-right: 12px;
-  margin-bottom: 9px;
-  transition: border 0.18s, background 0.18s;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-right: 1.2rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  
   &:focus {
-    border: 2px solid var(--primary-blue);
-    background: var(--bg-secondary);
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 0 0 3px rgba(74, 144, 226, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
   }
 `;
 
 const TimeRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 1.2rem;
   flex-wrap: wrap;
-  margin-bottom: 12px;
-  padding-left: 25px;
-  padding-right: 25px;
-  @media (max-width: 500px) {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
+  margin-bottom: 1.5rem;
 `;
 
 const EditContainer = styled.div`
@@ -520,19 +681,25 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
 
       <Section>
         <SectionTitle>검증된 자격 사항</SectionTitle>
-        <CertList>
-          {awards.length === 0 && <li>데이터가 없습니다.</li>}
-          {awards.map((a, i) => (
-            <li key={i} onClick={() => setSelectedAward(a)}>
-              <AwardIconCircle category={a.awards_category}>
-                {a.awards_category === '자격증' && <WorkspacePremiumIcon style={{ fontSize: '3.5rem' }}/>}
-                {a.awards_category === '학위' && <SchoolIcon style={{ fontSize: '3.5rem' }}/>}
-                {a.awards_category === '수상경력' && <EmojiEventsIcon style={{ fontSize: '3.5rem' }} />}
-              </AwardIconCircle>
-              <AwardName>{a.awards_name}</AwardName>
-            </li>
-          ))}
-        </CertList>
+        {awards.length === 0 ? (
+          <NoDataMessage>
+            데이터가 없습니다
+            <span>자격증이나 수상경력을 추가해보세요!</span>
+          </NoDataMessage>
+        ) : (
+          <CertList>
+            {awards.map((a, i) => (
+              <li key={i} onClick={() => setSelectedAward(a)}>
+                <AwardIconCircle category={a.awards_category}>
+                  {a.awards_category === '자격증' && <WorkspacePremiumIcon style={{ fontSize: '3.5rem' }}/>}
+                  {a.awards_category === '학위' && <SchoolIcon style={{ fontSize: '3.5rem' }}/>}
+                  {a.awards_category === '수상경력' && <EmojiEventsIcon style={{ fontSize: '3.5rem' }} />}
+                </AwardIconCircle>
+                <AwardName>{a.awards_name}</AwardName>
+              </li>
+            ))}
+          </CertList>
+        )}
 
         {isEdit && (
           <EditContainer style={{ marginTop: '13px' }}>
@@ -626,15 +793,24 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
 
       <Section>
         <SectionTitle>최근 후기</SectionTitle>
-          {reviews
-            ?.sort((a, b) => b.matching_idx - a.matching_idx)
-            .slice(0, 2)
-            .map((review) => (
-              <Review key={review.matching_idx} review={review} />
-          ))}
-        <MoreButtonContainer>
-          <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
-        </MoreButtonContainer>
+        {reviews && reviews.length > 0 ? (
+          <>
+            {reviews
+              ?.sort((a, b) => b.matching_idx - a.matching_idx)
+              .slice(0, 2)
+              .map((review) => (
+                <Review key={review.matching_idx} review={review} />
+            ))}
+            <MoreButtonContainer>
+              <MoreButton onClick={onMoreClick}>더 보기 →</MoreButton>
+            </MoreButtonContainer>
+          </>
+        ) : (
+          <NoReviews>
+            작성된 후기가 없습니다
+            <span>첫 번째 후기를 기다리고 있어요!</span>
+          </NoReviews>
+        )}
       </Section>
 
       <Section>
@@ -656,7 +832,10 @@ const TrainerIntroSection = ({ trainer, onMoreClick, isEdit, onChange, lessons, 
             onChange={onChange}
           />
         ) : (
-          <NoGym>등록된 체육관이 없습니다 !</NoGym>
+          <NoGym>
+            등록된 체육관이 없습니다
+            <span>체육관 정보를 등록해보세요!</span>
+          </NoGym>
         )}
       </Section>
     </>

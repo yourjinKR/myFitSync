@@ -10,40 +10,113 @@ import TrainerIntroSection from './TrainerIntroSection';
 import TrainerReviewSection from './TrainerReviewSection';
 
 // 스타일 컴포넌트 추가
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 // 컨테이너
 const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  font-size: 1.6rem;
   background: var(--bg-primary);
-  color: var(--text-primary);
   min-height: 100vh;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 20px;
+  }
 `;
 
 // 탭 메뉴
 const TabMenu = styled.div`
   display: flex;
-  border-bottom: 1px solid var(--border-light);
-  margin-top: 2.5rem;
-  background: var(--bg-secondary);
-  border-radius: 1rem 1rem 0 0;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
   overflow: hidden;
+  position: relative;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(74, 144, 226, 0.5), 
+      transparent
+    );
+  }
 `;
 
 // 탭 버튼
 const TabButton = styled.button`
   flex: 1;
-  padding: 1.5rem 0;
+  background: none;
   border: none;
-  background: ${({ $active }) => ($active ? 'var(--bg-tertiary)' : 'transparent')};
-  font-weight: 700;
   font-size: 1.6rem;
-  color: ${({ $active }) => ($active ? 'var(--primary-blue)' : 'var(--text-secondary)')};
-  border-bottom: ${({ $active }) => ($active ? '0.25rem solid var(--primary-blue)' : 'transparent')};
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  padding: 1.8rem 2.5rem;
+  color: ${({ $active }) => ($active ? '#fff' : 'var(--text-secondary)')};
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  ${({ $active }) => $active && css`
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+    color: #fff;
+    box-shadow: 
+      0 4px 16px rgba(74, 144, 226, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 1px;
+    }
+  `}
+
+  &:hover {
+    background: ${({ $active }) => 
+      $active 
+        ? 'linear-gradient(135deg, var(--primary-blue-hover), var(--primary-blue))' 
+        : 'rgba(74, 144, 226, 0.12)'
+    };
+    color: ${({ $active }) => 
+      $active 
+        ? '#fff' 
+        : 'var(--primary-blue)'
+    };
+    box-shadow: ${({ $active }) => 
+      $active 
+        ? '0 6px 20px rgba(74, 144, 226, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+        : '0 2px 8px rgba(74, 144, 226, 0.15)'
+    };
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+    padding: 1.5rem 2rem;
+  }
 `;
 
 // 플로팅 버튼 (상담하기 버튼)
