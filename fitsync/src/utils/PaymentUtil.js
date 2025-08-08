@@ -33,11 +33,9 @@ export const PaymentUtil = {
         });
 
         if (result.code) {
-            console.log("빌링키 발급 실패:", result);
             return null;
         }
 
-        console.log("발급 요청 결과:", result);
         return result;
     },
 

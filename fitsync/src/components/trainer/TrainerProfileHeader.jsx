@@ -65,7 +65,7 @@ const IconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.45rem;
+  font-size: 1.6rem;
   color: var(--primary-blue);
   cursor: pointer;
   box-shadow: 0 0.05rem 0.2rem rgba(74,144,226,0.10);
@@ -74,6 +74,10 @@ const IconButton = styled.button`
     background: var(--primary-blue-light);
     color: #fff;
     outline: none;
+  }
+  svg {
+    width: 2rem;
+    height: 2rem;
   }
 `;
 
@@ -636,13 +640,13 @@ const TrainerProfileHeader = ({
             <h2 style={{
               margin: 0, marginBottom: '1.2rem',
               color: 'var(--primary-blue)',
-              fontSize: '1.4rem',
+              fontSize: '1.6rem',
               fontWeight: 700,
               textAlign: 'center'
             }}>프로필 신고하기</h2>
             <div style={{
               color: 'var(--text-secondary)',
-              fontSize: '1.08rem',
+              fontSize: '1.4rem',
               textAlign: 'center',
               marginBottom: '1.2rem'
             }}>신고 사유를 입력해주세요</div>
@@ -656,7 +660,7 @@ const TrainerProfileHeader = ({
                 resize: 'none',
                 marginBottom: '1.2rem',
                 padding: '1rem',
-                fontSize: '1.08rem',
+                fontSize: '1.4rem',
                 borderRadius: '0.7rem',
                 background: 'var(--bg-tertiary)',
                 color: 'var(--text-primary)',
@@ -665,8 +669,8 @@ const TrainerProfileHeader = ({
               }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.7rem' }}>
-              <InstaButton onClick={() => setShowReportModal(false)}>취소</InstaButton>
-              <InstaButton $primary onClick={handleReportSubmit}>신고</InstaButton>
+              <InstaButton style={{fontSize: '1.4rem'}} onClick={() => setShowReportModal(false)}>취소</InstaButton>
+              <InstaButton $primary style={{fontSize: '1.4rem'}} onClick={handleReportSubmit}>신고</InstaButton>
             </div>
           </div>
         </div>
