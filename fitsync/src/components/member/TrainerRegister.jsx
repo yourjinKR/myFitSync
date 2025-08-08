@@ -234,7 +234,6 @@ const PurposeGrid = styled.div`
   margin-bottom: 2rem;
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
   }
 `;
 
@@ -280,38 +279,62 @@ const PurposeCheckboxItem = styled.label`
 const TimeInputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 1rem;
 
   span {
-    font-size: 1.8rem;
+    font-size: 2rem;
     color: var(--text-primary);
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
   }
 
   @media (max-width: 768px) {
     gap: 1rem;
+    
+    span {
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+    }
   }
 `;
 
 // Select 컴포넌트
 const Select = styled.select`
   width: 100%;
-  padding: 1.2rem 1.5rem;
+  padding: 1.5rem 2rem;
   border: 2px solid ${({ $invalid }) => ($invalid ? "#ff4d4f" : "var(--border-light)")};
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 1.6rem;
+  font-size: 1.8rem;
+  font-weight: 500;
   cursor: pointer;
+  text-align: center;
   
   &:focus {
     border-color: var(--primary-blue);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  }
+
+  &:hover {
+    border-color: var(--primary-blue);
   }
 
   option {
     background: var(--bg-secondary);
     color: var(--text-primary);
+    font-size: 1.6rem;
+    padding: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 250px;
+    padding: 1.3rem 1.5rem;
+    font-size: 1.6rem;
   }
 `;
 
