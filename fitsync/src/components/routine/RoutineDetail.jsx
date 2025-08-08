@@ -934,6 +934,13 @@ const RoutineDetail = () => {
       });
       checkedSetsRef.current = newChecked;
     }
+
+    if(location.pathname === "/routine/detail/custom"){
+      setNewData({
+        ...data,
+        update: false, // 자유 운동은 업데이트 필요 없음
+      });
+    }
   }, [data]);
 
   useEffect(() => {
