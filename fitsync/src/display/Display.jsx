@@ -168,6 +168,8 @@ const Display = () => {
 
           // 세션 스토리지 정리
           sessionStorage.removeItem('chat_member_idx');
+          
+          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
 
           // 로그아웃 처리
           dispatch(logoutUser());
@@ -190,6 +192,7 @@ const Display = () => {
           }
 
           sessionStorage.removeItem('chat_member_idx');
+          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
           dispatch(logoutUser());
           navigate('/login');
           stopAuthCheck();
