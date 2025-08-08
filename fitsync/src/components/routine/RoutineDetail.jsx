@@ -552,7 +552,10 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
-    // 값 변경 시에는 임시기록(tempData) 저장하지 않음
+    // custom 루틴일 경우 값 변경 시에도 임시기록(tempData) 저장
+    if(routine_list_idx === 'custom') {
+      updateTempData(updatedData);
+    }
   };
 
   // 세트 체크 핸들러
@@ -617,7 +620,10 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
-    // 세트 추가 시에는 임시기록(tempData) 저장하지 않음
+    // custom 루틴일 경우 세트 추가 시에도 임시기록(tempData) 저장
+    if(routine_list_idx === 'custom') {
+      updateTempData(updatedData);
+    }
   };
 
   // 세트 삭제 핸들러
@@ -648,7 +654,10 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
-    // 세트 삭제 시에는 임시기록(tempData) 저장하지 않음
+    // custom 루틴일 경우 세트 삭제 시에도 임시기록(tempData) 저장
+    if(routine_list_idx === 'custom') {
+      updateTempData(updatedData);
+    }
   };
 
   // 루틴 삭제 핸들러
@@ -675,14 +684,6 @@ const RoutineDetail = () => {
 
   const handleTimerToggle = () => {
     setIsTimerShow(true);
-  };
-
-  // 취소 핸들러 추가
-  const handleCancel = () => {
-    if (localInit) {
-      setData(localInit);
-      setIsEdit(false);
-    }
   };
 
   // trailingActions
@@ -723,7 +724,6 @@ const RoutineDetail = () => {
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
 
 
-    console.log("🚀  :  data:", data)
   }, [data, routine_list_idx, localInit, setNewData]); // setNewData 의존성 추가
 
   // 자유 운동 저장 로직 - 간소화하여 무한루프 방지
@@ -903,13 +903,26 @@ const RoutineDetail = () => {
       
       const customData = {
         routine_list_idx: 'custom',
-        routine_name: formatDate(currentDate, "none"),
+        // routine_name: formatDate(currentDate, "none"),
         routines: existingData?.routines || routineData?.routines || [],
         saveDate: currentDate // 강제로 currentDate만 사용
       };
-      setData(customData);
-      setInit(customData);
-      setLocalInit(customData); // 로컬 init도 설정
+
+      const getAllTempDataByDate = () => {
+        if (!tempData || !targetDate) return [];
+        const targetDateOnly = targetDate.split(' ')[0];
+        return tempData.filter(item =>
+          item.saveDate &&
+          item.saveDate.split(' ')[0] === targetDateOnly
+        );
+      };
+
+      const tempDataForDate = getAllTempDataByDate().find(item => item.saveDate === targetDate);
+      const customDataForMat = targetDate ? tempDataForDate : customData
+      setData(customDataForMat);
+      setRoutineData(customDataForMat);
+      setInit(customDataForMat);
+      setLocalInit(customDataForMat); // 로컬 init도 설정
       setIsLoading(false);
       return;
     }

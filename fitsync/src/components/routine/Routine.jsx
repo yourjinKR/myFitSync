@@ -145,7 +145,7 @@ const Routine = ({ data, onDelete, type, setTempData, setHeightData, targetIdx :
         <h3>
           {
             type !== null && type === 'custom' ? 
-            <>{data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name} )` : ''}</> :
+            <>{data.saveDate.slice(0, 10)} &ensp; {data.routine_name !== "" ? `( ${data.routine_name === undefined ? '자유운동' : data.routine_name } )` : ''}</> :
             <>{data.routine_name} {data.writer_idx !== data.member_idx  ? data.writer_idx === 0 ? '🤖' : '💪' : '' }</>
           }
         </h3>

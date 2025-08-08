@@ -481,6 +481,7 @@ const handleRoutineResponse = async () => {
         
         // 운동 기록 시에만 tempData에서 제거
         if(routine_list_idx === 'custom') {
+          
           const newLocalData = tempData.filter(item => {
             return item.saveDate !== postData.saveDate;
           });
@@ -491,6 +492,8 @@ const handleRoutineResponse = async () => {
           );
         }
 
+        // 기록 후 routineData 초기화하여 tempData 재추가 방지
+        setRoutineData(routineInit);
         nav("/routine/view");
       } else {
         alert(result.msg);
@@ -724,7 +727,7 @@ const handleRoutineResponse = async () => {
               <button onClick={() => handleRecordData(false)}>아니오</button>
             </ButtonGroup>
             {
-              routine_list_idx === 'custom' && !routineData.routine_list_idx ?
+              routine_list_idx === 'custom' && !routineData.member_idx ?
                 <ChkBox>
                   <CheckInput type='checkbox' id="chkUpdate" onChange={handleChkRef} ref={checkedRef} /><ChecklabelText htmlFor="chkUpdate"><p>루틴에 등록하기</p></ChecklabelText>
                 </ChkBox>
