@@ -793,7 +793,7 @@ useEffect(() => {
     return;
   }
 
-  if (user.member_type !== 'trainer' && user.member_type !== 'user') {
+  if (user.member_type !== 'trainer' && user.member_type !== 'user' && user.member_type !== 'admin') {
     alert('권한이 없습니다.');
     navigate('/');
     return;
