@@ -93,12 +93,25 @@ public class ChatRestController {
         return ResponseEntity.ok(room);
     }
     
-    // 사용자 채팅방 목록 조회 GET /api/chat/rooms
+    // 사용자 채팅방 목록 조회 (메시지 필터링 적용)
     @GetMapping("/rooms")
     public ResponseEntity<List<RoomVO>> readRoomList(HttpSession session) {
-        int member_idx = (Integer) session.getAttribute("member_idx");
-        List<RoomVO> rooms = chatService.readRoomList(member_idx);
-        return ResponseEntity.ok(rooms);
+        Integer member_idx = (Integer) session.getAttribute("member_idx");
+        
+        if (member_idx == null) {
+            return ResponseEntity.status(401).body(null);
+        }
+        
+        try {
+            // 메시지 필터링이 적용된 채팅방 목록 조회
+            List<RoomVO> rooms = chatService.readRoomList(member_idx);
+            return ResponseEntity.ok(rooms);
+            
+        } catch (Exception e) {
+            System.err.println("채팅방 목록 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
     
     // 채팅방 메시지 목록 조회 (페이징) GET /api/chat/room/{room_idx}/messages
@@ -135,7 +148,7 @@ public class ChatRestController {
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
     
-    // 🔥 핵심 수정: 채팅파일 업로드 API - 실시간 첨부파일 알림 강화
+    // 채팅파일 업로드 API
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("message_idx") int message_idx, HttpSession session) {
         
@@ -147,10 +160,10 @@ public class ChatRestController {
             // 2. 메시지와 첨부파일 연결
             chatService.linkAttachmentToMessage(message_idx, attachment.getAttach_idx());
             
-            // 3. 🔥 핵심 수정: 메시지 정보 조회하여 채팅방 정보 획득
+            // 3. 메시지 정보 조회하여 채팅방 정보 획득
             MessageVO messageInfo = chatService.getMessage(message_idx);
             if (messageInfo != null && messageInfo.getRoom_idx() > 0) {
-                // 4. 🔥 첨부파일 업로드 완료 실시간 알림 강화
+                // 4. 첨부파일 업로드 완료 실시간 알림 강화
                 try {
                     Map<String, Object> uploadNotification = Map.of(
                         "type", "attachment_uploaded",
@@ -166,11 +179,6 @@ public class ChatRestController {
                     
                     // 채팅방 첨부파일 전용 채널로 브로드캐스트
                     messagingTemplate.convertAndSend("/topic/room/" + messageInfo.getRoom_idx() + "/attachment", uploadNotification);
-                    System.out.println("🔥 첨부파일 업로드 완료 알림 전송 강화: " + message_idx);
-                    System.out.println("   - cloudinary_url: " + attachment.getCloudinary_url());
-                    System.out.println("   - original_filename: " + attachment.getOriginal_filename());
-                    System.out.println("   - attach_idx: " + attachment.getAttach_idx());
-                    
                 } catch (Exception e) {
                     // 브로드캐스트 실패는 파일 업로드 성공에 영향을 주지 않음
                     System.err.println("첨부파일 업로드 알림 전송 실패: " + e.getMessage());

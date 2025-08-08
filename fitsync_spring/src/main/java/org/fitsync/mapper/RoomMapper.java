@@ -1,6 +1,7 @@
 package org.fitsync.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
 import org.fitsync.domain.RoomVO;
@@ -17,5 +18,7 @@ public interface RoomMapper {
     public RoomVO getRoom(@Param("room_idx") int room_idx);
     // 사용자 채팅방 목록 조회
     public List<RoomVO> getRoomList(@Param("member_idx") int member_idx);
+    // 메시지 필터링이 적용된 채팅방 목록 조회
+    public List<RoomVO> getRoomListWithMessageFilter(Map<String, Object> params);
 	
 }

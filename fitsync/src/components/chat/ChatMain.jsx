@@ -193,6 +193,17 @@ const EmptySubtext = styled.p`
   color: var(--text-tertiary);
 `;
 
+// 로딩 상태 및 필터링 정보 표시
+const FilterInfo = styled.div`
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+`;
+
 // 채팅 메인 화면 컴포넌트 - 채팅방 목록 표시 및 관리자 문의 기능 제공
 const ChatMain = () => {
   const navigate = useNavigate();
@@ -205,6 +216,10 @@ const ChatMain = () => {
   const [lastMessages, setLastMessages] = useState({});
   const [inquiryLoading, setInquiryLoading] = useState(false);
   const [currentMemberIdx, setCurrentMemberIdx] = useState(null);
+  
+  // 필터링 관련 상태
+  const [memberType, setMemberType] = useState(null);
+  const [filteredRoomCount, setFilteredRoomCount] = useState(0);
 
   // 채팅용 member_idx 조회 함수 - 세션에서 member_idx를 가져와 채팅 기능에 사용
   const getMemberIdxForChat = async () => {
@@ -243,6 +258,10 @@ const ChatMain = () => {
     const initializeChat = async () => {
       const memberIdx = await getMemberIdxForChat();
       if (memberIdx) {
+        // 사용자 타입 확인
+        const userMemberType = user.member_type;
+        setMemberType(userMemberType);
+        
         await loadRooms();
       }
     };
@@ -250,12 +269,15 @@ const ChatMain = () => {
     initializeChat();
   }, [user, navigate]);
 
-  // 채팅방 목록 조회 - 각 채팅방의 읽지 않은 메시지 개수와 마지막 메시지도 함께 조회
+  // 채팅방 목록 조회
   const loadRooms = async () => {
     try {
-      // 백엔드 API 호출
+      setLoading(true);
+
+      // 백엔드 API 호출 - 자동으로 필터링된 결과 반환
       const roomList = await ChatApi.readRoomList();
       setRooms(roomList);
+      setFilteredRoomCount(roomList.length);
 
       // 각 채팅방의 읽지 않은 메시지 개수 조회
       const unreadData = {};
@@ -281,6 +303,8 @@ const ChatMain = () => {
       setLastMessages(lastMessageData);
       
     } catch (error) {
+      console.error('채팅방 목록 로드 오류:', error);
+      
       // 에러 처리
       if (error.response?.status === 401) {
         alert('로그인이 만료되었습니다.');
@@ -288,6 +312,7 @@ const ChatMain = () => {
       } else {
         // 네트워크 오류나 기타 오류는 빈 배열로 처리
         setRooms([]);
+        setFilteredRoomCount(0);
       }
     } finally {
       setLoading(false);
@@ -641,8 +666,18 @@ const ChatMain = () => {
         <RoomList>
           <EmptyState>
             <EmptyIcon>💬</EmptyIcon>
-            <EmptyText>진행중인 채팅이 없습니다</EmptyText>
-            <EmptySubtext>트레이너 검색에서 1:1 상담을 시작해보세요</EmptySubtext>
+            <EmptyText>
+              {memberType === 'trainer' 
+                ? '메시지가 있는 채팅방이 없습니다' 
+                : '진행중인 채팅이 없습니다'
+              }
+            </EmptyText>
+            <EmptySubtext>
+              {memberType === 'trainer' 
+                ? '회원과 대화를 시작하면 채팅방이 표시됩니다' 
+                : '트레이너 검색에서 1:1 상담을 시작해보세요'
+              }
+            </EmptySubtext>
           </EmptyState>
         </RoomList>
       ) : (

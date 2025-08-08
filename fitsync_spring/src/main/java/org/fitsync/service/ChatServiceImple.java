@@ -1,6 +1,7 @@
 package org.fitsync.service;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,11 +63,17 @@ public class ChatServiceImple implements ChatService {
 		return roomMapper.getRoom(room_idx);
 	}
 
-	// 특정 사용자의 모든 채팅방 목록 조회
+	// 메시지 필터링이 적용된 채팅방 목록 조회
 	@Override
 	public List<RoomVO> readRoomList(int member_idx) {
-		log.info("readRoomList..." + member_idx);
-		return roomMapper.getRoomList(member_idx);
+		log.info("readRoomList with message filter..." + member_idx);
+		
+		Map<String, Object> params = new HashMap<>();
+		params.put("member_idx", member_idx);
+		
+		List<RoomVO> rooms = roomMapper.getRoomListWithMessageFilter(params);
+		
+		return rooms;
 	}
 	
 	/*-------------------------------------------------------------------*/
@@ -97,7 +104,7 @@ public class ChatServiceImple implements ChatService {
 					if (savedMessage != null) {
 						log.info("✅ 저장된 메시지 조회 성공 (매칭 데이터 포함): " + savedMessage);
 						
-						// 🔥 매칭 데이터 로그 출력
+						// 매칭 데이터 로그 출력
 						if (savedMessage.hasMatchingData()) {
 							log.info("✅ 매칭 데이터 확인: " + savedMessage.getMatching_data());
 							log.info("✅ 매칭 IDX: " + savedMessage.getMatchingIdx());
