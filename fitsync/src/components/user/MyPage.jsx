@@ -97,6 +97,7 @@ const EmptyMessage = styled.div`
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(5px);
+  width: 100%;
   
   &::before {
     content: '💪';
