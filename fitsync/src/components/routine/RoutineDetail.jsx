@@ -552,9 +552,7 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
-    
-    // tempData 업데이트
-    updateTempData(updatedData);
+    // 값 변경 시에는 임시기록(tempData) 저장하지 않음
   };
 
   // 세트 체크 핸들러
@@ -619,9 +617,7 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
-    
-    // tempData 업데이트
-    updateTempData(updatedData);
+    // 세트 추가 시에는 임시기록(tempData) 저장하지 않음
   };
 
   // 세트 삭제 핸들러
@@ -652,9 +648,7 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
-    
-    // tempData 업데이트
-    updateTempData(updatedData);
+    // 세트 삭제 시에는 임시기록(tempData) 저장하지 않음
   };
 
   // 루틴 삭제 핸들러
@@ -671,9 +665,11 @@ const RoutineDetail = () => {
       }
       
       setData(updatedData);
-      
-      // tempData 업데이트
-      updateTempData(updatedData);
+      // 운동(루틴) 삭제 시 newData.update를 true로 설정
+      setNewData({
+        ...updatedData,
+        update: true
+      });
     }
   };
 
