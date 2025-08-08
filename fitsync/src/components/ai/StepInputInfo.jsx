@@ -157,7 +157,7 @@ const ProgressBar = styled.div`
 const ProgressFill = styled.div`
     height: 100%;
     background: linear-gradient(90deg, var(--check-green), var(--success));
-    width: ${props => ((props.currentSlide + 1) / props.totalSlides) * 100}%;
+    width: ${props => ((props.$currentSlide + 1) / props.$totalSlides) * 100}%;
     transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     position: relative;
     
@@ -189,7 +189,7 @@ const SlideContainer = styled.div`
     right: 0;
     bottom: 0;
     display: flex;
-    transform: translateX(${props => props.currentSlide * -100}%);
+    transform: translateX(${props => props.$currentSlide * -100}%);
     transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 `;
 
@@ -605,8 +605,6 @@ const WelcomeMessage = styled.div`
         font-size: 1.8rem;
     }
 `;
-
-// ...existing code...
 
 // Welcome 화면 전용 추가 스타일
 const UserInfoCard = styled.div`
@@ -1033,8 +1031,7 @@ const SubscriptionButton = styled.button`
     }
 `;
 
-// ...existing code...
-
+// Welcome 화면 전용
 const WelcomeSlide = ({ onNext, formData, setFormData, available, isSubscriber }) => {
     const [showTyping, setShowTyping] = useState(true);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -1360,8 +1357,6 @@ const GoalsSlide = ({ formData, setFormData }) => {
         const { name, value } = e.target;
     
         setFormData(prev => ({ ...prev, [name]: name === 'split' ? Number(value) : value }));
-        console.log(formData);
-        
     };
 
     return (
@@ -1410,7 +1405,6 @@ const GoalsSlide = ({ formData, setFormData }) => {
 };
 
 const StepInputInfo = ({memberData, onGenerate, available=false, isSubscriber}) => {
-    console.log("available:", available); // false여야 함
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [formData, setFormData] = useState({
@@ -1560,12 +1554,12 @@ const StepInputInfo = ({memberData, onGenerate, available=false, isSubscriber}) 
                 <HeaderTitle>사용자 맞춤 루틴 추천</HeaderTitle>
                 <CloseButton onClick={handleClose}>✕</CloseButton>
                 <ProgressBar>
-                    <ProgressFill currentSlide={currentSlide} totalSlides={slides.length} />
+                    <ProgressFill $currentSlide={currentSlide} $totalSlides={slides.length} />
                 </ProgressBar>
             </TopHeader>
             
             <MainContent>
-                <SlideContainer currentSlide={0}>
+                <SlideContainer $currentSlide={0}>
                     {renderSlide()}
                 </SlideContainer>
             </MainContent>

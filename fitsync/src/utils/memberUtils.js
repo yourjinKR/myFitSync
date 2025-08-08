@@ -9,7 +9,6 @@ export const getMemberTotalData = async () => {
         );
 
         if (response.data) {
-            console.log("멤버 정보 :", response.data);
             return response.data;
         } else {
             throw new Error(response.data);

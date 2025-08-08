@@ -161,7 +161,6 @@ const AiRoutineServiceContainer = () => {
         if (exception !== null && aiResult.logIdx) {
             const apilog = {apilog_idx : aiResult.logIdx, apilog_status_reason : exception};
             AiUtil.updateLogException(apilog);
-            console.log(exception);
         }
         
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,7 +168,6 @@ const AiRoutineServiceContainer = () => {
 
     // AI 루틴 생성 처리
     const handleGenerateRoutine = async (inputData) => {
-        console.log(subscriptionData.totalCost);
         
         if (subscriptionData.totalCost > 5) {
             alert('사용량이 초과되어 사용할 수 없음');
@@ -228,7 +226,6 @@ const AiRoutineServiceContainer = () => {
         
         try {
             const changedNameAiResult = checkAllExerciseNames(aiResult, rawDataMap);
-            console.log('변경된 AI 결과:', changedNameAiResult);
 
             const response = await AiUtil.updateLogUserAction({apilog_idx : aiResult.logIdx, apilog_user_action : SAVED_NOW});
             
@@ -281,12 +278,9 @@ const AiRoutineServiceContainer = () => {
                 apilog_feedback_reason : reason,
             };
 
-            console.log(log);
-            
             // 피드백 API 호출 (실제 엔드포인트에 맞게 수정 필요)
             await axios.patch('/admin/api/feedback', log, { withCredentials: true });
             
-            console.log('피드백 전송:', type, reason);
             setShowFeedbackModal(false);
             setFeedbackCompleted(true); // 피드백 완료 상태 설정
             

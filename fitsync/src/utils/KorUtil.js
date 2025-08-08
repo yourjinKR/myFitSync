@@ -194,7 +194,6 @@ export function createWorkoutNameObjects(workoutNames) {
  * @returns {Object} - 매칭 정보가 포함된 결과 객체
  */
 export function checkAllExerciseNames(result, dataMap) {
-    console.log('Checking all exercise names in the result...');
     
     const changedNameResult = result.content.map(routine => {
         const updatedExercises = routine.exercises.map(exercise => {
