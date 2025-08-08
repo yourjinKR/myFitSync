@@ -339,6 +339,8 @@ const MessageList = ({
               hasCompletedMatchingWithTrainer={hasCompletedMatchingWithTrainer}
               isMatchingCheckComplete={isMatchingCheckComplete}
               isMatchingCheckLoading={isMatchingCheckLoading}
+              allMessages={messages}
+              currentMemberIdx={currentMemberIdx}
             />
           </React.Fragment>
         );

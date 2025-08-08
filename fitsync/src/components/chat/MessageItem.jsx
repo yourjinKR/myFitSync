@@ -164,38 +164,72 @@ const MessageText = styled.div`
   hyphens: auto;
 `;
 
-// 매칭 버튼 컨테이너
+// 매칭 버튼 컨테이너 - 트레이너/회원 구분하여 스타일 적용
 const MatchingContainer = styled.div`
-  margin-top: 12px;
+  margin-top: ${props => props.$isCurrentUser ? '8px' : '12px'};
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  
+  /* 트레이너(본인)가 보낸 매칭 메시지의 경우 말풍선과 통합된 느낌 */
+  ${props => props.$isCurrentUser && `
+    margin-top: 0px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    justify-content: flex-end;
+  `}
 `;
 
-// 매칭 요청/수락 버튼
+// 매칭 요청/수락 버튼 - 트레이너/회원 구분 스타일
 const MatchingButton = styled.button`
-  background: ${props => props.$disabled ? 'var(--border-medium)' : 'var(--primary-blue)'};
-  color: ${props => props.$disabled ? 'var(--text-tertiary)' : 'white'};
-  border: none;
+  background: ${props => {
+    if (props.$disabled) return 'var(--border-medium)';
+    if (props.$isCurrentUser) return 'rgba(255, 255, 255, 0.2)'; // 트레이너용: 투명한 배경
+    return 'var(--primary-blue)'; // 회원용: 파란색 배경
+  }};
+  color: ${props => {
+    if (props.$disabled) return 'var(--text-tertiary)';
+    if (props.$isCurrentUser) return 'white'; // 트레이너용: 흰색 텍스트
+    return 'white'; // 회원용: 흰색 텍스트
+  }};
+  border: ${props => {
+    if (props.$disabled) return 'none';
+    if (props.$isCurrentUser) return '1px solid rgba(255, 255, 255, 0.3)'; // 트레이너용: 투명한 테두리
+    return 'none'; // 회원용: 테두리 없음
+  }};
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: ${props => props.$isCurrentUser ? '8px' : '8px'};
   font-size: 1.3rem;
   font-weight: 600;
   cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: ${props => {
+    if (props.$disabled) return 'none';
+    if (props.$isCurrentUser) return '0 1px 3px rgba(0,0,0,0.1)'; // 트레이너용: 약한 그림자
+    return '0 2px 4px rgba(0,0,0,0.1)'; // 회원용: 일반 그림자
+  }};
+  backdrop-filter: ${props => props.$isCurrentUser && !props.$disabled ? 'blur(10px)' : 'none'};
   
   &:hover:not(:disabled) {
-    background: var(--primary-blue-hover);
+    background: ${props => {
+      if (props.$isCurrentUser) return 'rgba(255, 255, 255, 0.3)'; // 트레이너용: 더 진한 투명
+      return 'var(--primary-blue-hover)'; // 회원용: 호버 색상
+    }};
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+    box-shadow: ${props => {
+      if (props.$isCurrentUser) return '0 2px 6px rgba(0,0,0,0.15)'; // 트레이너용
+      return '0 4px 8px rgba(74, 144, 226, 0.3)'; // 회원용
+    }};
   }
   
   &:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: ${props => {
+      if (props.$isCurrentUser) return '0 1px 3px rgba(0,0,0,0.1)';
+      return '0 2px 4px rgba(0,0,0,0.1)';
+    }};
   }
   
   &:disabled {
@@ -204,15 +238,25 @@ const MatchingButton = styled.button`
   }
 `;
 
-// 매칭 상태 표시
+// 매칭 상태 표시 - 트레이너/회원 구분 스타일
 const MatchingStatus = styled.div`
   font-size: 1.2rem;
-  color: var(--text-secondary);
+  color: ${props => {
+    if (props.$isCurrentUser) return 'rgba(255, 255, 255, 0.8)'; // 트레이너용: 투명한 흰색
+    return 'var(--text-secondary)'; // 회원용: 일반 보조 텍스트
+  }};
   font-style: italic;
   padding: 4px 8px;
-  background: var(--bg-tertiary);
+  background: ${props => {
+    if (props.$isCurrentUser) return 'rgba(255, 255, 255, 0.1)'; // 트레이너용: 투명한 배경
+    return 'var(--bg-tertiary)'; // 회원용: 일반 배경
+  }};
   border-radius: 6px;
-  border: 1px solid var(--border-light);
+  border: ${props => {
+    if (props.$isCurrentUser) return '1px solid rgba(255, 255, 255, 0.2)'; // 트레이너용
+    return '1px solid var(--border-light)'; // 회원용
+  }};
+  backdrop-filter: ${props => props.$isCurrentUser ? 'blur(5px)' : 'none'};
 `;
 
 // 답장 컨테이너
@@ -604,8 +648,9 @@ const MessageItem = ({
   onScrollToMessage = null,
   roomData = null,
   hasCompletedMatchingWithTrainer = false,
-  isMatchingCheckComplete = true,
-  isMatchingCheckLoading = false
+  isMatchingCheckLoading = false,
+  allMessages = [], // 전체 메시지 목록 추가
+  currentMemberIdx = null // 현재 회원 ID 추가
 }) => {
 
   // Redux에서 사용자 정보 가져오기
@@ -647,6 +692,25 @@ const MessageItem = ({
   const [matchingLoading, setMatchingLoading] = useState(false);
 
   const containerRef = useRef(null);
+
+  // 최신 매칭 메시지인지 확인하는 함수
+  const isLatestMatchingMessage = useCallback(() => {
+    if (message.message_type !== 'matching_request' || !allMessages || !currentMemberIdx) {
+      return false;
+    }
+
+    // 현재 채팅방의 모든 매칭 메시지 필터링 (같은 room_idx, 같은 sender)
+    const matchingMessages = allMessages
+      .filter(msg => 
+        msg.message_type === 'matching_request' && 
+        msg.sender_idx === message.sender_idx &&
+        msg.room_idx === message.room_idx
+      )
+      .sort((a, b) => new Date(b.message_senddate) - new Date(a.message_senddate));
+
+    // 가장 최근 매칭 메시지인지 확인
+    return matchingMessages.length > 0 && matchingMessages[0].message_idx === message.message_idx;
+  }, [message, allMessages, currentMemberIdx]);
 
   // 관리자 매칭 체크 함수 - 관리자(member_idx: 141)와의 매칭은 비활성화
   const isAdminMatching = () => {
@@ -798,8 +862,11 @@ const MessageItem = ({
   // 매칭 요청 메시지 여부 확인
   const isMatchingRequestMessage = message.message_type === 'matching_request';
 
-  // 매칭 버튼 클릭 가능 여부
-  const canClickMatchingButton = !isCurrentUser && user?.member_type === 'user' && !isAdminMatching();
+  // 매칭 버튼 클릭 가능 여부 - 최신 매칭 메시지인지도 확인
+  const canClickMatchingButton = !isCurrentUser && 
+                                user?.member_type === 'user' && 
+                                !isAdminMatching() && 
+                                isLatestMatchingMessage();
 
   // 최신 매칭 상태 사용 (DB 조회 결과 우선)
   const latestMatchingComplete = currentMatchingStatus ? currentMatchingStatus.matching_complete : matchingComplete;
@@ -1051,12 +1118,16 @@ const MessageItem = ({
       // 회원 계정에서 보는 경우
       
       if (isAdminMatching()) {
-        return <MatchingStatus>관리자와는 매칭이 불가능합니다</MatchingStatus>;
+        return (
+          <MatchingStatus $isCurrentUser={isCurrentUser}>
+            관리자와는 매칭이 불가능합니다
+          </MatchingStatus>
+        );
       }
       
       if (isMatchingStatusLoading) {
         return (
-          <MatchingButton disabled={true} $disabled={true}>
+          <MatchingButton disabled={true} $disabled={true} $isCurrentUser={isCurrentUser}>
             매칭 상태 확인 중...
           </MatchingButton>
         );
@@ -1064,7 +1135,7 @@ const MessageItem = ({
       
       if (isMatchingCheckLoading) {
         return (
-          <MatchingButton disabled={true} $disabled={true}>
+          <MatchingButton disabled={true} $disabled={true} $isCurrentUser={isCurrentUser}>
             상태 확인 중...
           </MatchingButton>
         );
@@ -1072,15 +1143,27 @@ const MessageItem = ({
       
       // 실시간 DB 상태로 매칭 완료 체크
       if (latestMatchingComplete === 2) {
-        return <MatchingStatus>완료된 매칭입니다</MatchingStatus>;
+        return (
+          <MatchingStatus $isCurrentUser={isCurrentUser}>
+            완료된 매칭입니다
+          </MatchingStatus>
+        );
       }
       
       if (latestMatchingComplete === 1) {
-        return <MatchingStatus>이미 수락된 매칭입니다</MatchingStatus>;
+        return (
+          <MatchingStatus $isCurrentUser={isCurrentUser}>
+            이미 수락된 매칭입니다
+          </MatchingStatus>
+        );
       }
       
       if (hasCompletedMatchingWithTrainer) {
-        return <MatchingStatus>이미 진행 중인 PT가 있습니다</MatchingStatus>;
+        return (
+          <MatchingStatus $isCurrentUser={isCurrentUser}>
+            이미 진행 중인 PT가 있습니다
+          </MatchingStatus>
+        );
       }
       
       // 매칭 대기 상태에서만 버튼 활성화
@@ -1090,30 +1173,54 @@ const MessageItem = ({
             onClick={handleMatchingAccept}
             disabled={matchingLoading}
             $disabled={matchingLoading}
+            $isCurrentUser={isCurrentUser}
           >
             {matchingLoading ? '처리 중...' : '매칭수락'}
           </MatchingButton>
         );
       } else {
         return (
-          <MatchingButton disabled={true} $disabled={true}>
+          <MatchingButton disabled={true} $disabled={true} $isCurrentUser={isCurrentUser}>
             {latestMatchingComplete > 0 ? '매칭 처리됨' : '매칭 정보 파싱 실패'}
           </MatchingButton>
         );
       }
+    } else if (!isCurrentUser && message.message_type === 'matching_request' && !isLatestMatchingMessage()) {
+      // 회원이 보는 이전 매칭 메시지들 - 비활성화
+      return (
+        <MatchingStatus $isCurrentUser={isCurrentUser}>
+          기간이 만료된 요청
+        </MatchingStatus>
+      );
     } else {
       // 트레이너 계정에서 보거나 다른 상황
       if (isCurrentUser) {
         // 트레이너가 보낸 매칭 요청의 실시간 상태 표시
         if (latestMatchingComplete === 2) {
-          return <MatchingStatus>완료된 매칭</MatchingStatus>;
+          return (
+            <MatchingStatus $isCurrentUser={isCurrentUser}>
+              완료된 매칭
+            </MatchingStatus>
+          );
         } else if (latestMatchingComplete === 1) {
-          return <MatchingStatus>수락된 매칭</MatchingStatus>;
+          return (
+            <MatchingStatus $isCurrentUser={isCurrentUser}>
+              수락된 매칭
+            </MatchingStatus>
+          );
         } else {
-          return <MatchingStatus>매칭 요청 전송됨</MatchingStatus>;
+          return (
+            <MatchingStatus $isCurrentUser={isCurrentUser}>
+              매칭 요청 전송
+            </MatchingStatus>
+          );
         }
       } else {
-        return <MatchingStatus>매칭 요청</MatchingStatus>;
+        return (
+          <MatchingStatus $isCurrentUser={isCurrentUser}>
+            매칭 요청
+          </MatchingStatus>
+        );
       }
     }
   };
@@ -1183,7 +1290,7 @@ const MessageItem = ({
 
             {/* 매칭 요청 버튼 */}
             {isMatchingRequestMessage && (
-              <MatchingContainer>
+              <MatchingContainer $isCurrentUser={isCurrentUser}>
                 {renderMatchingStatus()}
               </MatchingContainer>
             )}
