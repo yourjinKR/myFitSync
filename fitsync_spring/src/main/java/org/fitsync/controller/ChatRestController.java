@@ -9,11 +9,13 @@ import javax.servlet.http.HttpSession;
 
 import org.fitsync.domain.ChatAttachVO;
 import org.fitsync.domain.MatchingVO;
+import org.fitsync.domain.MemberVO;
 import org.fitsync.domain.MessageVO;
 import org.fitsync.domain.RoomVO;
 import org.fitsync.service.ChatService;
 import org.fitsync.service.LessonService;
 import org.fitsync.service.MatchingService;
+import org.fitsync.service.MemberService;
 import org.fitsync.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +40,9 @@ public class ChatRestController {
     private ChatService chatService;
     
     @Autowired
+    private MemberService memberService;
+    
+    @Autowired
     private ReportService reportService;
     
     @Autowired
@@ -53,7 +58,6 @@ public class ChatRestController {
         
         
         if (member_idx != null) {
-            System.out.println("member_idx 조회 성공: " + member_idx);
             if(session.getAttribute("block_date") != null) {
             	 Date block_date = (Date) session.getAttribute("block_date");
             	return ResponseEntity.ok(Map.of(
@@ -68,7 +72,6 @@ public class ChatRestController {
     			));
             }
         } else {
-            System.out.println("세션에 member_idx 없음 - 로그인 필요");
             return ResponseEntity.status(401).body(Map.of(
                 "success", false,
                 "message", "로그인이 필요합니다."
@@ -80,13 +83,8 @@ public class ChatRestController {
     @PostMapping("/room")
     public ResponseEntity<RoomVO> registerRoom(@RequestBody Map<String, Object> request, HttpSession session) {
         int user_idx = (Integer) session.getAttribute("member_idx");
-        System.out.println("세션에서 가져온 member_idx: " + user_idx);
-        
         int trainer_idx = Integer.valueOf(request.get("trainer_idx").toString());
         String room_name = request.get("room_name").toString();
-        
-        System.out.println("채팅방 생성 - trainer_idx: " + trainer_idx + ", user_idx: " + user_idx);
-        
         RoomVO room = chatService.registerRoom(trainer_idx, user_idx, room_name);
         return ResponseEntity.ok(room);
     }
@@ -95,8 +93,6 @@ public class ChatRestController {
     @GetMapping("/rooms")
     public ResponseEntity<List<RoomVO>> readRoomList(HttpSession session) {
         int member_idx = (Integer) session.getAttribute("member_idx");
-        System.out.println("채팅방 목록 조회 - member_idx: " + member_idx);
-        
         List<RoomVO> rooms = chatService.readRoomList(member_idx);
         return ResponseEntity.ok(rooms);
     }
@@ -106,8 +102,6 @@ public class ChatRestController {
     public ResponseEntity<List<MessageVO>> readMessageList(@PathVariable int room_idx, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size, HttpSession session) {
         
         int member_idx = (Integer) session.getAttribute("member_idx");
-        System.out.println("메시지 목록 조회 - room_idx: " + room_idx + ", member_idx: " + member_idx);
-        
         List<MessageVO> messages;
         // 기본값인 경우 전체 메시지 조회, 그렇지 않으면 페이징 처리
         if (page == 0 && size == 50) {
@@ -124,8 +118,6 @@ public class ChatRestController {
     public ResponseEntity<List<MessageVO>> searchMessage(@PathVariable int room_idx, @RequestParam String keyword, HttpSession session) {
         
         int member_idx = (Integer) session.getAttribute("member_idx");
-        System.out.println("메시지 검색 - room_idx: " + room_idx + ", keyword: " + keyword + ", member_idx: " + member_idx);
-        
         List<MessageVO> messages = chatService.searchMessage(room_idx, keyword);
         return ResponseEntity.ok(messages);
     }
@@ -135,8 +127,6 @@ public class ChatRestController {
     public ResponseEntity<Map<String, Integer>> unreadCount(@PathVariable int room_idx, HttpSession session) {
         
         int member_idx = (Integer) session.getAttribute("member_idx");
-        System.out.println("읽지 않은 메시지 수 조회 - room_idx: " + room_idx + ", receiver_idx: " + member_idx);
-        
         int count = chatService.unreadCount(room_idx, member_idx);
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
@@ -171,8 +161,6 @@ public class ChatRestController {
     public ResponseEntity<Map<String, Object>> deleteFile(@PathVariable int attach_idx, HttpSession session) {
         
         int member_idx = (Integer) session.getAttribute("member_idx");
-        System.out.println("파일 삭제 - attach_idx: " + attach_idx + ", member_idx: " + member_idx);
-        
         try {
             boolean isDeleted = chatService.deleteFile(attach_idx);
             
@@ -216,9 +204,6 @@ public class ChatRestController {
             result.put("message", "로그인이 필요합니다.");
             return ResponseEntity.status(401).body(result);
         }
-        
-        System.out.println("메시지 삭제 요청 - message_idx: " + message_idx + ", member_idx: " + member_idx);
-        
         try {
             boolean deleteResult = chatService.deleteMessage(message_idx, member_idx);
             
@@ -263,10 +248,6 @@ public class ChatRestController {
             result.put("message", "신고 사유를 입력해주세요.");
             return ResponseEntity.badRequest().body(result);
         }
-        
-        System.out.println("메시지 신고 요청 - message_idx: " + message_idx + 
-                          ", member_idx: " + member_idx + 
-                          ", reportContent: " + reportContent);
         
         try {
             boolean reportResult = reportService.reportMessage(message_idx, reportContent.trim(), member_idx);
@@ -345,9 +326,13 @@ public class ChatRestController {
             Integer user_idx = Integer.valueOf(request.get("user_idx").toString());
             Integer matching_total = Integer.valueOf(request.get("matching_total").toString());
             
-            System.out.println("매칭 생성 요청 - trainer_idx: " + trainer_idx + 
-                              ", user_idx: " + user_idx + 
-                              ", matching_total: " + matching_total);
+            // 해당 회원이 이미 트레이너와 활성 매칭이 있는지 확인
+            boolean userHasActiveMatching = matchingService.hasAnyActiveMatchingForUser(user_idx);
+            if (userHasActiveMatching) {
+                result.put("success", false);
+                result.put("message", "해당 회원이 이미 진행 중인 PT가 있습니다.");
+                return ResponseEntity.ok(result);
+            }
             
             // 매칭 데이터 생성
             MatchingVO matching = new MatchingVO();
@@ -364,8 +349,6 @@ public class ChatRestController {
                 result.put("success", true);
                 result.put("matching", createdMatching);
                 result.put("message", "매칭 요청이 생성되었습니다.");
-                
-                System.out.println("✅ 매칭 생성 완료 - matching_idx: " + createdMatching.getMatching_idx());
             } else {
                 result.put("success", false);
                 result.put("message", "매칭 생성에 실패했습니다.");
@@ -397,9 +380,6 @@ public class ChatRestController {
                 result.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(401).body(result);
             }
-            
-            System.out.println("매칭 수락 요청 - matching_idx: " + matching_idx + ", user_idx: " + user_idx);
-            
             // 특정 매칭의 트레이너와 이미 완료된 매칭이 있는지 확인
             MatchingVO targetMatching = matchingService.getMatching(matching_idx);
             if (targetMatching == null || targetMatching.getUser_idx() != user_idx) {
@@ -422,7 +402,6 @@ public class ChatRestController {
             if (accepted) {
                 result.put("success", true);
                 result.put("message", "매칭이 성공적으로 수락되었습니다.");
-                System.out.println("✅ 매칭 수락 완료 - matching_idx: " + matching_idx);
             } else {
                 result.put("success", false);
                 result.put("message", "매칭 수락에 실패했습니다.");
@@ -440,8 +419,8 @@ public class ChatRestController {
     }
     
     // 현재 회원의 모든 진행중인 매칭 확인 API
-    @GetMapping("/check-any-active-matching")
-    public ResponseEntity<Map<String, Object>> checkAnyActiveMatching(HttpSession session) {
+    @GetMapping("/check-current-user-active-matching")
+    public ResponseEntity<Map<String, Object>> checkCurrentUserActiveMatching(HttpSession session) {
         
         Map<String, Object> result = new HashMap<>();
         
@@ -452,21 +431,80 @@ public class ChatRestController {
                 result.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(401).body(result);
             }
-            
-            System.out.println("현재 회원의 모든 진행중인 매칭 확인 - user_idx: " + member_idx);
-            
             // 현재 회원의 모든 진행중인 매칭 확인
             boolean hasAnyActiveMatching = matchingService.hasAnyActiveMatchingForUser(member_idx);
             
             result.put("success", true);
             result.put("hasAnyActiveMatching", hasAnyActiveMatching);
-            
-            System.out.println("✅ 진행중인 매칭 확인 완료 - hasAnyActiveMatching: " + hasAnyActiveMatching);
-            
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
             System.err.println("매칭 상태 확인 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "매칭 상태 확인 중 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+    
+    // 특정 회원의 활성 매칭 상태 확인 API
+    @GetMapping("/check-target-user-active-matching/{user_idx}")
+    public ResponseEntity<Map<String, Object>> checkTargetUserActiveMatching(
+            @PathVariable("user_idx") int user_idx,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            Integer currentMemberIdx = (Integer) session.getAttribute("member_idx");
+            if (currentMemberIdx == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(result);
+            }
+            
+            // 세션에서 member_type 가져오기
+            Object memberTypeObj = session.getAttribute("member_type");
+            String memberType = memberTypeObj != null ? memberTypeObj.toString() : null;
+            
+            // member_type이 null이거나 빈 문자열인 경우 DB에서 조회
+            if (memberType == null || memberType.trim().isEmpty()) {
+                try {
+                    // MemberService를 통해 현재 사용자 정보 조회
+                    MemberVO currentMember = memberService.getMemberByIdx(currentMemberIdx);
+                    if (currentMember != null && currentMember.getMember_type() != null) {
+                        memberType = currentMember.getMember_type();
+                        // 세션에 저장해서 다음에 사용
+                        session.setAttribute("member_type", memberType);
+                    } else {
+                        memberType = null;
+                    }
+                } catch (Exception e) {
+                    System.err.println("DB에서 member_type 조회 실패: " + e.getMessage());
+                    memberType = null;
+                }
+            }
+            
+            // 트레이너가 아닌 경우 기본값 반환
+            if (!"trainer".equals(memberType)) {
+                result.put("success", true);
+                result.put("hasActiveMatching", false);
+                result.put("user_idx", user_idx);
+                result.put("message", "트레이너만 다른 회원의 매칭 상태를 확인할 수 있습니다.");
+                return ResponseEntity.ok(result);
+            }
+            
+            // 특정 회원의 모든 활성 매칭 확인 (트레이너만 가능)
+            boolean hasActiveMatching = matchingService.hasAnyActiveMatchingForUser(user_idx);
+            
+            result.put("success", true);
+            result.put("hasActiveMatching", hasActiveMatching);
+            result.put("user_idx", user_idx);
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            System.err.println("특정 회원 활성 매칭 확인 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
             result.put("success", false);
             result.put("message", "매칭 상태 확인 중 오류가 발생했습니다.");
@@ -490,8 +528,6 @@ public class ChatRestController {
                 return ResponseEntity.status(401).body(result);
             }
             
-            System.out.println("매칭 상태 조회 요청 - matching_idx: " + matching_idx + ", member_idx: " + member_idx);
-            
             // 매칭 정보 조회
             MatchingVO matching = matchingService.getMatching(matching_idx);
             
@@ -500,12 +536,6 @@ public class ChatRestController {
                 if (matching.getTrainer_idx() == member_idx || matching.getUser_idx() == member_idx) {
                     result.put("success", true);
                     result.put("matching", matching);
-                    
-                    System.out.println("매칭 상태 조회 성공:");
-                    System.out.println("   매칭 IDX: " + matching.getMatching_idx());
-                    System.out.println("   매칭 완료 상태: " + matching.getMatching_complete());
-                    System.out.println("   매칭 남은 횟수: " + matching.getMatching_remain());
-                    
                     return ResponseEntity.ok(result);
                 } else {
                     result.put("success", false);
@@ -543,20 +573,12 @@ public class ChatRestController {
                 return ResponseEntity.status(401).body(result);
             }
             
-            System.out.println("복합 할인 가격 계산 요청 - member_idx: " + member_idx + ", matching_total: " + matching_total);
-            
             // 복합 할인 가격 계산
             int calculatedPrice = lessonService.calculateMatchingPrice(member_idx, matching_total);
             
             result.put("success", true);
             result.put("price", calculatedPrice);
             result.put("matching_total", matching_total);
-            
-            if (calculatedPrice == -1) {
-                System.out.println("✅ 매칭 가격 계산 완료 - 가격미정 (lesson 데이터 없음)");
-            } else {
-                System.out.println("✅ 복합 할인 가격 계산 완료 - 가격: " + calculatedPrice + "원");
-            }
             
             return ResponseEntity.ok(result);
             

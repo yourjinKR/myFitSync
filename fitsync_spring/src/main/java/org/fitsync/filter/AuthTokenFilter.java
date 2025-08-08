@@ -1,6 +1,8 @@
 package org.fitsync.filter;
 
 import org.fitsync.util.JwtUtil;
+import org.fitsync.service.MemberServiceImple;
+import org.fitsync.domain.MemberVO;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -15,8 +17,10 @@ import java.io.IOException;
 
 public class AuthTokenFilter implements Filter {
     private JwtUtil jwtUtil;
+    private MemberServiceImple memberService;
 
     public void setJwtUtil(JwtUtil jwtUtil) { this.jwtUtil = jwtUtil; }
+    public void setMemberService(MemberServiceImple memberService) { this.memberService = memberService; }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {}
@@ -49,10 +53,33 @@ public class AuthTokenFilter implements Filter {
 
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
             Integer memberIdx = jwtUtil.getUserIdx(token).intValue();
+            
+            // DB에서 member_type 조회
+            String memberType = null;
+            try {
+                if (memberService != null) {
+                    MemberVO member = memberService.getMemberByIdx(memberIdx);
+                    if (member != null) {
+                        memberType = member.getMember_type();
+                    }
+                }
+            } catch (Exception e) {
+                // DB 조회 실패 시 로그만 남기고 계속 진행
+                System.err.println("Failed to get member_type from DB: " + e.getMessage());
+            }
+            
             // request attribute에 저장
             request.setAttribute("member_idx", memberIdx);
+            if (memberType != null) {
+                request.setAttribute("member_type", memberType);
+            }
+            
             // 세션에도 저장
             httpRequest.getSession().setAttribute("member_idx", memberIdx);
+            if (memberType != null) {
+                httpRequest.getSession().setAttribute("member_type", memberType);
+            }
+            
             chain.doFilter(request, response);
             return;
         }

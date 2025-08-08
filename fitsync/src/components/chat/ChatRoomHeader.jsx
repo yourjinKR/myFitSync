@@ -67,26 +67,28 @@ const RoomTitle = styled.h1`
 `;
 
 const MatchingButton = styled.button`
-  background: var(--primary-blue);
-  color: white;
+  background: ${props => props.$disabled ? 'var(--border-medium)' : 'var(--primary-blue)'};
+  color: ${props => props.$disabled ? 'var(--text-tertiary)' : 'white'};
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 1.2rem;
   font-weight: 500;
-  cursor: pointer;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
+  max-width: 200px;
   
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--primary-blue-hover);
     transform: scale(1.05);
   }
   
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.8;
     cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -179,7 +181,7 @@ const SearchToggleButton = styled.button.withConfig({
   }
 `;
 
-// 채팅방 헤더 컴포넌트 - 채팅방 제목, 검색 기능, 매칭 요청 기능을 제공
+// 채팅방 헤더 컴포넌트
 const ChatRoomHeader = ({ 
   roomDisplayName, 
   onSearchResults, 
@@ -200,6 +202,14 @@ const ChatRoomHeader = ({
   const [showMatchingModal, setShowMatchingModal] = useState(false);
   const [isMatchingLoading, setIsMatchingLoading] = useState(false);
   
+  // 상대방 회원의 활성 매칭 상태 확인 관련 상태
+  const [otherUserMatchingStatus, setOtherUserMatchingStatus] = useState({
+    hasActiveMatching: false,
+    isLoading: false,
+    lastChecked: null,
+    error: null
+  });
+  
   const searchInputRef = useRef(null);
   
   // 디바운스된 검색어 (300ms 지연)
@@ -210,14 +220,10 @@ const ChatRoomHeader = ({
 
   // 관리자 매칭 버튼 비활성화 조건
   const isAdminChat = () => {
-    // 상대방이 관리자인지 확인
     if (!roomData || !user) return false;
-    
-    // 관리자(member_idx: 141)가 채팅방에 포함되어 있는지 확인
     if (roomData.trainer_idx === 141 || roomData.user_idx === 141) {
       return true;
     }
-    
     return false;
   };
 
@@ -249,6 +255,112 @@ const ChatRoomHeader = ({
     }
   };
 
+  // 상대방 회원의 활성 매칭 상태 확인 함수
+  const checkOtherUserMatchingStatus = useCallback(async () => {
+    // 트레이너가 아닌 경우 즉시 반환
+    if (!isTrainer) {
+      setOtherUserMatchingStatus({
+        hasActiveMatching: false,
+        isLoading: false,
+        lastChecked: Date.now(),
+        error: null
+      });
+      return;
+    }
+
+    const otherPerson = getOtherPersonInfo();
+    
+    // 상대방이 회원이 아니면 체크하지 않음
+    if (!otherPerson || otherPerson.type !== 'user') {
+      setOtherUserMatchingStatus({
+        hasActiveMatching: false,
+        isLoading: false,
+        lastChecked: Date.now(),
+        error: null
+      });
+      return;
+    }
+
+    setOtherUserMatchingStatus(prev => ({
+      ...prev,
+      isLoading: true,
+      error: null
+    }));
+
+    try {
+      const result = await chatApi.checkTargetUserActiveMatching(otherPerson.member_idx);
+      
+      if (result.success) {
+        const hasActiveMatching = Boolean(result.hasActiveMatching);
+        
+        setOtherUserMatchingStatus({
+          hasActiveMatching: hasActiveMatching,
+          isLoading: false,
+          lastChecked: Date.now(),
+          error: null
+        });
+        
+      } else {
+        console.warn('상대방 매칭 상태 확인 실패:', result.message);
+        setOtherUserMatchingStatus({
+          hasActiveMatching: false,
+          isLoading: false,
+          lastChecked: Date.now(),
+          error: result.message || '상태 확인 실패'
+        });
+      }
+      
+    } catch (error) {
+      let errorMessage = '알 수 없는 오류';
+      
+      if (error.response?.status === 403) {
+        errorMessage = '권한 없음';
+        console.warn('상대방 매칭 상태 확인 권한 없음');
+      } else if (error.response?.status === 401) {
+        errorMessage = '로그인 필요';
+        console.error('인증 오류 - 로그인 필요');
+      } else if (error.response?.status === 404) {
+        errorMessage = '사용자를 찾을 수 없음';
+        console.error('상대방을 찾을 수 없음');
+      } else {
+        errorMessage = error.message || '네트워크 오류';
+        console.error('상대방 매칭 상태 확인 실패:', error);
+      }
+      
+      setOtherUserMatchingStatus({
+        hasActiveMatching: false,
+        isLoading: false,
+        lastChecked: Date.now(),
+        error: errorMessage
+      });
+    }
+  }, [isTrainer, roomData, user]);
+
+  // 컴포넌트 마운트 시 트레이너인 경우에만 상대방 매칭 상태 확인
+  useEffect(() => {
+    if (shouldShowMatchingButton && roomData && isTrainer) {
+      checkOtherUserMatchingStatus();
+    } else {
+      setOtherUserMatchingStatus({
+        hasActiveMatching: false,
+        isLoading: false,
+        lastChecked: Date.now(),
+        error: null
+      });
+    }
+  }, [shouldShowMatchingButton, roomData, isTrainer, checkOtherUserMatchingStatus]);
+
+  // 주기적 재확인 (30초마다)
+  useEffect(() => {
+    if (!shouldShowMatchingButton || !isTrainer) return;
+
+    const interval = setInterval(() => {
+      checkOtherUserMatchingStatus();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [shouldShowMatchingButton, isTrainer, checkOtherUserMatchingStatus]);
+
   // 복합 할인 매칭 요청 처리 함수
   const handleMatchingRequest = async (matchingTotal) => {
     setIsMatchingLoading(true);
@@ -258,6 +370,15 @@ const ChatRoomHeader = ({
       
       if (!otherPerson) {
         alert('상대방 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      // 매칭 요청 전 상대방 활성 매칭 상태 재확인
+      await checkOtherUserMatchingStatus();
+      
+      // 상대방이 이미 활성 매칭이 있는 경우 요청 차단
+      if (otherUserMatchingStatus.hasActiveMatching) {
+        alert('상대방이 이미 진행중인 PT가 있어 매칭 요청을 보낼 수 없습니다.');
         return;
       }
 
@@ -272,20 +393,17 @@ const ChatRoomHeader = ({
           calculatedPrice = priceResult.price;
           
           if (calculatedPrice === -1) {
-            // lesson 데이터가 없는 경우
             priceText = ' 가격미정';
           } else if (calculatedPrice > 0) {
-            // 정상적으로 가격이 계산된 경우 (복합 할인 적용)
             priceText = ` 가격 ${calculatedPrice.toLocaleString()}원`;
           } else {
-            // 예상치 못한 경우 (0원)
             priceText = ' 가격미정';
           }
         } else {
           priceText = ' 가격미정';
         }
       } catch (priceError) {
-        priceText = ' 가격미정'; // 가격 계산 실패 시 가격미정으로 처리
+        priceText = ' 가격미정';
       }
 
       // 백엔드에서 매칭 생성
@@ -315,6 +433,11 @@ const ChatRoomHeader = ({
             matchingData              // 매칭 데이터 (Map 형태로 전달)
           );
         }
+
+        // 매칭 요청 전송 후 상대방 매칭 상태 재확인
+        setTimeout(() => {
+          checkOtherUserMatchingStatus();
+        }, 1000);
           
         setShowMatchingModal(false);
           
@@ -323,6 +446,7 @@ const ChatRoomHeader = ({
       }
         
     } catch (error) {
+      console.error('매칭 요청 오류:', error);
       alert('매칭 요청 중 오류가 발생했습니다.');
     } finally {
       setIsMatchingLoading(false);
@@ -450,6 +574,59 @@ const ChatRoomHeader = ({
     };
   }, [handleKeyDown]);
 
+  // 매칭 버튼 렌더링 로직
+  const renderMatchingButton = () => {
+    if (!shouldShowMatchingButton) {
+      return null;
+    }
+
+    // 로딩 중
+    if (otherUserMatchingStatus.isLoading || isMatchingLoading) {
+      return (
+        <MatchingButton disabled={true} $disabled={true}>
+          {isMatchingLoading ? '전송 중...' : '확인 중...'}
+        </MatchingButton>
+      );
+    }
+
+    // 에러가 있는 경우 에러 상태 표시
+    if (otherUserMatchingStatus.error) {
+      return (
+        <MatchingButton 
+          disabled={true} 
+          $disabled={true} 
+          title={`오류: ${otherUserMatchingStatus.error}`}
+        >
+          상태확인실패
+        </MatchingButton>
+      );
+    }
+
+    // 상대방이 이미 활성 매칭이 있는 경우
+    if (otherUserMatchingStatus.hasActiveMatching) {
+      return (
+        <MatchingButton 
+          disabled={true} 
+          $disabled={true} 
+          title="상대방이 이미 진행중인 PT가 있습니다"
+        >
+          진행중인PT있음
+        </MatchingButton>
+      );
+    }
+
+    // 정상적으로 매칭 요청 가능한 경우
+    return (
+      <MatchingButton 
+        onClick={() => setShowMatchingModal(true)} 
+        disabled={false}
+        $disabled={false}
+      >
+        매칭요청
+      </MatchingButton>
+    );
+  };
+
   return (
     <HeaderContainer>
       <HeaderContent>
@@ -466,14 +643,7 @@ const ChatRoomHeader = ({
               <RoomTitle>{roomDisplayName}</RoomTitle>
               
               {/* 매칭요청 버튼 */}
-              {shouldShowMatchingButton && (
-                <MatchingButton 
-                  onClick={() => setShowMatchingModal(true)} 
-                  disabled={isMatchingLoading}
-                >
-                  매칭요청
-                </MatchingButton>
-              )}
+              {renderMatchingButton()}
             </>
           ) : (
             /* 검색 모드 */

@@ -104,7 +104,15 @@ const chatApi = {
 
   // 현재 회원의 모든 진행중인 매칭 확인
   checkAnyActiveMatching: async () => {
-    const response = await axios.get('/api/chat/check-any-active-matching', {
+    const response = await axios.get('/api/chat/check-current-user-active-matching', {
+      withCredentials: true
+    });
+    return response.data;
+  },
+
+  // 특정 회원의 활성 매칭 상태 확인
+  checkTargetUserActiveMatching: async (user_idx) => {
+    const response = await axios.get(`/api/chat/check-target-user-active-matching/${user_idx}`, {
       withCredentials: true
     });
     return response.data;
