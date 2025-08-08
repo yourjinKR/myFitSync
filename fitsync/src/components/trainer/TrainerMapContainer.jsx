@@ -135,8 +135,8 @@ const PageButton = styled.button`
 const NoResults = styled.div`
   padding: 25px;
   text-align: center;
-  color: var(--text-tertiary);
-  font-size: 1.2rem;
+  color: var(--text-primary);
+  font-size: 1.4rem;
 `;
 
 const MapContainer = styled.div`
@@ -380,7 +380,9 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
                     {/* 검색 결과가 없을 때 */}
                     {keyword && gymList.length === 0 && !isSearching && (
                         <NoResults>
-                            검색 결과가 없습니다.
+                            찾으시는 체육관이 없으신가요?<br/>
+                            아래 연락처로 문의해주세요!<br/>
+                            010-7202-2372☎️
                         </NoResults>
                     )}
                 </GymSearchContainer>
