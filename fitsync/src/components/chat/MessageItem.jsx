@@ -1251,7 +1251,7 @@ const MessageItem = ({
         } else if (latestMatchingComplete === 1) {
           return (
             <MatchingStatus $isCurrentUser={isCurrentUser}>
-              수락된 매칭
+              매칭이 수락됐습니다!
             </MatchingStatus>
           );
         } else {

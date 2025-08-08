@@ -670,7 +670,7 @@ return (
                 당신의 건강한 라이프스타일을 완성하세요
               </HeroSubtitle>
               <PrimaryButton onClick={() => nav('/login')}>
-                FitSync 시작하기 <BsRocket style={{ marginLeft: '0.5rem' }} />
+                FitSync 시작하기
               </PrimaryButton>
             </HeroSection>
           </PromoSection>
