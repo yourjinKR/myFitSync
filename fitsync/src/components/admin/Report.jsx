@@ -390,11 +390,11 @@ const ButtonBox = styled.div`
   }
   
   button:last-child {
-    background: #ff6b35 !important;
+    background: var(--start-red) !important;
     color: white !important;
     
     &:hover {
-      background: var(--start-red) !important;
+      background: #ff6b35 !important;
     }
   }
 `;

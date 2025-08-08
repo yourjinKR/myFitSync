@@ -43,7 +43,7 @@ public class RoutineServiceImple implements RoutineService {
 		RoutineArrVO sort = rlmapper.sortGet(member_idx);
 		System.out.println("sort : " + sort);
 		list = rlmapper.getRoutineList(member_idx);
-		if(sort != null) {
+		if(list.size() > 0 && sort != null) {
 			String[] arr =  sort.getRoutine_arr().split(",");
 			for (String str : arr) {
 				for (RoutineListVO vo : list) {

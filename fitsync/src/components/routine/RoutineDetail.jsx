@@ -37,7 +37,7 @@ const WorkoutSetWrapper = styled.div`
     height: 60vh;
     img {
       width: 60%;
-      max-width: 200px;
+      
       opacity: 0.6;
     }
   }
