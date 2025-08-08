@@ -257,6 +257,7 @@ const RoutineMain = () => {
     }
   },[])
 
+
   // 디버깅용
   useEffect(() => {
     if(newData === null) return;
@@ -264,7 +265,9 @@ const RoutineMain = () => {
   
   useEffect(() => {
     if(location.pathname === '/routine/view'){
-      setRoutineData(routineInit);
+      if(prev === null) {
+        setRoutineData(routineInit);
+      }
       closeAlert();
       
       // tempData 새로고침 - localStorage에서 다시 로드
@@ -299,7 +302,6 @@ const RoutineMain = () => {
     }else{
       setIsUpdate(false);
     }
-      
   },[newData])
 
   useEffect(() => {
@@ -366,7 +368,9 @@ const handleRoutineResponse = async () => {
         if(routine_list_idx !== 'custom'){
           nav("/routine/view");
         } 
-        setRoutineData(routineInit);
+        if(prev === null) {
+          setRoutineData(routineInit);
+        }
       }
     } catch (error) {
       console.error("루틴 등록 오류:", error);
@@ -478,8 +482,6 @@ const handleRoutineResponse = async () => {
         // 운동 기록 시에만 tempData에서 제거
         if(routine_list_idx === 'custom') {
           const newLocalData = tempData.filter(item => {
-            console.log("🚀  :  item.saveDate:", item.saveDate)
-            console.log("🚀  :  postData.saveDate:", postData.saveDate)
             return item.saveDate !== postData.saveDate;
           });
           setTempData(newLocalData);
@@ -522,10 +524,12 @@ const handleRoutineResponse = async () => {
   
   useEffect(() => {
     if(init === null) return;
-    setNewData({
-      ...init,
-      update: false
-    });
+    if(!location.pathname.includes('/routine/detail')) {
+      setNewData({
+        ...init,
+        update: false
+      });
+    }
   }, [init]);
 
   const handleUpdateData = (type) => {
@@ -594,6 +598,7 @@ const handleRoutineResponse = async () => {
         nav(path, {
           state: {
             targetMember: targetIdx,
+            prev: location.pathname === '/routine/set' ? '/routine/add?prev=/routine/set' : prev,
           },
         });
 
@@ -613,7 +618,10 @@ const handleRoutineResponse = async () => {
 
   const handleAddWorkOut = () => {
     nav("/routine/add?prev=/routine/detail/" + routine_list_idx,{
-      state: {targetMember: targetIdx,}
+      state: {
+        targetMember: targetIdx,
+        prev: ""
+      }
     });
   }
 

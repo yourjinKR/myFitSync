@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { SwipeableList, SwipeableListItem, SwipeAction, TrailingActions } from 'react-swipeable-list';
 import styled from 'styled-components';
@@ -726,29 +726,14 @@ const RoutineDetail = () => {
     const omitInit = omitCheckedAndSaveDate(localInit);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
 
-    if (routine_list_idx !== 'custom') {
-      setNewData({
-        ...data,
-        update: !isEqual,
-      });
-    } else {
-      setNewData({
-        ...data,
-        update: false,
-      });
-    }
 
-    // setRoutineData 호출 제거하여 무한루프 방지
-    // if (location.pathname.includes('/routine/detail/')) {
-    //   setRoutineData(data);
-    // }
+    console.log("🚀  :  data:", data)
   }, [data, routine_list_idx, localInit, setNewData]); // setNewData 의존성 추가
 
   // 자유 운동 저장 로직 - 간소화하여 무한루프 방지
   useEffect(() => {
     if (routine_list_idx !== 'custom' || !data) return;
 
-    // 빠간기록용 기본 saveDate 설정 - saveDate가 없거나 null이면 설정
     if (!data.saveDate || data.saveDate === null) {
       const currentDate = targetDate || getKoreaTime();
       setData(prev => {
@@ -791,12 +776,6 @@ const RoutineDetail = () => {
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      // RoutineDetail에서 나갈 때 모든 상태 초기화
-      setRoutineData({
-        routine_name: '',
-        member_idx: '',
-        routines: [],
-      });
       setIsEdit(false);
       // 추가로 전역 상태도 초기화
       if (typeof setInit === 'function') {
@@ -829,12 +808,36 @@ const RoutineDetail = () => {
               }))
             }))
           };
-
+          // routineData와 result.vo(init)가 다르면 setData 실행
+          const omitCheckedAndSaveDate = (obj) => {
+            if (!obj || !obj.routines) {
+              return obj;
+            }
+            const { saveDate, checked, id, update, ...cleanObj } = obj;
+            return {
+              ...cleanObj,
+              routines: obj.routines.map(routine => ({
+                ...routine,
+                sets: routine.sets.map(({ checked, id, set_num, update, ...setRest }) => setRest)
+              }))
+            };
+          };
+          const isEqual = JSON.stringify(omitCheckedAndSaveDate(routineData)) === JSON.stringify(omitCheckedAndSaveDate(result.vo));
+          
           setData(newData);
           setInit(result.vo);
           setLocalInit(result.vo); // 로컬 init도 설정
           setRoutineData(result.vo);
-        } else {
+
+          
+          if (routineData.routine_name !== ""  && !isEqual) {
+            setData(routineData);
+            setNewData({
+              ...routineData,
+              update: routine_list_idx === 'custom' ? false : true,
+            });
+          }
+        } else { 
           alert(result.msg);
         }
       } catch (err) {
@@ -936,6 +939,9 @@ const RoutineDetail = () => {
       checkedSetsRef.current = newChecked;
     }
   }, [data]);
+
+  useEffect(() => {
+  }, [location.state?.prev]); // prev 상태 변경 감지
 
   // 로딩 처리
   if (isLoading) {

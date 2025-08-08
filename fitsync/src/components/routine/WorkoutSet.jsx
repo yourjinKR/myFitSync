@@ -79,12 +79,8 @@ const ListHeader = styled.div`
     color: var(--text-primary);
   }
   
-  div:first-child {
+  div:first-child, div:last-child {
     flex: 1;
-  }
-  
-  div:last-child {
-    flex: 0.5;
   }
 `;
 const ListBody = styled.div`
@@ -100,7 +96,7 @@ const ListBody = styled.div`
     border-bottom: 1px solid var(--border-light);
   }
   .swipeable-list-item__content > div {
-    flex: 2;
+    flex: 1;
     text-align: center;
     font-size: 1.6rem;
     color: var(--text-primary);
@@ -289,12 +285,14 @@ const WorkoutSet = ({ data, routineData, setRoutineData }) => {
                 value={set.set_volume}
                 onChange={e => handleSetChange(set.id, 'set_volume', e.target.value)}
                 placeholder="-"
+                min={0}
               />
               <input
                 type="number"
                 value={set.set_count}
                 onChange={e => handleSetChange(set.id, 'set_count', e.target.value)}
                 placeholder="-"
+                min={0}
               />
               <div></div>
             </SwipeableListItem>
