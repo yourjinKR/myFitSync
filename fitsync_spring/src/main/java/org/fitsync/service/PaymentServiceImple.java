@@ -350,15 +350,12 @@ public class PaymentServiceImple implements PaymentService {
 			order.setOrder_currency("KRW");
 			order.setOrder_regdate(new java.sql.Date(System.currentTimeMillis()));
 			
-			System.out.println("provider!!!!!!!!! : " + method.getMethod_provider());
 			order.setOrder_provider(method.getMethod_provider());
 			String card = method.getMethod_card();
-			System.out.println("card!!!!!!!!! : " + card);
 			if (card != null) {
 				order.setOrder_card(card);
 			}
 			String cardNum = method.getMethod_card_num();
-			System.out.println("cardNum !!!!!!!!! : " + cardNum);
 			if (cardNum != null) {
 				order.setOrder_card_num(cardNum);
 			}
@@ -405,7 +402,6 @@ public class PaymentServiceImple implements PaymentService {
 	    	try {
 				log.info("결제 주문 정보 업데이트 - " + order);
 	    	    paymentOrderMapper.updatePaymentStatus(order);
-				System.out.println("결제 완료했으니 상태 변경함." + orderStatus);
 	    	    log.info("결제 상태 업데이트 완료 - PaymentId: " + paymentId + ", Status: " + orderStatus);
 	    	    
 	    	    // 업데이트 후 실제 DB 상태 확인
@@ -1172,19 +1168,19 @@ public class PaymentServiceImple implements PaymentService {
 	@Override
 	public List<PaymentOrderWithMethodVO> getPaymentHistoryWithMethod(int memberIdx) {
 		try {
-			System.out.println("=== 결제 기록 조회 (API) 함수 시작 ===");
+//			System.out.println("=== 결제 기록 조회 (API) 함수 시작 ===");
 			log.info("결제 기록 조회 시작 (API) - memberIdx: " + memberIdx);
 			
 			// DB에서 기본 결제 주문 정보만 조회 (JOIN 없이)
 			List<PaymentOrderWithMethodVO> paymentHistory = paymentOrderMapper.selectPaymentOrdersByMemberWithMethod(memberIdx);
 			
-			System.out.println("DB 조회 완료 - 건수: " + paymentHistory.size());
+//			System.out.println("DB 조회 완료 - 건수: " + paymentHistory.size());
 			log.info("결제 기록 조회 완료 (API) - memberIdx: " + memberIdx + ", 건수: " + paymentHistory.size());
 			
 			// 각 결제에 대해 PortOne API로 결제 수단 정보 조회
 			for (PaymentOrderWithMethodVO order : paymentHistory) {
-				System.out.println("처리 중인 결제 - PaymentId: " + order.getPayment_id() + 
-						", OrderType: " + order.getOrder_type() + ", Status: " + order.getOrder_status());
+//				System.out.println("처리 중인 결제 - PaymentId: " + order.getPayment_id() + 
+//						", OrderType: " + order.getOrder_type() + ", Status: " + order.getOrder_status());
 
 				// 결제 유형에 따라 다른 API 호출
 				String orderType = order.getOrder_type();
@@ -1197,12 +1193,12 @@ public class PaymentServiceImple implements PaymentService {
 						// 예약 결제의 경우: schedule_id로 빌링키 조회 후 결제수단 정보 조회
 						String scheduleId = order.getSchedule_id();
 						if (scheduleId != null) {
-							System.out.println("예약 결제 처리 중 - ScheduleId: " + scheduleId);
+//							System.out.println("예약 결제 처리 중 - ScheduleId: " + scheduleId);
 							
 							// PortOne API에서 예약 정보 조회
 							HttpResponse<String> scheduleResponse = portOneApiClient.getPaymentSchedule(scheduleId);
 							
-							System.out.println("예약 정보 API 응답 상태: " + scheduleResponse.statusCode());
+//							System.out.println("예약 정보 API 응답 상태: " + scheduleResponse.statusCode());
 							
 							if (scheduleResponse.statusCode() >= 200 && scheduleResponse.statusCode() < 300) {
 								ObjectMapper objectMapper = new ObjectMapper();
@@ -1212,7 +1208,7 @@ public class PaymentServiceImple implements PaymentService {
 								// billingKey 추출
 								String billingKey = (String) scheduleData.get("billingKey");
 								if (billingKey != null) {
-									System.out.println("빌링키 조회 성공 - billingKey: " + billingKey);
+//									System.out.println("빌링키 조회 성공 - billingKey: " + billingKey);
 									
 									// 빌링키로 결제수단 정보 조회
 									Map<String, Object> cardInfo = getCardInfoByBillingKey(billingKey);
@@ -1241,8 +1237,8 @@ public class PaymentServiceImple implements PaymentService {
 										order.setApiCardType(null);
 									}
 									
-									System.out.println("예약 결제 정보 업데이트 완료 - ScheduleId: " + scheduleId + 
-											", 결제수단: " + methodType + ", 카드: " + order.getApiCardName());
+//									System.out.println("예약 결제 정보 업데이트 완료 - ScheduleId: " + scheduleId + 
+//											", 결제수단: " + methodType + ", 카드: " + order.getApiCardName());
 								} else {
 									System.out.println("예약 정보에서 빌링키를 찾을 수 없습니다.");
 									setDefaultApiMethodInfo(order);
@@ -1258,10 +1254,10 @@ public class PaymentServiceImple implements PaymentService {
 						
 					} else {
 						// 일반 결제의 경우: payment_id로 결제 정보 조회
-						System.out.println("일반 결제 처리 중 - PaymentId: " + order.getPayment_id());
+//						System.out.println("일반 결제 처리 중 - PaymentId: " + order.getPayment_id());
 						
 						HttpResponse<String> response = portOneApiClient.getPaymentInfo(order.getPayment_id());
-						System.out.println("일반 결제 API 응답 상태: " + response.statusCode());
+//						System.out.println("일반 결제 API 응답 상태: " + response.statusCode());
 						
 						if (portOneApiClient.isSuccessResponse(response)) {
 							// JSON 응답 파싱
@@ -1269,7 +1265,7 @@ public class PaymentServiceImple implements PaymentService {
 							@SuppressWarnings("unchecked")
 							Map<String, Object> responseData = objectMapper.readValue(response.body(), Map.class);
 							
-							System.out.println("API 응답 파싱 완료");
+//							System.out.println("API 응답 파싱 완료");
 							
 							// 카드 정보 추출 (개선된 extractMethodInfo 함수 사용)
 							Map<String, Object> cardInfo = extractMethodInfo(responseData);
@@ -1306,8 +1302,8 @@ public class PaymentServiceImple implements PaymentService {
 								order.setApiMethodProvider("UNKNOWN");
 							}
 							
-							System.out.println("일반 결제 정보 업데이트 완료 - PaymentId: " + order.getPayment_id() + 
-									", 카드: " + order.getApiCardName() + " " + order.getApiCardNumber());
+//							System.out.println("일반 결제 정보 업데이트 완료 - PaymentId: " + order.getPayment_id() + 
+//									", 카드: " + order.getApiCardName() + " " + order.getApiCardNumber());
 							
 						} else {
 							System.out.println("API 호출 실패 - Status: " + response.statusCode());
@@ -1327,7 +1323,7 @@ public class PaymentServiceImple implements PaymentService {
 				}
 			}
 			
-			System.out.println("=== 결제 기록 조회 (API) 함수 완료 ===");
+//			System.out.println("=== 결제 기록 조회 (API) 함수 완료 ===");
 			log.info("결제 기록 조회 및 API 정보 업데이트 완료 - memberIdx: " + memberIdx);
 			return paymentHistory;
 			
@@ -1365,7 +1361,6 @@ public class PaymentServiceImple implements PaymentService {
 			}
 			// schedule_id로 PortOne API에서 결제 예약 정보 조회
 			HttpResponse<String> response = portOneApiClient.getPaymentSchedule(scheduleOrder.getSchedule_id());
-			System.out.println(response.body());
 
 			if (portOneApiClient.isSuccessResponse(response)) {
 				ObjectMapper objectMapper = new ObjectMapper();
@@ -1375,7 +1370,6 @@ public class PaymentServiceImple implements PaymentService {
 				// billingKey 추출
 				String billingKey = (String) responseData.get("billingKey");
 				if (billingKey != null) {
-					System.out.println("빌링키 조회 성공 - billingKey: " + billingKey);
 				} else {
 					System.out.println("응답에서 billingKey를 찾을 수 없습니다.");
 				}
@@ -1748,7 +1742,6 @@ public class PaymentServiceImple implements PaymentService {
 
 				// 사용량 조회
 				Map<String, Object> userUseage = apiLogMapper.selectTokenUsageDuringLatestPaidOrder(memberIdx);
-				System.out.println("userUseage!!!!! : " + userUseage);
 				int inputTokens = ((BigDecimal) userUseage.get("INPUT_TOKENS")).intValue();
 				int outputTokens = ((BigDecimal) userUseage.get("OUTPUT_TOKENS")).intValue();
 
@@ -1764,7 +1757,6 @@ public class PaymentServiceImple implements PaymentService {
 				log.info("❌ 비구독자 - memberIdx: " + memberIdx);
 				result.put("message", "현재 유효한 구독이 없습니다.");
 				ApiLogVO log = apiLogMapper.selectFirstRoutineLog(memberIdx);
-				System.out.println(log);
 				boolean isLog = log != null ? true : false;
 				result.put("isLog", isLog);
 			}

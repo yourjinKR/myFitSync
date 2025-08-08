@@ -83,7 +83,6 @@ public class AIServiceImple implements AIService {
     	
     	Map<String, Object> map = objectMapper.readValue(userMessage, new TypeReference<Map<String, Object>>() {});
     	int userSplit = (int) map.get("split");
-    	System.out.println("user split : " +  userSplit);
     	
     	
         Timestamp requestTime = new Timestamp(System.currentTimeMillis());
@@ -192,7 +191,6 @@ public class AIServiceImple implements AIService {
 
             // 1. AI 응답 JSON 파싱
             List<AiRoutineDTO> aiRoutines = objectMapper.readValue(content, new TypeReference<List<AiRoutineDTO>>() {});
-            System.out.println("response split : " +  aiRoutines.size());
 
             // 2. PT 이름 맵핑 정보 로드 (DB 1회 호출)
             Map<Integer, String> ptNameMap = getWorkoutNameMap();

@@ -561,8 +561,6 @@ public class PaymentController {
         try {
             // 1. 세션에서 사용자 정보 조회
             Integer memberIdx = (Integer) session.getAttribute("member_idx");
-            System.out.println(memberIdx);
-            System.out.println(member_idx);
             
             if (memberIdx == null) {
                 log.warn("❌ 세션에 memberIdx 정보가 없음");
