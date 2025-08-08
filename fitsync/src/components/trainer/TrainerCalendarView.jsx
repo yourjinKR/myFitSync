@@ -1429,7 +1429,7 @@ useEffect(() => {
                     </SlidePanelHeader>
 
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                      <DateCircle>{selectedDate.split('-')[2]}</DateCircle>
+                      
                       <div style={{ flex: 1 }}>
                         {monthSchedules[selectedDate] && monthSchedules[selectedDate].length > 0 ? (
                           monthSchedules[selectedDate]
