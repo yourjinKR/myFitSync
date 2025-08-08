@@ -19,6 +19,7 @@ import org.fitsync.service.MemberService;
 import org.fitsync.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +51,9 @@ public class ChatRestController {
     
     @Autowired
     private LessonService lessonService;
+    
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
     
     // 채팅용 member_idx 조회 API (세션스토리지 전용)
     @GetMapping("/member-info")
@@ -131,7 +135,7 @@ public class ChatRestController {
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
     
-    // 채팅파일 업로드 POST /api/chat/upload
+    // 🔥 핵심 수정: 채팅파일 업로드 API - 실시간 첨부파일 알림 강화
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("message_idx") int message_idx, HttpSession session) {
         
@@ -139,9 +143,44 @@ public class ChatRestController {
         try {
             // 1. 파일 업로드
             ChatAttachVO attachment = chatService.uploadFile(file);
+            
             // 2. 메시지와 첨부파일 연결
             chatService.linkAttachmentToMessage(message_idx, attachment.getAttach_idx());
-            // 3. 응답 데이터 구성
+            
+            // 3. 🔥 핵심 수정: 메시지 정보 조회하여 채팅방 정보 획득
+            MessageVO messageInfo = chatService.getMessage(message_idx);
+            if (messageInfo != null && messageInfo.getRoom_idx() > 0) {
+                // 4. 🔥 첨부파일 업로드 완료 실시간 알림 강화
+                try {
+                    Map<String, Object> uploadNotification = Map.of(
+                        "type", "attachment_uploaded",
+                        "message_idx", message_idx,
+                        "room_idx", messageInfo.getRoom_idx(),
+                        "cloudinary_url", attachment.getCloudinary_url(),
+                        "original_filename", attachment.getOriginal_filename(),
+                        "attach_idx", attachment.getAttach_idx(),
+                        "file_size_bytes", attachment.getFile_size_bytes(),
+                        "mime_type", attachment.getMime_type() != null ? attachment.getMime_type() : "image/jpeg",
+                        "timestamp", System.currentTimeMillis()
+                    );
+                    
+                    // 채팅방 첨부파일 전용 채널로 브로드캐스트
+                    messagingTemplate.convertAndSend("/topic/room/" + messageInfo.getRoom_idx() + "/attachment", uploadNotification);
+                    System.out.println("🔥 첨부파일 업로드 완료 알림 전송 강화: " + message_idx);
+                    System.out.println("   - cloudinary_url: " + attachment.getCloudinary_url());
+                    System.out.println("   - original_filename: " + attachment.getOriginal_filename());
+                    System.out.println("   - attach_idx: " + attachment.getAttach_idx());
+                    
+                } catch (Exception e) {
+                    // 브로드캐스트 실패는 파일 업로드 성공에 영향을 주지 않음
+                    System.err.println("첨부파일 업로드 알림 전송 실패: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                System.err.println("메시지 정보 조회 실패 또는 room_idx 없음: message_idx=" + message_idx);
+            }
+            
+            // 5. 응답 데이터 구성
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("attachIdx", attachment.getAttach_idx());
@@ -152,6 +191,8 @@ public class ChatRestController {
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            System.err.println("파일 업로드 실패: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", "파일 업로드 실패: " + e.getMessage()));
         }
     }

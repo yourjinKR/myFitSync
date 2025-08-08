@@ -303,12 +303,12 @@ export const useWebSocket = (shouldConnect = true) => {
     return false;
   }, []);
 
-  // 채팅방 구독 함수 - 특정 채팅방의 메시지, 읽음 확인, 삭제 알림을 구독
-  const subscribeToRoom = useCallback((room_idx, onMessageReceived, onReadReceived, onDeleteReceived) => {
+  // 🔥 핵심 수정: 채팅방 구독 함수 - 첨부파일 업로드 완료 구독 추가 및 콜백 개선
+  const subscribeToRoom = useCallback((room_idx, onMessageReceived, onReadReceived, onDeleteReceived, onAttachmentReceived) => {
     
     if (client && connected) {
       
-      // 새 메시지 구독
+      // 새 메시지 구독 - 실시간 이미지 메시지 처리 개선
       const messageSubscription = client.subscribe(`/topic/room/${room_idx}`, (message) => {
         try {
           const messageData = JSON.parse(message.body);
@@ -317,6 +317,14 @@ export const useWebSocket = (shouldConnect = true) => {
           const messageId = messageData.message_idx || `${messageData.sender_idx}_${messageData.timestamp}`;
           if (isMessageProcessed(messageId)) {
             return;
+          }
+          
+          // 실시간 이미지 메시지 로깅
+          if (messageData.message_type === 'image') {
+            console.log(`[WebSocket] 실시간 이미지 메시지 수신:`, messageData);
+            console.log(`- message_idx: ${messageData.message_idx}`);
+            console.log(`- attach_idx: ${messageData.attach_idx}`);
+            console.log(`- sender_idx: ${messageData.sender_idx}`);
           }
           
           onMessageReceived(messageData);
@@ -345,12 +353,33 @@ export const useWebSocket = (shouldConnect = true) => {
         }
       });
       
+      // 🔥 핵심 수정: 첨부파일 업로드 완료 알림 구독 강화
+      const attachmentSubscription = client.subscribe(`/topic/room/${room_idx}/attachment`, (message) => {
+        try {
+          const attachmentData = JSON.parse(message.body);
+          console.log(`[WebSocket] 첨부파일 업로드 완료 알림 수신:`, attachmentData);
+          
+          if (attachmentData.type === 'attachment_uploaded') {
+            // 첨부파일 업로드 완료 시 콜백 호출
+            console.log(`[WebSocket] 첨부파일 업로드 완료: message_idx ${attachmentData.message_idx}`);
+            
+            // 🔥 새로 추가: 첨부파일 업로드 완료 콜백 호출
+            if (onAttachmentReceived) {
+              onAttachmentReceived(attachmentData);
+            }
+          }
+        } catch (error) {
+          console.error('첨부파일 알림 파싱 오류:', error);
+        }
+      });
+      
       // 구독 해제 함수 반환
       return () => {
         try {
           messageSubscription.unsubscribe();
           readSubscription.unsubscribe();
           deleteSubscription.unsubscribe();
+          attachmentSubscription.unsubscribe(); // 첨부파일 구독 해제 추가
         } catch (error) {
           console.warn('구독 해제 중 오류:', error);
         }
@@ -495,6 +524,11 @@ export const useWebSocket = (shouldConnect = true) => {
         
         // WebSocket 메시지에 매칭 데이터 추가
         messageWithSender.matching_data = validatedMatchingData;
+      }
+      
+      // 이미지 메시지 전송 로깅
+      if (messageData.message_type === 'image') {
+        console.log(`[WebSocket] 이미지 메시지 전송:`, messageWithSender);
       }
       
       try {

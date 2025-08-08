@@ -170,7 +170,14 @@ public class ChatWebSocketController {
                 savedMessage.setMessage_idx(-1);
             }
             
-            // 브로드캐스트
+            // 🔥 핵심 수정: 이미지 메시지 처리 개선 - attach_idx 없이도 즉시 브로드캐스트
+            if ("image".equals(message_type) && savedMessage != null && savedMessage.getMessage_idx() > 0) {
+                // 이미지 메시지는 attach_idx 없이도 즉시 브로드캐스트
+                handleImageMessageBroadcast(savedMessage, room_idx);
+                return;
+            }
+            
+            // 브로드캐스트 (일반 메시지용)
             if (savedMessage != null) {
                 try {
                     savedMessage.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
@@ -194,6 +201,25 @@ public class ChatWebSocketController {
             
         } catch (Exception e) {
             System.err.println("메시지 처리 전체 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // 🔥 핵심 수정: 이미지 메시지 브로드캐스트 처리 개선
+    private void handleImageMessageBroadcast(MessageVO savedMessage, Integer room_idx) {
+        // 이미지 메시지를 즉시 브로드캐스트 (attach_idx는 나중에 업데이트됨)
+        try {
+            savedMessage.setMessage_senddate(new java.sql.Timestamp(System.currentTimeMillis()));
+            
+            System.out.println("이미지 메시지 즉시 브로드캐스트 시작: " + savedMessage.getMessage_idx());
+            System.out.println("현재 attach_idx: " + savedMessage.getAttach_idx());
+            
+            // attach_idx가 없어도 즉시 브로드캐스트
+            messagingTemplate.convertAndSend("/topic/room/" + room_idx, savedMessage);
+            System.out.println("이미지 메시지 즉시 브로드캐스트 완료");
+            
+        } catch (Exception e) {
+            System.err.println("이미지 메시지 브로드캐스트 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }

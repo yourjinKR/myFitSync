@@ -294,7 +294,7 @@ const ReplyText = styled.div`
   font-style: italic;
 `;
 
-// 이미지 로딩 컨테이너
+// 🔥 핵심 수정: 이미지 로딩 컨테이너 개선
 const ImageLoadingContainer = styled.div`
   max-width: 200px;
   max-height: 200px;
@@ -650,7 +650,9 @@ const MessageItem = ({
   hasCompletedMatchingWithTrainer = false,
   isMatchingCheckLoading = false,
   allMessages = [], // 전체 메시지 목록 추가
-  currentMemberIdx = null // 현재 회원 ID 추가
+  currentMemberIdx = null, // 현재 회원 ID 추가
+  pendingImageMessages = new Set(), // 실시간 이미지 로딩 대기 목록
+  onTriggerImageLoad = null // 실시간 이미지 로딩 트리거 함수
 }) => {
 
   // Redux에서 사용자 정보 가져오기
@@ -691,7 +693,49 @@ const MessageItem = ({
   // 매칭 관련 상태
   const [matchingLoading, setMatchingLoading] = useState(false);
 
+  // 🔥 핵심 수정: 실시간 이미지 로딩 상태 개선
+  const [realtimeImageLoading, setRealtimeImageLoading] = useState(false);
+  const realtimeLoadTriggered = useRef(false);
+
   const containerRef = useRef(null);
+
+  // 🔥 핵심 수정: 실시간 이미지 메시지 판별 로직 개선
+  const isRealtimeImageMessage = message.message_type === 'image' && 
+                                !attachments && 
+                                pendingImageMessages && 
+                                pendingImageMessages.has(message.message_idx);
+
+  // 🔥 핵심 수정: 실시간 이미지 로딩 트리거 개선
+  useEffect(() => {
+    if (isRealtimeImageMessage && 
+        !realtimeLoadTriggered.current && 
+        onTriggerImageLoad) {
+      
+      realtimeLoadTriggered.current = true;
+      setRealtimeImageLoading(true);
+      
+      console.log(`[MessageItem] 실시간 이미지 로딩 트리거: ${message.message_idx}`);
+      
+      // 실시간 이미지 로딩 트리거
+      onTriggerImageLoad(message.message_idx);
+      
+      // 10초 후에도 로딩이 끝나지 않으면 로딩 상태 해제
+      const timeoutId = setTimeout(() => {
+        setRealtimeImageLoading(false);
+        console.log(`[MessageItem] 실시간 이미지 로딩 타임아웃: ${message.message_idx}`);
+      }, 10000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isRealtimeImageMessage, onTriggerImageLoad, message.message_idx]);
+
+  // 첨부파일이 로딩되면 실시간 로딩 상태 해제
+  useEffect(() => {
+    if (attachments && realtimeImageLoading) {
+      setRealtimeImageLoading(false);
+      console.log(`[MessageItem] 실시간 이미지 로딩 완료: ${message.message_idx}`);
+    }
+  }, [attachments, realtimeImageLoading, message.message_idx]);
 
   // 최신 매칭 메시지인지 확인하는 함수
   const isLatestMatchingMessage = useCallback(() => {
@@ -1028,22 +1072,24 @@ const MessageItem = ({
     setLoadingProgress(0);
   }, [message.message_idx]);
 
-  // 로딩 진행률 시뮬레이션 - 이미지 업로드 중 사용자 경험 개선
+  // 🔥 핵심 수정: 로딩 진행률 시뮬레이션 개선
   useEffect(() => {
-    if (message.message_type === 'image' && !attachments && imageLoading) {
+    if (message.message_type === 'image' && (!attachments || realtimeImageLoading)) {
+      setLoadingProgress(0);
+      
       const interval = setInterval(() => {
         setLoadingProgress(prev => {
-          if (prev >= 90) {
+          if (prev >= 85) {
             clearInterval(interval);
-            return 90;
+            return 85;
           }
-          return prev + Math.random() * 15;
+          return prev + Math.random() * 10;
         });
-      }, 200);
+      }, 300);
 
       return () => clearInterval(interval);
     }
-  }, [message.message_type, attachments, imageLoading]);
+  }, [message.message_type, attachments, realtimeImageLoading]);
 
   useEffect(() => {
     if (attachments && message.message_type === 'image') {
@@ -1262,10 +1308,12 @@ const MessageItem = ({
             {/* 메시지 내용 */}
             {message.message_type === 'image' ? (
               <ImageContainer>
-                {(!attachments || imageLoading) ? (
+                {(!attachments || imageLoading || realtimeImageLoading) ? (
                   <ImageLoadingContainer>
                     <LoadingSpinner />
-                    <LoadingText>이미지 업로드 중...</LoadingText>
+                    <LoadingText>
+                      {realtimeImageLoading ? '실시간 이미지 로딩 중...' : '이미지 업로드 중...'}
+                    </LoadingText>
                     <LoadingProgress $progress={loadingProgress} />
                   </ImageLoadingContainer>
                 ) : (

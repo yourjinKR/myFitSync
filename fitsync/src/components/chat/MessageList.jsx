@@ -75,7 +75,9 @@ const MessageList = ({
   onScrollToMessage = null,
   hasCompletedMatchingWithTrainer = false,
   isMatchingCheckComplete = true,
-  isMatchingCheckLoading = false
+  isMatchingCheckLoading = false,
+  pendingImageMessages = new Set(), // 실시간 이미지 로딩 대기 목록
+  onTriggerImageLoad = null // 실시간 이미지 로딩 트리거 함수
 }) => {
   
   const [fixedOldestUnreadMessageIdx, setFixedOldestUnreadMessageIdx] = useState(null);
@@ -291,6 +293,14 @@ const MessageList = ({
     }
   };
 
+  // 실시간 이미지 로딩 트리거 함수 래핑
+  const handleTriggerImageLoad = (messageIdx) => {
+    console.log(`[MessageList] 실시간 이미지 로딩 트리거 전달: ${messageIdx}`);
+    if (onTriggerImageLoad) {
+      onTriggerImageLoad(messageIdx);
+    }
+  };
+
   return (
     <Container>
       {messages.map((message, index) => {
@@ -341,6 +351,8 @@ const MessageList = ({
               isMatchingCheckLoading={isMatchingCheckLoading}
               allMessages={messages}
               currentMemberIdx={currentMemberIdx}
+              pendingImageMessages={pendingImageMessages}
+              onTriggerImageLoad={handleTriggerImageLoad}
             />
           </React.Fragment>
         );

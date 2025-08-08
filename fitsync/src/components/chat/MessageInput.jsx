@@ -274,7 +274,7 @@ const MessageInput = ({
     return replyToMessage.message_content || '';
   };
 
-  // 메시지 전송 처리
+  // 수정된 메시지 전송 처리 - 이미지 업로드 순서 개선
   const handleSend = async () => {
     if (isUploading) return;
     if (!messageText.trim() && selectedFiles.length === 0) return;
@@ -295,13 +295,13 @@ const MessageInput = ({
       fileInputRef.current.value = '';
     }
 
-    // 파일 업로드 처리
+    // 이미지 파일 업로드 처리 - 개선된 순서
     if (filesToSend.length > 0) {
       setIsUploading(true);
       const hasText = textToSend;
       
       try {
-        // 다중 파일 순차 업로드
+        // 다중 파일 순차 업로드 - 개선된 처리 방식
         for (let index = 0; index < filesToSend.length; index++) {
           const file = filesToSend[index];
           const isLastFile = index === filesToSend.length - 1;
@@ -309,6 +309,9 @@ const MessageInput = ({
           // 마지막 파일에만 텍스트 메시지 첨부
           const messageContent = (hasText && isLastFile) ? hasText : '[이미지]';
           
+          console.log(`[MessageInput] 이미지 파일 전송 시작: ${file.name} (${index + 1}/${filesToSend.length})`);
+          
+          // 🔥 핵심 수정: onSendMessage에서 직접 처리하도록 변경
           await onSendMessage(
             messageContent, 
             'image', 
@@ -316,12 +319,15 @@ const MessageInput = ({
             replyToMessage?.message_idx
           );
           
-          // 업로드 간격 조절
+          console.log(`[MessageInput] 이미지 파일 전송 완료: ${file.name}`);
+          
+          // 업로드 간격 조절 - 안정성을 위한 지연 최소화
           if (index < filesToSend.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
       } catch (error) {
+        console.error('[MessageInput] 파일 업로드 오류:', error);
         alert('파일 업로드 중 오류가 발생했습니다.');
       } finally {
         setIsUploading(false);
@@ -329,6 +335,7 @@ const MessageInput = ({
     } else {
       // 텍스트 메시지만 전송
       try {
+        console.log(`[MessageInput] 텍스트 메시지 전송: ${textToSend}`);
         await onSendMessage(
           textToSend, 
           'text', 
@@ -336,7 +343,8 @@ const MessageInput = ({
           replyToMessage?.message_idx
         );
       } catch (error) {
-        // 전송 실패 시 사용자에게 알림
+        console.error('[MessageInput] 텍스트 메시지 전송 오류:', error);
+        alert('메시지 전송 중 오류가 발생했습니다.');
       }
     }
 
@@ -363,7 +371,7 @@ const MessageInput = ({
     textArea.style.height = textArea.scrollHeight + 'px';
   };
 
-  // 파일 선택 처리
+  // 파일 선택 처리 - 유효성 검사 강화
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -391,13 +399,16 @@ const MessageInput = ({
 
       validFiles.push(file);
 
-      // 미리보기 생성
+      // 미리보기 생성 - 메모리 효율성을 위한 개선
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviewUrls(prev => ({
           ...prev,
           [index]: e.target.result
         }));
+      };
+      reader.onerror = () => {
+        console.error(`파일 "${file.name}" 미리보기 생성 실패`);
       };
       reader.readAsDataURL(file);
     });
@@ -538,10 +549,10 @@ const MessageInput = ({
           
           <SendButton 
             onClick={handleSend} 
-            disabled={disabled || (!messageText.trim() && selectedFiles.length === 0)} 
+            disabled={disabled || (!messageText.trim() && selectedFiles.length === 0) || isUploading} 
             title="전송 (Enter)"
           >
-            ➤
+            {isUploading ? '⏳' : '➤'}
           </SendButton>
         </TextAreaContainer>
       </InputContainer>
