@@ -92,7 +92,7 @@ const RoutineAdd = () => {
   useEffect(() => {
     getWorkOut();
     
-    if(!prev.includes('/routine/detail/custom')){
+    if(!prev || !prev.includes('/routine/detail/custom')){
       if(prev === null) {
         setRoutineData({
           routine_name: '',
