@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import BodyComparisonChart from './BodyComparisonChart';
 import Routine from '../routine/Routine';
@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 24px;
   padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
@@ -21,11 +22,11 @@ const Container = styled.div`
 
   @media (max-width: 768px) {
     padding: 16px;
+    gap: 20px;
   }
 `;
 
 const Section = styled.section`
-  margin-top: 20px;
   background: var(--bg-secondary);
   border-radius: 12px;
   border: 1px solid rgba(74, 144, 226, 0.1);
@@ -46,7 +47,6 @@ const RoutineSection = styled.section`
   padding: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
-  margin-top: 20px;
   
   @media (max-width: 768px) {
     padding: 20px;
@@ -97,7 +97,6 @@ const EmptyMessage = styled.div`
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(5px);
-  width: 100%;
   
   &::before {
     content: '💪';
@@ -172,13 +171,6 @@ const ShowMoreButton = styled.button`
   }
 `;
 
-const SlideSection = styled.div`
-  position: relative;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  height: ${props => props.$isInfoEdit ? 'auto' : '0'};
-`;
-
 const MyPage = () => {
   const { user: loginUser } = useSelector((state) => state.user); // Redux에서 유저 정보 가져옴
   const [user, setUser] = useState(null);
@@ -188,9 +180,7 @@ const MyPage = () => {
   const [chartKey, setChartKey] = useState(0);
   const [showAllRoutines, setShowAllRoutines] = useState(false);
   const [isInfoEdit, setIsInfoEdit] = useState(false);
-  const [slideHeight, setSlideHeight] = useState(0);
-  const slideRef = useRef(null);
-  const nav = useNavigate();
+  const nav = useNavigate ();
 
   useEffect(() => {
     if (loginUser) {
@@ -214,7 +204,7 @@ const MyPage = () => {
   const fetchUser = async () => {
     try {
       const res = await axios.get('/user/profile', { withCredentials: true });
-      setUser(res.data);
+      setUser(res.data); 
     } catch (error) {
       console.error('유저 정보 불러오기 실패', error);
     } finally {
@@ -240,29 +230,21 @@ const MyPage = () => {
   };
 
   const handleImageChange = (newImageUrl) => {
-    setUser((prev) => ({
-      ...prev,
-      member_image: newImageUrl,
-    }));
-  };
+  setUser((prev) => ({
+    ...prev,
+    member_image: newImageUrl,
+  }));
+};
 
 
   const handleBodyUpdate = () => setChartKey((prev) => prev + 1);
-
-  useEffect(() => {
-    if (isInfoEdit && slideRef.current) {
-      setSlideHeight(slideRef.current.scrollHeight + 20);
-    } else {
-      setSlideHeight(0);
-    }
-  }, [isInfoEdit, user]);
 
   if (loading || !user) return (
     <Container>
       <LoadingMessage>로딩중...</LoadingMessage>
     </Container>
   );
-
+  
   if (!user) return (
     <Container>
       <ErrorMessage>유저 정보를 불러올 수 없습니다.</ErrorMessage>
@@ -281,18 +263,12 @@ const MyPage = () => {
         onImageChange={handleImageChange}
         setIsInfoEdit={setIsInfoEdit}
       />
-      <SlideSection style={{
-        height: `${slideHeight}px`,
-        transition: 'height 0.3s ease',
-        overflow: 'hidden',
-      }} $isInfoEdit={isInfoEdit}>
-        <div ref={slideRef}>
-          <Section>
-            <SectionTitle>개인정보 수정</SectionTitle>
-            <UserInfo user={user} setIsInfoEdit={setIsInfoEdit} setUser={setUser} />
-          </Section>
-        </div>
-      </SlideSection>
+      {isInfoEdit && (
+        <Section>
+          <SectionTitle>개인정보 수정</SectionTitle>
+          <UserInfo user={user} setIsInfoEdit={setIsInfoEdit} setUser={setUser}/>
+        </Section>
+      )}
       <Section>
         <SectionTitle>최근 인바디 정보</SectionTitle>
         <LatestBodyInfo key={chartKey} onUpdate={handleBodyUpdate} />
@@ -306,13 +282,13 @@ const MyPage = () => {
         <RoutineListWrapper>
           {routineList.length > 0 ? (
             <>
-              {(showAllRoutines ? routineList : routineList.slice(0, 4)).map((routineItem) => (
-                <Routine
-                  data={routineItem}
-                  key={routineItem.routine_list_idx}
-                  onDelete={handleRoutineResponse}
-                />
-              ))}
+                {(showAllRoutines ? routineList : routineList.slice(0, 4)).map((routineItem) => (
+                  <Routine 
+                    data={routineItem} 
+                    key={routineItem.routine_list_idx}
+                    onDelete={handleRoutineResponse}
+                  />
+                ))}
               {routineList.length > 4 && (
                 <ShowMoreButton onClick={() => setShowAllRoutines(!showAllRoutines)}>
                   {showAllRoutines ? '접기' : `더보기 (${routineList.length - 4}개 더)`}

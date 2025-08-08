@@ -17,6 +17,8 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import DailyDetailModal from '../user/DailyDetailModal';
+import WorkoutRecordModal from '../user/WorkoutRecordModal';
+import ScheduleDetailModal from '../user/ScheduleDetailModal';
 
 
 // 스타일 컴포넌트 분리
@@ -771,6 +773,10 @@ const TrainerCalendarView = ({autoHeight}) => {
   const [selectedEtime, setSelectedEtime] = useState('');
   const [showModal, setShowModal] = useState(false);
   
+  // 통합 모달 관리
+  const [currentModal, setCurrentModal] = useState(null); // 'daily', 'workout', 'schedule'
+  const [modalData, setModalData] = useState(null);
+  
 
   const isTrainer = user?.member_type === 'trainer';
   const isUser = user?.member_type === 'user';
@@ -836,15 +842,14 @@ useEffect(() => {
     if (trainerIdx) {
       fetchSchedules();
 
-      // **매칭된 회원 리스트 불러오기 (matching_complete === 1, 2 포함)**
+      // **매칭된 회원 리스트 불러오기 (matching_complete === 1 필터링)**
       axios.get(`/trainer/${trainerIdx}/matched-members`)
         .then((res) => {
-          const matched = res.data.filter(m => m.matching_complete === 1 || m.matching_complete === 2);
+          const matched = res.data.filter(m => m.matching_complete === 1);
           const transformed = matched.map((m) => ({
             member: {
               member_idx: m.user_idx,
               member_name: m.member?.member_name || '이름없음',
-              matching_complete: m.matching_complete,
             },
           }));
           setMembers(transformed);
@@ -852,10 +857,7 @@ useEffect(() => {
           // memberMap도 같이 만들어서 편의성 증가
           const map = {};
           transformed.forEach(({ member }) => {
-            const displayName = member.matching_complete === 2 
-              ? `${member.member_name}(계약종료)` 
-              : member.member_name;
-            map[String(member.member_idx)] = displayName;
+            map[String(member.member_idx)] = member.member_name;
           });
           setMemberMap(map);
         })
@@ -995,13 +997,34 @@ useEffect(() => {
     // 트레이너의 경우 운동기록이 있는 날짜만 모달 열기
     if (isTrainer) {
       if (recordDates.includes(dateStr)) {
-        setShowModal(true);
+        setCurrentModal('daily');
+        setModalData({ date: new Date(dateStr) });
       } else {
         setShowPanel(true);
       }
     } else {
-      setShowModal(true);
+      setCurrentModal('daily');
+      setModalData({ date: new Date(dateStr) });
     }
+  };
+
+  // 워크아웃 기록 모달 열기 콜백
+  const handleOpenWorkoutRecord = (records) => {
+    setCurrentModal('workout');
+    setModalData(records);
+  };
+
+  // 스케줄 상세 모달 열기 콜백
+  const handleOpenScheduleDetail = (schedule) => {
+    setCurrentModal('schedule');
+    setModalData(schedule);
+  };
+
+  // 모달 닫기
+  const handleCloseModal = () => {
+    setCurrentModal(null);
+    setModalData(null);
+    setShowModal(false);
   };
 
   // 일정 추가 모달 열기
@@ -1574,13 +1597,40 @@ useEffect(() => {
           </>
         ) : null}
       </Wrapper>
-       {showModal && (
-          <DailyDetailModal
-            date={selectedDate}
-            schedules={monthSchedules[selectedDate] || []}
-            onClose={() => setShowModal(false)}
-          />
-        )}
+       
+      {/* 통합 모달 관리 */}
+      {currentModal === 'daily' && modalData && (
+        <DailyDetailModal
+          date={modalData.date}
+          onClose={handleCloseModal}
+          onOpenWorkoutRecord={handleOpenWorkoutRecord}
+          onOpenScheduleDetail={handleOpenScheduleDetail}
+        />
+      )}
+
+      {currentModal === 'workout' && modalData && (
+        <WorkoutRecordModal
+          records={modalData}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      {currentModal === 'schedule' && modalData && (
+        <ScheduleDetailModal
+          schedule={modalData}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      {/* 기존 모달 (showModal 방식) - 하위 호환성 */}
+      {showModal && !currentModal && (
+        <DailyDetailModal
+          date={new Date(selectedDate)}
+          onClose={() => setShowModal(false)}
+          onOpenWorkoutRecord={handleOpenWorkoutRecord}
+          onOpenScheduleDetail={handleOpenScheduleDetail}
+        />
+      )}
     </>
     
   );

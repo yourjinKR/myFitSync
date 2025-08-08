@@ -653,7 +653,7 @@ return (
     )}
   </>
     )}
-    {isLogin && member_type !== 'admin' && (
+    {isLogin && (
       <div style={{padding:'2rem 2rem 0'}}>
         <TrainerCalendarView autoHeight={'auto'}/>
       </div>
