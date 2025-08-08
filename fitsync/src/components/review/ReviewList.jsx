@@ -61,24 +61,14 @@ const ReviewList = () => {
         speed={7500}
         effect="slide"
         autoplay={{
+          delay: 0,
           disableOnInteraction: false,
         }}
         allowTouchMove={true}
         className="mySwiper"
         style={{ padding: '30px' }}
-        onMouseEnter={swiper => {
-          if (swiper.autoplay) swiper.autoplay.stop();
-          // 슬라이드 이동중 즉시 멈춤
-          if (swiper.wrapperEl) {
-            swiper.wrapperEl.style.transition = 'none';
-          }
-        }}
-        onMouseLeave={swiper => {
-          if (swiper.wrapperEl) {
-            swiper.wrapperEl.style.transition = '';
-          }
-          if (swiper.autoplay) swiper.autoplay.start();
-        }}
+        onMouseEnter={swiper => swiper.autoplay && swiper.autoplay.stop()}
+        onMouseLeave={swiper => swiper.autoplay && swiper.autoplay.start()}
       >
         {duplicatedSlides.map((slide, idx) => (
           <SwiperSlide key={idx}>
