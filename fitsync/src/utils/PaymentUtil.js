@@ -58,7 +58,6 @@ export const PaymentUtil = {
                 }
             );
 
-            console.log('빌링키 저장 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -79,7 +78,6 @@ export const PaymentUtil = {
                 }
             );
 
-            console.log('결제수단 목록 조회 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -97,7 +95,6 @@ export const PaymentUtil = {
                     headers: {'Content-Type': 'application/json'}
                 }
             );
-            console.log('빌링키 정보 조회 성공:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching billing key info:', error);
@@ -133,7 +130,6 @@ export const PaymentUtil = {
                 }
             );
 
-            console.log('결제수단 이름 변경 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -157,7 +153,6 @@ export const PaymentUtil = {
                 }
             );
 
-            console.log('결제수단 삭제 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -178,7 +173,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('중복 체크 결과:', response.data);
             return response.data;
             
         } catch (error) {
@@ -202,7 +196,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('중복 처리 후 저장 결과:', response.data);
             return response.data;
             
         } catch (error) {
@@ -225,7 +218,6 @@ export const PaymentUtil = {
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('빌링키 결제 성공:', response.data);
             return response.data;
         } catch (error) {
             console.error('빌링키 결제 중 오류:', error);
@@ -243,7 +235,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('결제 내역 조회 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -277,7 +268,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('빌링키 결제 예약 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -299,7 +289,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('결제 예약 취소 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -328,7 +317,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('예약 내역 조회 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -357,7 +345,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('구독자 상태 조회 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -376,7 +363,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('모니터링 테스트 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -395,7 +381,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('가장 최근 결제건 불러오기 성공:', response.data);
             return response.data;
             
         } catch (error) {
@@ -414,7 +399,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('결제수단 변경 성공 :', response.data);
             return response.data;
             
         } catch (error) {
@@ -433,7 +417,6 @@ export const PaymentUtil = {
                 }
             });
 
-            console.log('구독 재연장 성공 :', response.data);
             return response.data;
             
         } catch (error) {
@@ -447,7 +430,6 @@ export const PaymentUtil = {
         try {
             const response = await axios.get('/admin/subscription/count');
 
-            console.log("구독자 수 : ", response.data);
             return response.data;
 
         } catch (error) {

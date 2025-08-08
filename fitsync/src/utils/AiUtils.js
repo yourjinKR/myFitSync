@@ -25,7 +25,6 @@ const AiUtil = {
                     if (matchResult.found) {
                         exIdx = rawDataIdx.find(item => item.pt_name === matchResult.matchedName)?.pt_idx || null;
                         if (matchResult.score > 0) {
-                            console.log(`Found similar exercise: ${ex.pt_name} → ${matchResult.matchedName} (score: ${matchResult.score})`);
                         }
                     } else {
                         console.warn(`유효하지 않은 운동명: ${ex.pt_name}`);
@@ -49,15 +48,12 @@ const AiUtil = {
             return parseData;
         }); 
         
-        // console.log(result.content, result.logIdx);
-        // console.log('파싱된 결과:', parsedResult);
         return parsedResult;
     },
 
     /** 결과 저장 함수 */
     async saveResult(result, rawDataIdx, rawDataMap) {
         const parsedResult = this.parseResult(result, rawDataIdx, rawDataMap);
-        console.log(parsedResult);
         
         for (const routineData of parsedResult) {
             try {
@@ -66,7 +62,6 @@ const AiUtil = {
                 });
 
                 if (response.data.success) {
-                    console.log('루틴이 성공적으로 저장되었습니다.');
                 } else {
                     console.error('루틴 저장에 실패했습니다: ' + response.data.msg);
                 }
@@ -85,7 +80,6 @@ const AiUtil = {
         } else {
             log.apilog_status = 'exception';
         }
-        console.log('업데이트할 로그:', log);
         try {
             await axios.patch('/admin/api/exception', log)
                 .then((res) => console.log('API 로그 업데이트 결과:', res.data));
@@ -98,7 +92,7 @@ const AiUtil = {
     async updateLogUserAction (log) {
         try {
             const response = await axios.patch('/admin/api/action', log);
-            console.log("사용자 행동 업데이트 : ", response);
+            return response.data;
         } catch (error) {
             console.error('API 로그 업데이트 실패:', error);
         }
@@ -188,7 +182,6 @@ const AiUtil = {
                     toDate: '2025-07-29'
                 }
             });
-            console.log("통계 개요 : ", response.data);
             return response.data;
         } catch (error) {
             console.error("통계 개요 호출 실패 : ", error);

@@ -13,7 +13,6 @@ export const GymUtil = {
             },
             });
 
-            console.log("체육관 불러오기:", response.data);
             return response.data;
         } catch (error) {
             console.error("체육관 불러오기 실패:", error);
@@ -26,7 +25,6 @@ export const GymUtil = {
         try {
             const response = await axios.get(`/admin/gym/${gym_idx}`);
 
-            console.log("특정 체육관 불러오기 : " , response.data);
             
             return response.data;
         } catch (error) {
@@ -39,7 +37,6 @@ export const GymUtil = {
         try {
             const response = await axios.post('/admin/gym', gym);
 
-            console.log("체육관 추가 : " , response.data);
             
             return response.data;
         } catch (error) {
@@ -52,7 +49,6 @@ export const GymUtil = {
         try {
             const response = await axios.put('/admin/gym', gym);
 
-            console.log("체육관 수정 : " , response.data);
             
             return response.data;
         } catch (error) {
@@ -65,7 +61,6 @@ export const GymUtil = {
         try {
             const response = await axios.delete(`/admin/gym/${gym_idx}`);
 
-            console.log("체육관 삭제 : " , response.data);
             
             return response.data;
         } catch (error) {
