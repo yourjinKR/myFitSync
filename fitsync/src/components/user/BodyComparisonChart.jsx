@@ -30,17 +30,17 @@ const ToggleWrapper = styled.div`
 const ToggleButton = styled.button`
   padding: 8px 16px;
   border-radius: 8px;
-  background: ${props => props.$active ? 'var(--primary-blue)' : 'var(--bg-tertiary)'};
-  color: ${props => props.$active ? 'white' : 'var(--text-secondary)'};
-  border: 1px solid ${props => props.$active ? 'var(--primary-blue)' : 'var(--border-light)'};
+  background: ${({ active }) => (active ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
+  color: ${({ active }) => (active ? 'white' : 'var(--text-secondary)')};
+  border: 1px solid ${({ active }) => (active ? 'var(--primary-blue)' : 'var(--border-light)')};
   font-weight: 500;
   font-size: 1.4rem;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.$active ? 'var(--primary-blue-light)' : 'var(--bg-secondary)'};
-    color: ${props => props.$active ? 'white' : 'var(--text-primary)'};
+    background: ${({ active }) => (active ? 'var(--primary-blue-light)' : 'var(--bg-secondary)')};
+    color: ${({ active }) => (active ? 'white' : 'var(--text-primary)')};
     transform: translateY(-1px);
   }
 `;
@@ -257,7 +257,7 @@ const BodyComparisonChart = ({ onUpdate }) => {
         {Object.keys(datasetsConfig).map(metric => (
           <ToggleButton
             key={metric}
-            $active={selectedMetric === metric}
+            active={selectedMetric === metric}
             onClick={() => setSelectedMetric(metric)}
           >
             {datasetsConfig[metric].label}
