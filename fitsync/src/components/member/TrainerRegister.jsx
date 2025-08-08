@@ -383,12 +383,6 @@ const NextButton = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   
-  &:hover {
-    background: var(--primary-blue-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
-  }
-  
   &:disabled {
     background: var(--border-light);
     color: var(--text-tertiary);
@@ -664,7 +658,7 @@ const TrainerRegister = () => {
 
         {/* 단계 2: 수업 가능 요일 */}
         <StepContainer isVisible={!!info.member_gender} data-step="schedule">
-          <Question>수업 가능한 요일을 선택해주세요 (복수 선택 가능)</Question>
+          <Question>수업 가능한 요일을 선택해주세요</Question>
           <DayGrid>
             {days.map((day) => (
               <DayCheckboxItem
@@ -747,7 +741,7 @@ const TrainerRegister = () => {
 
         {/* 단계 5: 전문 분야 */}
         <StepContainer isVisible={info.sido1 && info.gugun1} data-step="purpose">
-          <Question>전문 분야를 선택해주세요 (복수 선택 가능)</Question>
+          <Question>전문 분야를 선택해주세요</Question>
           <CheckboxGrid>
             {purposeOptions.map((purpose) => (
               <CheckboxItem
