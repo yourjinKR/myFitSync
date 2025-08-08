@@ -836,14 +836,15 @@ useEffect(() => {
     if (trainerIdx) {
       fetchSchedules();
 
-      // **매칭된 회원 리스트 불러오기 (matching_complete === 1 필터링)**
+      // **매칭된 회원 리스트 불러오기 (matching_complete === 1, 2 포함)**
       axios.get(`/trainer/${trainerIdx}/matched-members`)
         .then((res) => {
-          const matched = res.data.filter(m => m.matching_complete === 1);
+          const matched = res.data.filter(m => m.matching_complete === 1 || m.matching_complete === 2);
           const transformed = matched.map((m) => ({
             member: {
               member_idx: m.user_idx,
               member_name: m.member?.member_name || '이름없음',
+              matching_complete: m.matching_complete,
             },
           }));
           setMembers(transformed);
@@ -851,7 +852,10 @@ useEffect(() => {
           // memberMap도 같이 만들어서 편의성 증가
           const map = {};
           transformed.forEach(({ member }) => {
-            map[String(member.member_idx)] = member.member_name;
+            const displayName = member.matching_complete === 2 
+              ? `${member.member_name}(계약종료)` 
+              : member.member_name;
+            map[String(member.member_idx)] = displayName;
           });
           setMemberMap(map);
         })
