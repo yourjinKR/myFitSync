@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
+import { Autoplay } from 'swiper/modules';
 import Review from './Review';
 
 const ReviewList = () => {
@@ -46,14 +47,38 @@ const ReviewList = () => {
 
   return (
     <div>
+      <style>{`
+        .mySwiper .swiper-wrapper {
+          transition-timing-function: linear !important;
+        }
+      `}</style>
       <Swiper
+        modules={[Autoplay]}
         slidesPerView={1.2}
         centeredSlides={true}
         loop={true}
-        
         spaceBetween={15}
+        speed={7500}
+        effect="slide"
+        autoplay={{
+          disableOnInteraction: false,
+        }}
+        allowTouchMove={true}
         className="mySwiper"
         style={{ padding: '30px' }}
+        onMouseEnter={swiper => {
+          if (swiper.autoplay) swiper.autoplay.stop();
+          // 슬라이드 이동중 즉시 멈춤
+          if (swiper.wrapperEl) {
+            swiper.wrapperEl.style.transition = 'none';
+          }
+        }}
+        onMouseLeave={swiper => {
+          if (swiper.wrapperEl) {
+            swiper.wrapperEl.style.transition = '';
+          }
+          if (swiper.autoplay) swiper.autoplay.start();
+        }}
       >
         {duplicatedSlides.map((slide, idx) => (
           <SwiperSlide key={idx}>
