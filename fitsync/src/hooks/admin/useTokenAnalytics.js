@@ -1,5 +1,23 @@
 import { useMemo } from 'react';
 
+// GPT-4o 가격 정보 (USD)
+export const PRICING = {
+    'gpt-4o': {
+        input: 2.5 / 1000000,   // $2.50 per 1 M tokens
+        output: 10 / 1000000    // $10.00 per 1 M tokens
+    },
+    'gpt-3.5-turbo': {
+        input: 1.5 / 1000000,   // $1.50 per 1 M tokens
+        output: 2.0 / 1000000    // $2.00 per 1 M tokens
+    },
+    default: {
+        input: 2 / 1000000,
+        output: 6 / 1000000
+    }
+};
+
+export const USD_TO_KRW = 1300; // 환율
+
 /**
  * 토큰 사용량 분석 및 비용 계산 훅
  * @param {Array} apiLogs - API 로그 데이터
@@ -9,24 +27,6 @@ import { useMemo } from 'react';
 export const useTokenAnalytics = (apiLogs, filteredLogs) => {
     const analytics = useMemo(() => {
         if (!filteredLogs || filteredLogs.length === 0) return null;
-
-        // GPT-4o 가격 정보 (USD)
-        const PRICING = {
-            'gpt-4o': {
-                input: 2.5 / 1000000,   // $2.50 per 1 M tokens
-                output: 10 / 1000000    // $10.00 per 1 M tokens
-            },
-            'gpt-3.5-turbo': {
-                input: 1.5 / 1000000,   // $1.50 per 1 M tokens
-                output: 2.0 / 1000000    // $2.00 per 1 M tokens
-            },
-            default: {
-                input: 2 / 1000000,
-                output: 6 / 1000000
-            }
-        };
-
-        const USD_TO_KRW = 1300; // 환율
 
         // 전체 토큰 통계 계산
         const calculateOverallStats = () => {

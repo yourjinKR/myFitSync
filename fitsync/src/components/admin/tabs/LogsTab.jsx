@@ -1,14 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
+import { PRICING, USD_TO_KRW } from '../../../hooks/admin/useTokenAnalytics';
 
 // 토큰 비용 계산 함수
 const calculateTokenCost = (inputTokens, outputTokens, model) => {
-    const pricing = model?.includes('gpt-4') ? 
-        { input: 0.005, output: 0.015 } : 
-        { input: 0.0005, output: 0.0015 };
-    
-    const cost = (inputTokens * pricing.input + outputTokens * pricing.output) / 1000 * 1300;
-    return Math.round(cost);
+    const pricing = PRICING[model] || PRICING.default;
+    const costUSD = (inputTokens * pricing.input) + (outputTokens * pricing.output);
+    const costKRW = costUSD * USD_TO_KRW;
+    return Math.round(costKRW);
 };
 
 const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading, stats, memberType }) => {
