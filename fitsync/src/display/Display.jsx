@@ -22,7 +22,6 @@ import ChatRoom from '../components/chat/ChatRoom';
 import AdminApiContainer from '../components/admin/AdminApiContainer';
 import AdminMain from '../components/admin/AdminMain';
 import RoutineDetail from '../components/routine/RoutineDetail';
-import BarbellLoading from '../components/BarbellLoading';
 import ChatLoading from '../components/ChatLoading';
 import Timer from '../components/Timer';
 import SlideInputFormTest from '../components/ai/test/SlideInputFormTest';
@@ -250,7 +249,6 @@ const Display = () => {
           <Route path='/chat' element={<ChatMain />} />
           <Route path='/chat/:roomId' element={<ChatRoom />} />
           <Route path='/loading' element={<IsLoading />} />
-          <Route path='/BarbellLoading' element={<BarbellLoading />} />
           <Route path='/ChatLoading' element={<ChatLoading />} />
           <Route path='/Timer' element={<Timer />} />
           <Route path='/workout/:ptId' element={<WorkoutView key={location.pathname} />} />
