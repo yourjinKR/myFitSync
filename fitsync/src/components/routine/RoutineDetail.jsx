@@ -722,7 +722,14 @@ const RoutineDetail = () => {
     const omitData = omitCheckedAndSaveDate(data);
     const omitInit = omitCheckedAndSaveDate(localInit);
     const isEqual = JSON.stringify(omitData) === JSON.stringify(omitInit);
-
+    
+    if (!isEqual) {
+      setNewData({
+        ...omitData,
+        update: routine_list_idx === 'custom' ? false : true,
+      });
+    }
+    
 
   }, [data, routine_list_idx, localInit, setNewData]); // setNewData 의존성 추가
 

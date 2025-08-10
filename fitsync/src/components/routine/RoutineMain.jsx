@@ -17,6 +17,7 @@ const HeaderWrapper = styled.header`
   border-bottom: 1px solid var(--border-light);
   min-height: 56px;
   position: fixed;
+  max-width: 750px;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
@@ -293,7 +294,7 @@ const RoutineMain = () => {
   useEffect(() => {
     if(newData === null) return;
     if(routine_list_idx !== 'custom'){
-      if(newData.update) {
+      if(newData?.update) {
         setIsUpdate(true);
       }else{
         setIsUpdate(false);
@@ -537,6 +538,7 @@ const handleRoutineResponse = async () => {
 
   const handleUpdateData = (type) => {
     if(type) {
+      
       const putData = async () => {
         try {
           const response = await axios.put(
@@ -559,14 +561,14 @@ const handleRoutineResponse = async () => {
         }
       }
 
-      if(newData.update) {
+      if(newData && newData?.update) {
         if(window.confirm("루틴을 업데이트 하시겠습니까?")){
           putData();
         }
         return;
       }
       
-      if(isEdit && newData.update) {
+      if(isEdit && newData && newData.update) {
         if(window.confirm("루틴을 업데이트 하시겠습니까?")){
           putData();
         }
