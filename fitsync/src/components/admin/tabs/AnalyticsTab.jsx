@@ -219,12 +219,12 @@ const AnalyticsTab = ({
                         >
                             📊 시간대별 분석
                         </SelectorButton>
-                        <SelectorButton
+                        {/* <SelectorButton
                             active={selectedAnalysis === 'models'}
                             onClick={() => setSelectedAnalysis('models')}
                         >
                             🤖 모델 사용량
-                        </SelectorButton>
+                        </SelectorButton> */}
                         <SelectorButton
                             active={selectedAnalysis === 'performance'}
                             onClick={() => setSelectedAnalysis('performance')}

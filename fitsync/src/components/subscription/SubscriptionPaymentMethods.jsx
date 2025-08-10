@@ -959,7 +959,7 @@ const SubscriptionPaymentMethods = () => {
                     {/* 결제하기 버튼 */}
                     {isSub === false || (method.method_idx !== recentOrder.method_idx) ? (
                       <PaymentButton onClick={() => handlePaymentStart(method)}>
-                        해당 결제수단으로 구독하기
+                        {isSub === false ? '해당 결제수단으로 구독하기' : '해당 결제수단으로 변경하기'}
                       </PaymentButton>
                     ) : (<></>)}
                   </CardContent>
@@ -970,9 +970,11 @@ const SubscriptionPaymentMethods = () => {
         )}
       </PullToRefreshContainer>
 
-      <FloatingAddButton onClick={handleAddPaymentMethod}>
-        +
-      </FloatingAddButton>
+      {paymentMethods.length > 0 && (
+        <FloatingAddButton onClick={handleAddPaymentMethod}>
+          +
+        </FloatingAddButton>
+      )}
 
       {/* 확인 다이얼로그 */}
       {confirmDialog && (

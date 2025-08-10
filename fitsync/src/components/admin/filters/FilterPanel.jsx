@@ -38,15 +38,17 @@ const FilterPanel = ({
             
             <FilterGrid>
                 {/* 검색어 */}
-                <FilterGroup>
-                    <FilterLabel>검색어</FilterLabel>
-                    <SearchInput
-                        type="text"
-                        placeholder="멤버 ID"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </FilterGroup>
+                {activeTab === 'logs' && (
+                    <FilterGroup>
+                        <FilterLabel>검색어</FilterLabel>
+                        <SearchInput
+                            type="text"
+                            placeholder="멤버 ID"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </FilterGroup>
+                )}
                 
                 {/* 상태 필터 */}
                 <FilterGroup>

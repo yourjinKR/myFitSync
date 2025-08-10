@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { PaymentUtil, KAKAOPAY, TOSSPAYMENTS } from '../../utils/PaymentUtil';
 import { KakaoIcon } from '../member/KakaoLoginButton';
@@ -208,6 +208,13 @@ const AddPaymentMethodModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  // 에러 메세지 초기화
+  useEffect(()=> {
+    if (!isOpen) {
+      setError(null);
+    }
+  },[isOpen]);
 
   if (!isOpen) return null;
 

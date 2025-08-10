@@ -279,7 +279,7 @@ const UserApiLogContainer = () => {
 
             {apiLogs.length === 0 ? (
                 <EmptyState>
-                    <EmptyIcon>🤖</EmptyIcon>
+                    {/* <EmptyIcon>🤖</EmptyIcon> */}
                     <EmptyTitle>AI 루틴 추천을 시작해보세요!</EmptyTitle>
                     <EmptyDescription>
                         개인 맞춤형 운동 루틴을 AI가 추천해드립니다.<br />
@@ -451,7 +451,6 @@ const Container = styled.div`
   margin: 0 auto;
   padding: 20px;
   background: var(--bg-primary);
-  min-height: 100vh;
 
   @media (max-width: 768px) {
     padding: 15px;

@@ -159,9 +159,9 @@ const TokenAnalyticsTab = ({ logs, filteredLogs, isLoading, dateRange, subscribe
         <Container>
             {/* 오늘의 핵심 지표 */}
             <TodaySection>
-                <TodaySectionTitle>📅 오늘의 핵심 지표</TodaySectionTitle>
+                {/* <TodaySectionTitle>오늘의 핵심 지표</TodaySectionTitle> */}
                 <TodayStatsGrid>
-                    <TodayStatCard highlight>
+                    <TodayStatCard>
                         <TodayStatIcon>🔥</TodayStatIcon>
                         <TodayStatContent>
                             <TodayStatTitle>금일 총 요청</TodayStatTitle>
