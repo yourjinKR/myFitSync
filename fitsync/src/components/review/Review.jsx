@@ -220,7 +220,7 @@ const Button = styled.button`
   }
 `;
 
-const Review = ({ review = {} }) => {
+const Review = ({ review = {}, showReportButton = true }) => {
   const {
     matching_idx,
     review_title,
@@ -283,7 +283,7 @@ const Review = ({ review = {} }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px'}}>
             <ReviewScore score={review_star} />
-            <ReportBtn onClick={openModal}>⚠</ReportBtn>
+            {showReportButton && <ReportBtn onClick={openModal}>⚠</ReportBtn>}
           </div>
         </div>
         <div className="review-title">{review_title}</div>

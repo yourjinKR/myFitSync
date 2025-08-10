@@ -228,51 +228,32 @@ const MemoBox = styled.div`
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 2rem;
-  right: 2rem;
-  width: 52px;
-  height: 52px;
-  font-size: 1.6rem;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 2rem;
   font-weight: 600;
-  background: linear-gradient(135deg, rgba(74, 144, 226, 0.15), rgba(99, 184, 255, 0.1));
-  border: 1px solid rgba(74, 144, 226, 0.3);
+  background: linear-gradient(135deg, rgba(74, 144, 226, 0.12), rgba(74, 144, 226, 0.08));
+  border: 1px solid rgba(74, 144, 226, 0.2);
   border-radius: 50%;
-  color: var(--text-primary);
+  color: var(--primary-blue);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(74, 144, 226, 0.3), transparent);
-    border-radius: 50%;
-    transition: all 0.4s ease;
-    transform: translate(-50%, -50%);
-  }
+  backdrop-filter: blur(15px);
   
   &:hover {
-    background: linear-gradient(135deg, rgba(74, 144, 226, 0.25), rgba(99, 184, 255, 0.2));
-    border-color: rgba(74, 144, 226, 0.5);
-    transform: rotate(90deg) scale(1.1);
-    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.25);
-
-    &::before {
-      width: 100%;
-      height: 100%;
-    }
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.2), rgba(74, 144, 226, 0.15));
+    color: white;
+    border-color: var(--primary-blue);
+    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
   }
 
   &:active {
-    transform: rotate(90deg) scale(0.95);
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.25), rgba(74, 144, 226, 0.2));
   }
 `;
 

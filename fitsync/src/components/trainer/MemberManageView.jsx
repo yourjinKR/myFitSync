@@ -359,9 +359,6 @@ const DotRow = styled.div`
           만료 회원 <span className="count">{expiredMembers.length}</span>
         </Tab>
 
-        <AddBtn onClick={() => setShowInsertForm((prev) => !prev)}>
-          {showInsertForm ? '닫기' : '+ 회원 추가하기'}
-        </AddBtn>
       </Tabs>
 
       {members.map((m) => (
