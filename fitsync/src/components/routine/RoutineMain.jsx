@@ -17,7 +17,6 @@ const HeaderWrapper = styled.header`
   border-bottom: 1px solid var(--border-light);
   min-height: 56px;
   position: fixed;
-  max-width: 750px;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
@@ -152,8 +151,8 @@ const WarrningText = styled.div`
 `;
 
 const H4 = styled.h4.withConfig({
-    shouldForwardProp: (prop) => prop !== 'isWarring'
-  })`
+  shouldForwardProp: (prop) => prop !== 'isWarring'
+})`
   font-size: 2.2rem;
   font-weight: bold;
   margin: 0;
@@ -200,28 +199,28 @@ const ChkBox = styled.div`
 const RoutineMain = () => {
   // 로그인 확인
   useRequireLogin();
-  
+
   const nav = useNavigate();
   const { routine_list_idx } = useParams();
-  
+
   // 이전 페이지 정보
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const prev = query.get("prev");
   const targetDate = query.get("date");
-  
+
   const targetIdx = location.state?.targetMember;
 
-  
+
   // 헤더 변경 여부
-  const changeHeader = 
-  location.pathname !== `/routine/detail/${routine_list_idx}` && 
-  location.pathname !== '/routine/add' && 
-  location.pathname !== '/routine/set';
+  const changeHeader =
+    location.pathname !== `/routine/detail/${routine_list_idx}` &&
+    location.pathname !== '/routine/add' &&
+    location.pathname !== '/routine/set';
 
   const routineInit = {
     routine_name: '',
-    member_idx : '',
+    member_idx: '',
     routines: [],
   };
   const [routineData, setRoutineData] = useState(routineInit);
@@ -236,44 +235,44 @@ const RoutineMain = () => {
 
   const checkedRef = useRef();
 
-  
+
   useEffect(() => {
     if (routineData === null) return;
-    if(routine_list_idx !== 'custom' ) {
-      if(isSave && (prev === null || prev === undefined)) {
+    if (routine_list_idx !== 'custom') {
+      if (isSave && (prev === null || prev === undefined)) {
         nav("/routine/view");
         setIsSave(false);
       }
-    }else{
+    } else {
       const localData = tempData.find(item => item.saveDate === targetDate);
-      if(localData != null && localData.routine_name !== "") {
+      if (localData != null && localData.routine_name !== "") {
         setIsSave(true);
       }
     }
-  },[routineData, unfinished, isSave , nav]);
+  }, [routineData, unfinished, isSave, nav]);
 
   useEffect(() => {
-    if(prev !== null && routineData === routineInit) {
+    if (prev !== null && routineData === routineInit) {
       nav(prev);
     }
-  },[])
+  }, [])
 
 
   // 디버깅용
   useEffect(() => {
-    if(newData === null) return;
-  },[isUpdate]);
-  
+    if (newData === null) return;
+  }, [isUpdate]);
+
   useEffect(() => {
-    if(location.pathname === '/routine/view'){
-      if(prev === null) {
+    if (location.pathname === '/routine/view') {
+      if (prev === null) {
         setRoutineData(routineInit);
       }
       closeAlert();
-      
+
       // tempData 새로고침 - localStorage에서 다시 로드
       const storedTempData = localStorage.getItem('routineData');
-      
+
       if (storedTempData) {
         try {
           const parsedData = JSON.parse(storedTempData);
@@ -286,29 +285,29 @@ const RoutineMain = () => {
       }
     }
 
-    if(isEdit){
+    if (isEdit) {
       setIsEdit(false);
     }
-  },[location.pathname])
+  }, [location.pathname])
 
   useEffect(() => {
-    if(newData === null) return;
-    if(routine_list_idx !== 'custom'){
-      if(newData?.update) {
+    if (newData === null) return;
+    if (routine_list_idx !== 'custom') {
+      if (newData.update) {
         setIsUpdate(true);
-      }else{
+      } else {
         setIsUpdate(false);
       }
 
-    }else{
+    } else {
       setIsUpdate(false);
     }
-  },[newData])
+  }, [newData])
 
   useEffect(() => {
-    if(tempData === null) return;
+    if (tempData === null) return;
     localStorage.setItem('routineData', JSON.stringify(tempData));
-  },[tempData]);
+  }, [tempData]);
 
   // routineData 변경시 custom 모드에서 tempData 업데이트
   useEffect(() => {
@@ -330,7 +329,7 @@ const RoutineMain = () => {
         saveDate: currentDate,
         routine_list_idx: 'custom'
       };
-      
+
       setTempData(prev => {
         const existingIndex = prev.findIndex(item => item.saveDate === currentDate);
         if (existingIndex !== -1) {
@@ -345,11 +344,11 @@ const RoutineMain = () => {
   }, [routineData, routine_list_idx, targetDate]);
 
   // 루틴 추가
-const handleRoutineResponse = async () => {
-  if(!routineData.routine_name || routineData.routine_name === "") {
-    alert("루틴명을 작성해주세요.");
-    return;
-  }
+  const handleRoutineResponse = async () => {
+    if (!routineData.routine_name || routineData.routine_name === "") {
+      alert("루틴명을 작성해주세요.");
+      return;
+    }
 
     const routineDataWithTarget = {
       ...routineData,
@@ -362,14 +361,14 @@ const handleRoutineResponse = async () => {
         { withCredentials: true }
       );
       const result = response.data;
-      if(result.success) {
+      if (result.success) {
         alert(result.msg);
         setIsSave(true);
 
-        if(routine_list_idx !== 'custom'){
+        if (routine_list_idx !== 'custom') {
           nav("/routine/view");
-        } 
-        if(prev === null) {
+        }
+        if (prev === null) {
           setRoutineData(routineInit);
         }
       }
@@ -377,7 +376,7 @@ const handleRoutineResponse = async () => {
       console.error("루틴 등록 오류:", error);
     }
   };
-  
+
   const handleDataSubmit = () => {
     handleRoutineResponse();
   }
@@ -386,39 +385,47 @@ const handleRoutineResponse = async () => {
 
   // 루틴 기록
   const handleRocordSubmit = () => {
-    if(newData === null) return;
+    if (newData === null) return;
     alertRef.current.style.display = "flex";
 
-    
-    if(newData.update !== undefined && newData.update) {
+
+    if (newData.update !== undefined && newData.update) {
       setIsUpdate(true);
     };
 
     const dataFilter = newData.routines;
     dataFilter.forEach((routine) => {
       const sets = routine.sets;
-      const filter = sets.filter((set) => set.checked === undefined || set.checked === false); 
-      filter.forEach((set,idx) => {
+      const filter = sets.filter((set) => set.checked === undefined || set.checked === false);
+      filter.forEach((set, idx) => {
         setUnfinished(prev => [
-          ...prev, 
+          ...prev,
           `${routine.pt.pt_name} ${filter[idx].set_num}세트`
         ]);
       })
     });
   }
 
-  
+
   // 운동 기록
   const handleRoutineRecord = async () => {
-    let postData = {...newData};
+    // 체크된 세트만 포함하는 postData 생성
+    let postData = {
+      ...newData,
+      routines: (newData.routines || []).map(routine => ({
+        ...routine,
+        sets: (routine.sets || []).filter(set => set.checked)
+      })).filter(routine => routine.sets.length > 0)
+    };
+
 
     if (routine_list_idx === "custom") {
-    postData.member_idx = targetIdx; // 여기에 target_idx는 해당 유저의 member_idx
+      postData.member_idx = targetIdx; // 여기에 target_idx는 해당 유저의 member_idx
     }
-    if(postData.routines.length === 0) {
+    if (postData.routines.length === 0) {
       alert("완료된 운동이 없습니다.");
       const saveCheck = tempData.find(item => item.saveDate === newData.saveDate)?.save;
-      if(saveCheck === undefined || saveCheck === false) {
+      if (saveCheck === undefined || saveCheck === false) {
         setIsSave(false);
       }
       closeAlert();
@@ -433,19 +440,19 @@ const handleRoutineResponse = async () => {
       );
       const result = response.data;
       alertRef.current.style.display = "none";
-      
-      if(isUpdate) {
+
+      if (isUpdate) {
         setIsUpdate(false);
       }
-      
-      if(result.success) {
+
+      if (result.success) {
         alert(result.msg);
 
         // 체크박스가 체크되어 있으면 루틴 등록 실행
-        if(checkedRef.current && checkedRef.current.checked) {
+        if (checkedRef.current && checkedRef.current.checked) {
           // 루틴 이름이 없으면 기본 이름 설정
           let updatedRoutineData = { ...postData };
-          if(!updatedRoutineData.routine_name || updatedRoutineData.routine_name === "") {
+          if (!updatedRoutineData.routine_name || updatedRoutineData.routine_name === "") {
             const getDateStr = () => {
               const now = new Date();
               const year = now.getFullYear();
@@ -456,7 +463,7 @@ const handleRoutineResponse = async () => {
             const dateStr = postData.saveDate ? postData.saveDate.slice(0, 10) : getDateStr();
             updatedRoutineData.routine_name = `루틴_${dateStr}`;
           }
-          
+
           // 업데이트된 데이터로 루틴 등록
           try {
             const routineResponse = await axios.post(
@@ -465,8 +472,8 @@ const handleRoutineResponse = async () => {
               { withCredentials: true }
             );
             const routineResult = routineResponse.data;
-            
-            if(routineResult.success) {
+
+            if (routineResult.success) {
               alert(routineResult.msg);
               // 상태도 업데이트
               setRoutineData(updatedRoutineData);
@@ -479,16 +486,16 @@ const handleRoutineResponse = async () => {
             alert("루틴 등록에 실패했습니다.");
           }
         }
-        
+
         // 운동 기록 시에만 tempData에서 제거
-        if(routine_list_idx === 'custom') {
-          
+        if (routine_list_idx === 'custom') {
+
           const newLocalData = tempData.filter(item => {
             return item.saveDate !== postData.saveDate;
           });
           setTempData(newLocalData);
         } else {
-          setTempData(prev => 
+          setTempData(prev =>
             prev.filter(item => item.saveDate !== postData.saveDate)
           );
         }
@@ -498,12 +505,12 @@ const handleRoutineResponse = async () => {
         nav("/routine/view");
       } else {
         alert(result.msg);
-        if(isUpdate) {
+        if (isUpdate) {
           setIsUpdate(false);
         }
 
         const saveCheck = tempData.find(item => item.saveDate === newData.saveDate)?.save;
-        if(saveCheck === undefined || saveCheck === false) {
+        if (saveCheck === undefined || saveCheck === false) {
           setIsSave(false);
         }
       }
@@ -512,10 +519,10 @@ const handleRoutineResponse = async () => {
       closeAlert();
     }
   }
-  
+
   // 저장하기
   const handleRecordData = (isRecord) => {
-    if(isRecord) {
+    if (isRecord) {
       handleRoutineRecord();
     } else {
       closeAlert();
@@ -523,12 +530,12 @@ const handleRoutineResponse = async () => {
   }
 
   useEffect(() => {
-    if(newData === null) return;
-  },[newData, isEdit]);
-  
+    if (newData === null) return;
+  }, [newData, isEdit]);
+
   useEffect(() => {
-    if(init === null) return;
-    if(!location.pathname.includes('/routine/detail')) {
+    if (init === null) return;
+    if (!location.pathname.includes('/routine/detail')) {
       setNewData({
         ...init,
         update: false
@@ -537,8 +544,7 @@ const handleRoutineResponse = async () => {
   }, [init]);
 
   const handleUpdateData = (type) => {
-    if(type) {
-      
+    if (type) {
       const putData = async () => {
         try {
           const response = await axios.put(
@@ -547,7 +553,7 @@ const handleRoutineResponse = async () => {
             { withCredentials: true }
           );
           const result = response.data;
-          if(result.success) {
+          if (result.success) {
             setIsUpdate(false);
             setIsEdit(false);
             setInit(newData);
@@ -561,68 +567,68 @@ const handleRoutineResponse = async () => {
         }
       }
 
-      if(newData && newData?.update) {
-        if(window.confirm("루틴을 업데이트 하시겠습니까?")){
+      if (newData.update) {
+        if (window.confirm("루틴을 업데이트 하시겠습니까?")) {
           putData();
         }
         return;
       }
-      
-      if(isEdit && newData && newData.update) {
-        if(window.confirm("루틴을 업데이트 하시겠습니까?")){
+
+      if (isEdit && newData.update) {
+        if (window.confirm("루틴을 업데이트 하시겠습니까?")) {
           putData();
         }
       }
 
-      if(isEdit) {
+      if (isEdit) {
         setIsEdit(!isEdit);
       }
-      
-    }else{
+
+    } else {
       setIsUpdate(false);
     }
-   
-  }   
+
+  }
 
   const closeAlert = () => {
     alertRef.current.style.display = "none";
     setUnfinished([]);
     setIsUpdate(false);
-    if(checkedRef.current) checkedRef.current.checked = false;
+    if (checkedRef.current) checkedRef.current.checked = false;
   }
 
 
-    useEffect(() => {
-      if (pendingNav) {
-        const path = prev !== null
-          ? prev
-          : location.pathname === '/routine/set'
-            ? '/routine/add?prev=/routine/set'
-            : '/routine/set';
+  useEffect(() => {
+    if (pendingNav) {
+      const path = prev !== null
+        ? prev
+        : location.pathname === '/routine/set'
+          ? '/routine/add?prev=/routine/set'
+          : '/routine/set';
 
-        nav(path, {
-          state: {
-            targetMember: targetIdx,
-            prev: location.pathname === '/routine/set' ? '/routine/add?prev=/routine/set' : prev,
-          },
-        });
+      nav(path, {
+        state: {
+          targetMember: targetIdx,
+          prev: location.pathname === '/routine/set' ? '/routine/add?prev=/routine/set' : prev,
+        },
+      });
 
-        setPendingNav(false);
-      }
-      // eslint-disable-next-line
-    }, [pendingNav, nav]);
+      setPendingNav(false);
+    }
+    // eslint-disable-next-line
+  }, [pendingNav, nav]);
 
   // 루틴 운동 등록
   const handleButton = () => {
-    if(routineData.routines.length > 0){
+    if (routineData.routines.length > 0) {
       setPendingNav(true); // 상태 반영 후 이동 예약
-    }else{
+    } else {
       alert("하나 이상의 운동을 선택해주세요.");
     }
   }
 
   const handleAddWorkOut = () => {
-    nav("/routine/add?prev=/routine/detail/" + routine_list_idx,{
+    nav("/routine/add?prev=/routine/detail/" + routine_list_idx, {
       state: {
         targetMember: targetIdx,
         prev: ""
@@ -633,7 +639,7 @@ const handleRoutineResponse = async () => {
   const handleChkRef = (e) => {
     checkedRef.current = e.target;
     const chk = e.target.checked;
-    if( chk) {
+    if (chk) {
       const getDateStr = () => {
         const now = new Date();
         const year = now.getFullYear();
@@ -646,7 +652,7 @@ const handleRoutineResponse = async () => {
         ...prev,
         routine_name: `루틴_${dateStr}`,
       }));
-    }else{
+    } else {
       setRoutineData(prev => ({
         ...prev,
         routine_name: '',
@@ -655,34 +661,34 @@ const handleRoutineResponse = async () => {
   }
 
 
-  
+
   return (
     <>
       {/* 루틴 헤더 */}
-      {!changeHeader ? 
-          <HeaderWrapper>
-            <button type="button" onClick={()=> nav("/routine/view")}>취소</button>
-            <p>루틴 생성하기</p>
-            {
-              location.pathname !== `/routine/detail/${routine_list_idx}` ? 
+      {!changeHeader ?
+        <HeaderWrapper>
+          <button type="button" onClick={() => nav("/routine/view")}>취소</button>
+          <p>루틴 생성하기</p>
+          {
+            location.pathname !== `/routine/detail/${routine_list_idx}` ?
               <HeaderCTA disabled={location.pathname !== '/routine/set' ? true : false} onClick={handleDataSubmit}>저장</HeaderCTA>
               :
-              <HeaderCTA 
+              <HeaderCTA
                 disabled={
-                  routine_list_idx === 'custom' 
-                    ? !targetDate && (routineData?.routines?.length === 0) 
+                  routine_list_idx === 'custom'
+                    ? !targetDate && (routineData?.routines?.length === 0)
                     : isEdit || (routineData?.routines?.length === 0)
-                } 
+                }
                 onClick={handleRocordSubmit}
               >
                 {routine_list_idx === 'custom' && targetDate ? '저장' : '마치기'}
               </HeaderCTA>
-            }
-          </HeaderWrapper> : <></>}
+          }
+        </HeaderWrapper> : <></>}
       {
-        location.pathname !== `/routine/detail/${routine_list_idx}` ? 
-        <Outlet context={{ routineData, setRoutineData, isSave,  handleButton, prev, tempData, setTempData}} /> :
-        <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData}}/>
+        location.pathname !== `/routine/detail/${routine_list_idx}` ?
+          <Outlet context={{ routineData, setRoutineData, isSave, handleButton, prev, tempData, setTempData }} /> :
+          <Outlet context={{ routineData, setRoutineData, newData, setNewData, routineInit, isEdit, setIsEdit, init, setInit, handleUpdateData, tempData, setTempData }} />
       }
 
       {/* 루틴 하단 버튼 */}
@@ -690,52 +696,52 @@ const handleRoutineResponse = async () => {
         <RoutineFooter>
           <RoutineAddCTA onClick={
             location.pathname !== `/routine/detail/${routine_list_idx}` ? handleButton :
-            handleAddWorkOut
+              handleAddWorkOut
           }>운동 추가하기</RoutineAddCTA>
-        </RoutineFooter>  
+        </RoutineFooter>
       }
 
-      {/* 알림 모달 */} 
+      {/* 알림 모달 */}
       <AlertBg ref={alertRef}>
         {
           isUpdate ?
-          <AlertDiv>
-            <H4>루틴 변경 내용이 있습니다</H4>
-            <ButtonGroup>
-              <button onClick={() => handleUpdateData(true)}>업데이트</button>
-              <button onClick={() => handleUpdateData(false)}>유지하기</button>
-            </ButtonGroup>
-          </AlertDiv>
-        :
-          <AlertDiv>
-            <WarrningText>
+            <AlertDiv>
+              <H4>루틴 변경 내용이 있습니다</H4>
+              <ButtonGroup>
+                <button onClick={() => handleUpdateData(true)}>업데이트</button>
+                <button onClick={() => handleUpdateData(false)}>유지하기</button>
+              </ButtonGroup>
+            </AlertDiv>
+            :
+            <AlertDiv>
+              <WarrningText>
+                {
+                  unfinished.length === 0 ? <></> :
+                    <div>
+                      <H4 isWarring={true}>완료되지 않은 운동 목록</H4>
+                      <div style={{ width: '100%', overflowY: 'auto', maxHeight: '200px' }}>
+                        {unfinished.map((item, idx) => (
+                          <p key={idx}>
+                            {item}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                }
+              </WarrningText>
+              <H4>운동정보를 기록하시겠습니까?</H4>
+              <ButtonGroup>
+                <button onClick={() => handleRecordData(true)}>예</button>
+                <button onClick={() => handleRecordData(false)}>아니오</button>
+              </ButtonGroup>
               {
-                unfinished.length === 0 ? <></> :
-                <div>
-                  <H4 isWarring={true}>완료되지 않은 운동 목록</H4>
-                  <div style={{ width: '100%', overflowY: 'auto', maxHeight: '200px' }}>
-                    {unfinished.map((item, idx) => (
-                      <p key={idx}>
-                        {item}
-                      </p>
-                    ))}
-                  </div>
-                </div>
+                routine_list_idx === 'custom' && !routineData.member_idx ?
+                  <ChkBox>
+                    <CheckInput type='checkbox' id="chkUpdate" onChange={handleChkRef} ref={checkedRef} /><ChecklabelText htmlFor="chkUpdate"><p>루틴에 등록하기</p></ChecklabelText>
+                  </ChkBox>
+                  : <></>
               }
-            </WarrningText>
-            <H4>운동정보를 기록하시겠습니까?</H4>
-            <ButtonGroup>
-              <button onClick={() => handleRecordData(true)}>예</button>
-              <button onClick={() => handleRecordData(false)}>아니오</button>
-            </ButtonGroup>
-            {
-              routine_list_idx === 'custom' && !routineData.member_idx ?
-                <ChkBox>
-                  <CheckInput type='checkbox' id="chkUpdate" onChange={handleChkRef} ref={checkedRef} /><ChecklabelText htmlFor="chkUpdate"><p>루틴에 등록하기</p></ChecklabelText>
-                </ChkBox>
-              :<></>
-            }
-          </AlertDiv>
+            </AlertDiv>
         }
       </AlertBg>
     </>

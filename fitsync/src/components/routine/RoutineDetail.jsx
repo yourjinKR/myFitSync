@@ -552,6 +552,7 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
+
     // custom 루틴일 경우 값 변경 시에도 임시기록(tempData) 저장
     if(routine_list_idx === 'custom') {
       updateTempData(updatedData);
@@ -583,6 +584,7 @@ const RoutineDetail = () => {
     }
     
     setData(updatedData);
+    setNewData(updatedData);
     
     // tempData 업데이트
     if(routine_list_idx !== 'custom') {
@@ -725,12 +727,10 @@ const RoutineDetail = () => {
     
     if (!isEqual) {
       setNewData({
-        ...omitData,
+        ...data,
         update: routine_list_idx === 'custom' ? false : true,
       });
     }
-    
-
   }, [data, routine_list_idx, localInit, setNewData]); // setNewData 의존성 추가
 
   // 자유 운동 저장 로직 - 간소화하여 무한루프 방지
