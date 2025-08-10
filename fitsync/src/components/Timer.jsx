@@ -250,7 +250,6 @@ const Timer = ({time, setTime, setIsTimerShow}) => {
       }
     }
 
-    console.log("🚀  :  Timer  :  time:", time)
   }, [time, isRunning, isPause]);
 
   useEffect(() => {

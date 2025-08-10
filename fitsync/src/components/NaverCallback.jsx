@@ -25,7 +25,6 @@ const NaverCallback = () => {
         })
             .then((res) => {
                 alert(`네이버 로그인 성공: ${res.data.email}`);
-                console.log("사용자 정보:", res.data);
                 navigate("/"); // 홈으로 리다이렉트
             })
             .catch((err) => {

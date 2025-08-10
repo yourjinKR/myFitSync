@@ -1193,7 +1193,6 @@ const Report = () => {
   };
 
   const handleDetailModal = (getContent, getType, getContentType) => {
-    console.log('handleDetailModal called with:', { getContent, getType, getContentType });
     setModalData({
       content: getContent,
       type: getType,
@@ -1379,8 +1378,6 @@ const Report = () => {
       </TabContent>
       {modalOpen && (
         <DetailModal onClick={() => setModalOpen(false)}>
-          {console.log('Modal rendering with modalData:', modalData)}
-          {console.log('Modal open state:', modalOpen)}
           {modalData.type === 'isBlocked' ? (
             <ModalBox onClick={(e) => e.stopPropagation()}>
               <h3>제재 대상 선택</h3>
@@ -1417,8 +1414,6 @@ const Report = () => {
               </ModalBox>
             ) : (
               <ChatHistory onClick={(e) => e.stopPropagation()}>
-                {console.log('ChatHistory rendering with contentType:', modalData.contentType)}
-                {console.log('ChatHistory content:', modalData.content)}
                 <div className="chat-divider">
                   <span>대화 내용</span>
                 </div>
