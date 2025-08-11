@@ -1,6 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../action/userAction';
 
 // 스타일 컴포넌트
 const Wrapper = styled.div`
@@ -55,6 +57,14 @@ const HiddenInput = styled.input`
 
 const ProfileImageEditor = ({ profileImage, onSuccess = () => {}, isEditable = true }) => {
   const fileInputRef = useRef();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
+  const [currentImage, setCurrentImage] = useState(profileImage);
+
+  // profileImage prop이 변경될 때 currentImage 업데이트
+  useEffect(() => {
+    setCurrentImage(profileImage);
+  }, [profileImage]);
   
   const handleClick = () => {
     if (!isEditable || !fileInputRef.current) return;
@@ -76,8 +86,24 @@ const ProfileImageEditor = ({ profileImage, onSuccess = () => {}, isEditable = t
       });
 
       if (res.status === 200 && res.data) {
+        const newImageUrl = res.data.imageUrl || res.data;
+        
+        // 브라우저 캐시를 방지하기 위해 타임스탬프 추가
+        const timestampedUrl = newImageUrl + (newImageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        
+        // 로컬 상태 즉시 업데이트
+        setCurrentImage(timestampedUrl);
+        
+        // Redux store 업데이트 (로그인한 사용자인 경우)
+        if (user && user.isLogin) {
+          dispatch(setUser({
+            ...user,
+            member_image: timestampedUrl
+          }));
+        }
+        
         alert('프로필 이미지가 변경되었습니다.');
-        onSuccess(res.data); // res.data는 이미지 URL
+        onSuccess(timestampedUrl); // 부모 컴포넌트에 알림
       } else {
         alert('이미지 변경에 실패했습니다.');
       }
@@ -94,8 +120,9 @@ const ProfileImageEditor = ({ profileImage, onSuccess = () => {}, isEditable = t
   return (
     <Wrapper onClick={handleClick} $isEditable={isEditable}>
       <Image
-        src={profileImage || '/default-profile.png'} // fallback 이미지
+        src={currentImage || '/default-profile.png'} // 현재 이미지 상태 사용
         alt="프로필 이미지"
+        key={currentImage} // 이미지가 바뀔 때 강제 리렌더링
       />
       {isEditable && (
         <HiddenInput

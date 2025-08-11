@@ -445,10 +445,17 @@ const TrainerProfileHeader = ({
 
   // 프로필 이미지 변경 시 성공 콜백
   const handleImageChangeSuccess = (updatedImageData) => {
+    // 새 이미지 URL 추출 (여러 형태의 응답 데이터 처리)
+    const newImageUrl = updatedImageData?.image || 
+                       updatedImageData?.imageUrl || 
+                       updatedImageData || 
+                       profileImage;
+    
     // 서버에서 받은 새 이미지 URL을 localTrainer 상태에 반영
     setLocalTrainer(prev => ({
       ...prev,
-      profile_image: updatedImageData.image || updatedImageData.imageUrl || profileImage,
+      profile_image: newImageUrl,
+      member_image: newImageUrl, // 두 필드 모두 업데이트
     }));
   };
   
