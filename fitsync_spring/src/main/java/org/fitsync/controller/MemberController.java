@@ -200,7 +200,7 @@ public class MemberController {
         }
         
         ReportVO report = new ReportVO();
-        report.setIdx_num(reporterIdx); // 게시물 신고가 아니라면 0 또는 null
+        report.setIdx_num(targetIdx); // 게시물 신고가 아니라면 0 또는 null
         report.setReport_category((String) data.get("report_category"));
         report.setReport_content((String) data.get("report_content"));
         report.setReport_hidden((Integer) data.getOrDefault("report_hidden", 0));

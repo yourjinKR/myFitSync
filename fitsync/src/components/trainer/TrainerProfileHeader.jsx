@@ -426,7 +426,7 @@ const TrainerProfileHeader = ({
     }
   };
 
-  // 신고 제출
+  // 신고 제출 (수정필요)
   const handleReportSubmit = async () => {
     try {
       await axios.post('/member/report/profile', {
