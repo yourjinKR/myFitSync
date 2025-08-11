@@ -156,7 +156,7 @@ const ChatRoom = () => {
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [showFirstVisitModal, setShowFirstVisitModal] = useState(false);
 
-  // 🔥 핵심 수정: 실시간 이미지 로딩 관리 강화
+  // 실시간 이미지 로딩 관리 강화
   const [pendingImageMessages, setPendingImageMessages] = useState(new Set());
   const pendingAttachmentLoaders = useRef(new Map());
   const attachmentLoadingTimers = useRef(new Map()); // 타이머 관리 추가
@@ -231,22 +231,18 @@ const ChatRoom = () => {
     }
   }, [scrollToBottom]);
 
-  // 🔥 핵심 수정: 실시간 첨부파일 로딩 함수 개선
+  // 실시간 첨부파일 로딩 함수 개선
   const loadRealtimeAttachment = useCallback(async (messageIdx, retryCount = 0) => {
     const maxRetries = 15; // 재시도 횟수 증가
     const baseDelay = 200; // 기본 지연 시간 단축
     
-    console.log(`[ChatRoom] 실시간 첨부파일 로딩 시도 - messageIdx: ${messageIdx}, 재시도: ${retryCount}`);
-    
     // 이미 로딩 중이거나 완료된 경우 중복 방지
     if (pendingAttachmentLoaders.current.has(messageIdx)) {
-      console.log(`[ChatRoom] 이미 로딩 중인 메시지: ${messageIdx}`);
       return;
     }
 
     // 이미 첨부파일이 있는 경우 스킵
     if (attachments[messageIdx]) {
-      console.log(`[ChatRoom] 이미 첨부파일이 있는 메시지: ${messageIdx}`);
       setPendingImageMessages(prev => {
         const newSet = new Set(prev);
         newSet.delete(messageIdx);
@@ -265,8 +261,6 @@ const ChatRoom = () => {
       const attachment = await chatApi.readFile(messageIdx);
       
       if (attachment && attachment.cloudinary_url) {
-        console.log(`[ChatRoom] 첨부파일 로딩 성공: ${messageIdx} - ${attachment.original_filename}`);
-        
         setAttachments(prev => ({
           ...prev,
           [messageIdx]: attachment
@@ -294,8 +288,6 @@ const ChatRoom = () => {
       }
       
     } catch (error) {
-      console.warn(`[ChatRoom] 첨부파일 로딩 실패 (재시도 ${retryCount}/${maxRetries}): ${messageIdx}`, error);
-      
       if (retryCount < maxRetries - 1) {
         // 재시도 스케줄링
         const nextDelay = Math.min(baseDelay * (retryCount + 2), 3000);
@@ -307,7 +299,6 @@ const ChatRoom = () => {
         attachmentLoadingTimers.current.set(messageIdx, timerId);
       } else {
         // 최대 재시도 후에도 실패한 경우, 로딩 상태 제거
-        console.error(`[ChatRoom] 첨부파일 로딩 최종 실패: ${messageIdx}`);
         setPendingImageMessages(prev => {
           const newSet = new Set(prev);
           newSet.delete(messageIdx);
@@ -327,10 +318,8 @@ const ChatRoom = () => {
     }
   }, [attachments, adjustScrollPosition]);
 
-  // 🔥 새로 추가: 첨부파일 업로드 완료 알림 처리
+  // 첨부파일 업로드 완료 알림 처리
   const handleAttachmentUploadComplete = useCallback((attachmentData) => {
-    console.log(`[ChatRoom] 첨부파일 업로드 완료 알림 수신:`, attachmentData);
-    
     const messageIdx = attachmentData.message_idx;
     
     if (messageIdx && attachmentData.cloudinary_url) {
@@ -364,8 +353,6 @@ const ChatRoom = () => {
         clearTimeout(attachmentLoadingTimers.current.get(messageIdx));
         attachmentLoadingTimers.current.delete(messageIdx);
       }
-      
-      console.log(`[ChatRoom] 첨부파일 정보 즉시 반영 완료: ${messageIdx}`);
       
       // 스크롤 위치 조정
       setTimeout(() => {
@@ -549,7 +536,6 @@ const ChatRoom = () => {
     
     try {
       const hasVisited = hasVisitedChatRoom(roomId);
-      console.log(`채팅방 ${roomId} 방문 기록 확인:`, hasVisited ? '방문한 적 있음' : '첫 방문');
       
       if (!hasVisited) {
         setIsFirstVisit(true);
@@ -561,7 +547,6 @@ const ChatRoom = () => {
         setIsFirstVisit(false);
       }
     } catch (error) {
-      console.warn('첫 방문 확인 실패:', error);
       setIsFirstVisit(false);
     }
   }, [roomId]);
@@ -574,10 +559,9 @@ const ChatRoom = () => {
       // 방문 기록을 쿠키에 저장
       if (roomId) {
         markChatRoomAsVisited(roomId);
-        console.log(`채팅방 ${roomId} 방문 기록 저장 완료`);
       }
     } catch (error) {
-      console.warn('방문 기록 저장 실패:', error);
+      // 에러 처리 (무시)
     }
   }, [roomId]);
 
@@ -929,7 +913,7 @@ const ChatRoom = () => {
       setIsFirstVisit(false);
       setShowFirstVisitModal(false);
 
-      // 🔥 실시간 이미지 로딩 상태 초기화
+      // 실시간 이미지 로딩 상태 초기화
       setPendingImageMessages(new Set());
       pendingAttachmentLoaders.current.clear();
       attachmentLoadingTimers.current.clear();
@@ -955,7 +939,7 @@ const ChatRoom = () => {
       if (scrollAdjustmentTimerRef.current) {
         clearTimeout(scrollAdjustmentTimerRef.current);
       }
-      // 🔥 컴포넌트 언마운트 시 정리 강화
+      // 컴포넌트 언마운트 시 정리 강화
       pendingAttachmentLoaders.current.clear();
       attachmentLoadingTimers.current.forEach(timerId => clearTimeout(timerId));
       attachmentLoadingTimers.current.clear();
@@ -1027,13 +1011,12 @@ const ChatRoom = () => {
     }
   };
 
-  // 🔥 핵심 수정: WebSocket 구독 설정 - 첨부파일 업로드 완료 구독 강화
+  // WebSocket 구독 설정 - 첨부파일 업로드 완료 구독 강화
   useEffect(() => {
     if (connected && roomId && currentMemberIdx) {
       const unsubscribe = subscribeToRoom(
         parseInt(roomId),
         async (newMessage) => {
-          console.log(`[ChatRoom] 새 메시지 수신:`, newMessage);
           
           setMessages(prev => {
             const existingMessage = prev.find(msg => msg.message_idx === newMessage.message_idx);
@@ -1045,27 +1028,23 @@ const ChatRoom = () => {
             scrollToBottom(true);
           }, 100);
 
-          // 🔥 핵심 수정: 실시간 이미지 메시지 처리 개선
+          // 실시간 이미지 메시지 처리 개선
           if (newMessage.message_type === 'image') {
-            console.log(`[ChatRoom] 실시간 이미지 메시지 처리: ${newMessage.message_idx}, attach_idx: ${newMessage.attach_idx}`);
             
             // 이미지 메시지는 항상 대기 목록에 추가
             setPendingImageMessages(prev => new Set([...prev, newMessage.message_idx]));
             
             if (newMessage.attach_idx && newMessage.attach_idx > 0) {
               // attach_idx가 있는 경우 즉시 로딩 시도
-              console.log(`[ChatRoom] attach_idx가 있는 이미지 메시지 - 즉시 로딩: ${newMessage.message_idx}`);
               setTimeout(() => {
                 loadRealtimeAttachment(newMessage.message_idx);
               }, 100);
             } else {
               // attach_idx가 없는 경우 업로드 완료 대기
-              console.log(`[ChatRoom] attach_idx가 없는 이미지 메시지 - 업로드 완료 대기: ${newMessage.message_idx}`);
               
               // 5초 후 강제 로딩 시도
               setTimeout(() => {
                 if (pendingImageMessages.has(newMessage.message_idx)) {
-                  console.log(`[ChatRoom] 5초 후 강제 로딩 시도: ${newMessage.message_idx}`);
                   loadRealtimeAttachment(newMessage.message_idx);
                 }
               }, 5000);
@@ -1098,7 +1077,7 @@ const ChatRoom = () => {
             });
           }
         },
-        // 🔥 새로 추가: 첨부파일 업로드 완료 콜백
+        // 첨부파일 업로드 완료 콜백
         handleAttachmentUploadComplete
       );
 
@@ -1119,14 +1098,12 @@ const ChatRoom = () => {
             if (matchingUpdate.status_type === 'accepted') {
               if (matchingUpdate.user_idx === user.member_idx) {
                 // 현재 사용자가 수락한 경우 - 즉시 상태 업데이트
-                console.log('현재 사용자 매칭 수락됨 - 상태 즉시 업데이트');
                 setHasAnyActiveMatching(true);
                 
                 // 메시지 리스트 갱신으로 UI 업데이트
                 setMessages(prevMessages => [...prevMessages]);
               } else {
                 // 다른 사용자의 매칭 수락 - 1초 후 재확인
-                console.log('다른 사용자 매칭 변동 감지 - 1초 후 재확인');
                 setTimeout(() => {
                   checkAnyActiveMatchingForUser();
                 }, 1000);
@@ -1270,7 +1247,7 @@ const ChatRoom = () => {
     }
   }, [navigate]);
 
-  // 🔥 핵심 수정: 메시지 전송 핸들러 - 이미지 업로드 순서 개선
+  // 메시지 전송 핸들러 - 이미지 업로드 순서 개선
   const handleSendMessage = async (messageContent, messageType = 'text', file = null, parentIdx = null, matchingData = null) => {
     if (!connected || !roomId || !currentMemberIdx) {
       return Promise.reject('WebSocket 연결 오류');
@@ -1285,9 +1262,8 @@ const ChatRoom = () => {
         const messageTimestamp = Date.now();
         const messageId = `${messageTimestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // 🔥 수정된 부분: 이미지 메시지 처리 방식 개선
+        // 이미지 메시지 처리 방식 개선
         if (file && messageType === 'image') {
-          console.log(`[ChatRoom] 이미지 메시지 전송 시작: ${file.name}`);
           
           // 1. 먼저 WebSocket으로 이미지 메시지 전송 (attach_idx 없이)
           const messageData = {
@@ -1300,7 +1276,6 @@ const ChatRoom = () => {
           };
 
           sendMessage(messageData);
-          console.log(`[ChatRoom] 이미지 메시지 WebSocket 전송 완료`);
 
           // 2. 짧은 지연 후 DB에서 저장된 메시지 조회
           setTimeout(async () => {
@@ -1322,11 +1297,8 @@ const ChatRoom = () => {
                 throw new Error('업로드할 메시지를 찾을 수 없습니다.');
               }
               
-              console.log(`[ChatRoom] 대상 메시지 발견: ${targetMessage.message_idx}`);
-              
               // 3. 파일 업로드
               const uploadResult = await chatApi.uploadFile(file, targetMessage.message_idx);
-              console.log(`[ChatRoom] 파일 업로드 완료:`, uploadResult);
               
               // 4. 첨부파일 정보 즉시 로컬 상태에 반영
               const attachmentInfo = {
@@ -1349,8 +1321,6 @@ const ChatRoom = () => {
                 return newSet;
               });
               
-              console.log(`[ChatRoom] 첨부파일 정보 로컬 상태 업데이트 완료: ${targetMessage.message_idx}`);
-              
               // 6. 스크롤 위치 조정
               setTimeout(() => {
                 scrollToBottom(false);
@@ -1359,7 +1329,6 @@ const ChatRoom = () => {
               resolve(targetMessage);
               
             } catch (uploadError) {
-              console.error('[ChatRoom] 파일 업로드 실패:', uploadError);
               reject(uploadError);
             }
           }, 500); // 500ms 지연으로 DB 저장 완료 대기
@@ -1390,7 +1359,6 @@ const ChatRoom = () => {
         }
         
       } catch (error) {
-        console.error('[ChatRoom] 메시지 전송 오류:', error);
         reject(error);
       }
     });

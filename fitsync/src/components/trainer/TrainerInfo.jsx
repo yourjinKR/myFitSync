@@ -72,8 +72,8 @@ const ProfileImage = styled.div`
   overflow: hidden;
   flex-shrink: 0;
   border: 2px solid ${props => {
-    if (props.gender === '남자') return '#3B82F6';
-    if (props.gender === '여자') return '#EC4899';
+    if (props.$gender === '남자') return '#3B82F6';
+    if (props.$gender === '여자') return '#EC4899';
     return 'var(--border-light)';
   }};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -89,8 +89,8 @@ const ProfileImage = styled.div`
 
   ${TrainerCard}:hover & {
     border-color: ${props => {
-      if (props.gender === '남자') return '#1D4ED8';
-      if (props.gender === '여자') return '#BE185D';
+      if (props.$gender === '남자') return '#1D4ED8';
+      if (props.$gender === '여자') return '#BE185D';
       return 'var(--primary-blue)';
     }};
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
@@ -363,7 +363,7 @@ const TrainerInfo = ({idx, trainerData}) => {
   return (
     <TrainerCard onClick={handleTrainerDetail}>
       <TrainerHeader>
-        <ProfileImage gender={trainerGender}>
+        <ProfileImage $gender={trainerGender}>
           <img 
             src={trainerImage || '/default-profile.png'} 
             alt={`${trainerName} 프로필`} 
@@ -372,7 +372,7 @@ const TrainerInfo = ({idx, trainerData}) => {
             }}
           />
         </ProfileImage>
-        <TrainerBasicInfo gender={trainerGender}>
+        <TrainerBasicInfo>
           <div className="trainer-name">
             {trainerName}
             <div className="trainer-purpose">{trainerPurpose}</div>

@@ -80,6 +80,7 @@
 		WHERE REPORT_SANCTION = #{member_idx}
 	</select>
 	
+	<!-- 프로필 신고 -->
 	<insert id="insertProfileReport" parameterType="org.fitsync.domain.ReportVO">
 	    INSERT INTO REPORT (
 	      REPORT_IDX,
@@ -97,9 +98,33 @@
 	      #{report_category},
 	      #{report_content},
 	      #{member_idx},
-	      0,
+	      #{report_hidden},
 	      SYSDATE,
 	      #{report_sanction}
+	    )
+	</insert>
+	
+	<!-- UserProfileModal 사용자 프로필 신고 -->
+	<insert id="insertUserProfileReport" parameterType="org.fitsync.domain.ReportVO">
+	    INSERT INTO REPORT (
+	      REPORT_IDX,
+	      IDX_NUM,
+	      REPORT_CATEGORY,
+	      REPORT_CONTENT,
+	      MEMBER_IDX,
+	      REPORT_HIDDEN,
+	      REPORT_TIME,
+	      REPORT_SANCTION
+	    )
+	    VALUES (
+	      REPORT_SEQ.NEXTVAL,
+	      #{idx_num},              <!-- 신고 대상자의 member_idx -->
+	      #{report_category},      <!-- "member" -->
+	      #{report_content},       <!-- 신고 사유 -->
+	      #{member_idx},           <!-- 신고자의 member_idx -->
+	      #{report_hidden},        <!-- 숨김 여부 (기본값 0) -->
+	      SYSDATE,                 <!-- 신고 시간 -->
+	      #{report_sanction}       <!-- 제재 대상자 (NULL 또는 추후 설정) -->
 	    )
 	</insert>
 </mapper>

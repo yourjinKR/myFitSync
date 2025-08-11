@@ -42,9 +42,7 @@ public class MessageVO {
 		if (matchingDataMap != null && !matchingDataMap.isEmpty()) {
 			try {
 				this.matching_data = objectMapper.writeValueAsString(matchingDataMap);
-				System.out.println("✅ 매칭 데이터 JSON 변환 성공: " + this.matching_data);
 			} catch (JsonProcessingException e) {
-				System.err.println("❌ 매칭 데이터 JSON 변환 실패: " + e.getMessage());
 				this.matching_data = null;
 			}
 		} else {
@@ -64,10 +62,8 @@ public class MessageVO {
 					matching_data, 
 					new TypeReference<Map<String, Object>>() {}
 				);
-				System.out.println("✅ 매칭 데이터 Map 변환 성공: " + this.matching_data_map);
 				return this.matching_data_map;
 			} catch (JsonProcessingException e) {
-				System.err.println("❌ 매칭 데이터 Map 변환 실패: " + e.getMessage());
 				return null;
 			}
 		}

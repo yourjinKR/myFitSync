@@ -10,7 +10,15 @@ import TrainerIntroSection from './TrainerIntroSection';
 import TrainerReviewSection from './TrainerReviewSection';
 
 // 스타일 컴포넌트 추가
-import styled, { css } from 'styled-components';
+import styled, { css, createGlobalStyle } from 'styled-components';
+
+// 글로벌 스타일로 애니메이션 정의
+const GlobalStyle = createGlobalStyle`
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
 // 컨테이너
 const Container = styled.div`
@@ -167,6 +175,15 @@ const FloatingButton = styled.button`
   z-index: 30;
 `;
 
+// 로딩 스피너 스타일
+const LoadingSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+`;
 
 // 모달 백드롭
 const ModalBackdrop = styled.div`
@@ -231,8 +248,6 @@ const TrainerDetailView = () => {
   // 성별 정보 보완을 위한 추가 API 호출 함수
   const fetchMemberGenderInfo = async (memberIdx) => {
     try {
-      console.log(`성별 정보 보완을 위해 회원 정보 조회: ${memberIdx}`);
-      
       // 1. 트레이너 목록 API를 활용한 성별 정보 조회
       const trainerListResponse = await axios.get('/member/trainers', {
         withCredentials: true
@@ -241,7 +256,6 @@ const TrainerDetailView = () => {
       if (trainerListResponse.data && Array.isArray(trainerListResponse.data)) {
         const matchingTrainer = trainerListResponse.data.find(t => t.member_idx === parseInt(memberIdx));
         if (matchingTrainer && matchingTrainer.member_gender) {
-          console.log(`트레이너 목록에서 성별 정보 발견: ${matchingTrainer.member_gender}`);
           return matchingTrainer.member_gender;
         }
       }
@@ -253,7 +267,6 @@ const TrainerDetailView = () => {
         });
         
         if (memberResponse.data && memberResponse.data.member_gender) {
-          console.log(`회원 프로필에서 성별 정보 발견: ${memberResponse.data.member_gender}`);
           return memberResponse.data.member_gender;
         }
       } catch (profileError) {
@@ -263,7 +276,6 @@ const TrainerDetailView = () => {
       // 3. 로컬 스토리지에서 캐시된 정보 확인
       const cachedGender = localStorage.getItem(`member_gender_${memberIdx}`);
       if (cachedGender && cachedGender !== 'null') {
-        console.log(`로컬 스토리지에서 성별 정보 발견: ${cachedGender}`);
         return cachedGender;
       }
 
@@ -280,7 +292,6 @@ const TrainerDetailView = () => {
     if (memberIdx && gender) {
       try {
         localStorage.setItem(`member_gender_${memberIdx}`, gender);
-        console.log(`성별 정보 캐시됨: ${memberIdx} -> ${gender}`);
       } catch (error) {
         console.warn('성별 정보 캐시 실패:', error);
       }
@@ -320,7 +331,6 @@ const TrainerDetailView = () => {
         let finalGender = data.member_gender;
         
         if (!finalGender || finalGender === null) {
-          console.warn('API 응답에 성별 정보 없음, 추가 조회 시도');
           const supplementaryGender = await fetchMemberGenderInfo(data.member_idx);
           
           if (supplementaryGender) {
@@ -422,7 +432,6 @@ const TrainerDetailView = () => {
           // 트레이너 상태 업데이트
           setTrainer(prev => ({ ...prev, member_gender: trainerGender }));
           setEditedTrainer(prev => ({ ...prev, member_gender: trainerGender }));
-          console.log('채팅방 생성 시점에 성별 정보 보완됨:', trainerGender);
         }
       }
 
@@ -502,7 +511,6 @@ const TrainerDetailView = () => {
         member_day: editedTrainer.member_day || '',
         member_time: editedTrainer.member_time || '',
       };
-      console.log('[payload]', payload);
       try {
         await axios.put(`/trainer/update/${trainerIdx}`, payload, {
           withCredentials: true,
@@ -531,7 +539,6 @@ const TrainerDetailView = () => {
         
         setTrainer(updatedTrainer);
         setEditedTrainer(updatedTrainer); // editedTrainer도 동기화
-        console.log('[수정 완료] 업데이트된 trainer:', updatedTrainer);
       } catch (err) {
         alert('수정 중 오류가 발생했습니다.');
         console.error('[프론트] 수정 실패:', err);
@@ -557,85 +564,73 @@ const TrainerDetailView = () => {
     : lessons.slice().sort((a, b) => (a.lesson_num || 0) - (b.lesson_num || 0));
 
   return (
-    <Container>
-      <TrainerProfileHeader
-        trainer={isEditMode ? editedTrainer : trainer}
-        isEdit={isEditMode}
-        onChange={handleChange}
-        onEditToggle={handleEditToggle}
-        loginUserId={loginUserId}
-      />
-
-      {/* 탭 메뉴 */}
-      <TabMenu>
-        {['소개', '후기'].map(tab => (
-          <TabButton
-            key={tab}
-            $active={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
-            type="button"
-          >
-            {tab}
-          </TabButton>
-        ))}
-      </TabMenu>
-
-      {/* 섹션 렌더링 */}
-      {activeTab === '소개' && (
-        <TrainerIntroSection
+    <>
+      <GlobalStyle />
+      <Container>
+        <TrainerProfileHeader
           trainer={isEditMode ? editedTrainer : trainer}
           isEdit={isEditMode}
           onChange={handleChange}
-          onMoreClick={() => setActiveTab('후기')}
-          lessons={sortedLessons}
-          onLessonsChange={newLessons => handleChange('lessons', newLessons)}
-          onTimeChange={(start, end) => handleChange('member_time', `${start}~${end}`)}
+          onEditToggle={handleEditToggle}
+          loginUserId={loginUserId}
         />
-      )}
 
-      {activeTab === '후기' && <TrainerReviewSection reviews={trainer.reviewList} />}
+        {/* 탭 메뉴 */}
+        <TabMenu>
+          {['소개', '후기'].map(tab => (
+            <TabButton
+              key={tab}
+              $active={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              type="button"
+            >
+              {tab}
+            </TabButton>
+          ))}
+        </TabMenu>
 
-      {/* 상담 버튼 */}
-      {loginUserId !== trainer.member_email && (
-        <FloatingButton 
-          onClick={handleConsultClick} 
-          disabled={isConsultLoading}
-          title={isConsultLoading ? "채팅방 생성 중..." : "상담하기"}
-        >
-          {isConsultLoading ? (
-            <div style={{ 
-              width: '20px', 
-              height: '20px', 
-              border: '2px solid transparent',
-              borderTop: '2px solid white',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-          ) : (
-            <MdChat />
-          )}
-        </FloatingButton>
-      )}
+        {/* 섹션 렌더링 */}
+        {activeTab === '소개' && (
+          <TrainerIntroSection
+            trainer={isEditMode ? editedTrainer : trainer}
+            isEdit={isEditMode}
+            onChange={handleChange}
+            onMoreClick={() => setActiveTab('후기')}
+            lessons={sortedLessons}
+            onLessonsChange={newLessons => handleChange('lessons', newLessons)}
+            onTimeChange={(start, end) => handleChange('member_time', `${start}~${end}`)}
+          />
+        )}
 
-      {/* 로그인 모달 */}
-      {showLoginModal && (
-        <ModalBackdrop>
-          <ModalBox>
-            <p>로그인이 필요한 기능입니다.</p>
-            <ModalButton onClick={() => navigate('/login')}>로그인 하러가기</ModalButton>
-            <ModalButton onClick={() => setShowLoginModal(false)}>닫기</ModalButton>
-          </ModalBox>
-        </ModalBackdrop>
-      )}
+        {activeTab === '후기' && <TrainerReviewSection reviews={trainer.reviewList} />}
 
-      {/* 채팅방로딩 애니메이션을 위한 CSS */}
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-    </Container>
+        {/* 상담 버튼 */}
+        {loginUserId !== trainer.member_email && (
+          <FloatingButton 
+            onClick={handleConsultClick} 
+            disabled={isConsultLoading}
+            title={isConsultLoading ? "채팅방 생성 중..." : "상담하기"}
+          >
+            {isConsultLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <MdChat />
+            )}
+          </FloatingButton>
+        )}
+
+        {/* 로그인 모달 */}
+        {showLoginModal && (
+          <ModalBackdrop>
+            <ModalBox>
+              <p>로그인이 필요한 기능입니다.</p>
+              <ModalButton onClick={() => navigate('/login')}>로그인 하러가기</ModalButton>
+              <ModalButton onClick={() => setShowLoginModal(false)}>닫기</ModalButton>
+            </ModalBox>
+          </ModalBackdrop>
+        )}
+      </Container>
+    </>
   );
 };
 

@@ -689,23 +689,24 @@ const MessageItem = ({
   // 프로필 모달 상태
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileUserInfo, setProfileUserInfo] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   
   // 매칭 관련 상태
   const [matchingLoading, setMatchingLoading] = useState(false);
 
-  // 🔥 핵심 수정: 실시간 이미지 로딩 상태 개선
+  // 실시간 이미지 로딩 상태 개선
   const [realtimeImageLoading, setRealtimeImageLoading] = useState(false);
   const realtimeLoadTriggered = useRef(false);
 
   const containerRef = useRef(null);
 
-  // 🔥 핵심 수정: 실시간 이미지 메시지 판별 로직 개선
+  // 실시간 이미지 메시지 판별 로직 개선
   const isRealtimeImageMessage = message.message_type === 'image' && 
                                 !attachments && 
                                 pendingImageMessages && 
                                 pendingImageMessages.has(message.message_idx);
 
-  // 🔥 핵심 수정: 실시간 이미지 로딩 트리거 개선
+  // 실시간 이미지 로딩 트리거 개선
   useEffect(() => {
     if (isRealtimeImageMessage && 
         !realtimeLoadTriggered.current && 
@@ -714,15 +715,12 @@ const MessageItem = ({
       realtimeLoadTriggered.current = true;
       setRealtimeImageLoading(true);
       
-      console.log(`[MessageItem] 실시간 이미지 로딩 트리거: ${message.message_idx}`);
-      
       // 실시간 이미지 로딩 트리거
       onTriggerImageLoad(message.message_idx);
       
       // 10초 후에도 로딩이 끝나지 않으면 로딩 상태 해제
       const timeoutId = setTimeout(() => {
         setRealtimeImageLoading(false);
-        console.log(`[MessageItem] 실시간 이미지 로딩 타임아웃: ${message.message_idx}`);
       }, 10000);
       
       return () => clearTimeout(timeoutId);
@@ -733,7 +731,6 @@ const MessageItem = ({
   useEffect(() => {
     if (attachments && realtimeImageLoading) {
       setRealtimeImageLoading(false);
-      console.log(`[MessageItem] 실시간 이미지 로딩 완료: ${message.message_idx}`);
     }
   }, [attachments, realtimeImageLoading, message.message_idx]);
 
@@ -767,71 +764,124 @@ const MessageItem = ({
     return false;
   };
 
-  // 프로필 이미지 클릭 핸들러
-  const handleProfileImageClick = async () => {
-    if (isConsecutive || isCurrentUser) return;
-    
-    // 상대방 정보 가져오기
-    const otherPersonInfo = getOtherPersonInfo();
-    if (!otherPersonInfo) return;
-    
-    try {
-      if (otherPersonInfo.type === 'trainer') {
-        // 트레이너인 경우 - TrainerDetailView로 이동
-        navigate(`/trainer/view/${otherPersonInfo.member_idx}`);
-      } else if (otherPersonInfo.type === 'user') {
-        // 회원인 경우 - 상세 정보 조회 후 모달 표시
-        const response = await axios.get(`/member/user/profile/${otherPersonInfo.member_idx}`, {
-          withCredentials: true
-        });
-        
-        // API 응답 구조에 맞게 수정
-        if (response.data) {
-          setProfileUserInfo(response.data);
-          setIsProfileModalOpen(true);
-        }
-      }
-    } catch (error) {
-      console.error('프로필 정보 조회 실패:', error);
-      // 기본 모달 표시 (user 타입인 경우)
-      if (otherPersonInfo.type === 'user') {
-        setProfileUserInfo({
-          member_name: otherPersonInfo.name,
-          member_image: otherPersonInfo.image,
-          member_gender: otherPersonInfo.gender,
-          member_birth: null
-        });
-        setIsProfileModalOpen(true);
-      }
-    }
-  };
-
   // 상대방 정보 가져오기 함수
   const getOtherPersonInfo = () => {
     if (!roomData || !user) {
       return null;
     }
-      
+    
     const currentMemberIdx = user.member_idx;
-      
-    if (roomData.trainer_idx === currentMemberIdx) {
-      // 내가 트레이너인 경우 → 회원 반환
-      return {
-        member_idx: roomData.user_idx,
+    
+    // 메시지 발신자가 누구인지 확인
+    const messageSenderIdx = message.sender_idx;
+    
+    // 현재 사용자가 메시지를 보낸 경우 (내 메시지)
+    if (messageSenderIdx === currentMemberIdx) {
+      return null;
+    }
+    
+    // 상대방이 보낸 메시지인 경우 - 메시지 발신자의 정보 반환
+    let otherPersonInfo = null;
+    
+    // roomData에서 메시지 발신자가 trainer인지 user인지 확인
+    if (messageSenderIdx === roomData.trainer_idx) {
+      // 메시지 발신자가 트레이너인 경우
+      otherPersonInfo = {
+        member_idx: roomData.trainer_idx, // 트레이너의 member_idx
+        name: roomData.trainer_name || '트레이너',
+        image: roomData.trainer_image,
+        gender: roomData.trainer_gender,
+        type: 'trainer'
+      };
+    } else if (messageSenderIdx === roomData.user_idx) {
+      // 메시지 발신자가 회원인 경우
+      otherPersonInfo = {
+        member_idx: roomData.user_idx, // 회원의 member_idx
         name: roomData.user_name || '회원',
         image: roomData.user_image,
         gender: roomData.user_gender,
         type: 'user'
       };
     } else {
-      // 내가 일반 사용자인 경우 → 트레이너 반환
-      return {
-        member_idx: roomData.trainer_idx,
-        name: roomData.trainer_name || '트레이너',
-        image: roomData.trainer_image,
-        gender: roomData.trainer_gender,
-        type: roomData.trainer_type || 'trainer'
+      // 예상치 못한 상황 - fallback: 메시지 발신자 정보를 직접 사용
+      otherPersonInfo = {
+        member_idx: messageSenderIdx, // 메시지 발신자의 member_idx 직접 사용
+        name: senderName || '상대방',
+        image: senderImage,
+        gender: senderGender,
+        type: 'user' // 기본값
       };
+    }
+    
+    return otherPersonInfo;
+  };
+
+  // 프로필 이미지 클릭 핸들러
+  const handleProfileImageClick = async () => {
+    if (isConsecutive || isCurrentUser) return;
+    
+    // 상대방 정보 가져오기
+    const otherPersonInfo = getOtherPersonInfo();
+    if (!otherPersonInfo) {
+      return;
+    }
+    
+    setIsLoadingProfile(true);
+    
+    try {
+      if (otherPersonInfo.type === 'trainer') {
+        // 트레이너인 경우 - TrainerDetailView로 이동
+        navigate(`/trainer/view/${otherPersonInfo.member_idx}`);
+      } else if (otherPersonInfo.type === 'user') {
+        // 회원인 경우 - API로 완전한 정보 조회
+        try {
+          const response = await axios.get(`/member/user/profile/${otherPersonInfo.member_idx}`, {
+            withCredentials: true
+          });
+          
+          // API 응답 구조에 맞게 처리
+          if (response.data) {
+            // 사용자 정보 생성
+            const completeUserInfo = {
+              ...response.data,
+              member_idx: otherPersonInfo.member_idx
+            };
+            
+            setProfileUserInfo(completeUserInfo);
+            setIsProfileModalOpen(true);
+          }
+        } catch (apiError) {
+          
+          // API 실패 시 기본 정보 + member_idx 추가
+          const fallbackUserInfo = {
+            member_name: otherPersonInfo.name,
+            member_image: otherPersonInfo.image,
+            member_gender: otherPersonInfo.gender,
+            member_birth: null,
+            member_idx: otherPersonInfo.member_idx
+          };
+          
+          setProfileUserInfo(fallbackUserInfo);
+          setIsProfileModalOpen(true);
+        }
+      }
+    } catch (error) {
+      
+      // 최종 fallback - 메시지에서 가져올 수 있는 정보 사용
+      if (otherPersonInfo.type === 'user') {
+        const emergencyUserInfo = {
+          member_name: otherPersonInfo.name || senderName || '회원',
+          member_image: otherPersonInfo.image || senderImage,
+          member_gender: otherPersonInfo.gender || senderGender,
+          member_birth: null,
+          member_idx: otherPersonInfo.member_idx
+        };
+        
+        setProfileUserInfo(emergencyUserInfo);
+        setIsProfileModalOpen(true);
+      }
+    } finally {
+      setIsLoadingProfile(false);
     }
   };
 
@@ -1072,7 +1122,7 @@ const MessageItem = ({
     setLoadingProgress(0);
   }, [message.message_idx]);
 
-  // 🔥 핵심 수정: 로딩 진행률 시뮬레이션 개선
+  // 로딩 진행률 시뮬레이션 개선
   useEffect(() => {
     if (message.message_type === 'image' && (!attachments || realtimeImageLoading)) {
       setLoadingProgress(0);
@@ -1124,7 +1174,11 @@ const MessageItem = ({
         $isConsecutive={isConsecutive}
         $gender={senderGender}
         onClick={handleProfileImageClick}
-        title={isConsecutive ? '' : '프로필 보기'}
+        title={isConsecutive ? '' : isLoadingProfile ? '프로필 로딩 중...' : '프로필 보기'}
+        style={{ 
+          cursor: isLoadingProfile ? 'wait' : (isConsecutive ? 'default' : 'pointer'),
+          opacity: isLoadingProfile ? 0.7 : (isConsecutive ? 0 : 1)
+        }}
       >
         {hasValidImage ? (
           <img 
@@ -1138,7 +1192,7 @@ const MessageItem = ({
           />
         ) : (
           <div className="default-avatar">
-            {senderName.charAt(0).toUpperCase()}
+            {isLoadingProfile ? '⏳' : senderName.charAt(0).toUpperCase()}
           </div>
         )}
       </ProfileImage>

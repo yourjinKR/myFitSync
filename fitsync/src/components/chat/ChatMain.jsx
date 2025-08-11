@@ -193,7 +193,6 @@ const EmptySubtext = styled.p`
   color: var(--text-tertiary);
 `;
 
-// 로딩 상태 및 필터링 정보 표시
 const FilterInfo = styled.div`
   font-size: 1.2rem;
   color: var(--text-secondary);
@@ -274,7 +273,7 @@ const ChatMain = () => {
     try {
       setLoading(true);
 
-      // 백엔드 API 호출 - 자동으로 필터링된 결과 반환
+      // 백엔드 API 호출 - 메시지 필터링이 적용된 결과 반환
       const roomList = await ChatApi.readRoomList();
       setRooms(roomList);
       setFilteredRoomCount(roomList.length);
@@ -303,8 +302,6 @@ const ChatMain = () => {
       setLastMessages(lastMessageData);
       
     } catch (error) {
-      console.error('채팅방 목록 로드 오류:', error);
-      
       // 에러 처리
       if (error.response?.status === 401) {
         alert('로그인이 만료되었습니다.');
@@ -667,16 +664,10 @@ const ChatMain = () => {
           <EmptyState>
             <EmptyIcon>💬</EmptyIcon>
             <EmptyText>
-              {memberType === 'trainer' 
-                ? '메시지가 있는 채팅방이 없습니다' 
-                : '진행중인 채팅이 없습니다'
-              }
+              진행중인 채팅이 없습니다
             </EmptyText>
             <EmptySubtext>
-              {memberType === 'trainer' 
-                ? '회원과 대화를 시작하면 채팅방이 표시됩니다' 
-                : '트레이너 검색에서 1:1 상담을 시작해보세요'
-              }
+              메시지를 주고받으면 채팅방이 표시됩니다
             </EmptySubtext>
           </EmptyState>
         </RoomList>

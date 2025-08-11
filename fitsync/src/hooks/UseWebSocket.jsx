@@ -37,7 +37,6 @@ export const useWebSocket = (shouldConnect = true) => {
         if (response.status === 401) {
           return false; // 로그인하지 않은 상태
         }
-        console.warn('인증 확인 응답 오류:', response.status, response.statusText);
         return false;
       }
       
@@ -86,7 +85,7 @@ export const useWebSocket = (shouldConnect = true) => {
         }
         // deactivate()가 내부적으로 disconnect와 forceDisconnect를 처리함
       } catch (error) {
-        console.warn('클라이언트 강제 해제 중 오류:', error);
+        // 오류 무시
       }
       clientRef.current = null;
     }
@@ -192,7 +191,6 @@ export const useWebSocket = (shouldConnect = true) => {
 
         // WebSocket 에러 처리
         onWebSocketError: async (event) => {
-          console.error('WebSocket 에러:', event);
           isConnectingRef.current = false;
           setConnected(false);
           
@@ -216,7 +214,6 @@ export const useWebSocket = (shouldConnect = true) => {
 
       // STOMP 에러 처리
       stompClient.onStompError = async (frame) => {
-        console.error('STOMP 에러:', frame.headers['message']);
         isConnectingRef.current = false;
         setConnected(false);
         
@@ -237,7 +234,6 @@ export const useWebSocket = (shouldConnect = true) => {
       try {
         stompClient.activate();
       } catch (error) {
-        console.error('STOMP 클라이언트 활성화 실패:', error);
         isConnectingRef.current = false;
         setConnected(false);
         
@@ -276,7 +272,7 @@ export const useWebSocket = (shouldConnect = true) => {
           }
           // forceDisconnect는 이미 deactivate()에 포함되어 있으므로 중복 호출 방지
         } catch (error) {
-          console.warn('정리 중 오류:', error);
+          // 오류 무시
         }
         clientRef.current = null;
       }
@@ -303,7 +299,7 @@ export const useWebSocket = (shouldConnect = true) => {
     return false;
   }, []);
 
-  // 🔥 핵심 수정: 채팅방 구독 함수 - 첨부파일 업로드 완료 구독 추가 및 콜백 개선
+  // 채팅방 구독 함수
   const subscribeToRoom = useCallback((room_idx, onMessageReceived, onReadReceived, onDeleteReceived, onAttachmentReceived) => {
     
     if (client && connected) {
@@ -319,17 +315,9 @@ export const useWebSocket = (shouldConnect = true) => {
             return;
           }
           
-          // 실시간 이미지 메시지 로깅
-          if (messageData.message_type === 'image') {
-            console.log(`[WebSocket] 실시간 이미지 메시지 수신:`, messageData);
-            console.log(`- message_idx: ${messageData.message_idx}`);
-            console.log(`- attach_idx: ${messageData.attach_idx}`);
-            console.log(`- sender_idx: ${messageData.sender_idx}`);
-          }
-          
           onMessageReceived(messageData);
         } catch (error) {
-          console.error('메시지 파싱 오류:', error);
+          // 오류 무시
         }
       });
       
@@ -339,7 +327,7 @@ export const useWebSocket = (shouldConnect = true) => {
           const readData = JSON.parse(message.body);
           onReadReceived && onReadReceived(readData);
         } catch (error) {
-          console.error('읽음 확인 파싱 오류:', error);
+          // 오류 무시
         }
       });
       
@@ -349,27 +337,25 @@ export const useWebSocket = (shouldConnect = true) => {
           const deleteData = JSON.parse(message.body);
           onDeleteReceived && onDeleteReceived(deleteData);
         } catch (error) {
-          console.error('삭제 알림 파싱 오류:', error);
+          // 오류 무시
         }
       });
       
-      // 🔥 핵심 수정: 첨부파일 업로드 완료 알림 구독 강화
+      // 첨부파일 업로드 완료 알림 구독 강화
       const attachmentSubscription = client.subscribe(`/topic/room/${room_idx}/attachment`, (message) => {
         try {
           const attachmentData = JSON.parse(message.body);
-          console.log(`[WebSocket] 첨부파일 업로드 완료 알림 수신:`, attachmentData);
           
           if (attachmentData.type === 'attachment_uploaded') {
             // 첨부파일 업로드 완료 시 콜백 호출
-            console.log(`[WebSocket] 첨부파일 업로드 완료: message_idx ${attachmentData.message_idx}`);
             
-            // 🔥 새로 추가: 첨부파일 업로드 완료 콜백 호출
+            // 첨부파일 업로드 완료 콜백 호출
             if (onAttachmentReceived) {
               onAttachmentReceived(attachmentData);
             }
           }
         } catch (error) {
-          console.error('첨부파일 알림 파싱 오류:', error);
+          // 오류 무시
         }
       });
       
@@ -381,11 +367,10 @@ export const useWebSocket = (shouldConnect = true) => {
           deleteSubscription.unsubscribe();
           attachmentSubscription.unsubscribe(); // 첨부파일 구독 해제 추가
         } catch (error) {
-          console.warn('구독 해제 중 오류:', error);
+          // 오류 무시
         }
       };
     } else {
-      console.warn('WebSocket 연결되지 않음 - 구독 불가');
       return null;
     }
   }, [client, connected, isMessageProcessed]);
@@ -420,7 +405,7 @@ export const useWebSocket = (shouldConnect = true) => {
           const matchingUpdate = JSON.parse(message.body);
           processMatchingUpdate(matchingUpdate);
         } catch (error) {
-          console.error('매칭 상태 업데이트 파싱 오류:', error);
+          // 오류 무시
         }
       });
       
@@ -430,7 +415,7 @@ export const useWebSocket = (shouldConnect = true) => {
           const matchingUpdate = JSON.parse(message.body);
           processMatchingUpdate(matchingUpdate);
         } catch (error) {
-          console.error('채팅방 매칭 상태 업데이트 파싱 오류:', error);
+          // 오류 무시
         }
       });
       
@@ -441,11 +426,10 @@ export const useWebSocket = (shouldConnect = true) => {
           matchingSubscription.unsubscribe();
           roomsMatchingSubscription.unsubscribe();
         } catch (error) {
-          console.warn('매칭 구독 해제 중 오류:', error);
+          // 오류 무시
         }
       };
     } else {
-      console.warn('WebSocket 연결되지 않음 - 매칭 구독 불가');
       return null;
     }
   }, [client, connected]);
@@ -461,7 +445,6 @@ export const useWebSocket = (shouldConnect = true) => {
       
       // 중복 전송 방지
       if (isMessageProcessed(uniqueId)) {
-        console.warn('중복 메시지 전송 방지:', uniqueId);
         return;
       }
       
@@ -495,19 +478,16 @@ export const useWebSocket = (shouldConnect = true) => {
             if (!isNaN(numValue)) {
               validatedMatchingData[field] = numValue;
             } else {
-              console.error(`매칭 데이터 필수 필드 변환 실패: ${field} = ${value}`);
               validationFailed = true;
               break;
             }
           } else {
-            console.error(`매칭 데이터 필수 필드 누락: ${field}`);
             validationFailed = true;
             break;
           }
         }
         
         if (validationFailed) {
-          console.warn('매칭 데이터 전송 중단 - 검증 실패');
           return;
         }
         
@@ -526,21 +506,14 @@ export const useWebSocket = (shouldConnect = true) => {
         messageWithSender.matching_data = validatedMatchingData;
       }
       
-      // 이미지 메시지 전송 로깅
-      if (messageData.message_type === 'image') {
-        console.log(`[WebSocket] 이미지 메시지 전송:`, messageWithSender);
-      }
-      
       try {
         client.publish({
           destination: '/app/chat.send',
           body: JSON.stringify(messageWithSender)
         });
       } catch (error) {
-        console.error('메시지 전송 실패:', error);
+        // 오류 무시
       }
-    } else {
-      console.warn('WebSocket 연결되지 않음 또는 연결 중이거나 세션스토리지에 member_idx 없음');
     }
   }, [client, connected, isMessageProcessed]);
 
@@ -566,11 +539,9 @@ export const useWebSocket = (shouldConnect = true) => {
           body: JSON.stringify(readData)
         });
       } catch (error) {
-        console.error('읽음 처리 실패:', error);
+        // 오류 무시
       }
       
-    } else {
-      console.warn('WebSocket 연결되지 않음 - 읽음 처리 불가');
     }
   }, [client, connected]);
 
@@ -595,10 +566,8 @@ export const useWebSocket = (shouldConnect = true) => {
           body: JSON.stringify(deleteNotification)
         });
       } catch (error) {
-        console.error('삭제 알림 전송 실패:', error);
+        // 오류 무시
       }
-    } else {
-      console.warn('WebSocket 연결되지 않음 - 삭제 알림 불가');
     }
   }, [client, connected]);
 
@@ -640,10 +609,8 @@ export const useWebSocket = (shouldConnect = true) => {
           body: JSON.stringify(matchingStatusUpdate)
         });
       } catch (error) {
-        console.error('매칭 상태 브로드캐스트 실패:', error);
+        // 오류 무시
       }
-    } else {
-      console.warn('WebSocket 연결되지 않음 - 매칭 상태 브로드캐스트 불가');
     }
   }, [client, connected]);
 

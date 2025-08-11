@@ -1,4 +1,5 @@
 package org.fitsync.service;
+
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
@@ -27,67 +28,58 @@ public class CloudinaryService {
     @Autowired
 	private ChatAttachMapper mapper;
     
+    // Cloudinary 설정을 주입받아 서비스 초기화
     @Autowired
     public CloudinaryService(Cloudinary cloudinary) {
         this.cloudinary = cloudinary;
-        // Cloudinary 설정 확인 로그 추가
-        log.info("=== Cloudinary 설정 확인 ===");
-        log.info("Cloud Name: " + cloudinary.config.cloudName);
-        log.info("API Key: " + cloudinary.config.apiKey);
-        log.info("API Secret: " + (cloudinary.config.apiSecret != null ? "설정됨" : "설정되지 않음"));
-        log.info("========================");
     }
     
-    // 파일 업로드
+    // 파일을 Cloudinary에 업로드하고 DB에 파일 정보 저장
     public ChatAttachVO uploadFile(MultipartFile file) throws Exception {
-        log.info("CloudinaryService uploadFile..." + file.getOriginalFilename());
-        
         try {
             // Cloudinary 업로드 파라미터 설정
             Map<String, Object> uploadParams = new HashMap<>();
-            uploadParams.put("resource_type", "auto");
-            uploadParams.put("folder", "fitsync");
-            uploadParams.put("public_id", "chat_" + System.currentTimeMillis());
-            uploadParams.put("overwrite", false);
-            uploadParams.put("quality", "auto:good");
+            uploadParams.put("resource_type", "auto"); // 파일 타입 자동 감지
+            uploadParams.put("folder", "fitsync"); // 업로드 폴더 지정
+            uploadParams.put("public_id", "chat_" + System.currentTimeMillis()); // 고유 ID 생성
+            uploadParams.put("overwrite", false); // 덮어쓰기 방지
+            uploadParams.put("quality", "auto:good"); // 품질 자동 최적화
             
-            // Cloudinary에 파일 업로드
+            // Cloudinary에 파일 업로드 실행
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadParams);
             
-            // 첨부파일 정보 생성
+            // 업로드 결과를 바탕으로 첨부파일 정보 객체 생성
             ChatAttachVO vo = new ChatAttachVO();
             vo.setOriginal_filename(file.getOriginalFilename());
-            vo.setCloudinary_url((String) uploadResult.get("secure_url"));
+            vo.setCloudinary_url((String) uploadResult.get("secure_url")); // HTTPS URL
             vo.setCloudinary_public_id((String) uploadResult.get("public_id"));
             vo.setFile_size_bytes(file.getSize());
             vo.setMime_type(file.getContentType());
             
-            // 파일 확장자 추출
+            // 파일 확장자 추출 및 설정
             String filename = file.getOriginalFilename();
             if (filename != null && filename.contains(".")) {
                 String extension = filename.substring(filename.lastIndexOf("."));
                 vo.setFile_extension(extension);
             }
             
-            // 첨부파일 정보 DB 저장
+            // 첨부파일 정보를 DB에 저장
             mapper.insertAttach(vo);
             
             return vo;
             
         } catch (Exception e) {
-            log.error("파일 업로드 처리 중 오류 발생: " + e.getMessage());
             throw e;
         }
     }
     
-    // 파일 삭제 메서드
+    // Cloudinary와 DB에서 파일 삭제
     public boolean deleteFile(int attach_idx) {
         try {
-            // 첨부파일 정보 조회
+            // DB에서 첨부파일 정보 조회
             ChatAttachVO attachment = mapper.getAttach(attach_idx);
             
             if (attachment == null) {
-                log.warn("삭제할 첨부파일을 찾을 수 없습니다. attach_idx: " + attach_idx);
                 return false;
             }
             
@@ -97,26 +89,29 @@ public class CloudinaryService {
             // DB에서 첨부파일 정보 삭제
             int deletedRows = mapper.deleteAttach(attach_idx);
             
+            // 양쪽 모두 성공해야 true 반환
             return cloudinaryDeleted && deletedRows > 0;
             
         } catch (Exception e) {
-            log.error("첨부파일 삭제 중 오류 발생: " + attach_idx, e);
-            return false;
-        }
-    } // 클라우디너리 삭제
-    private boolean deleteCloudinaryFile(String publicId) {
-        try {
-            Map<String, Object> deleteOptions = new HashMap<>();
-            deleteOptions.put("invalidate", true);
-            
-            Map<String, Object> deleteResult = cloudinary.uploader().destroy(publicId, deleteOptions);
-            
-            return deleteResult.containsKey("result") && "ok".equals(deleteResult.get("result"));
-            
-        } catch (Exception e) {
-            log.error("Cloudinary 파일 삭제 중 오류 발생: " + publicId, e);
             return false;
         }
     }
     
+    // Cloudinary에서 파일 삭제 (내부 메서드)
+    private boolean deleteCloudinaryFile(String publicId) {
+        try {
+            // Cloudinary 삭제 옵션 설정
+            Map<String, Object> deleteOptions = new HashMap<>();
+            deleteOptions.put("invalidate", true); // CDN 캐시 무효화
+            
+            // Cloudinary API를 통한 파일 삭제 실행
+            Map<String, Object> deleteResult = cloudinary.uploader().destroy(publicId, deleteOptions);
+            
+            // 삭제 결과 확인 (result가 "ok"이면 성공)
+            return deleteResult.containsKey("result") && "ok".equals(deleteResult.get("result"));
+            
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

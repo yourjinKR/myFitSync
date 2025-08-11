@@ -66,7 +66,6 @@ public class ReportServiceImple implements ReportService {
 				}
 			}else {				
 				ReviewVO rvo = reviewMapper.getReviewOne(vo.getIdx_num());
-				System.out.println("rvo : " + rvo);
 				MemberVO memvo = memberMapper.selectTrainerByIdx(rvo.getMember_idx());
 				if(rvo != null) {
 					vo.setReview(rvo);
@@ -79,13 +78,10 @@ public class ReportServiceImple implements ReportService {
 
 	@Override
     public boolean reportMessage(int messageIdx, String reportContent, int memberIdx) {
-        log.info("메시지 신고 등록: messageIdx=" + messageIdx + ", memberIdx=" + memberIdx);
-        
         try {
             // 중복 신고 체크
             int duplicateCount = mapper.checkDuplicateReport(messageIdx, memberIdx, "message");
             if (duplicateCount > 0) {
-                log.warn("이미 신고한 메시지입니다: messageIdx=" + messageIdx + ", memberIdx=" + memberIdx);
                 return false; // 중복 신고
             }
             
@@ -99,15 +95,12 @@ public class ReportServiceImple implements ReportService {
             int result = mapper.insertReport(reportVO);
             
             if (result > 0) {
-                log.info("메시지 신고 등록 완료: " + reportVO);
                 return true;
             } else {
-                log.error("메시지 신고 등록 실패");
                 return false;
             }
             
         } catch (Exception e) {
-            log.error("메시지 신고 등록 중 오류 발생: " + e.getMessage(), e);
             throw new RuntimeException("신고 등록에 실패했습니다.", e);
         }
     }
@@ -145,8 +138,15 @@ public class ReportServiceImple implements ReportService {
 		return mapper.getBlockData(member_idx);
 	}
 	
+	// 프로필 신고
 	@Override
 	public void insertReport(ReportVO report) {
 		mapper.insertProfileReport(report);
+	}
+	
+	// UserProfileModal 사용자 프로필 신고
+	@Override
+	public void insertUserProfileReport(ReportVO report) {
+		mapper.insertUserProfileReport(report);
 	}
 }

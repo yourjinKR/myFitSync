@@ -20,4 +20,6 @@ public interface ReportMapper {
  	
  	// 프로필에서 신고 등록
  	public void insertProfileReport(ReportVO report);
+ 	// UserProfileModal 사용자 프로필 신고
+ 	public int insertUserProfileReport(ReportVO vo);
 }

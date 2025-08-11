@@ -211,6 +211,46 @@ public class MemberController {
         return ResponseEntity.ok("신고가 접수되었습니다.");
     }
     
+    // UserProfileModal 사용자 프로필 신고
+    @PostMapping("/report/user-profile")
+    public ResponseEntity<?> reportUserProfile(@RequestBody Map<String, Object> data, HttpSession session) {
+        Object sessionIdx = session.getAttribute("member_idx");
+        if (sessionIdx == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        int reporterIdx = Integer.parseInt(sessionIdx.toString()); // 신고자 (현재 로그인한 사용자)
+
+        // 필수 값 체크
+        if (!data.containsKey("target_member_idx") || !data.containsKey("report_content")) {
+            return ResponseEntity.badRequest().body("필수 신고 정보가 누락되었습니다.");
+        }
+
+        Integer targetMemberIdx = null; // 신고 대상자
+        try {
+            targetMemberIdx = Integer.parseInt(data.get("target_member_idx").toString());
+            log.info("UserProfileModal 신고 처리 - 신고자: " + reporterIdx + ", 신고 대상자: " + targetMemberIdx);
+        } catch (Exception e) {
+            log.error("신고 대상자 ID 파싱 오류: " + e.getMessage());
+            return ResponseEntity.badRequest().body("신고 대상자 ID가 유효하지 않습니다.");
+        }
+        
+        // ReportVO 설정
+        ReportVO report = new ReportVO();
+        report.setIdx_num(targetMemberIdx);                                // 신고 대상자의 member_idx
+        report.setReport_category("member");                               // "member" (프로필 신고)
+        report.setReport_content((String) data.get("report_content"));     // 신고 사유
+        report.setReport_hidden(0);                                       // 기본값 0
+        report.setMember_idx(reporterIdx);                                // 신고자의 member_idx
+
+        try {
+            reportService.insertUserProfileReport(report); // 새로운 메서드 사용
+            return ResponseEntity.ok("신고가 접수되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("신고 처리 중 오류가 발생했습니다.");
+        }
+    }
+    
     // 리뷰 신고
     @PostMapping("/report/review")
     public ResponseEntity<?> reportReview(@RequestBody Map<String, Object> data, HttpSession session) {

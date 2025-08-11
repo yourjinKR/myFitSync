@@ -295,7 +295,6 @@ const MessageList = ({
 
   // 실시간 이미지 로딩 트리거 함수 래핑
   const handleTriggerImageLoad = (messageIdx) => {
-    console.log(`[MessageList] 실시간 이미지 로딩 트리거 전달: ${messageIdx}`);
     if (onTriggerImageLoad) {
       onTriggerImageLoad(messageIdx);
     }

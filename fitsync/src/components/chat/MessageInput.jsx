@@ -309,9 +309,7 @@ const MessageInput = ({
           // 마지막 파일에만 텍스트 메시지 첨부
           const messageContent = (hasText && isLastFile) ? hasText : '[이미지]';
           
-          console.log(`[MessageInput] 이미지 파일 전송 시작: ${file.name} (${index + 1}/${filesToSend.length})`);
-          
-          // 🔥 핵심 수정: onSendMessage에서 직접 처리하도록 변경
+          // onSendMessage에서 직접 처리하도록 변경
           await onSendMessage(
             messageContent, 
             'image', 
@@ -319,15 +317,12 @@ const MessageInput = ({
             replyToMessage?.message_idx
           );
           
-          console.log(`[MessageInput] 이미지 파일 전송 완료: ${file.name}`);
-          
           // 업로드 간격 조절 - 안정성을 위한 지연 최소화
           if (index < filesToSend.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
       } catch (error) {
-        console.error('[MessageInput] 파일 업로드 오류:', error);
         alert('파일 업로드 중 오류가 발생했습니다.');
       } finally {
         setIsUploading(false);
@@ -335,7 +330,6 @@ const MessageInput = ({
     } else {
       // 텍스트 메시지만 전송
       try {
-        console.log(`[MessageInput] 텍스트 메시지 전송: ${textToSend}`);
         await onSendMessage(
           textToSend, 
           'text', 
@@ -343,7 +337,6 @@ const MessageInput = ({
           replyToMessage?.message_idx
         );
       } catch (error) {
-        console.error('[MessageInput] 텍스트 메시지 전송 오류:', error);
         alert('메시지 전송 중 오류가 발생했습니다.');
       }
     }
@@ -408,7 +401,7 @@ const MessageInput = ({
         }));
       };
       reader.onerror = () => {
-        console.error(`파일 "${file.name}" 미리보기 생성 실패`);
+        // 에러 처리 (무시)
       };
       reader.readAsDataURL(file);
     });

@@ -77,7 +77,7 @@ const AnimatedChatIcon = styled(ChatIcon)`
 `;
 
 const LoadingText = styled.h2`
-  font-size: 1.8rem; /* ✅ 기존보다 조금 키움 */
+  font-size: 1.8rem;
   font-weight: 800;
   color: var(--text-primary);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);

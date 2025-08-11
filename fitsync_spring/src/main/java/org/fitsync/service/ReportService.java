@@ -15,4 +15,6 @@ public interface ReportService {
 	public ReportVO getBlockData(int member_idx);
 	
 	public void insertReport(ReportVO report);
+	// UserProfileModal 사용자 프로필 신고
+	public void insertUserProfileReport(ReportVO report);
 }
