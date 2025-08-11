@@ -942,7 +942,6 @@ const LogDetailModal = ({
                                 {log.apilog_user_action}
                             </FeedbackReason>
                         </Section>
-                            
                     )}
 
                     {/* 오류 정보 */}

@@ -22,6 +22,7 @@
 	        apilog_model,
 	        apilog_version,
 	        apilog_status,
+	        apilog_user_action,
 	        <if test="apilog_status_reason != null">
 	        	apilog_status_reason,
 	        </if>
@@ -41,6 +42,7 @@
 	       	<if test="apilog_status_reason != null">
 	        	#{apilog_status_reason},
 	        </if>
+	        'ignore',
 	        #{apilog_service_type}
 	    )
 	</insert>
