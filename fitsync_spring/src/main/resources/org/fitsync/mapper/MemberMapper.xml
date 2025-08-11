@@ -150,6 +150,7 @@
 		FROM member 
 		WHERE member_type = 'trainer'
 		AND member_status = 'active'
+		AND member_hidden = 0
 		<if test="keyword != null and keyword != ''">
 			AND (
 				member_name LIKE '%' || #{keyword} || '%' 
