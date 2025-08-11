@@ -27,7 +27,9 @@ const ToggleWrapper = styled.div`
   margin-bottom: 20px;
 `;
 
-const ToggleButton = styled.button`
+const ToggleButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'active'
+})`
   padding: 8px 16px;
   border-radius: 8px;
   background: ${({ active }) => (active ? 'var(--primary-blue)' : 'var(--bg-tertiary)')};
