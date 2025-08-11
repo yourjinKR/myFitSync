@@ -144,7 +144,6 @@ const StyledLink = styled(Link)`
 
 const SideNav = ({ setIsOpen }) => {
     const memberType = sessionStorage.getItem("member_type");
-    const memberIdx = sessionStorage.getItem("member_idx");
     const { user } = useSelector((state) => state.user);
     const navItems = [
         { to: "/", label: "홈", icon: <FaHome /> },
@@ -152,7 +151,7 @@ const SideNav = ({ setIsOpen }) => {
         { to: "/trainer/search", label: "트레이너", icon: <FaUserTie /> },
         { to: "/chat", label: "채팅", icon: <FaComments /> },
         user.member_type === "trainer"
-        ? { to: `/trainer/view/${memberIdx}`, label: "마이페이지", icon: <FaUserCircle /> }
+        ? { to: `/trainer/view/${user.member_idx}`, label: "마이페이지", icon: <FaUserCircle /> }
             : { to: "/mypage", label: "마이페이지", icon: <FaUserCircle /> },
             { to: "/subscription", label: "구독/결제", icon: <FaMoneyBillWave /> },
             { to: "/ai/userLog", label: "AI 서비스", icon: <FaRobot /> },
