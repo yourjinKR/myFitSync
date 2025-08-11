@@ -240,7 +240,17 @@ const RoutineMain = () => {
     if (routineData === null) return;
     if (routine_list_idx !== 'custom') {
       if (isSave && (prev === null || prev === undefined)) {
-        nav("/routine/view");
+        if (targetIdx) {
+          // 트레이너가 target 회원을 위해 작업 중일 때는 target 정보 유지
+          nav("/routine/view", {
+            state: {
+              viewer: 'trainer',
+              targetMember: targetIdx
+            }
+          });
+        } else {
+          nav("/routine/view");
+        }
         setIsSave(false);
       }
     } else {
@@ -249,7 +259,7 @@ const RoutineMain = () => {
         setIsSave(true);
       }
     }
-  }, [routineData, unfinished, isSave, nav]);
+  }, [routineData, unfinished, isSave, nav, targetIdx, prev, routine_list_idx, tempData, targetDate]);
 
   useEffect(() => {
     if (prev !== null && routineData === routineInit) {
@@ -366,7 +376,17 @@ const RoutineMain = () => {
         setIsSave(true);
 
         if (routine_list_idx !== 'custom') {
-          nav("/routine/view");
+          if (targetIdx) {
+            // 트레이너가 target 회원을 위해 작업 중일 때는 target 정보 유지
+            nav("/routine/view", {
+              state: {
+                viewer: 'trainer',
+                targetMember: targetIdx
+              }
+            });
+          } else {
+            nav("/routine/view");
+          }
         }
         if (prev === null) {
           setRoutineData(routineInit);
@@ -418,10 +438,11 @@ const RoutineMain = () => {
       })).filter(routine => routine.sets.length > 0)
     };
 
-
-    if (routine_list_idx === "custom") {
-      postData.member_idx = targetIdx; // 여기에 target_idx는 해당 유저의 member_idx
+    // 트레이너가 target 회원을 위해 기록할 때
+    if (targetIdx) {
+      postData.member_idx = targetIdx;
     }
+
     if (postData.routines.length === 0) {
       alert("완료된 운동이 없습니다.");
       const saveCheck = tempData.find(item => item.saveDate === newData.saveDate)?.save;
@@ -616,7 +637,7 @@ const RoutineMain = () => {
       setPendingNav(false);
     }
     // eslint-disable-next-line
-  }, [pendingNav, nav]);
+  }, [pendingNav, nav, targetIdx, prev, location.pathname]);
 
   // 루틴 운동 등록
   const handleButton = () => {
@@ -662,12 +683,27 @@ const RoutineMain = () => {
 
 
 
+  const handleBackButton = () => {
+    if (targetIdx) {
+      // 트레이너가 target 회원을 위해 작업 중일 때는 루틴 뷰로 이동하되 target 정보 유지
+      nav("/routine/view", {
+        state: {
+          viewer: 'trainer',
+          targetMember: targetIdx
+        }
+      });
+    } else {
+      // 일반 사용자는 기존대로
+      nav("/routine/view");
+    }
+  };
+
   return (
     <>
       {/* 루틴 헤더 */}
       {!changeHeader ?
         <HeaderWrapper>
-          <button type="button" onClick={() => nav("/routine/view")}>취소</button>
+          <button type="button" onClick={handleBackButton}>취소</button>
           <p>루틴 생성하기</p>
           {
             location.pathname !== `/routine/detail/${routine_list_idx}` ?
