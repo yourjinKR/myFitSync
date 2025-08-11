@@ -935,6 +935,16 @@ const LogDetailModal = ({
                         </Section>
                     )}
 
+                    {log.apilog_user_action && (
+                        <Section>
+                            <SectionTitle>🛠️ 사용자 액션</SectionTitle>
+                            <FeedbackReason>
+                                {log.apilog_user_action}
+                            </FeedbackReason>
+                        </Section>
+                            
+                    )}
+
                     {/* 오류 정보 */}
                     {(log.apilog_status === 'error' || log.apilog_status === 'exception') && (
                         <Section>
