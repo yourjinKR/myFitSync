@@ -481,6 +481,15 @@ const Main = () => {
   const [nextSchedule, setNextSchedule] = useState(null);
   const { user } = useSelector(state => state.user);
   
+  // 로그아웃 시 상태 초기화
+  useEffect(() => {
+    if (!isLogin) {
+      setIsMatched(false);
+      setTrainerInfo(null);
+      setNextSchedule(null);
+    }
+  }, [isLogin]);
+
   // 스크롤 애니메이션을 위한 Intersection Observer
   useEffect(() => {
     // 로그인 상태가 아니거나 어드민일 때만 애니메이션 설정
@@ -540,6 +549,9 @@ const Main = () => {
             setIsMatched(false);
           }
         });
+    } else {
+      // 로그인하지 않았거나 일반 사용자가 아닌 경우 상태 초기화
+      setIsMatched(false);
     }
   }, [isLogin, member_type, member_idx]);
 
@@ -551,6 +563,7 @@ const Main = () => {
         .then(res => setTrainerInfo(res.data))
         .catch(err => {
           console.error('트레이너 정보 조회 실패', err);
+          setTrainerInfo(null);
         });
 
       // 매칭된 경우에만 다음 PT 스케줄 조회
@@ -561,7 +574,12 @@ const Main = () => {
           if (err.response?.status !== 404) {
             console.error('다음 스케줄 조회 실패', err);
           }
+          setNextSchedule(null);
         });
+    } else {
+      // 매칭되지 않았거나 조건이 맞지 않는 경우 상태 초기화
+      setTrainerInfo(null);
+      setNextSchedule(null);
     }
   }, [isLogin, member_type, member_idx, isMatched]);
 
@@ -620,7 +638,7 @@ const Main = () => {
 
 return (
   <> 
-    {isMatched && (
+    {isLogin && member_type === 'user' && member_idx && isMatched && (
     <>
     {/* <MatchedTrainerTitle>매칭된 트레이너와 함께<br />운동을 이어가보세요!</MatchedTrainerTitle> */}
 
