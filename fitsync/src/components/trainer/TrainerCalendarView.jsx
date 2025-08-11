@@ -22,14 +22,16 @@ import ScheduleDetailModal from '../user/ScheduleDetailModal';
 
 
 // 스타일 컴포넌트 분리
-const Wrapper = styled.div`
+const Wrapper = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'autoHeight'
+})`
   display: flex;
   flex-direction: column;
   gap: 2rem;
   font-size: 1.4rem;
   background: transparent;
   color: var(--text-primary);
-  min-height: ${autoHeight => autoHeight ? autoHeight : '100vh'};
+  min-height: ${props => props.autoHeight ? props.autoHeight : '100vh'};
   max-width: 1200px;
   margin: 0 auto;
 `;
