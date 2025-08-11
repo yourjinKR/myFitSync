@@ -183,7 +183,7 @@
             FROM payment_order
             WHERE member_idx = #{member_idx}
                 AND (
-                    (order_status = 'PAID' AND order_paydate IS NOT NULL AND order_paydate + 31 >= SYSDATE)
+                    (order_status = 'PAID' AND order_paydate IS NOT NULL AND (order_paydate + 31 + (10/1440)) >= SYSDATE)
                     OR
                     (order_type = 'SCHEDULE' AND order_status = 'READY' AND schedule_date >= SYSDATE)
                 )

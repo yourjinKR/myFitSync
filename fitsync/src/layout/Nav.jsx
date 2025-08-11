@@ -38,7 +38,7 @@ const NavButton = styled.button`
   background: none;
   border: none;
   outline: none;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 1.6rem;
   font-weight: 500;
   display: flex;
@@ -120,28 +120,28 @@ const Nav = () => {
   return (
     <NavWrapper>
       <NavButton onClick={() => handleNav('routine')}>
-        <FitnessCenterIcon />
+        <FitnessCenterIcon style={{fill : "var(--text-primary)"}}/>
         운동
       </NavButton>
       {!isTrainer && (
         <NavButton onClick={() => handleNav('matching')}>
-          <PersonSearchIcon />
+          <PersonSearchIcon style={{fill : "var(--text-primary)"}}/>
           매칭
         </NavButton>
       )}
       <Divider />
       <NavButton onClick={() => handleNav('home')}>
-        <HomeIcon />
+        <HomeIcon style={{fill : "var(--text-primary)"}}/>
         홈
       </NavButton>
       <Divider />
       <NavButton onClick={() => handleNav('chat')}>
-        <ChatIcon />
+        <ChatIcon style={{fill : "var(--text-primary)"}}/>
         채팅
       </NavButton>
       <Divider />
       <NavButton onClick={() => handleNav('mypage')}>
-        <PersonIcon />
+        <PersonIcon style={{fill : "var(--text-primary)"}}/>
         프로필
       </NavButton>
     </NavWrapper>

@@ -381,8 +381,8 @@ const TrainerMapContainer = ({gymInfo, isEdit, onChange}) => {
                     {keyword && gymList.length === 0 && !isSearching && (
                         <NoResults>
                             찾으시는 체육관이 없으신가요?<br/>
-                            아래 연락처로 문의해주세요!<br/>
-                            010-7202-2372☎️
+                            아래 이메일로 문의해주세요!<br/>
+                            yourj1n@naver.com 📨
                         </NoResults>
                     )}
                 </GymSearchContainer>
