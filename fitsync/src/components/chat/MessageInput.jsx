@@ -532,11 +532,11 @@ const MessageInput = ({
                 ? "답장을 입력하세요..." 
                 : selectedFiles.length > 0 
                   ? "이미지와 함께 보낼 메시지를 입력하세요..." 
-                  : blockDate === null
-                    ? "메시지를 입력하세요..."
-                    : `제재되어 ${formatDate(blockDate - 1, "none")}까지 메시지를 입력할 수 없습니다.`
+                  : blockDate !== null && blockDate >= Date.now()
+                    ? `제재되어 ${formatDate(blockDate - 1, "none")}까지 메시지를 입력할 수 없습니다.`
+                    : "메시지를 입력하세요..."
             }
-            disabled={disabled}
+            disabled={(blockDate !== null && blockDate >= Date.now()) && disabled}
             rows={1}
           />
           
