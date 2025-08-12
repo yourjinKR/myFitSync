@@ -516,13 +516,6 @@ const ButtonGroup = styled.div`
       &:active {
         transform: translateY(0);
       }
-
-      &:disabled {
-        background: rgba(74, 144, 226, 0.3);
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
     }
 
     &.secondary {
@@ -737,6 +730,13 @@ const ScheduleContent = styled.div`
     border-radius: 8px;
     display: inline-block;
     width: fit-content;
+  }
+
+  .schedule-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 
   .schedule-content {
@@ -1452,14 +1452,13 @@ useEffect(() => {
                                  
                                   title={!isDeleteMode ? '운동 추가' : ''}
                                 >
-                                  <div className="schedule-title">
-                                    {/* user_idx가 있으면 memberMap에서 문자열로 조회 */}
-                                    {schedule.user_idx
-                                      ? memberMap[String(schedule.user_idx)]
-                                      : schedule.user_name || '일정 없음'}
-                                  </div>
-                                  <div className="schedule-time">
-                                    {schedule.schedule_stime} ~ {schedule.schedule_etime}
+                                  <div className="schedule-header">
+                                    <div className="schedule-title">
+                                      {schedule.user_name}
+                                    </div>
+                                    <div className="schedule-time">
+                                      {schedule.schedule_stime} ~ {schedule.schedule_etime}
+                                    </div>
                                   </div>
                                   <div className="schedule-content">
                                     {schedule.schedule_content}

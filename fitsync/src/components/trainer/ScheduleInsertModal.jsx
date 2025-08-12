@@ -87,17 +87,17 @@ const Field = styled.div`
     &:read-only {
       background: rgba(0, 0, 0, 0.05);
       color: var(--text-secondary);
-      cursor: not-allowed;
     }
   }
 
   select {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 1);
+    background: #000000 !important;
   }
 
   option {
-    color: rgba(255, 255, 255, 1); /* 옵션 글자색을 완전히 밝게 설정 */
+    color: var(--text-primary);
+    background: #000000 !important;
     background: rgba(0, 0, 0, 0.8); /* 옵션 배경색을 완전히 어둡게 설정 */
     font-size: 1.6rem; /* 옵션 글자 크기 크게 설정 */
   }

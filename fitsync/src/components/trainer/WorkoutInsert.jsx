@@ -163,7 +163,6 @@ const Field = styled.div`
   input[readonly] {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
     color: var(--text-secondary);
-    cursor: not-allowed;
     border-color: rgba(255, 255, 255, 0.1);
   }
 
@@ -191,6 +190,13 @@ const Field = styled.div`
     background-size: 1.5rem;
     padding-right: 3rem;
     appearance: none;
+    background-color: #000000 !important;
+    color: var(--text-primary);
+  }
+
+  option {
+    background-color: #000000 !important;
+    color: var(--text-primary);
   }
 `;
 
