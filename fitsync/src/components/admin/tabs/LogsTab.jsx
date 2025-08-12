@@ -339,7 +339,6 @@ const StatusBadge = styled.span`
 
 const StatusReason = styled.span`
   color: var(--warning);
-  cursor: help;
   font-size: 12px;
 `;
 
@@ -403,7 +402,7 @@ const LogFeedback = styled.div`
 
 const FeedbackIcon = styled.span`
   font-size: 16px;
-  cursor: ${props => props.neutral ? 'default' : 'help'};
+  cursor: pointer;
   opacity: ${props => props.neutral ? '0.5' : '1'};
 `;
 

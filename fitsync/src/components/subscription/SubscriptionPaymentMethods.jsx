@@ -811,7 +811,7 @@ const SubscriptionPaymentMethods = () => {
   const handlePaymentSuccess = (result) => {
     setShowPaymentConfirm(false);
     setSelectedPaymentMethod(null);
-    alert(`결제가 완료되었습니다!`);
+    // alert(`결제가 완료되었습니다!`);
     loadPaymentMethods();
   };
 
