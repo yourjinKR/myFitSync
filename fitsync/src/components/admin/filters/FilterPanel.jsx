@@ -56,7 +56,7 @@ const FilterPanel = ({
                     <StyledSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
                         <option value="all">전체</option>
                         <option value="success">✅ 성공</option>
-                        <option value="error">❌ 오류</option>
+                        <option value="fail">❌ 오류</option>
                         <option value="exception">⚠️ 예외</option>
                     </StyledSelect>
                 </FilterGroup>

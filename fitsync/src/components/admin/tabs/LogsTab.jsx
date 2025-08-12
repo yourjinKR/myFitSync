@@ -64,8 +64,9 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
                             <HeaderCell>토큰</HeaderCell>
                             <HeaderCell>비용</HeaderCell>
                             <HeaderCell>응답시간</HeaderCell>
-                            <HeaderCell>피드백</HeaderCell>
                             <HeaderCell>버전</HeaderCell>
+                            <HeaderCell>피드백</HeaderCell>
+                            <HeaderCell>사용자 반응</HeaderCell>
                         </LogHeader>
                         
                         <LogList>
@@ -132,7 +133,10 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
                                             {log.apilog_total_time ? log.apilog_total_time.toFixed(2) : '-'}초
                                         </ResponseTime>
                                     </LogResponseTime>
-                                    
+
+                                    <LogVersion>
+                                        <VersionBadge>v{log.apilog_version || '0.0.0'}</VersionBadge>
+                                    </LogVersion>
                                     <LogFeedback>
                                         {log.apilog_feedback === 'LIKE' ? (
                                             <FeedbackIcon positive title="좋아요">👍</FeedbackIcon>
@@ -142,10 +146,11 @@ const LogsTab = ({ filteredLogs, apiLogs, setSelectedLog, selectedLog, isLoading
                                             <FeedbackIcon neutral>➖</FeedbackIcon>
                                         )}
                                     </LogFeedback>
+
+                                    <LogUserAction>
+                                      <LogUserActionBadge action={log.apilog_user_action}>{log.apilog_user_action}</LogUserActionBadge>
+                                    </LogUserAction>
                                     
-                                    <LogVersion>
-                                        <VersionBadge>v{log.apilog_version || '0.0.0'}</VersionBadge>
-                                    </LogVersion>
                                 </LogItem>
                             ))}
                         </LogList>
@@ -241,7 +246,7 @@ const LogContainer = styled.div`
 
 const LogHeader = styled.div`
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 0.8fr 1.2fr 0.8fr 0.8fr 0.6fr 0.6fr;
+  grid-template-columns: 0.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 0.6fr 0.6fr;
   gap: 12px;
   padding: 16px;
   background: var(--bg-tertiary);
@@ -267,7 +272,7 @@ const LogList = styled.div`
 
 const LogItem = styled.div`
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 0.8fr 1.2fr 0.8fr 0.8fr 0.6fr 0.6fr;
+  grid-template-columns: 0.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 0.6fr 0.6fr;
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid var(--border-light);
@@ -283,7 +288,7 @@ const LogItem = styled.div`
     border-left: 3px solid var(--success);
   `}
   
-  ${props => props.status === 'error' && `
+  ${props => props.status === 'fail' && `
     border-left: 3px solid var(--warning);
   `}
   
@@ -397,7 +402,6 @@ const ResponseTime = styled.div`
 `;
 
 const LogFeedback = styled.div`
-  text-align: center;
 `;
 
 const FeedbackIcon = styled.span`
@@ -415,6 +419,46 @@ const VersionBadge = styled.span`
   padding: 2px 6px;
   border-radius: 4px;
   color: var(--text-tertiary);
+`;
+
+const LogUserAction = styled.div``;
+
+const LogUserActionBadge = styled.div`
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  background: ${props => {
+    switch (props.action) {
+      case 'saved-immediate': return 'rgba(46, 139, 87, 0.2)'; // 초록계열 - 즉시 저장
+      case 'saved-after': return 'rgba(74, 144, 226, 0.2)'; // 파란계열 - 나중에 저장  
+      case 'ignored': return 'rgba(136, 136, 136, 0.2)'; // 회색계열 - 무시
+      default: return 'var(--bg-tertiary)';
+    }
+  }};
+  
+  color: ${props => {
+    switch (props.action) {
+      case 'saved-immediate': return 'var(--success)';
+      case 'saved-after': return 'var(--primary-blue)';
+      case 'ignored': return 'var(--primary-gray)';
+      default: return 'var(--text-tertiary)';
+    }
+  }};
+  
+  &::before {
+    content: ${props => {
+      switch (props.action) {
+        case 'saved-immediate': return '"⚡ "'; // 번개 - 즉시 반응
+        case 'saved-after': return '"⏰ "'; // 시계 - 나중에 반응
+        case 'ignored': return '"❌ "'; // X표 - 무시
+        default: return '"❓ "';
+      }
+    }};
+    margin-right: 2px;
+  }
 `;
 
 export default LogsTab;
