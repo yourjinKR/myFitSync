@@ -359,6 +359,8 @@ const TrainerInfo = ({idx, trainerData}) => {
   const trainerGender = trainerData?.member_gender;
   const trainerArea = trainerData?.member_activity_area || '활동 지역 미등록';
   const trainerTime = trainerData?.member_time || '시간 미등록';
+  const trainerIntro = trainerData?.member_intro || '트레이너 소개가 없습니다.';
+  
 
   return (
     <TrainerCard onClick={handleTrainerDetail}>
@@ -387,7 +389,7 @@ const TrainerInfo = ({idx, trainerData}) => {
           </div>
           <div className="trainer-intro">
             <FaUser className="intro-icon" />
-            <div className="intro-text">{trainerInfo}</div>
+            <div className="intro-text">{trainerIntro}</div>
           </div>
         </TrainerBasicInfo>
       </TrainerHeader>

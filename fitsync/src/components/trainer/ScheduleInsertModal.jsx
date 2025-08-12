@@ -199,12 +199,12 @@ const ScheduleInsertModal = ({
     return `${hour.toString().padStart(2, '0')}:00`;
   });
 
-  // 첫 진입 시 회원 자동 선택
-  useEffect(() => {
-    if (members.length > 0 && !useCustom && !selectedMember) {
-      setSelectedMember(members[0].member.member_name);
-    }
-  }, [members, useCustom, selectedMember]);
+  // 첫 진입 시 회원 자동 선택 제거 - 기본값을 "-- 선택하세요 --"로 유지
+  // useEffect(() => {
+  //   if (members.length > 0 && !useCustom && !selectedMember) {
+  //     setSelectedMember(members[0].member.member_name);
+  //   }
+  // }, [members, useCustom, selectedMember]);
 
   const isTimeConflict = () => {
     if (!schedulesForDate || !startTime) return false;
@@ -231,7 +231,7 @@ const ScheduleInsertModal = ({
     const scheduleName = useCustom ? customMember.trim() : selectedMember;
 
     if (!scheduleName || !startTime) {
-      alert('모든 항목을 입력해주세요.');
+      alert('회원을 선택하거나 이름을 입력해주세요.');
       return;
     }
 
