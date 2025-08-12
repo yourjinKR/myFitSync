@@ -563,7 +563,7 @@ const RoutineDetail = () => {
   const handleSetCheck = (routinePtIdx, setIndex) => (e) => {
     const key = `${routinePtIdx}-${setIndex}`;
     checkedSetsRef.current[key] = e.target.checked;
-    
+
     const updatedData = {
       ...data,
       routines: data.routines.map(r =>
@@ -582,14 +582,12 @@ const RoutineDetail = () => {
     if (!updatedData.saveDate) {
       updatedData.saveDate = targetDate || getKoreaTime();
     }
-    
+
     setData(updatedData);
     setNewData(updatedData);
-    
-    // tempData 업데이트
-    if(routine_list_idx !== 'custom') {
-      updateTempData(updatedData);
-    }
+
+    // 완료 체크 시 임시저장 항상 반영
+    updateTempData(updatedData);
   };
 
   // 세트 추가 핸들러
