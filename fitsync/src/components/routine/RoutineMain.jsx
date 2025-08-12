@@ -259,8 +259,6 @@ const RoutineMain = () => {
         setIsSave(true);
       }
     }
-    console.log("🚀  :  routineData:", routineData)
-    console.log("🚀  :  tempData:", tempData)
   }, [routineData, unfinished, isSave, nav, targetIdx, prev, routine_list_idx, tempData, targetDate]);
 
   useEffect(() => {
