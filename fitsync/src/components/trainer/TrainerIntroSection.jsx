@@ -390,8 +390,8 @@ const EditField = styled.input`
 const EditSelect = styled.select`
   width: 100%;
   font-size: 1.4rem;
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  background: #000000 !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 1.2rem 1.5rem;
@@ -410,7 +410,12 @@ const EditSelect = styled.select`
       0 4px 16px rgba(0, 0, 0, 0.08),
       0 0 0 3px rgba(74, 144, 226, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.08);
+    background: #000000 !important;
+  }
+
+  option {
+    background: #000000 !important;
+    color: white !important;
   }
 `;
 
@@ -498,8 +503,8 @@ const DayButton = styled.button`
 // 시간 선택 셀렉트 스타일
 const TimeSelect = styled.select`
   font-size: 1.4rem;
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  background: #000000 !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 1rem 1.5rem;
@@ -518,7 +523,12 @@ const TimeSelect = styled.select`
       0 4px 16px rgba(0, 0, 0, 0.08),
       0 0 0 3px rgba(74, 144, 226, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.08);
+    background: #000000 !important;
+  }
+
+  option {
+    background: #000000 !important;
+    color: white !important;
   }
 `;
 
