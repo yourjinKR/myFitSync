@@ -248,9 +248,10 @@ const TextArea = styled.textarea`
     min-height: 100px;
     margin-bottom: 1rem;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 1.3rem;
     line-height: 1.5;
     transition: all 0.2s ease;
+    resize : none;
     
     &:focus {
         outline: none;
