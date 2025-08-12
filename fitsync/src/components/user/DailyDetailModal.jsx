@@ -92,6 +92,7 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(15px);
   
