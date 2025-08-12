@@ -186,7 +186,7 @@ const DetailModal = styled.div`
 `;
 
 const UserInfo = styled.div`
-  position: fixed;
+  position: absolute; // ← fixed에서 absolute로 변경
   z-index: 1001;
   min-width: 250px;
   padding: 16px;
@@ -197,7 +197,6 @@ const UserInfo = styled.div`
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease, visibility 0.2s ease;
-  pointer-events: none;
   
   &.show {
     opacity: 1;
@@ -308,6 +307,7 @@ const UserInfo = styled.div`
 `;
 
 const UserInfoTrigger = styled.td`
+
   position: relative;
   cursor: pointer;
   padding: 12px 8px;
@@ -897,7 +897,7 @@ const Report = () => {
                                 <p>📧 {user.reported?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
-                                  <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reported?.member_idx, 'total')}</dt>
                                   <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
                                   <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
                                   <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
@@ -1119,7 +1119,7 @@ const Report = () => {
                                 <p>📧 {user.reported?.member_email || '(알수없음)'}</p>
                                 <dl>
                                   <dt>누적 차단 :&ensp;{getReportCount(user.reported?.member_idx, 'block')}</dt>
-                                  <dt>누적 신고 :&ensp;{totalData.filter(item => item.reported?.member_idx === user.reported?.member_idx).length}</dt>
+                                  <dt>누적 신고 :&ensp;{getReportCount(user.reported?.member_idx, 'total')}</dt>
                                   <dd>유저 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'member')}</strong></dd>
                                   <dd>채팅 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'message')}</strong></dd>
                                   <dd>리뷰 신고 :&ensp;<strong>{getReportCount(user.reported?.member_idx, 'review')}</strong></dd>
@@ -1275,36 +1275,21 @@ const Report = () => {
 
   // 툴팁 클릭 핸들러
   const handleTooltipClick = (e, tooltipId) => {
-    e.stopPropagation(); // 이벤트 버블링 방지
+    e.stopPropagation();
 
     const tooltip = e.currentTarget.querySelector('[data-tooltip]');
     if (tooltip) {
-      const rect = e.currentTarget.getBoundingClientRect();
+      // 부모 기준 좌표 계산
+      const parentRect = e.currentTarget.getBoundingClientRect();
 
-      let left = rect.left + rect.width / 2;
-      let top = rect.bottom + 10;
+      // absolute 기준: 부모의 왼쪽 상단이 (0,0)
+      let left = parentRect.width / 2;
+      let top = parentRect.height + 10; // 셀 아래 10px
 
-      // 화면 오른쪽 경계 체크
-      if (left + 125 > window.innerWidth) {
-        left = window.innerWidth - 125 - 10;
-      }
-
-      // 화면 왼쪽 경계 체크
-      if (left - 125 < 0) {
-        left = 125 + 10;
-      }
-
-      // 화면 아래쪽 경계 체크
-      if (top + 200 > window.innerHeight) {
-        top = rect.top - 200 - 10;
-      }
-
-      // 위치 설정
       tooltip.style.left = `${left}px`;
       tooltip.style.top = `${top}px`;
       tooltip.style.transform = 'translateX(-50%)';
 
-      // 툴팁 표시/숨김 토글
       if (activeTooltip === tooltipId) {
         setActiveTooltip(null);
       } else {
