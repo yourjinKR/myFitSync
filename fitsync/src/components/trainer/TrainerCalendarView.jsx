@@ -7,7 +7,6 @@ import {
   getDay,
   addDays,
   subDays,
-  endOfWeek,
 } from 'date-fns';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
@@ -628,36 +627,6 @@ const LegendContainer = styled.div`
   border-radius: 0 0 10px 10px;
 `;
 
-const DateCircle = styled.div`
-  min-width: 4rem;
-  height: 4rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  font-weight: 700;
-  box-shadow: 
-    0 4px 12px rgba(74, 144, 226, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-blue-light), var(--primary-blue));
-    z-index: -1;
-  }
-`;
-
 const ScheduleLabel = styled.label`
   display: flex;
   align-items: center;
@@ -1215,7 +1184,6 @@ useEffect(() => {
                             color: 'var(--text-secondary)',
                             lineHeight: '4rem',
                             fontWeight: '500',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                             background: 'rgba(255, 255, 255, 0.03)',
                             display: 'flex',
                             alignItems: 'center',
@@ -1248,7 +1216,6 @@ useEffect(() => {
                             <div
                               key={dayIdx}
                               style={{
-                                borderLeft: dayIdx === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
                                 height: '5rem',
                                 position: 'relative',
                                 cursor: 'pointer',
@@ -1315,9 +1282,10 @@ useEffect(() => {
                                     handleMemberClick(schedule);
                                   }}
                                 >
-                                  {schedule.user_idx
-                                    ? memberMap[schedule.user_idx]
-                                    : schedule.user_name || schedule.schedule_content}
+                                  {schedule.user_name || 
+                                   (schedule.user_idx && schedule.user_idx !== 0 ? memberMap[schedule.user_idx] : null) ||
+                                   schedule.schedule_content || 
+                                   '스케줄'}
                                 </div>
                               )}
                             </div>

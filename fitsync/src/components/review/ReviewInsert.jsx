@@ -262,7 +262,7 @@ const Button = styled.button`
   }
 `;
 
-const ReviewInsert = ({ matchingIdx, memberIdx, onClose }) => {
+const ReviewInsert = ({ matchingIdx, memberIdx, onClose, onReviewSubmitted }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [score, setScore] = useState(5);
@@ -285,6 +285,10 @@ const ReviewInsert = ({ matchingIdx, memberIdx, onClose }) => {
       .then(() => {
         alert('리뷰가 등록되었습니다.');
         onClose();
+        // 리뷰 작성 완료 후 부모 컴포넌트에 알림
+        if (onReviewSubmitted) {
+          onReviewSubmitted();
+        }
       })
       .catch(err => {
         alert('리뷰 등록 실패: ' + (err.response?.data || '에러'));

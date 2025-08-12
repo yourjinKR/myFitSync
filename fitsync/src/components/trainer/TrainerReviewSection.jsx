@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
@@ -230,19 +230,25 @@ const TrainerReviewSection = () => {
   const [canWriteReview, setCanWriteReview] = useState(false);
   const [showInsert, setShowInsert] = useState(false);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        if (trainerIdx) {
-          const res = await axios.get(`/trainer/reviews/${trainerIdx}`);
-          const filtered = Array.isArray(res.data) ? res.data.filter(r => r !== undefined && r !== null) : [];
-          setReviews(filtered);
-        }
-      } catch (err) {
-        console.error('리뷰 가져오기 실패:', err);
+  const fetchReviews = useCallback(async () => {
+    try {
+      if (trainerIdx) {
+        const res = await axios.get(`/trainer/reviews/${trainerIdx}`);
+        const filtered = Array.isArray(res.data) ? res.data.filter(r => r !== undefined && r !== null) : [];
+        setReviews(filtered);
       }
-    };
+    } catch (err) {
+      console.error('리뷰 가져오기 실패:', err);
+    }
+  }, [trainerIdx]);
 
+  const handleReviewSubmitted = () => {
+    // 리뷰 작성 완료 후 목록 새로고침
+    fetchReviews();
+    setCanWriteReview(false); // 리뷰 작성 버튼 숨기기
+  };
+
+  useEffect(() => {
     const checkEligibility = async () => {
       if (trainerIdx && memberIdx) {
         try {
@@ -258,7 +264,7 @@ const TrainerReviewSection = () => {
 
     fetchReviews();
     checkEligibility();
-  }, [trainerIdx, memberIdx]);
+  }, [trainerIdx, memberIdx, fetchReviews]);
 
   return (
     <Section>
@@ -274,9 +280,10 @@ const TrainerReviewSection = () => {
 
         {showInsert && (
           <ReviewInsert
-            trainerIdx={trainerIdx}
+            matchingIdx={trainerIdx}
             memberIdx={memberIdx}
             onClose={() => setShowInsert(false)}
+            onReviewSubmitted={handleReviewSubmitted}
           />
         )}
       </Container>
