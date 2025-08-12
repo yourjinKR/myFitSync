@@ -353,7 +353,6 @@ const TrainerInfo = ({idx, trainerData}) => {
 
   // 기본값 처리
   const trainerName = trainerData?.member_name || `트레이너 ${idx + 1}`;
-  const trainerInfo = trainerData?.member_info || '트레이너 소개 정보가 없습니다.';
   const trainerPurpose = trainerData?.member_purpose || `전문 분야`;
   const trainerImage = trainerData?.member_image;
   const trainerGender = trainerData?.member_gender;
