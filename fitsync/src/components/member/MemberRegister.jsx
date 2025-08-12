@@ -489,7 +489,7 @@ const MemberRegister = () => {
             </TimeInputWrapper>
           </FormGroup>
           <FormGroup>
-            <Label htmlFor='member_disease'>불편상항 <span>(선택)</span></Label>
+            <Label htmlFor='member_disease'>불편사항 <span>(선택)</span></Label>
             <Select 
               onChange={handleChange} 
               name="member_disease"
