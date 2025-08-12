@@ -218,8 +218,6 @@ const ScheduleInsertModal = ({
       if (!sEndRaw) continue;
       const sEnd = parseInt(sEndRaw.split(':')[0], 10);
 
-      console.log(`Checking conflict: new ${startHour}-${endHour} vs existing ${sStart}-${sEnd}`);
-
       if (startHour < sEnd && endHour > sStart) {
         return true;
       }
