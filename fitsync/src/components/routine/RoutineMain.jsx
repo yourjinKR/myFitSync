@@ -259,6 +259,8 @@ const RoutineMain = () => {
         setIsSave(true);
       }
     }
+    console.log("🚀  :  routineData:", routineData)
+    console.log("🚀  :  tempData:", tempData)
   }, [routineData, unfinished, isSave, nav, targetIdx, prev, routine_list_idx, tempData, targetDate]);
 
   useEffect(() => {
@@ -566,6 +568,7 @@ const RoutineMain = () => {
 
   const handleUpdateData = (type) => {
     if (type) {
+      if(!newData) return;
       const putData = async () => {
         try {
           const response = await axios.put(
@@ -657,29 +660,29 @@ const RoutineMain = () => {
     });
   }
 
-  const handleChkRef = (e) => {
-    checkedRef.current = e.target;
-    const chk = e.target.checked;
-    if (chk) {
-      const getDateStr = () => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-      const dateStr = routineData.saveDate ? routineData.saveDate.slice(0, 10) : getDateStr();
-      setRoutineData(prev => ({
-        ...prev,
-        routine_name: `루틴_${dateStr}`,
-      }));
-    } else {
-      setRoutineData(prev => ({
-        ...prev,
-        routine_name: '',
-      }));
-    }
-  }
+  // const handleChkRef = (e) => {
+  //   checkedRef.current = e.target;
+  //   const chk = e.target.checked;
+  //   if (chk) {
+  //     const getDateStr = () => {
+  //       const now = new Date();
+  //       const year = now.getFullYear();
+  //       const month = String(now.getMonth() + 1).padStart(2, '0');
+  //       const day = String(now.getDate()).padStart(2, '0');
+  //       return `${year}-${month}-${day}`;
+  //     };
+  //     const dateStr = routineData.saveDate ? routineData.saveDate.slice(0, 10) : getDateStr();
+  //     setRoutineData(prev => ({
+  //       ...prev,
+  //       routine_name: `루틴_${dateStr}`,
+  //     }));
+  //   } else {
+  //     setRoutineData(prev => ({
+  //       ...prev,
+  //       routine_name: '',
+  //     }));
+  //   }
+  // }
 
 
 
@@ -773,7 +776,7 @@ const RoutineMain = () => {
               {
                 routine_list_idx === 'custom' && !routineData.member_idx ?
                   <ChkBox>
-                    <CheckInput type='checkbox' id="chkUpdate" onChange={handleChkRef} ref={checkedRef} /><ChecklabelText htmlFor="chkUpdate"><p>루틴에 등록하기</p></ChecklabelText>
+                    <CheckInput type='checkbox' id="chkUpdate" ref={checkedRef} /><ChecklabelText htmlFor="chkUpdate"><p>루틴에 등록하기</p></ChecklabelText>
                   </ChkBox>
                   : <></>
               }
