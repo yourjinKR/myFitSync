@@ -481,7 +481,7 @@ const ModalBox = styled.div`
 `;
 
 const ChatHistory = styled.div`
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  background: var(--bg-secondary);
   border-radius: 16px;
   padding: 30px;
   color: var(--text-black) !important;
@@ -1400,7 +1400,7 @@ const Report = () => {
             ) : (
               <ChatHistory onClick={(e) => e.stopPropagation()}>
                 <div className="chat-divider">
-                  <span>대화 내용</span>
+                  <span style={{background : "var(--bg-tertiary)"}}>대화 내용</span>
                 </div>
                 {modalData.content?.history_message && modalData.content.history_message.length > 0 ? (
                   modalData.content.history_message.map((item, index) => (
