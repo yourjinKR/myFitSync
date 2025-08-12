@@ -239,6 +239,7 @@ const CloseButton = styled.button`
   border-radius: 50%;
   color: var(--primary-blue);
   cursor: pointer;
+  z-index : 1;
   display: flex;
   align-items: center;
   justify-content: center;
