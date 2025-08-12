@@ -128,7 +128,6 @@ const Header = ({setIsOpen}) => {
           // 영구 저장소 정리
           persistor.purge();
           // 성공 메시지는 유지 (사용자가 의도한 로그아웃이므로)
-          alert(res.data.message);
           nav("/");
           
         } catch (error) {
@@ -148,8 +147,6 @@ const Header = ({setIsOpen}) => {
             alert('로그아웃 요청 시간이 초과되었지만 로그아웃되었습니다.');
           } else if (error.response?.status === 401) {
             // 이미 로그아웃된 상태 처리
-          } else {
-            alert('로그아웃되었습니다.');
           }
           
           nav("/");
