@@ -992,8 +992,6 @@ const MessageItem = ({
       const result = await chatApi.acceptMatching(matchingIdx);
       
       if (result.success) {
-        alert('매칭이 성공적으로 수락되었습니다!');
-        
         // 로컬 상태 즉시 업데이트
         setCurrentMatchingStatus(prev => ({
           ...prev,
