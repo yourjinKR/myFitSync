@@ -56,6 +56,11 @@ public class JwtUtil {
         Claims claims = parseClaims(token);
         return claims.get("block_date", Date.class);
     }
+    
+    public Integer getBlockCount(String token) {
+    	Claims claims = parseClaims(token);
+    	return claims.get("block_Count", Integer.class);
+    }
 
     public boolean validate(String token) {
         try {

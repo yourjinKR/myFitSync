@@ -1,8 +1,10 @@
 package org.fitsync.filter;
 
 import org.fitsync.util.JwtUtil;
-import org.fitsync.service.MemberServiceImple;
+import org.fitsync.service.MemberService;
 import org.fitsync.domain.MemberVO;
+import org.fitsync.domain.ReportVO;
+import org.fitsync.service.ReportService;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -17,10 +19,12 @@ import java.io.IOException;
 
 public class AuthTokenFilter implements Filter {
     private JwtUtil jwtUtil;
-    private MemberServiceImple memberService;
+    private MemberService memberService;
+    private ReportService reportService; // ReportService 추가
 
     public void setJwtUtil(JwtUtil jwtUtil) { this.jwtUtil = jwtUtil; }
-    public void setMemberService(MemberServiceImple memberService) { this.memberService = memberService; }
+    public void setMemberService(MemberService memberService) { this.memberService = memberService; }
+    public void setReportService(ReportService reportService) { this.reportService = reportService; } // ReportService 세터 메서드 추가
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {}
@@ -52,34 +56,51 @@ public class AuthTokenFilter implements Filter {
         }
 
         if (token != null && jwtUtil != null && jwtUtil.validate(token)) {
-            Integer memberIdx = jwtUtil.getUserIdx(token).intValue();
-            
-            // DB에서 member_type 조회
-            String memberType = null;
-            try {
-                if (memberService != null) {
-                    MemberVO member = memberService.getMemberByIdx(memberIdx);
-                    if (member != null) {
-                        memberType = member.getMember_type();
-                    }
-                }
-            } catch (Exception e) {
-                // DB 조회 실패 시 로그만 남기고 계속 진행
-                System.err.println("Failed to get member_type from DB: " + e.getMessage());
+            String tokenEmail = jwtUtil.getEmail(token);
+
+            MemberVO member = memberService.getFindUser(tokenEmail);
+
+            if (member == null) {
+                httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                httpResponse.setContentType("application/json;charset=UTF-8");
+                httpResponse.getWriter().write("{\"success\":false,\"msg\":\"회원 정보를 찾을 수 없습니다.\"}");
+                return;
             }
-            
-            // request attribute에 저장
-            request.setAttribute("member_idx", memberIdx);
-            if (memberType != null) {
-                request.setAttribute("member_type", memberType);
+
+            // 제재 정보 비교 (block_date, block_count)
+            java.util.Date tokenBlockDate = jwtUtil.getBlockDate(token);
+            Integer tokenBlockCount = jwtUtil.getBlockCount(token);
+
+            ReportVO report = reportService.getBlockData(member.getMember_idx());
+            java.sql.Date dbBlockDate = report != null ? report.getReport_time() : null;
+            Integer dbBlockCount = report != null ? report.getBlock_count() : null;
+
+            boolean needRefresh = (dbBlockDate != null && !dbBlockDate.equals(tokenBlockDate))
+                || (dbBlockCount != null && !dbBlockCount.equals(tokenBlockCount));
+
+            // 세션에 정보 저장
+            httpRequest.getSession().setAttribute("member_idx", member.getMember_idx());
+            httpRequest.getSession().setAttribute("member_type", member.getMember_type());
+            httpRequest.getSession().setAttribute("block_date", dbBlockDate); // 제재일 세션에 갱신
+            httpRequest.getSession().setAttribute("block_count", dbBlockCount); // 카운트도 세션에 갱신
+
+            // 제재 정보가 다르면 토큰 갱신
+            if (needRefresh) {
+                String newToken = jwtUtil.generateToken(
+                    member.getMember_idx(),
+                    dbBlockDate,
+                    dbBlockCount != null ? dbBlockCount : 0,
+                    member.getMember_email()
+                );
+                Cookie cookie = new Cookie("accessToken", newToken);
+                cookie.setHttpOnly(true);
+                cookie.setPath("/");
+                cookie.setMaxAge(8 * 60 * 60);
+                cookie.setSecure(false); // HTTPS 사용시 true
+                cookie.setComment("SameSite=Lax");
+                httpResponse.addCookie(cookie);
             }
-            
-            // 세션에도 저장
-            httpRequest.getSession().setAttribute("member_idx", memberIdx);
-            if (memberType != null) {
-                httpRequest.getSession().setAttribute("member_type", memberType);
-            }
-            
+
             chain.doFilter(request, response);
             return;
         }

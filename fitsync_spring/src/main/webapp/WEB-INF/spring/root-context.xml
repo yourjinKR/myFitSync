@@ -57,10 +57,13 @@
    </bean>
    
    	<bean id="jwtUtil" class="org.fitsync.util.JwtUtil" />
+    <bean id="memberService" class="org.fitsync.service.MemberServiceImple"/>
+    <bean id="reportService" class="org.fitsync.service.ReportServiceImple"/>
 	<bean id="authTokenFilter" class="org.fitsync.filter.AuthTokenFilter">
-	    <property name="jwtUtil" ref="jwtUtil" />
+	    <property name="jwtUtil" ref="jwtUtil"/>
+	    <property name="memberService" ref="memberService"/>
+	    <property name="reportService" ref="reportService"/>
 	</bean>
-	
    <tx:annotation-driven transaction-manager="transactionManager" />
 
 </beans>
