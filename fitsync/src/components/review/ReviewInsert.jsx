@@ -262,42 +262,86 @@ const Button = styled.button`
   }
 `;
 
-const ReviewInsert = ({ matchingIdx, memberIdx, onClose, onReviewSubmitted }) => {
+const ReviewInsert = ({ memberIdx, trainerIdx, onClose, onReviewSubmitted }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [score, setScore] = useState(5);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title || !score || !memberIdx) {
+      alert('제목, 별점이 필요합니다.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 회원의 모든 매칭 정보 가져오기 
+      const allMatchingsRes = await axios.get(`/user/all-matchings/${memberIdx}`);
       
-      alert('제목, 별점, 매칭 정보가 필요합니다.');
-      return;
-    }
+      if (!allMatchingsRes.data || !Array.isArray(allMatchingsRes.data) || allMatchingsRes.data.length === 0) {
+        alert('매칭 정보가 없습니다.');
+        return;
+      }
 
-    if (!matchingIdx) {
-      alert('매칭 정보를 확인할 수 없습니다. 다시 시도해주세요.');
-      return;
-    }
+      // 완료된 매칭만 필터링 (MATCHING_COMPLETE = 2)
+      const completedMatchings = allMatchingsRes.data.filter(m => m.matching_complete === 2);
+      
+      if (completedMatchings.length === 0) {
+        alert('완료된 매칭이 없습니다.');
+        return;
+      }
 
-    axios.post('/user/reviewinsert', {
-      review_title: title,
-      review_content: content,
-      review_star: score,
-      member_idx: memberIdx,
-      matching_idx: matchingIdx, // 매칭 정보도 함께 전송
-      review_hidden: 'N'
-    })
-      .then(() => {
-        alert('리뷰가 등록되었습니다.');
-        onClose();
-        // 리뷰 작성 완료 후 부모 컴포넌트에 알림
-        if (onReviewSubmitted) {
-          onReviewSubmitted();
-        }
-      })
-      .catch(err => {
-        alert('리뷰 등록 실패: ' + (err.response?.data || '에러'));
+      // MATCHING_IDX 기준으로 내림차순 정렬하여 최신 매칭 선택
+      const sortedMatchings = completedMatchings.sort((a, b) => b.matching_idx - a.matching_idx);
+      const latestMatching = sortedMatchings[0];
+
+      console.log('최신 완료된 매칭:', latestMatching);
+
+      // 리뷰 등록
+      await axios.post('/user/reviewinsert', {
+        review_title: title,
+        review_content: content,
+        review_star: score,
+        member_idx: memberIdx,
+        matching_idx: latestMatching.matching_idx,
+        review_hidden: 'N'
       });
+
+      alert('리뷰가 등록되었습니다.');
+      onClose();
+      if (onReviewSubmitted) {
+        onReviewSubmitted();
+      }
+    } catch (err) {
+      console.error('리뷰 등록 오류:', err);
+      
+      // API가 없다면 기존 방식 사용
+      if (err.response?.status === 404) {
+        try {
+          // 백엔드에서 자동으로 찾아주는 방식 사용
+          await axios.post('/user/reviewinsert', {
+            review_title: title,
+            review_content: content,
+            review_star: score,
+            member_idx: memberIdx,
+            review_hidden: 'N'
+          });
+
+          alert('리뷰가 등록되었습니다.');
+          onClose();
+          if (onReviewSubmitted) {
+            onReviewSubmitted();
+          }
+        } catch (fallbackErr) {
+          alert('리뷰 등록 실패: ' + (fallbackErr.response?.data || '에러가 발생했습니다.'));
+        }
+      } else {
+        alert('리뷰 등록 실패: ' + (err.response?.data || '에러가 발생했습니다.'));
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -332,8 +376,10 @@ const ReviewInsert = ({ matchingIdx, memberIdx, onClose, onReviewSubmitted }) =>
         </StarSection>
         
         <ButtonGroup>
-          <Button onClick={onClose}>취소</Button>
-          <Button $primary onClick={handleSubmit}>등록하기</Button>
+          <Button onClick={onClose} disabled={loading}>취소</Button>
+          <Button $primary onClick={handleSubmit} disabled={loading}>
+            {loading ? '등록 중...' : '등록하기'}
+          </Button>
         </ButtonGroup>
       </FormContainer>
     </ModalOverlay>
