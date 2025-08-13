@@ -244,7 +244,6 @@ const ScheduleInsertModal = ({
 
     const dayIndex = new Date(selectedDate).getDay();
     const key = `${dayIndex}-${startTime}`;
-    console.log(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
     
     onInsert(key, userNameToSend, startTime, endTime, memo, userIdxToSend);
     onClose();

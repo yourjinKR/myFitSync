@@ -396,7 +396,6 @@ const TrainerProfileHeader = ({
 
   // 핸들러
   const subScriptionPagehandler = () => {
-    console.log(isSubscriber);
     
     if (isSubscriber) {
       nav('/ai/userLog');
