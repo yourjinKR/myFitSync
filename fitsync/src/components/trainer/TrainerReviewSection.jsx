@@ -229,6 +229,7 @@ const TrainerReviewSection = () => {
   const [reviews, setReviews] = useState([]);
   const [canWriteReview, setCanWriteReview] = useState(false);
   const [showInsert, setShowInsert] = useState(false);
+  const [latestMatchingIdx, setLatestMatchingIdx] = useState(null);
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -255,7 +256,31 @@ const TrainerReviewSection = () => {
           const res = await axios.get(`/user/check-review-eligibility`, {
             params: { trainerIdx, memberIdx }
           });
-          setCanWriteReview(res.data === true);
+          
+          // 응답이 객체인 경우 매칭 정보도 포함되어 있을 수 있음
+          if (typeof res.data === 'object' && res.data !== null) {
+            setCanWriteReview(res.data.canWrite === true);
+            if (res.data.latestMatchingIdx) {
+              setLatestMatchingIdx(res.data.latestMatchingIdx);
+            }
+          } else {
+            setCanWriteReview(res.data === true);
+          }
+          
+          // 리뷰 작성 가능한 경우 최신 매칭 정보 가져오기
+          if (res.data === true || (res.data && res.data.canWrite)) {
+            try {
+              const matchingRes = await axios.get(`/user/latest-completed-matching`, {
+                params: { trainerIdx, memberIdx }
+              });
+              if (matchingRes.data && matchingRes.data.matching_idx) {
+                setLatestMatchingIdx(matchingRes.data.matching_idx);
+              }
+            } catch (matchingErr) {
+              console.error('최신 매칭 정보 가져오기 실패:', matchingErr);
+              // 매칭 정보를 가져올 수 없는 경우 trainerIdx 사용
+            }
+          }
         } catch (err) {
           console.error('작성 가능 여부 요청 실패:', err);
         }
@@ -280,7 +305,7 @@ const TrainerReviewSection = () => {
 
         {showInsert && (
           <ReviewInsert
-            matchingIdx={trainerIdx}
+            matchingIdx={latestMatchingIdx || trainerIdx}
             memberIdx={memberIdx}
             onClose={() => setShowInsert(false)}
             onReviewSubmitted={handleReviewSubmitted}

@@ -269,9 +269,13 @@ const ReviewInsert = ({ matchingIdx, memberIdx, onClose, onReviewSubmitted }) =>
 
   const handleSubmit = () => {
     if (!title || !score || !memberIdx) {
-      console.log(matchingIdx, memberIdx);
       
       alert('제목, 별점, 매칭 정보가 필요합니다.');
+      return;
+    }
+
+    if (!matchingIdx) {
+      alert('매칭 정보를 확인할 수 없습니다. 다시 시도해주세요.');
       return;
     }
 
@@ -280,6 +284,7 @@ const ReviewInsert = ({ matchingIdx, memberIdx, onClose, onReviewSubmitted }) =>
       review_content: content,
       review_star: score,
       member_idx: memberIdx,
+      matching_idx: matchingIdx, // 매칭 정보도 함께 전송
       review_hidden: 'N'
     })
       .then(() => {
