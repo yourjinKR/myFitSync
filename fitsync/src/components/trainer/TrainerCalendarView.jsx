@@ -277,6 +277,15 @@ const WeekdaysRow = styled.div`
 
   & > div {
     font-size: 1.4rem;
+    position: relative;
+    
+    ${({ weekmode }) => weekmode && `
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      
+      &:last-child {
+        border-right: none;
+      }
+    `}
   }
   ${({ weekmode }) => weekmode && `
     & + div > div{
@@ -314,7 +323,7 @@ const CustomCalendar = styled.div`
 `;
 
 const DayCellBox = styled.div.withConfig({
-  shouldForwardProp: (prop) => !['isSelected', 'isToday', 'isSunday', 'isSaturday', 'isClickable'].includes(prop)
+  shouldForwardProp: (prop) => !['isSelected', 'isToday', 'isSunday', 'isSaturday', 'isClickable', 'weekmode'].includes(prop)
 })`
   background: ${({ isSelected, isToday }) =>
     isSelected
@@ -333,7 +342,7 @@ const DayCellBox = styled.div.withConfig({
       ? 'var(--primary-blue-light)'
       : 'var(--text-primary)'};
   padding: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: ${({ weekmode }) => weekmode ? '1px solid rgba(255, 255, 255, 0.15)' : 'none'};
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: ${({ isClickable }) => (isClickable ? 'pointer' : 'default')};
   font-size: 1.5rem;
@@ -1222,7 +1231,8 @@ useEffect(() => {
                                 background: isToday 
                                   ? 'rgba(74, 144, 226, 0.06)' 
                                   : 'transparent',
-                                transition: 'background-color 0.2s ease'
+                                transition: 'background-color 0.2s ease',
+                                borderRight: dayIdx < 6 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none'
                               }}
                               onMouseEnter={(e) => {
                                 if (!isStart) {
@@ -1307,7 +1317,7 @@ useEffect(() => {
                 <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
                   <div style={{ flex: 1, minWidth: '350px' }}>
 
-                  <WeekdaysRow>
+                  <WeekdaysRow weekmode={false}>
                     {days.map((day, idx) => (
                       <div key={idx}>{day}</div>
                     ))}
@@ -1335,6 +1345,7 @@ useEffect(() => {
                           isSunday={dayOfWeek === 0}
                           isSaturday={dayOfWeek === 6}
                           isClickable={!!dateStr}
+                          weekmode={view === 'week'}
                           tabIndex={!!dateStr ? 0 : -1}
                           aria-label={dateStr ? `${day}일` : ''}
                           onClick={() => dateStr && handleDayClick(dateStr)}
@@ -1505,7 +1516,7 @@ useEffect(() => {
             </MonthTitle>
 
             <ScheduleBox style={{ flexDirection: 'column', minWidth: '350px' }}>
-              <WeekdaysRow>
+              <WeekdaysRow weekmode={false}>
                 {days.map((day, idx) => (
                   <div key={idx}>{day}</div>
                 ))}
@@ -1528,6 +1539,7 @@ useEffect(() => {
                       isSunday={dayOfWeek === 0}
                       isSaturday={dayOfWeek === 6}
                       isClickable={!!dateStr}
+                      weekmode={view === 'week'}
                       onClick={() => dateStr && handleDayClick(dateStr)}
                     >
                       {day || ''}
