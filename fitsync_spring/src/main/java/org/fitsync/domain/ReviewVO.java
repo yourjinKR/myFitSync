@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReviewVO {
-	private int matching_idx, review_star, member_idx;
+	private int matching_idx, review_star, member_idx, trainer_idx;
 	private String review_title, review_content, review_hidden, member_name, member_image;
 }

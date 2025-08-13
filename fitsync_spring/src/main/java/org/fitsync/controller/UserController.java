@@ -122,6 +122,23 @@ public class UserController {
         	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    
+    // 특정 트레이너와 회원 간의 완료된 매칭 정보 조회
+    @GetMapping("/completed-matching/{trainerIdx}/{memberIdx}")
+    public ResponseEntity<MatchingVO> getCompletedMatching(
+            @PathVariable int trainerIdx,
+            @PathVariable int memberIdx
+    ) {
+        try {
+            log.info("완료된 매칭 조회 요청 - trainerIdx: " + trainerIdx + ", memberIdx: " + memberIdx);
+            MatchingVO matching = matchingService.findCompletedMatchingByTrainerAndMember(trainerIdx, memberIdx);
+            log.info("완료된 매칭 조회 결과: " + (matching != null ? matching.getMatching_idx() : "null"));
+            return ResponseEntity.ok(matching);
+        } catch (Exception e) {
+            log.error("완료된 매칭 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
     // PT 횟수 차감
     @PutMapping("/matching/decrease/{matchingIdx}")
     public ResponseEntity<?> decreaseMatchingRemain(@PathVariable int matchingIdx) {
@@ -223,12 +240,36 @@ public class UserController {
     @PostMapping("/reviewinsert")
     public ResponseEntity<?> insertReview(@RequestBody ReviewVO reviewVO) {
         try {
+            log.info("리뷰 등록 요청 받음: " + reviewVO.toString());
+            
             // reviewVO에는 member_idx가 있음
             int memberIdx = reviewVO.getMember_idx();
+            
+            MatchingVO matching = null;
+            
+            // matching_idx가 직접 전달된 경우 해당 매칭 사용
+            if (reviewVO.getMatching_idx() != 0) {
+                matching = matchingService.getMatching(reviewVO.getMatching_idx());
+                log.info("직접 전달된 matching_idx 사용: " + reviewVO.getMatching_idx());
+            } 
+            // trainer_idx가 전달된 경우 해당 트레이너와의 매칭 찾기
+            else if (reviewVO.getTrainer_idx() != 0) {
+                int trainerIdx = reviewVO.getTrainer_idx();
+                log.info("trainer_idx로 매칭 찾기: trainerIdx=" + trainerIdx + ", memberIdx=" + memberIdx);
+                
+                // 특정 트레이너와의 완료된 매칭 조회
+                matching = matchingService.findCompletedMatchingByTrainerAndMember(trainerIdx, memberIdx);
+                log.info("trainer_idx " + trainerIdx + "와 member_idx " + memberIdx + "의 매칭 찾기 결과: " + 
+                        (matching != null ? matching.getMatching_idx() : "null"));
+            }
+            // 둘 다 없으면 기존 로직 사용
+            else {
+                matching = matchingService.findCompletedMatchingByMemberIdx(memberIdx);
+                log.info("기존 로직으로 매칭 찾기: " + (matching != null ? matching.getMatching_idx() : "null"));
+            }
 
-            // member_idx로 매칭 정보 조회 (매칭 완료 상태인 것)
-            MatchingVO matching = matchingService.findCompletedMatchingByMemberIdx(memberIdx);
             if (matching == null) {
+                log.error("완료된 매칭 정보가 없습니다. memberIdx: " + memberIdx + ", trainerIdx: " + reviewVO.getTrainer_idx());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("완료된 매칭 정보가 없습니다.");
             }
 
@@ -238,9 +279,11 @@ public class UserController {
             // 리뷰 공개 상태 기본값 설정
             reviewVO.setReview_hidden("0");
 
+            log.info("최종 사용된 matching_idx: " + matching.getMatching_idx());
             reviewService.insertReview(reviewVO);
             return ResponseEntity.ok("리뷰 등록 성공");
         } catch (Exception e) {
+            log.error("리뷰 등록 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("리뷰 등록 실패: " + e.getMessage());
         }
     }

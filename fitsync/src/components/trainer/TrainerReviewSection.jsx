@@ -229,6 +229,7 @@ const TrainerReviewSection = () => {
   const [reviews, setReviews] = useState([]);
   const [canWriteReview, setCanWriteReview] = useState(false);
   const [showInsert, setShowInsert] = useState(false);
+  const [currentMatchingIdx, setCurrentMatchingIdx] = useState(null);
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -249,6 +250,14 @@ const TrainerReviewSection = () => {
           params: { trainerIdx, memberIdx }
         });
         setCanWriteReview(res.data === true);
+
+        // 리뷰 작성 가능한 경우 해당 트레이너와의 매칭 정보 가져오기
+        if (res.data === true) {
+          // 매칭 정보를 가져오지 말고 바로 리뷰 작성 가능하도록 설정
+          // 백엔드에서 trainer_idx를 통해 올바른 매칭을 찾도록 함
+          console.log('리뷰 작성 가능 - trainer_idx로 매칭 찾기 위임');
+          setCurrentMatchingIdx(null); // null로 설정하여 백엔드에서 찾도록 함
+        }
       } catch (err) {
         console.error('작성 가능 여부 요청 실패:', err);
       }
@@ -276,13 +285,21 @@ const TrainerReviewSection = () => {
         </ReviewCount>
 
         {canWriteReview && (
-          <WriteButton onClick={() => setShowInsert(true)}>리뷰 작성하기</WriteButton>
+          <WriteButton onClick={() => {
+            console.log('리뷰 작성 버튼 클릭:', {
+              trainerIdx,
+              memberIdx,
+              currentMatchingIdx
+            });
+            setShowInsert(true);
+          }}>리뷰 작성하기</WriteButton>
         )}
 
         {showInsert && (
           <ReviewInsert
             memberIdx={memberIdx}
             trainerIdx={trainerIdx}
+            matchingIdx={currentMatchingIdx}
             onClose={() => setShowInsert(false)}
             onReviewSubmitted={handleReviewSubmitted}
           />

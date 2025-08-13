@@ -262,7 +262,7 @@ const Button = styled.button`
   }
 `;
 
-const ReviewInsert = ({ memberIdx, trainerIdx, onClose, onReviewSubmitted }) => {
+const ReviewInsert = ({ memberIdx, trainerIdx, matchingIdx, onClose, onReviewSubmitted }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [score, setScore] = useState(5);
@@ -274,39 +274,37 @@ const ReviewInsert = ({ memberIdx, trainerIdx, onClose, onReviewSubmitted }) => 
       return;
     }
 
+    console.log('리뷰 제출 시작:', {
+      memberIdx,
+      trainerIdx,
+      matchingIdx,
+      title,
+      content,
+      score
+    });
+
+    // matchingIdx가 있으면 직접 사용, 없으면 백엔드에서 자동 찾기
+    const requestData = {
+      review_title: title,
+      review_content: content,
+      review_star: score,
+      member_idx: memberIdx,
+      trainer_idx: trainerIdx, // 트레이너 정보 추가로 전달
+      review_hidden: 'N'
+    };
+
+    // matchingIdx가 있으면 추가
+    if (matchingIdx) {
+      requestData.matching_idx = matchingIdx;
+      console.log('매칭 정보 포함해서 전송:', requestData);
+    } else {
+      console.log('trainer_idx로 매칭 찾기 요청:', requestData);
+    }
+
     setLoading(true);
     try {
-      // 회원의 모든 매칭 정보 가져오기 
-      const allMatchingsRes = await axios.get(`/user/all-matchings/${memberIdx}`);
-      
-      if (!allMatchingsRes.data || !Array.isArray(allMatchingsRes.data) || allMatchingsRes.data.length === 0) {
-        alert('매칭 정보가 없습니다.');
-        return;
-      }
-
-      // 완료된 매칭만 필터링 (MATCHING_COMPLETE = 2)
-      const completedMatchings = allMatchingsRes.data.filter(m => m.matching_complete === 2);
-      
-      if (completedMatchings.length === 0) {
-        alert('완료된 매칭이 없습니다.');
-        return;
-      }
-
-      // MATCHING_IDX 기준으로 내림차순 정렬하여 최신 매칭 선택
-      const sortedMatchings = completedMatchings.sort((a, b) => b.matching_idx - a.matching_idx);
-      const latestMatching = sortedMatchings[0];
-
-      console.log('최신 완료된 매칭:', latestMatching);
-
-      // 리뷰 등록
-      await axios.post('/user/reviewinsert', {
-        review_title: title,
-        review_content: content,
-        review_star: score,
-        member_idx: memberIdx,
-        matching_idx: latestMatching.matching_idx,
-        review_hidden: 'N'
-      });
+      const response = await axios.post('/user/reviewinsert', requestData);
+      console.log('리뷰 등록 성공:', response.data);
 
       alert('리뷰가 등록되었습니다.');
       onClose();
@@ -315,30 +313,8 @@ const ReviewInsert = ({ memberIdx, trainerIdx, onClose, onReviewSubmitted }) => 
       }
     } catch (err) {
       console.error('리뷰 등록 오류:', err);
-      
-      // API가 없다면 기존 방식 사용
-      if (err.response?.status === 404) {
-        try {
-          // 백엔드에서 자동으로 찾아주는 방식 사용
-          await axios.post('/user/reviewinsert', {
-            review_title: title,
-            review_content: content,
-            review_star: score,
-            member_idx: memberIdx,
-            review_hidden: 'N'
-          });
-
-          alert('리뷰가 등록되었습니다.');
-          onClose();
-          if (onReviewSubmitted) {
-            onReviewSubmitted();
-          }
-        } catch (fallbackErr) {
-          alert('리뷰 등록 실패: ' + (fallbackErr.response?.data || '에러가 발생했습니다.'));
-        }
-      } else {
-        alert('리뷰 등록 실패: ' + (err.response?.data || '에러가 발생했습니다.'));
-      }
+      console.error('전송한 데이터:', requestData);
+      alert('리뷰 등록 실패: ' + (err.response?.data || '에러가 발생했습니다.'));
     } finally {
       setLoading(false);
     }

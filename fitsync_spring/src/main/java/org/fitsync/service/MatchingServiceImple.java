@@ -101,6 +101,12 @@ public class MatchingServiceImple implements MatchingService {
         return mapper.countEligibleMatchingWithoutReview(trainerIdx, memberIdx) > 0;
     }
     
+    // 특정 트레이너와 회원 간의 완료된 매칭 조회
+    @Override
+    public MatchingVO findCompletedMatchingByTrainerAndMember(int trainerIdx, int memberIdx) {
+        return mapper.selectCompletedMatchingByTrainerAndMember(trainerIdx, memberIdx);
+    }
+    
     // 특정 회원의 완료된 매칭 정보 조회
     @Override
     public MatchingVO findCompletedMatchingByMemberIdx(int memberIdx) {

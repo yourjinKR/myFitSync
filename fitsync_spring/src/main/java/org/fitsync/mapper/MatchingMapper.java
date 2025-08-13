@@ -25,6 +25,8 @@ public interface MatchingMapper {
     public int countAnyActiveMatchingForUser(@Param("user_idx") int user_idx);
     // 리뷰 작성 가능여부 확인
     public int countEligibleMatchingWithoutReview(@Param("trainerIdx") int trainerIdx, @Param("memberIdx") int memberIdx);
+    // 특정 트레이너와 회원 간의 완료된 매칭 조회
+    public MatchingVO selectCompletedMatchingByTrainerAndMember(@Param("trainerIdx") int trainerIdx, @Param("memberIdx") int memberIdx);
     // Main 화면용 매칭 조회
     public MatchingVO selectCompletedMatchingByMemberIdx(@Param("memberIdx") int memberIdx);
     public MemberVO selectMatchedTrainerByUserIdx(@Param("userIdx") int userIdx);

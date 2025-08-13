@@ -132,6 +132,17 @@
 		    AND matching_complete = 2
 		    AND ROWNUM = 1
 	</select>
+	
+	<!-- 특정 트레이너와 회원 간의 완료된 매칭 조회 -->
+	<select id="selectCompletedMatchingByTrainerAndMember" resultType="org.fitsync.domain.MatchingVO">
+		  SELECT *
+		  FROM matching
+		  WHERE trainer_idx = #{trainerIdx}
+		    AND user_idx = #{memberIdx}
+		    AND matching_complete = 2
+		    AND ROWNUM = 1
+		  ORDER BY matching_idx DESC
+	</select>
 	 
 	<select id="selectMatchedTrainerByUserIdx" resultType="org.fitsync.domain.MemberVO">
 	    SELECT m.trainer_idx AS member_idx,
