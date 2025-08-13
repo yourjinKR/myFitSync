@@ -1,6 +1,7 @@
 package org.fitsync.service;
 
 import java.net.http.HttpResponse;
+import java.time.ZoneId;
 import java.util.*;
 
 import org.fitsync.domain.ApiLogVO;
@@ -1616,8 +1617,14 @@ public class PaymentServiceImple implements PaymentService {
 				return Map.of("success", false, "message", "결제수단을 찾을 수 없습니다.");
 			}
 			
+			Date orderPayDate = completedOrder.getOrder_paydate();
+			
+			java.time.LocalDateTime lastPaymentDateTime = orderPayDate.toInstant()
+			        .atZone(ZoneId.systemDefault())
+			        .toLocalDateTime();
+			
 			// 2. 다음 결제일 계산 (31일 후)
-			java.time.LocalDateTime nextPaymentDateTime = java.time.LocalDateTime.now()
+			java.time.LocalDateTime nextPaymentDateTime = lastPaymentDateTime
 					.plusDays(31)
 					.withHour(0)  // 자정으로 고정
 					.withMinute(0)
