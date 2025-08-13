@@ -306,7 +306,6 @@ const ReviewInsert = ({ memberIdx, trainerIdx, matchingIdx, onClose, onReviewSub
       const response = await axios.post('/user/reviewinsert', requestData);
       console.log('리뷰 등록 성공:', response.data);
 
-      alert('리뷰가 등록되었습니다.');
       onClose();
       if (onReviewSubmitted) {
         onReviewSubmitted();
