@@ -1504,7 +1504,7 @@ const ChatRoom = () => {
       <InputWrapper>
         <MessageInput
           onSendMessage={handleSendMessage}
-          disabled={!connected || blockDate}
+          disabled={!connected}
           replyToMessage={replyToMessage}
           onCancelReply={handleCancelReply}
           attachments={attachments}
