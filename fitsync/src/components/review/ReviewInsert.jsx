@@ -274,15 +274,6 @@ const ReviewInsert = ({ memberIdx, trainerIdx, matchingIdx, onClose, onReviewSub
       return;
     }
 
-    console.log('리뷰 제출 시작:', {
-      memberIdx,
-      trainerIdx,
-      matchingIdx,
-      title,
-      content,
-      score
-    });
-
     // matchingIdx가 있으면 직접 사용, 없으면 백엔드에서 자동 찾기
     const requestData = {
       review_title: title,
@@ -296,23 +287,17 @@ const ReviewInsert = ({ memberIdx, trainerIdx, matchingIdx, onClose, onReviewSub
     // matchingIdx가 있으면 추가
     if (matchingIdx) {
       requestData.matching_idx = matchingIdx;
-      console.log('매칭 정보 포함해서 전송:', requestData);
-    } else {
-      console.log('trainer_idx로 매칭 찾기 요청:', requestData);
     }
 
     setLoading(true);
     try {
-      const response = await axios.post('/user/reviewinsert', requestData);
-      console.log('리뷰 등록 성공:', response.data);
-
+      await axios.post('/user/reviewinsert', requestData);
+      alert('리뷰가 등록되었습니다.');
       onClose();
       if (onReviewSubmitted) {
         onReviewSubmitted();
       }
     } catch (err) {
-      console.error('리뷰 등록 오류:', err);
-      console.error('전송한 데이터:', requestData);
       alert('리뷰 등록 실패: ' + (err.response?.data || '에러가 발생했습니다.'));
     } finally {
       setLoading(false);

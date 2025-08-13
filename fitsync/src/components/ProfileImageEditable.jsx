@@ -102,7 +102,6 @@ const ProfileImageEditor = ({ profileImage, onSuccess = () => {}, isEditable = t
           }));
         }
         
-        alert('프로필 이미지가 변경되었습니다.');
         onSuccess(timestampedUrl); // 부모 컴포넌트에 알림
       } else {
         alert('이미지 변경에 실패했습니다.');

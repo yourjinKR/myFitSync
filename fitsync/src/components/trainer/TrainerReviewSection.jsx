@@ -239,7 +239,8 @@ const TrainerReviewSection = () => {
         setReviews(filtered);
       }
     } catch (err) {
-      console.error('리뷰 가져오기 실패:', err);
+      // 리뷰 가져오기 실패 시 빈 배열로 설정
+      setReviews([]);
     }
   }, [trainerIdx]);
 
@@ -255,11 +256,11 @@ const TrainerReviewSection = () => {
         if (res.data === true) {
           // 매칭 정보를 가져오지 말고 바로 리뷰 작성 가능하도록 설정
           // 백엔드에서 trainer_idx를 통해 올바른 매칭을 찾도록 함
-          console.log('리뷰 작성 가능 - trainer_idx로 매칭 찾기 위임');
           setCurrentMatchingIdx(null); // null로 설정하여 백엔드에서 찾도록 함
         }
       } catch (err) {
-        console.error('작성 가능 여부 요청 실패:', err);
+        // 작성 가능 여부 확인 실패 시 false로 설정
+        setCanWriteReview(false);
       }
     }
   }, [trainerIdx, memberIdx]);
@@ -286,11 +287,6 @@ const TrainerReviewSection = () => {
 
         {canWriteReview && (
           <WriteButton onClick={() => {
-            console.log('리뷰 작성 버튼 클릭:', {
-              trainerIdx,
-              memberIdx,
-              currentMatchingIdx
-            });
             setShowInsert(true);
           }}>리뷰 작성하기</WriteButton>
         )}
