@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AiUtil from '../../utils/AiUtils';
 
+// 테스트 커밋
+
 /**
  * API 로그 데이터 관리 훅
  * @returns {Object} API 로그 상태와 관련 함수들
