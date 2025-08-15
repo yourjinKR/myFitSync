@@ -146,36 +146,140 @@ const AnalyticsTab = ({
     };
 
     // 에러 분석
+    // 에러 분석 (개선된 버전)
     const getErrorAnalysis = () => {
         if (!filteredLogs || filteredLogs.length === 0) return null;
 
-        const errorLogs = filteredLogs.filter(log =>
-            log.apilog_status === 'error' || log.apilog_status === 'exception'
+        const errorLogs = filteredLogs.filter(log => 
+            log.apilog_status === 'exception' || log.apilog_status === 'fail'
         );
+        const successLogs = filteredLogs.filter(log => log.apilog_status === 'success');
 
-        const errorByModel = {};
-        const errorByService = {};
-        const errorOverTime = {};
+        if (errorLogs.length === 0) return null;
+
+        // 에러 타입별 분석
+        const errorTypeAnalysis = {};
+        const invalidExerciseAnalysis = {};
+        const modelErrorAnalysis = {};
+        const serviceErrorAnalysis = {};
+        const timeErrorAnalysis = {};
 
         errorLogs.forEach(log => {
-            // 모델별 에러
-            const model = log.apilog_model || 'Unknown';
-            errorByModel[model] = (errorByModel[model] || 0) + 1;
+            const reason = log.apilog_status_reason || 'unknown';
+            const model = log.apilog_model || '기타';
+            const service = log.apilog_service_type || '기타';
+            const hour = new Date(log.apilog_request_time).getHours();
+            const status = log.apilog_status;
 
-            // 서비스별 에러
-            const service = log.apilog_service_type || 'Unknown';
-            errorByService[service] = (errorByService[service] || 0) + 1;
+            // 에러 타입 분류
+            if (reason.includes('invalid_exercise')) {
+                errorTypeAnalysis['invalid_exercise'] = (errorTypeAnalysis['invalid_exercise'] || 0) + 1;
+                
+                // 잘못된 운동명 추출
+                const exerciseMatch = reason.match(/invalid_exercise:\s*(.+?)(?:;|$)/);
+                if (exerciseMatch) {
+                    const exercises = exerciseMatch[1].split(',').map(ex => ex.trim());
+                    exercises.forEach(exercise => {
+                        invalidExerciseAnalysis[exercise] = (invalidExerciseAnalysis[exercise] || 0) + 1;
+                    });
+                }
+            } else if (reason.includes('split_mismatch')) {
+                errorTypeAnalysis['split_mismatch'] = (errorTypeAnalysis['split_mismatch'] || 0) + 1;
+            } else if (reason.includes('no_response_data')) {
+                errorTypeAnalysis['no_response_data'] = (errorTypeAnalysis['no_response_data'] || 0) + 1;
+            } else if (reason.includes('invalid_json')) {
+                errorTypeAnalysis['invalid_json'] = (errorTypeAnalysis['invalid_json'] || 0) + 1;
+            } else {
+                errorTypeAnalysis['other'] = (errorTypeAnalysis['other'] || 0) + 1;
+            }
 
-            // 시간별 에러
-            const hour = new Date(log.apilog_timestamp).getHours();
-            errorOverTime[hour] = (errorOverTime[hour] || 0) + 1;
+            // 모델별 에러 분석
+            if (!modelErrorAnalysis[model]) {
+                modelErrorAnalysis[model] = { total: 0, exception: 0, fail: 0 };
+            }
+            modelErrorAnalysis[model].total += 1;
+            modelErrorAnalysis[model][status] = (modelErrorAnalysis[model][status] || 0) + 1;
+
+            // 서비스별 에러 분석
+            if (!serviceErrorAnalysis[service]) {
+                serviceErrorAnalysis[service] = { total: 0, exception: 0, fail: 0 };
+            }
+            serviceErrorAnalysis[service].total += 1;
+            serviceErrorAnalysis[service][status] = (serviceErrorAnalysis[service][status] || 0) + 1;
+
+            // 시간대별 에러 분석
+            timeErrorAnalysis[hour] = (timeErrorAnalysis[hour] || 0) + 1;
         });
 
+        // 에러율 계산
+        const totalRequests = filteredLogs.length;
+        const exceptionRate = ((filteredLogs.filter(log => log.apilog_status === 'exception').length / totalRequests) * 100).toFixed(2);
+        const failRate = ((filteredLogs.filter(log => log.apilog_status === 'fail').length / totalRequests) * 100).toFixed(2);
+        const totalErrorRate = ((errorLogs.length / totalRequests) * 100).toFixed(2);
+
         return {
-            errorByModel: Object.entries(errorByModel).sort(([, a], [, b]) => b - a),
-            errorByService: Object.entries(errorByService).sort(([, a], [, b]) => b - a),
-            errorOverTime,
-            totalErrors: errorLogs.length
+            totalErrors: errorLogs.length,
+            totalRequests: totalRequests,
+            successCount: successLogs.length,
+            exceptionCount: filteredLogs.filter(log => log.apilog_status === 'exception').length,
+            failCount: filteredLogs.filter(log => log.apilog_status === 'fail').length,
+            errorRates: {
+                total: totalErrorRate,
+                exception: exceptionRate,
+                fail: failRate
+            },
+            errorByType: Object.entries(errorTypeAnalysis).sort((a, b) => b[1] - a[1]),
+            invalidExercises: Object.entries(invalidExerciseAnalysis)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10), // 상위 10개만
+            errorByModel: Object.entries(modelErrorAnalysis)
+                .map(([model, data]) => ({
+                    model,
+                    ...data,
+                    errorRate: ((data.total / (data.total + (filteredLogs.filter(log => log.apilog_model === model && log.apilog_status === 'success').length || 0))) * 100).toFixed(2)
+                }))
+                .sort((a, b) => b.total - a.total),
+            errorByService: Object.entries(serviceErrorAnalysis)
+                .map(([service, data]) => ({
+                    service,
+                    ...data,
+                    errorRate: ((data.total / (data.total + (filteredLogs.filter(log => log.apilog_service_type === service && log.apilog_status === 'success').length || 0))) * 100).toFixed(2)
+                }))
+                .sort((a, b) => b.total - a.total),
+            errorByTime: Object.entries(timeErrorAnalysis).sort((a, b) => b[1] - a[1]),
+            
+            // Chart.js용 데이터
+            errorTypeChartData: {
+                labels: Object.keys(errorTypeAnalysis).map(type => {
+                    switch(type) {
+                        case 'invalid_exercise': return '잘못된 운동명';
+                        case 'split_mismatch': return '분할 불일치';
+                        case 'no_response_data': return '응답 데이터 없음';
+                        case 'invalid_json': return '잘못된 JSON';
+                        default: return '기타';
+                    }
+                }),
+                datasets: [{
+                    data: Object.values(errorTypeAnalysis),
+                    backgroundColor: [
+                        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            
+            timeErrorChartData: {
+                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                datasets: [{
+                    label: '시간대별 에러 발생',
+                    data: Array.from({length: 24}, (_, i) => timeErrorAnalysis[i] || 0),
+                    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+                    borderColor: '#FF6B6B',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            }
         };
     };
 
@@ -390,47 +494,196 @@ const AnalyticsTab = ({
                         <AnalysisSection>
                             <SectionTitle>🚨 에러 분석 리포트</SectionTitle>
                             {errorAnalysis ? (
-                                <ErrorAnalysisGrid>
-                                    <ErrorCard>
-                                        <ErrorCardTitle>모델별 에러</ErrorCardTitle>
-                                        <ErrorList>
-                                            {errorAnalysis.errorByModel.slice(0, 5).map(([model, count]) => (
-                                                <ErrorItem key={model}>
-                                                    <ErrorLabel>{model}</ErrorLabel>
-                                                    <ErrorCount>{count}건</ErrorCount>
-                                                </ErrorItem>
-                                            ))}
-                                        </ErrorList>
-                                    </ErrorCard>
+                                <>
+                                    {/* 에러 개요 카드 */}
+                                    <ErrorOverviewGrid>
+                                        <ErrorOverviewCard>
+                                            <ErrorOverviewIcon>🚨</ErrorOverviewIcon>
+                                            <ErrorOverviewContent>
+                                                <ErrorOverviewTitle>총 에러</ErrorOverviewTitle>
+                                                <ErrorOverviewValue error>{errorAnalysis.totalErrors}건</ErrorOverviewValue>
+                                                <ErrorOverviewDetail>전체 요청 중 {errorAnalysis.errorRates.total}%</ErrorOverviewDetail>
+                                            </ErrorOverviewContent>
+                                        </ErrorOverviewCard>
 
-                                    <ErrorCard>
-                                        <ErrorCardTitle>서비스별 에러</ErrorCardTitle>
-                                        <ErrorList>
-                                            {errorAnalysis.errorByService.slice(0, 5).map(([service, count]) => (
-                                                <ErrorItem key={service}>
-                                                    <ErrorLabel>{service}</ErrorLabel>
-                                                    <ErrorCount>{count}건</ErrorCount>
-                                                </ErrorItem>
-                                            ))}
-                                        </ErrorList>
-                                    </ErrorCard>
+                                        <ErrorOverviewCard>
+                                            <ErrorOverviewIcon>⚠️</ErrorOverviewIcon>
+                                            <ErrorOverviewContent>
+                                                <ErrorOverviewTitle>Exception</ErrorOverviewTitle>
+                                                <ErrorOverviewValue warning>{errorAnalysis.exceptionCount}건</ErrorOverviewValue>
+                                                <ErrorOverviewDetail>{errorAnalysis.errorRates.exception}%</ErrorOverviewDetail>
+                                            </ErrorOverviewContent>
+                                        </ErrorOverviewCard>
 
-                                    <ErrorCard>
-                                        <ErrorCardTitle>에러 요약</ErrorCardTitle>
-                                        <ErrorSummary>
-                                            <SummaryRow>
-                                                <SummaryLabel>총 에러 수</SummaryLabel>
-                                                <SummaryValue error>{errorAnalysis.totalErrors}건</SummaryValue>
-                                            </SummaryRow>
-                                            <SummaryRow>
-                                                <SummaryLabel>에러율</SummaryLabel>
-                                                <SummaryValue error>
-                                                    {((errorAnalysis.totalErrors / filteredLogs.length) * 100).toFixed(2)}%
-                                                </SummaryValue>
-                                            </SummaryRow>
-                                        </ErrorSummary>
-                                    </ErrorCard>
-                                </ErrorAnalysisGrid>
+                                        <ErrorOverviewCard>
+                                            <ErrorOverviewIcon>❌</ErrorOverviewIcon>
+                                            <ErrorOverviewContent>
+                                                <ErrorOverviewTitle>Fail</ErrorOverviewTitle>
+                                                <ErrorOverviewValue error>{errorAnalysis.failCount}건</ErrorOverviewValue>
+                                                <ErrorOverviewDetail>{errorAnalysis.errorRates.fail}%</ErrorOverviewDetail>
+                                            </ErrorOverviewContent>
+                                        </ErrorOverviewCard>
+
+                                        <ErrorOverviewCard>
+                                            <ErrorOverviewIcon>✅</ErrorOverviewIcon>
+                                            <ErrorOverviewContent>
+                                                <ErrorOverviewTitle>Success</ErrorOverviewTitle>
+                                                <ErrorOverviewValue good>{errorAnalysis.successCount}건</ErrorOverviewValue>
+                                                <ErrorOverviewDetail>{(100 - parseFloat(errorAnalysis.errorRates.total)).toFixed(2)}%</ErrorOverviewDetail>
+                                            </ErrorOverviewContent>
+                                        </ErrorOverviewCard>
+                                    </ErrorOverviewGrid>
+
+                                    {/* 에러 타입 분석 */}
+                                    <ErrorAnalysisGrid>
+                                        <ErrorAnalysisSection>
+                                            <ErrorSectionTitle>📊 에러 타입별 분석</ErrorSectionTitle>
+                                            <ChartContainer>
+                                                <Doughnut 
+                                                    data={errorAnalysis.errorTypeChartData} 
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: {
+                                                            legend: {
+                                                                position: 'right',
+                                                            },
+                                                            tooltip: {
+                                                                callbacks: {
+                                                                    label: function(context) {
+                                                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                                                                        return `${context.label}: ${context.raw}건 (${percentage}%)`;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </ChartContainer>
+                                        </ErrorAnalysisSection>
+
+                                        <ErrorAnalysisSection>
+                                            <ErrorSectionTitle>🕒 시간대별 에러 패턴</ErrorSectionTitle>
+                                            <ChartContainer>
+                                                <Line 
+                                                    data={errorAnalysis.timeErrorChartData} 
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: {
+                                                            legend: {
+                                                                display: false
+                                                            }
+                                                        },
+                                                        scales: {
+                                                            y: {
+                                                                beginAtZero: true,
+                                                                ticks: {
+                                                                    stepSize: 1
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </ChartContainer>
+                                        </ErrorAnalysisSection>
+                                    </ErrorAnalysisGrid>
+
+                                    {/* 상세 에러 분석 */}
+                                    <DetailedErrorGrid>
+                                        {/* 잘못된 운동명 분석 */}
+                                        {errorAnalysis.invalidExercises.length > 0 && (
+                                            <ErrorCard>
+                                                <ErrorCardTitle>🏋️‍♂️ 잘못된 운동명 TOP 10</ErrorCardTitle>
+                                                <ErrorList>
+                                                    {errorAnalysis.invalidExercises.map(([exercise, count]) => (
+                                                        <ErrorItem key={exercise}>
+                                                            <ErrorLabel>{exercise}</ErrorLabel>
+                                                            <ErrorCount>{count}회</ErrorCount>
+                                                        </ErrorItem>
+                                                    ))}
+                                                </ErrorList>
+                                            </ErrorCard>
+                                        )}
+
+                                        {/* 모델별 에러 분석 */}
+                                        <ErrorCard>
+                                            <ErrorCardTitle>🤖 모델별 에러 현황</ErrorCardTitle>
+                                            <ErrorList>
+                                                {errorAnalysis.errorByModel.slice(0, 5).map((modelData) => (
+                                                    <ErrorItem key={modelData.model}>
+                                                        <ErrorItemContent>
+                                                            <ErrorLabel>{modelData.model}</ErrorLabel>
+                                                            <ErrorSubInfo>
+                                                                Exception: {modelData.exception || 0} | Fail: {modelData.fail || 0}
+                                                            </ErrorSubInfo>
+                                                        </ErrorItemContent>
+                                                        <ErrorItemRight>
+                                                            <ErrorCount>{modelData.total}건</ErrorCount>
+                                                            <ErrorRate>({modelData.errorRate}%)</ErrorRate>
+                                                        </ErrorItemRight>
+                                                    </ErrorItem>
+                                                ))}
+                                            </ErrorList>
+                                        </ErrorCard>
+
+                                        {/* 서비스별 에러 분석 */}
+                                        <ErrorCard>
+                                            <ErrorCardTitle>🔧 서비스별 에러 현황</ErrorCardTitle>
+                                            <ErrorList>
+                                                {errorAnalysis.errorByService.slice(0, 3).map((serviceData) => (
+                                                    <ErrorItem key={serviceData.service}>
+                                                        <ErrorItemContent>
+                                                            <ErrorLabel>{serviceData.service}</ErrorLabel>
+                                                            <ErrorSubInfo>
+                                                                Exception: {serviceData.exception || 0} | Fail: {serviceData.fail || 0}
+                                                            </ErrorSubInfo>
+                                                        </ErrorItemContent>
+                                                        <ErrorItemRight>
+                                                            <ErrorCount>{serviceData.total}건</ErrorCount>
+                                                            <ErrorRate>({serviceData.errorRate}%)</ErrorRate>
+                                                        </ErrorItemRight>
+                                                    </ErrorItem>
+                                                ))}
+                                            </ErrorList>
+                                        </ErrorCard>
+
+                                        {/* 에러 인사이트 */}
+                                        <ErrorCard>
+                                            <ErrorCardTitle>💡 에러 분석 인사이트</ErrorCardTitle>
+                                            <InsightsList>
+                                                {errorAnalysis.errorByType[0] && (
+                                                    <InsightItem>
+                                                        <InsightIcon>🔍</InsightIcon>
+                                                        <InsightText>
+                                                            가장 빈번한 에러: {
+                                                                errorAnalysis.errorByType[0][0] === 'invalid_exercise' ? '잘못된 운동명' :
+                                                                errorAnalysis.errorByType[0][0] === 'split_mismatch' ? '분할 불일치' :
+                                                                errorAnalysis.errorByType[0][0] === 'no_response_data' ? '응답 데이터 없음' :
+                                                                errorAnalysis.errorByType[0][0] === 'invalid_json' ? '잘못된 JSON' : '기타'
+                                                            } ({errorAnalysis.errorByType[0][1]}건)
+                                                        </InsightText>
+                                                    </InsightItem>
+                                                )}
+                                                {errorAnalysis.errorByTime[0] && (
+                                                    <InsightItem>
+                                                        <InsightIcon>🕐</InsightIcon>
+                                                        <InsightText>
+                                                            에러 발생이 많은 시간대: {errorAnalysis.errorByTime[0][0]}시 ({errorAnalysis.errorByTime[0][1]}건)
+                                                        </InsightText>
+                                                    </InsightItem>
+                                                )}
+                                                <InsightItem>
+                                                    <InsightIcon>📈</InsightIcon>
+                                                    <InsightText>
+                                                        전체 에러율: {errorAnalysis.errorRates.total}% (Exception: {errorAnalysis.errorRates.exception}%, Fail: {errorAnalysis.errorRates.fail}%)
+                                                    </InsightText>
+                                                </InsightItem>
+                                            </InsightsList>
+                                        </ErrorCard>
+                                    </DetailedErrorGrid>
+                                </>
                             ) : (
                                 <NoDataMessage>에러 분석 데이터가 없습니다</NoDataMessage>
                             )}
@@ -834,20 +1087,6 @@ const ErrorCount = styled.span`
   }
 `;
 
-const ErrorSummary = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  
-  @media (max-width: 768px) {
-    gap: 0.8rem;
-  }
-`;
-
-const SummaryRow = styled(StatRow)``;
-const SummaryLabel = styled(StatLabel)``;
-const SummaryValue = styled(StatValue)``;
-
 const SummarySection = styled.div`
   background: var(--bg-secondary);
   border-radius: 0.75rem;
@@ -956,6 +1195,152 @@ const NoDataMessage = styled.div`
   
   @media (max-width: 768px) {
     font-size: 1.4rem;
+  }
+`;
+
+// 에러 분석 관련 새로운 styled-components
+const ErrorOverviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+  }
+`;
+
+const ErrorOverviewCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.8rem;
+  background: var(--bg-tertiary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+`;
+
+const ErrorOverviewIcon = styled.span`
+  font-size: 2.2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+`;
+
+const ErrorOverviewContent = styled.div`
+  flex: 1;
+`;
+
+const ErrorOverviewTitle = styled.div`
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+`;
+
+const ErrorOverviewValue = styled.div`
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  color: ${props => {
+    if (props.error) return 'var(--warning)';
+    if (props.warning) return '#f59e0b';
+    if (props.good) return 'var(--success)';
+    return 'var(--text-primary)';
+  }};
+  
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
+`;
+
+const ErrorOverviewDetail = styled.div`
+  font-size: 1.1rem;
+  color: var(--text-tertiary);
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const ErrorAnalysisSection = styled.div`
+  background: var(--bg-tertiary);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  border: 1px solid var(--border-light);
+  
+  @media (max-width: 768px) {
+    padding: 1.8rem;
+  }
+`;
+
+const ErrorSectionTitle = styled.h4`
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+`;
+
+const DetailedErrorGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+`;
+
+const ErrorItemContent = styled.div`
+  flex: 1;
+`;
+
+const ErrorItemRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+`;
+
+const ErrorSubInfo = styled.div`
+  font-size: 1.1rem;
+  color: var(--text-tertiary);
+  margin-top: 0.2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const ErrorRate = styled.span`
+  font-size: 1.1rem;
+  color: var(--text-tertiary);
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
   }
 `;
 

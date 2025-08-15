@@ -136,9 +136,33 @@ const AiUtil = {
     },
 
     /**
+     * @typedef {Object} ParsedApiLog
+     * @property {number} apilog_idx - API 로그 고유 ID
+     * @property {number} member_idx - 회원 고유 ID
+     * @property {string} apilog_prompt - 원본 프롬프트 문자열(JSON)
+     * @property {string} apilog_response - 원본 응답 문자열(JSON)
+     * @property {number|string|Date} apilog_request_time - 요청 시각
+     * @property {number|string|Date} apilog_response_time - 응답 시각
+     * @property {number} apilog_input_tokens - 입력 토큰 수
+     * @property {number} apilog_output_tokens - 출력 토큰 수
+     * @property {string} apilog_model - 사용된 모델명
+     * @property {string} apilog_version - API 버전
+     * @property {string} apilog_service_type - 서비스 타입
+     * @property {string} apilog_status - API 응답 상태
+     * @property {string} apilog_status_reason - 상태 사유
+     * @property {string} apilog_feedback - 피드백 내용
+     * @property {string} apilog_feedback_reason - 피드백 사유
+     * @property {string} apilog_user_action - 사용자 액션
+     * @property {Object} parsed_prompt - 파싱된 프롬프트
+     * @property {Object[]} parsed_response - 파싱된 응답
+     * @property {Object|null} parsed_userMassage - 파싱된 사용자 메시지
+     * @property {number} apilog_total_time - 요청~응답까지 소요 시간(초)
+     */
+
+    /**
      * API 로그 데이터 파싱 및 응답 시간 계산
      * @param {Object} apiLogItem - API 로그 아이템
-     * @returns {Object} 파싱된 API 로그 데이터
+     * @returns {ParsedApiLog} 파싱된 API 로그 데이터
      */
     parseApiLogData : (apiLogItem) => {
         const version = apiLogItem.apilog_version;
@@ -167,6 +191,30 @@ const AiUtil = {
             console.error('JSON 파싱 오류:', error);
             return apiLogItem;
         }
+    },
+
+    /** parseApiLogData 함수 return 값 예시 */
+    exampleParsedApilog : {
+        apilog_idx : 0,
+        member_idx : 0,
+        apilog_prompt : "",
+        apilog_response : "",
+        apilog_request_time : 0,
+        apilog_response_time : 0,
+        apilog_input_tokens : 0,
+        apilog_output_tokens : 0,
+        apilog_model : "",
+        apilog_version : "",
+        apilog_status : "",
+        apilog_service_type : "",
+        apilog_feedback : "",
+        apilog_feedback_reason : "",
+        apilog_status_reason : "",
+        apilog_user_action : "",
+        parsed_prompt : {},
+        parsed_response : [{}],
+        parsed_userMassage : {},
+        apilog_total_time : 0
     },
 
     /** api log 개요 통계 가져오기  */
