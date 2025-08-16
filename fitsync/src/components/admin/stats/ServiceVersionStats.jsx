@@ -39,7 +39,7 @@ const ServiceVersionStats = ({ logs, isLoading }) => {
             versionStat.requestCount++;
             serviceVersionMap[service].totalRequests++;
 
-            if (log.apilog_response_status === 'SUCCESS') {
+            if (log.apilog_status === 'success') {
                 versionStat.successCount++;
             } else {
                 versionStat.errorCount++;

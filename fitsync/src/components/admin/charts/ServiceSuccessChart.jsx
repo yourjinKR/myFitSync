@@ -24,11 +24,11 @@ const ServiceSuccessChart = ({ logs, isLoading, dateRange }) => {
       
       serviceStats[service].totalRequests++;
       
-      if (log.apilog_response_status === 'SUCCESS') {
+      if (log.apilog_status === 'success') {
         serviceStats[service].successCount++;
-      } else if (log.apilog_response_status === 'ERROR') {
+      } else if (log.apilog_status === 'fail') {
         serviceStats[service].errorCount++;
-      } else if (log.apilog_response_status === 'EXCEPTION') {
+      } else if (log.apilog_status === 'exception') {
         serviceStats[service].exceptionCount++;
       }
     });

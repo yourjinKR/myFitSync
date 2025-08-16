@@ -12,7 +12,7 @@ export const useStatistics = (apiLogs, filteredLogs) => {
         
         const total = filteredLogs.length;
         const successCount = filteredLogs.filter(log => log.apilog_status === 'success').length;
-        const errorCount = filteredLogs.filter(log => log.apilog_status === 'error').length;
+        const failCount = filteredLogs.filter(log => log.apilog_status === 'fail').length;
         const exceptionCount = filteredLogs.filter(log => log.apilog_status === 'exception').length;
         
         const totalTokens = filteredLogs.reduce((sum, log) => sum + (log.apilog_input_tokens || 0) + (log.apilog_output_tokens || 0), 0);
@@ -114,10 +114,10 @@ export const useStatistics = (apiLogs, filteredLogs) => {
             totalRequests: total,
             totalApiCalls: apiLogs.length,
             successCount,
-            errorCount,
+            failCount,
             exceptionCount,
             successRate: total > 0 ? ((successCount / total) * 100).toFixed(1) : 0,
-            errorRate: total > 0 ? (((errorCount + exceptionCount) / total) * 100).toFixed(1) : 0,
+            errorRate: total > 0 ? (((failCount + exceptionCount) / total) * 100).toFixed(1) : 0,
             
             // 토큰 통계
             totalTokens,

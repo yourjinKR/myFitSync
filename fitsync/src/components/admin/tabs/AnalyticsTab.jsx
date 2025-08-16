@@ -66,16 +66,24 @@ const AnalyticsTab = ({
                 {
                     label: '총 요청',
                     data: hours.map(h => hourlyData[h]?.total || 0),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderColor: '#3498DB',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
                     fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3498DB',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 },
                 {
                     label: '성공 요청',
                     data: hours.map(h => hourlyData[h]?.success || 0),
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: '#2ECC71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
                     fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#2ECC71',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 }
             ]
         };
@@ -101,10 +109,19 @@ const AnalyticsTab = ({
                 label: '사용 횟수',
                 data: sortedModels.map(([, count]) => count),
                 backgroundColor: [
-                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6b7280'
+                    '#E74C3C',  // 빨강
+                    '#3498DB',  // 파랑
+                    '#2ECC71',  // 초록
+                    '#F39C12',  // 주황
+                    '#9B59B6',  // 보라
+                    '#1ABC9C',  // 터키석
+                    '#F1C40F',  // 노랑
+                    '#E67E22',  // 당근색
+                    '#E91E63',  // 분홍
+                    '#95A5A6'   // 회색
                 ],
-                borderWidth: 1
+                borderWidth: 1,
+                borderColor: '#ffffff'
             }]
         };
     };
@@ -138,9 +155,17 @@ const AnalyticsTab = ({
                 label: '요청 수',
                 data: distribution,
                 backgroundColor: [
-                    '#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#dc2626', '#991b1b', '#7f1d1d'
+                    '#2ECC71',  // 초록 - 매우 빠름 (< 3s)
+                    '#3498DB',  // 파랑 - 빠름 (3s-6s)
+                    '#F1C40F',  // 노랑 - 보통 (6s-9s)
+                    '#F39C12',  // 주황 - 느림 (9s-12s)
+                    '#E67E22',  // 진주황 - 매우 느림 (12s-15s)
+                    '#E74C3C',  // 빨강 - 심각 (15s-18s)
+                    '#C0392B',  // 진빨강 - 위험 (18s-20s)
+                    '#922B21'   // 암적색 - 매우 위험 (> 20s)
                 ],
-                borderWidth: 1
+                borderWidth: 1,
+                borderColor: '#ffffff'
             }]
         };
     };
@@ -262,7 +287,11 @@ const AnalyticsTab = ({
                 datasets: [{
                     data: Object.values(errorTypeAnalysis),
                     backgroundColor: [
-                        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'
+                        '#E74C3C',  // 빨간색 - 잘못된 운동명
+                        '#F39C12',  // 주황색 - 분할 불일치
+                        '#3498DB',  // 파란색 - 응답 데이터 없음
+                        '#9B59B6',  // 보라색 - 잘못된 JSON
+                        '#95A5A6'   // 회색 - 기타
                     ],
                     borderWidth: 2,
                     borderColor: '#ffffff'
@@ -274,10 +303,213 @@ const AnalyticsTab = ({
                 datasets: [{
                     label: '시간대별 에러 발생',
                     data: Array.from({length: 24}, (_, i) => timeErrorAnalysis[i] || 0),
-                    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-                    borderColor: '#FF6B6B',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderColor: '#E74C3C',
                     borderWidth: 2,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#E74C3C',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            }
+        };
+    };
+
+    // 사용자 분석 (새로 추가)
+    const getUserAnalysis = () => {
+        if (!filteredLogs || filteredLogs.length === 0) return null;
+
+        // 성공한 로그 중에서 사용자 메시지가 파싱된 로그만 필터링
+        const successLogsWithUserData = filteredLogs.filter(log => 
+            log.apilog_status === 'success' && 
+            log.parsed_userMassage && 
+            typeof log.parsed_userMassage === 'object'
+        );
+
+        if (successLogsWithUserData.length === 0) return null;
+
+        // 사용자 정보별 분석
+        const ageGroups = { '10대': 0, '20대': 0, '30대': 0, '40대': 0, '50대+': 0 };
+        const genderStats = { '남성': 0, '여성': 0 };
+        const purposeStats = {};
+        const diseaseStats = {};
+        const bmiCategories = { '저체중': 0, '정상': 0, '과체중': 0, '비만': 0 };
+        const splitPreferences = {};
+        const heightStats = { ranges: { '150미만': 0, '150-160': 0, '160-170': 0, '170-180': 0, '180-190': 0, '190이상': 0 }, total: 0, sum: 0 };
+        const weightStats = { ranges: { '50미만': 0, '50-60': 0, '60-70': 0, '70-80': 0, '80-90': 0, '90이상': 0 }, total: 0, sum: 0 };
+        const fatPercentageStats = { ranges: { '10미만': 0, '10-15': 0, '15-20': 0, '20-25': 0, '25이상': 0 }, total: 0, sum: 0 };
+
+        successLogsWithUserData.forEach(log => {
+            const userData = log.parsed_userMassage;
+
+            // 나이 그룹 분석
+            if (userData.age) {
+                const age = parseInt(userData.age);
+                if (age < 20) ageGroups['10대']++;
+                else if (age < 30) ageGroups['20대']++;
+                else if (age < 40) ageGroups['30대']++;
+                else if (age < 50) ageGroups['40대']++;
+                else ageGroups['50대+']++;
+            }
+
+            // 성별 분석
+            if (userData.gender) {
+                // 성별 표기법 통일 (남성/여성으로 통일)
+                let normalizedGender = userData.gender;
+                if (userData.gender === '남자') {
+                    normalizedGender = '남성';
+                } else if (userData.gender === '여자') {
+                    normalizedGender = '여성';
+                }
+                genderStats[normalizedGender] = (genderStats[normalizedGender] || 0) + 1;
+            }
+
+            // 목적 분석
+            if (userData.purpose) {
+                purposeStats[userData.purpose] = (purposeStats[userData.purpose] || 0) + 1;
+            }
+
+            // 질병/부상 분석
+            if (userData.disease && userData.disease !== '없음' && userData.disease !== '' && typeof userData.disease === 'string') {
+                const diseases = userData.disease.split(',').map(d => d.trim());
+                diseases.forEach(disease => {
+                    if (disease) {
+                        diseaseStats[disease] = (diseaseStats[disease] || 0) + 1;
+                    }
+                });
+            }
+
+            // BMI 카테고리 분석
+            if (userData.bmi) {
+                const bmi = parseFloat(userData.bmi);
+                if (bmi < 18.5) bmiCategories['저체중']++;
+                else if (bmi < 23) bmiCategories['정상']++;
+                else if (bmi < 25) bmiCategories['과체중']++;
+                else bmiCategories['비만']++;
+            }
+
+            // 분할 선호도 분석
+            if (userData.split) {
+                const split = userData.split.toString();
+                splitPreferences[split + '분할'] = (splitPreferences[split + '분할'] || 0) + 1;
+            }
+
+            // 신장 분석
+            if (userData.height) {
+                const height = parseInt(userData.height);
+                heightStats.total++;
+                heightStats.sum += height;
+                if (height < 150) heightStats.ranges['150미만']++;
+                else if (height < 160) heightStats.ranges['150-160']++;
+                else if (height < 170) heightStats.ranges['160-170']++;
+                else if (height < 180) heightStats.ranges['170-180']++;
+                else if (height < 190) heightStats.ranges['180-190']++;
+                else heightStats.ranges['190이상']++;
+            }
+
+            // 체중 분석
+            if (userData.weight) {
+                const weight = parseInt(userData.weight);
+                weightStats.total++;
+                weightStats.sum += weight;
+                if (weight < 50) weightStats.ranges['50미만']++;
+                else if (weight < 60) weightStats.ranges['50-60']++;
+                else if (weight < 70) weightStats.ranges['60-70']++;
+                else if (weight < 80) weightStats.ranges['70-80']++;
+                else if (weight < 90) weightStats.ranges['80-90']++;
+                else weightStats.ranges['90이상']++;
+            }
+
+            // 체지방률 분석
+            if (userData.fat_percentage) {
+                const fatPercentage = parseFloat(userData.fat_percentage);
+                fatPercentageStats.total++;
+                fatPercentageStats.sum += fatPercentage;
+                if (fatPercentage < 10) fatPercentageStats.ranges['10미만']++;
+                else if (fatPercentage < 15) fatPercentageStats.ranges['10-15']++;
+                else if (fatPercentage < 20) fatPercentageStats.ranges['15-20']++;
+                else if (fatPercentage < 25) fatPercentageStats.ranges['20-25']++;
+                else fatPercentageStats.ranges['25이상']++;
+            }
+        });
+
+        // 평균 계산
+        const avgHeight = heightStats.total > 0 ? (heightStats.sum / heightStats.total).toFixed(1) : 0;
+        const avgWeight = weightStats.total > 0 ? (weightStats.sum / weightStats.total).toFixed(1) : 0;
+        const avgFatPercentage = fatPercentageStats.total > 0 ? (fatPercentageStats.sum / fatPercentageStats.total).toFixed(1) : 0;
+
+        return {
+            totalUsers: successLogsWithUserData.length,
+            ageGroups,
+            genderStats,
+            purposeStats,
+            diseaseStats,
+            bmiCategories,
+            splitPreferences,
+            heightStats: { ...heightStats, average: avgHeight },
+            weightStats: { ...weightStats, average: avgWeight },
+            fatPercentageStats: { ...fatPercentageStats, average: avgFatPercentage },
+            
+            // Chart.js용 데이터
+            ageChartData: {
+                labels: Object.keys(ageGroups),
+                datasets: [{
+                    data: Object.values(ageGroups),
+                    backgroundColor: [
+                        '#FF6B6B',  // 빨간색 - 10대
+                        '#4ECDC4',  // 청록색 - 20대
+                        '#45B7D1',  // 파란색 - 30대
+                        '#96CEB4',  // 연두색 - 40대
+                        '#FECA57'   // 노란색 - 50대+
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+
+            genderChartData: {
+                labels: Object.keys(genderStats),
+                datasets: [{
+                    data: Object.values(genderStats),
+                    backgroundColor: [
+                        '#3498DB',  // 파란색 - 남성
+                        '#E91E63'   // 분홍색 - 여성
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+
+            purposeChartData: {
+                labels: Object.keys(purposeStats),
+                datasets: [{
+                    label: '운동 목적',
+                    data: Object.values(purposeStats),
+                    backgroundColor: [
+                        '#FF5733',  // 주황빨강 - 체중감량
+                        '#33C4FF',  // 하늘색 - 근육증가
+                        '#FFD133',  // 밝은 노랑 - 체력향상
+                        '#8E44AD',  // 보라색 - 재활
+                        '#27AE60',  // 초록색 - 건강유지
+                        '#F39C12'   // 주황색 - 기타
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+
+            bmiChartData: {
+                labels: Object.keys(bmiCategories),
+                datasets: [{
+                    data: Object.values(bmiCategories),
+                    backgroundColor: [
+                        '#74B9FF',  // 연파랑 - 저체중
+                        '#00B894',  // 초록 - 정상
+                        '#FDCB6E',  // 노랑 - 과체중
+                        '#E17055'   // 빨강 - 비만
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
                 }]
             }
         };
@@ -287,6 +519,7 @@ const AnalyticsTab = ({
     const modelUsageData = getModelUsageData();
     const responseTimeData = getResponseTimeDistribution();
     const errorAnalysis = getErrorAnalysis();
+    const userAnalysis = getUserAnalysis();
 
     const chartOptions = {
         responsive: true,
@@ -340,6 +573,12 @@ const AnalyticsTab = ({
                             onClick={() => setSelectedAnalysis('errors')}
                         >
                             🚨 에러 분석
+                        </SelectorButton>
+                        <SelectorButton
+                            active={selectedAnalysis === 'users'}
+                            onClick={() => setSelectedAnalysis('users')}
+                        >
+                            👥 사용자 분석
                         </SelectorButton>
                     </SelectorButtons>
                 </AnalysisSelector>
@@ -686,6 +925,255 @@ const AnalyticsTab = ({
                                 </>
                             ) : (
                                 <NoDataMessage>에러 분석 데이터가 없습니다</NoDataMessage>
+                            )}
+                        </AnalysisSection>
+                    )}
+
+                    {selectedAnalysis === 'users' && (
+                        <AnalysisSection>
+                            <SectionTitle>👥 사용자 분석 리포트</SectionTitle>
+                            {userAnalysis ? (
+                                <>
+                                    {/* 사용자 개요 */}
+                                    <UserOverviewGrid>
+                                        <UserOverviewCard>
+                                            <UserOverviewIcon>👥</UserOverviewIcon>
+                                            <UserOverviewContent>
+                                                <UserOverviewTitle>총 사용자</UserOverviewTitle>
+                                                <UserOverviewValue>{userAnalysis.totalUsers}명</UserOverviewValue>
+                                                <UserOverviewDetail>분석 대상 사용자</UserOverviewDetail>
+                                            </UserOverviewContent>
+                                        </UserOverviewCard>
+
+                                        <UserOverviewCard>
+                                            <UserOverviewIcon>📏</UserOverviewIcon>
+                                            <UserOverviewContent>
+                                                <UserOverviewTitle>평균 신장</UserOverviewTitle>
+                                                <UserOverviewValue>{userAnalysis.heightStats.average}cm</UserOverviewValue>
+                                                <UserOverviewDetail>{userAnalysis.heightStats.total}명 기준</UserOverviewDetail>
+                                            </UserOverviewContent>
+                                        </UserOverviewCard>
+
+                                        <UserOverviewCard>
+                                            <UserOverviewIcon>⚖️</UserOverviewIcon>
+                                            <UserOverviewContent>
+                                                <UserOverviewTitle>평균 체중</UserOverviewTitle>
+                                                <UserOverviewValue>{userAnalysis.weightStats.average}kg</UserOverviewValue>
+                                                <UserOverviewDetail>{userAnalysis.weightStats.total}명 기준</UserOverviewDetail>
+                                            </UserOverviewContent>
+                                        </UserOverviewCard>
+
+                                        <UserOverviewCard>
+                                            <UserOverviewIcon>🔥</UserOverviewIcon>
+                                            <UserOverviewContent>
+                                                <UserOverviewTitle>평균 체지방률</UserOverviewTitle>
+                                                <UserOverviewValue>{userAnalysis.fatPercentageStats.average}%</UserOverviewValue>
+                                                <UserOverviewDetail>{userAnalysis.fatPercentageStats.total}명 기준</UserOverviewDetail>
+                                            </UserOverviewContent>
+                                        </UserOverviewCard>
+                                    </UserOverviewGrid>
+
+                                    {/* 차트 분석 */}
+                                    <UserAnalysisGrid>
+                                        <UserAnalysisSection>
+                                            <UserSectionTitle>📊 연령대별 분포</UserSectionTitle>
+                                            <ChartContainer>
+                                                <Doughnut 
+                                                    data={userAnalysis.ageChartData} 
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: {
+                                                            legend: {
+                                                                position: 'right',
+                                                            },
+                                                            tooltip: {
+                                                                callbacks: {
+                                                                    label: function(context) {
+                                                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                                                                        return `${context.label}: ${context.raw}명 (${percentage}%)`;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </ChartContainer>
+                                        </UserAnalysisSection>
+
+                                        <UserAnalysisSection>
+                                            <UserSectionTitle>⚖️ BMI 분포</UserSectionTitle>
+                                            <ChartContainer>
+                                                <Doughnut 
+                                                    data={userAnalysis.bmiChartData} 
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: {
+                                                            legend: {
+                                                                position: 'right',
+                                                            },
+                                                            tooltip: {
+                                                                callbacks: {
+                                                                    label: function(context) {
+                                                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                                                                        return `${context.label}: ${context.raw}명 (${percentage}%)`;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </ChartContainer>
+                                        </UserAnalysisSection>
+                                    </UserAnalysisGrid>
+
+                                    <UserAnalysisGrid>
+                                        <UserAnalysisSection>
+                                            <UserSectionTitle>🚀 운동 목적</UserSectionTitle>
+                                            <ChartContainer>
+                                                <Bar 
+                                                    data={userAnalysis.purposeChartData} 
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: {
+                                                            legend: {
+                                                                display: false
+                                                            }
+                                                        },
+                                                        scales: {
+                                                            y: {
+                                                                beginAtZero: true,
+                                                                ticks: {
+                                                                    stepSize: 1
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </ChartContainer>
+                                        </UserAnalysisSection>
+
+                                        <UserAnalysisSection>
+                                            <UserSectionTitle>👨‍👩‍👧‍👦 성별 분포</UserSectionTitle>
+                                            <ChartContainer>
+                                                <Doughnut 
+                                                    data={userAnalysis.genderChartData} 
+                                                    options={{
+                                                        responsive: true,
+                                                        maintainAspectRatio: false,
+                                                        plugins: {
+                                                            legend: {
+                                                                position: 'bottom',
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </ChartContainer>
+                                        </UserAnalysisSection>
+                                    </UserAnalysisGrid>
+
+                                    {/* 상세 분석 */}
+                                    <DetailedUserGrid>
+                                        {/* 질병/부상 분석 */}
+                                        {Object.keys(userAnalysis.diseaseStats).length > 0 && (
+                                            <UserCard>
+                                                <UserCardTitle>🏥 주요 질병/부상</UserCardTitle>
+                                                <UserList>
+                                                    {Object.entries(userAnalysis.diseaseStats)
+                                                        .sort((a, b) => b[1] - a[1])
+                                                        .slice(0, 8)
+                                                        .map(([disease, count]) => (
+                                                        <UserItem key={disease}>
+                                                            <UserLabel>{disease}</UserLabel>
+                                                            <UserCount>{count}명</UserCount>
+                                                        </UserItem>
+                                                    ))}
+                                                </UserList>
+                                            </UserCard>
+                                        )}
+
+                                        {/* 분할 선호도 */}
+                                        <UserCard>
+                                            <UserCardTitle>🗓️ 분할 선호도</UserCardTitle>
+                                            <UserList>
+                                                {Object.entries(userAnalysis.splitPreferences)
+                                                    .sort((a, b) => b[1] - a[1])
+                                                    .map(([split, count]) => (
+                                                    <UserItem key={split}>
+                                                        <UserLabel>{split}</UserLabel>
+                                                        <UserCount>{count}명</UserCount>
+                                                    </UserItem>
+                                                ))}
+                                            </UserList>
+                                        </UserCard>
+
+                                        {/* 신장 분포 */}
+                                        <UserCard>
+                                            <UserCardTitle>📏 신장 분포</UserCardTitle>
+                                            <UserList>
+                                                {Object.entries(userAnalysis.heightStats.ranges)
+                                                    .filter(([, count]) => count > 0)
+                                                    .map(([range, count]) => (
+                                                    <UserItem key={range}>
+                                                        <UserLabel>{range}cm</UserLabel>
+                                                        <UserCount>{count}명</UserCount>
+                                                    </UserItem>
+                                                ))}
+                                            </UserList>
+                                        </UserCard>
+
+                                        {/* 사용자 인사이트 */}
+                                        <UserCard>
+                                            <UserCardTitle>💡 사용자 인사이트</UserCardTitle>
+                                            <InsightsList>
+                                                {Object.entries(userAnalysis.ageGroups).length > 0 && (
+                                                    <InsightItem>
+                                                        <InsightIcon>🎯</InsightIcon>
+                                                        <InsightText>
+                                                            주요 연령층: {
+                                                                Object.entries(userAnalysis.ageGroups)
+                                                                    .sort((a, b) => b[1] - a[1])[0]?.[0]
+                                                            } ({
+                                                                Object.entries(userAnalysis.ageGroups)
+                                                                    .sort((a, b) => b[1] - a[1])[0]?.[1]
+                                                            }명)
+                                                        </InsightText>
+                                                    </InsightItem>
+                                                )}
+                                                {Object.entries(userAnalysis.purposeStats).length > 0 && (
+                                                    <InsightItem>
+                                                        <InsightIcon>🚀</InsightIcon>
+                                                        <InsightText>
+                                                            인기 목적: {
+                                                                Object.entries(userAnalysis.purposeStats)
+                                                                    .sort((a, b) => b[1] - a[1])[0]?.[0]
+                                                            } ({
+                                                                Object.entries(userAnalysis.purposeStats)
+                                                                    .sort((a, b) => b[1] - a[1])[0]?.[1]
+                                                            }명)
+                                                        </InsightText>
+                                                    </InsightItem>
+                                                )}
+                                                <InsightItem>
+                                                    <InsightIcon>📊</InsightIcon>
+                                                    <InsightText>
+                                                        평균 BMI: {
+                                                            userAnalysis.heightStats.total > 0 && userAnalysis.weightStats.total > 0 ?
+                                                            (userAnalysis.weightStats.average / Math.pow(userAnalysis.heightStats.average / 100, 2)).toFixed(1) : 
+                                                            'N/A'
+                                                        }
+                                                    </InsightText>
+                                                </InsightItem>
+                                            </InsightsList>
+                                        </UserCard>
+                                    </DetailedUserGrid>
+                                </>
+                            ) : (
+                                <NoDataMessage>사용자 분석 데이터가 없습니다</NoDataMessage>
                             )}
                         </AnalysisSection>
                     )}
@@ -1341,6 +1829,78 @@ const ErrorRate = styled.span`
   
   @media (max-width: 768px) {
     font-size: 1rem;
+  }
+`;
+
+// 사용자 분석 관련 새로운 styled-components
+const UserOverviewGrid = styled(ErrorOverviewGrid)``;
+
+const UserOverviewCard = styled(ErrorOverviewCard)``;
+
+const UserOverviewIcon = styled(ErrorOverviewIcon)``;
+
+const UserOverviewContent = styled(ErrorOverviewContent)``;
+
+const UserOverviewTitle = styled(ErrorOverviewTitle)``;
+
+const UserOverviewValue = styled(ErrorOverviewValue)``;
+
+const UserOverviewDetail = styled(ErrorOverviewDetail)``;
+
+const UserAnalysisGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+`;
+
+const UserAnalysisSection = styled(ErrorAnalysisSection)``;
+
+const UserSectionTitle = styled(ErrorSectionTitle)``;
+
+const DetailedUserGrid = styled(DetailedErrorGrid)``;
+
+const UserCard = styled.div`
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.8rem;
+  }
+`;
+
+const UserCardTitle = styled.h4`
+  margin: 0 0 1.4rem 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+`;
+
+const UserList = styled(ErrorList)``;
+
+const UserItem = styled(ErrorItem)``;
+
+const UserLabel = styled(ErrorLabel)``;
+
+const UserCount = styled.span`
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--success);
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
   }
 `;
 

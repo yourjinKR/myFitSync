@@ -26,7 +26,7 @@ const StatisticsCards = ({ stats, isLoading, subscriberInfo }) => {
     const {
         totalRequests,
         successCount,
-        errorCount,
+        failCount,
         exceptionCount,
         successRate,
         errorRate,
@@ -91,7 +91,7 @@ const StatisticsCards = ({ stats, isLoading, subscriberInfo }) => {
                         {errorRate}%
                     </CardValue>
                     <CardSubtext>
-                        오류: {errorCount.toLocaleString()}건 / 예외: {exceptionCount.toLocaleString()}건
+                        실패: {failCount.toLocaleString()}건 / 예외: {exceptionCount.toLocaleString()}건
                     </CardSubtext>
                 </CardContent>
             </StatCard>
