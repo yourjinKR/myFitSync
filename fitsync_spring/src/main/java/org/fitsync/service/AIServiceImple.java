@@ -264,4 +264,24 @@ public class AIServiceImple implements AIService {
         return new ApiResponseDTO(finalResponseJson, logIdx);
     }
 
+    // 운동기록 분석기반 AI 피드백 서비스
+    @Override
+    public ApiResponseDTO requestAIfeedback(String userMessage, int memberIdx) throws Exception {
+        /**
+         * 기존에 루틴 생성 AI 서비스만으로는 부족함을 느낌.
+         * 사용자가 지속적인 케어를 받을 수 있는 AI 피드백 서비스를 기획 중임.
+         * AI가 사용자의 정보를 받아 분석하고 운동에 방향성을 피드백해줌.
+         * 일일 단위로 지원되는 AI 서비스로 예상됨.
+         * 
+         * 사용자로부터 받는 데이터
+         * 1. 오늘 한 운동 (recordVO)
+         * 2. 지난 운동들 (List<recordVO>)
+         * 3. 사용자 정보 (MemberVO, BodyVO)
+         * 4. 지난 사용자 정보 (필요할지 의문임)
+         */
+
+
+        return null;
+    }
+
 }
