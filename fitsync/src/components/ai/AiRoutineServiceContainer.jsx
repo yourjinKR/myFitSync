@@ -188,7 +188,7 @@ const AiRoutineServiceContainer = () => {
             const fullMessage = JSON.stringify(filteredUserInfo);
             
             const response = await axios.post(
-                '/ai/createRoutine', 
+                '/ai/routine', 
                 { message: fullMessage },
                 { withCredentials: true }
             );

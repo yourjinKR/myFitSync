@@ -79,7 +79,7 @@ public class AIController {
 	    }
 	}
 	
-	@PostMapping(value = "/createRoutine", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@PostMapping(value = "/routine", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ApiResponseDTO> createRoutine(@RequestBody Map<String, String> request, HttpSession session) {
 		Object memberIdx = session.getAttribute("member_idx");
 		
@@ -141,6 +141,11 @@ public class AIController {
 	        errorBody.put("success", false);
 	        return ResponseEntity.status(500).body(errorBody);
 		}
+	}
+
+	@PostMapping("/feedback")
+	public ResponseEntity<?> getFeedback(@RequestBody Map<Object, String> body, HttpSession session) {
+		return null;
 	}
 	
 }

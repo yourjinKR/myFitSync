@@ -234,6 +234,20 @@ const AiUtil = {
         } catch (error) {
             console.error("통계 개요 호출 실패 : ", error);
         }
+    },
+
+    /** 운동 피드백 AI 서비스 */
+    feedbackService : async ({message}) => {
+        try {
+            const response = await axios.post(
+                'ai/feedback', 
+                { message },
+                { withCredentials: true }
+            )
+            console.log(response);
+        } catch (error) {
+            console.error('피드백 요청 실패');
+        }
     }
 };
 
