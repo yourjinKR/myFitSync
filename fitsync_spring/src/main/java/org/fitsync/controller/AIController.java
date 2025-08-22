@@ -145,6 +145,15 @@ public class AIController {
 
 	@PostMapping("/feedback")
 	public ResponseEntity<?> getFeedback(@RequestBody Map<Object, String> body, HttpSession session) {
+		String message = body.get("message");
+
+		try {
+			ApiResponseDTO response = aiService.requestAIfeedback(message, 0);
+		
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
 		return null;
 	}
 	
