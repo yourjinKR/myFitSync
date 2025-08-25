@@ -70,8 +70,6 @@
 - **Backend**: Spring MVC API 설계, DB 모델링, 결제/구독 로직 구현  
 - **DevOps**: AWS 배포 (Elastic Beanstalk, S3, CloudFront)  
 
----
-
 ## 📈 향후 개선사항
 - 모바일 반응형 디자인 강화  
 - Elasticsearch 기반 한글 친화적 검색 기능 추가  
