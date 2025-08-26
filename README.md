@@ -41,8 +41,6 @@
 ### DevOps & Deployment
 - AWS Elastic Beanstalk (Spring MVC 배포)
 - AWS S3 + CloudFront (React 정적 파일 호스팅)
-- (고려 중) AWS RDS for Oracle
-- (고려 중) 반응형 디자인 (모바일 대응)
 
 ## 📊 데이터베이스 구조 (요약)
 - **member**: 회원 정보  
