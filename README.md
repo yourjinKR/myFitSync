@@ -42,7 +42,7 @@
 - AWS Elastic Beanstalk (Spring MVC 배포)
 - AWS S3 + CloudFront (React 정적 파일 호스팅)
 
-## 📊 데이터베이스 구조 (요약)
+## 📊 데이터베이스 구조 [🔗](https://graceful-centaur-bbe.notion.site/ERD-2513b926694380149f8bf941dece8fc8?pvs=74)
 - **member**: 회원 정보  
 - **pt**: 트레이너 정보  
 - **record / routine**: 운동 기록 및 루틴  
@@ -50,7 +50,7 @@
 - **review / favorite**: 리뷰 및 즐겨찾기  
 - **payment**: 결제 내역 및 구독  
 - **room / message**: 채팅 및 파일 전송 로그  
-[view more](https://graceful-centaur-bbe.notion.site/ERD-2513b926694380149f8bf941dece8fc8?pvs=74)
+
 
 ## 🚀 프로젝트 목적
 - PT 계약 과정을 온라인으로 간소화  
