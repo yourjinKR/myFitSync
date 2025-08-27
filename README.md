@@ -50,6 +50,7 @@
 - **review / favorite**: 리뷰 및 즐겨찾기  
 - **payment**: 결제 내역 및 구독  
 - **room / message**: 채팅 및 파일 전송 로그  
+[view more](https://graceful-centaur-bbe.notion.site/ERD-2513b926694380149f8bf941dece8fc8?pvs=74)
 
 ## 🚀 프로젝트 목적
 - PT 계약 과정을 온라인으로 간소화  
