@@ -132,8 +132,8 @@ public class MemberController {
         return result;
     }
 	
-	// 유저 정보 불러오기 임시
-	@GetMapping(value = "/getMemberInfoWithBody")
+	// 특정 유저의 기본정보와 가장 최신의 신체 정보 전달
+	@GetMapping(value = "/info/all")
     public ResponseEntity<Map<String, Object>> getMemberInfoWithBody(HttpSession session) {
 		Object memberIdx = session.getAttribute("member_idx");
 		

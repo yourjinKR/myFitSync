@@ -4,7 +4,7 @@ import axios from "axios";
 export const getMemberTotalData = async () => {
     try {
         const response = await axios.get(
-            '/member/getMemberInfoWithBody',
+            '/member/info/all',
             { withCredentials: true }
         );
 

@@ -278,7 +278,7 @@ const AiRoutineServiceContainer = () => {
                 apilog_feedback_reason : reason,
             };
 
-            // 피드백 API 호출 (실제 엔드포인트에 맞게 수정 필요)
+            // 피드백 API 호출
             await axios.patch('/admin/api/feedback', log, { withCredentials: true });
             
             setShowFeedbackModal(false);
