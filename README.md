@@ -48,7 +48,7 @@
 - PortOne REST API v2 (정기 결제)
 - OAuth (Google, Kakao, Naver)
 
-## 📊 데이터베이스 구조 [🔗](https://graceful-centaur-bbe.notion.site/ERD-2513b926694380149f8bf941dece8fc8?pvs=74)
+## 📊 데이터베이스 구조 [🔗](https://www.erdcloud.com/d/rB7vpSTshcwFJ9Zmd)
 - **member**: 회원 정보  
 - **pt**: 트레이너 정보  
 - **record / routine**: 운동 기록 및 루틴  
