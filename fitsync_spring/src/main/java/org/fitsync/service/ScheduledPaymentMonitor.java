@@ -108,8 +108,8 @@ public class ScheduledPaymentMonitor {
         java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
         
         try {
-            log.info("🌅 === 일일 결제 배치 처리 시작 (날짜: " + today + ", 서버: " + serverName + ") ===");
-            System.out.println("🌅 [" + serverName + "] " + today + " 일일 결제 배치 시작");
+            log.info("=== 일일 결제 배치 처리 시작 (날짜: " + today + ", 서버: " + serverName + ") ===");
+            System.out.println("[" + serverName + "] " + today + " 일일 결제 배치 시작");
             
             // 1. 당일(00:00:00 ~ 23:59:59) 예약 결제 조회
             java.time.LocalDateTime todayStart = today.atTime(0, 0, 0);
@@ -118,15 +118,15 @@ public class ScheduledPaymentMonitor {
             Timestamp batchStart = Timestamp.valueOf(todayStart);
             Timestamp batchEnd = Timestamp.valueOf(todayEnd);
             
-            log.info("📅 배치 처리 범위: " + todayStart + " ~ " + todayEnd);
+            log.info("배치 처리 범위: " + todayStart + " ~ " + todayEnd);
             
             // 2. 당일 예약 결제 조회 (정각에 설정된 예약들)
             List<PaymentOrderVO> todayScheduledOrders = paymentOrderMapper
                 .selectScheduledPaymentsByTimeRange(batchStart, batchEnd);
             
             if (todayScheduledOrders.isEmpty()) {
-                log.info("✅ 당일 처리할 예약 결제가 없습니다. (날짜: " + today + ")");
-                System.out.println("✅ [" + serverName + "] 당일 처리할 예약 결제 없음");
+                log.info("당일 처리할 예약 결제가 없습니다. (날짜: " + today + ")");
+                System.out.println("[" + serverName + "] 당일 처리할 예약 결제 없음");
                 return;
             }
             
@@ -157,15 +157,15 @@ public class ScheduledPaymentMonitor {
                 switch (result) {
                     case "SUCCESS": 
                         successCount++; 
-                        System.out.println("✅ [배치] 결제 성공 - OrderIdx: " + order.getOrder_idx());
+                        System.out.println("[배치] 결제 성공 - OrderIdx: " + order.getOrder_idx());
                         break;
                     case "FAILED": 
                         failureCount++; 
-                        System.out.println("❌ [배치] 결제 실패 - OrderIdx: " + order.getOrder_idx());
+                        System.out.println("[배치] 결제 실패 - OrderIdx: " + order.getOrder_idx());
                         break;
                     case "UNCHANGED": 
                         unchangedCount++; 
-                        System.out.println("⏳ [배치] 대기 중 - OrderIdx: " + order.getOrder_idx());
+                        System.out.println("[배치] 대기 중 - OrderIdx: " + order.getOrder_idx());
                         break;
                     case "API_LIMIT_EXCEEDED": 
                         skippedCount++; 
@@ -186,19 +186,19 @@ public class ScheduledPaymentMonitor {
             
             long executionTime = System.currentTimeMillis() - startTime;
             
-            log.info("🌅 === 일일 결제 배치 처리 완료 (날짜: " + today + ", 서버: " + serverName + 
+            log.info("=== 일일 결제 배치 처리 완료 (날짜: " + today + ", 서버: " + serverName + 
                     ", 실행시간: " + executionTime + "ms) ===");
-            log.info("📊 처리 결과 - 총 처리: " + totalProcessed + "건 중 " + 
+            log.info("처리 결과 - 총 처리: " + totalProcessed + "건 중 " + 
                     "성공: " + successCount + "건, 실패: " + failureCount + "건, " + 
                     "대기: " + unchangedCount + "건, 건너뜀: " + skippedCount + "건");
             
-            System.out.println("🌅 [" + serverName + "] " + today + " 일일 배치 완료!");
-            System.out.println("📊 [결과] 성공: " + successCount + "건, 실패: " + failureCount + "건, " + 
+            System.out.println("[" + serverName + "] " + today + " 일일 배치 완료!");
+            System.out.println("[결과] 성공: " + successCount + "건, 실패: " + failureCount + "건, " + 
                              "대기: " + unchangedCount + "건 (총 " + totalProcessed + "건 처리)");
             
             // 성과 요약 로깅
             if (successCount > 0 || failureCount > 0) {
-                System.out.println("💰 [" + serverName + "] " + today + " 결제 처리: " + 
+                System.out.println("[" + serverName + "] " + today + " 결제 처리: " + 
                                  successCount + "건 완료, " + failureCount + "건 실패");
             }
             
@@ -206,7 +206,7 @@ public class ScheduledPaymentMonitor {
             long executionTime = System.currentTimeMillis() - startTime;
             log.error("일일 결제 배치 처리 중 오류 발생 (날짜: " + today + ", 서버: " + serverName + 
                      ", 실행시간: " + executionTime + "ms): ", e);
-            System.err.println("💥 [" + serverName + "] 일일 배치 오류: " + e.getMessage());
+            System.err.println("[" + serverName + "] 일일 배치 오류: " + e.getMessage());
         }
     }
     
@@ -333,16 +333,16 @@ public class ScheduledPaymentMonitor {
                 // 로깅
                 switch (newStatus) {
                     case "PAID":
-                        log.info("🎉 예약 결제 성공 감지 - OrderIdx: " + order.getOrder_idx() + ", 상태 변경: READY -> PAID");
-                        System.out.println("✅ [" + serverName + "] 결제 성공! OrderIdx: " + order.getOrder_idx());
+                        log.info("예약 결제 성공 감지 - OrderIdx: " + order.getOrder_idx() + ", 상태 변경: READY -> PAID");
+                        System.out.println("[" + serverName + "] 결제 성공! OrderIdx: " + order.getOrder_idx());
                         break;
                     case "FAILED":
-                        log.info("❌ 예약 결제 실패 감지 - OrderIdx: " + order.getOrder_idx() + ", 상태 변경: READY -> FAILED");
-                        System.out.println("❌ [" + serverName + "] 결제 실패! OrderIdx: " + order.getOrder_idx());
+                        log.info("예약 결제 실패 감지 - OrderIdx: " + order.getOrder_idx() + ", 상태 변경: READY -> FAILED");
+                        System.out.println("[" + serverName + "] 결제 실패! OrderIdx: " + order.getOrder_idx());
                         break;
                     case "CANCELLED":
-                        log.info("🚫 예약 결제 취소 감지 - OrderIdx: " + order.getOrder_idx() + ", 상태 변경: READY -> CANCELLED");
-                        System.out.println("🚫 [" + serverName + "] 결제 취소! OrderIdx: " + order.getOrder_idx());
+                        log.info("예약 결제 취소 감지 - OrderIdx: " + order.getOrder_idx() + ", 상태 변경: READY -> CANCELLED");
+                        System.out.println("[" + serverName + "] 결제 취소! OrderIdx: " + order.getOrder_idx());
                         break;
                 }
                 
@@ -399,7 +399,7 @@ public class ScheduledPaymentMonitor {
             throw new RuntimeException("Concurrent modification detected");
         }
         
-        System.out.println("✅ 예약 결제 상태 업데이트 완료 - OrderIdx: " + order.getOrder_idx() + ", READY -> " + newStatus);
+        System.out.println("예약 결제 상태 업데이트 완료 - OrderIdx: " + order.getOrder_idx() + ", READY -> " + newStatus);
     }
 
     /**
@@ -407,17 +407,17 @@ public class ScheduledPaymentMonitor {
      */
     private void sendPaymentNotification(PaymentOrderVO order, String status) {
         try {
-            log.info("📢 결제 알림 발송 - OrderIdx: " + order.getOrder_idx() + ", Status: " + status + ", MemberIdx: " + order.getMember_idx());
+            log.info("결제 알림 발송 - OrderIdx: " + order.getOrder_idx() + ", Status: " + status + ", MemberIdx: " + order.getMember_idx());
             
             // 결제 성공 시 추가 비즈니스 로직
             if ("PAID".equals(status)) {
-                log.info("💎 구독 활성화 처리 - MemberIdx: " + order.getMember_idx());
+                log.info("구독 활성화 처리 - MemberIdx: " + order.getMember_idx());
                 
                 // 정기 결제인 경우 다음 달 자동 예약 처리 (설정으로 제어)
                 if ("SCHEDULE".equals(order.getOrder_type()) && autoScheduleEnabled) {
                     scheduleNextMonthAutoPayment(order);
                 } else if ("SCHEDULE".equals(order.getOrder_type()) && !autoScheduleEnabled) {
-                    log.info("⚠️ 자동 예약 기능이 비활성화됨 - MemberIdx: " + order.getMember_idx());
+                    log.info("자동 예약 기능이 비활성화됨 - MemberIdx: " + order.getMember_idx());
                 }
                 
                 // TODO: 구독 활성화 로직 구현
@@ -442,9 +442,9 @@ public class ScheduledPaymentMonitor {
             PaymentOrderWithMethodVO existingSchedule = paymentOrderMapper.selectScheduledPaymentOrderByMember(completedOrder.getMember_idx());
             
             if (existingSchedule != null && !"CANCELLED".equals(existingSchedule.getOrder_status())) {
-                log.info("⚠️ 이미 다음 달 예약이 존재함 - ExistingOrderIdx: " + existingSchedule.getOrder_idx() + 
+                log.info("이미 다음 달 예약이 존재함 - ExistingOrderIdx: " + existingSchedule.getOrder_idx() + 
                         ", Status: " + existingSchedule.getOrder_status());
-                System.out.println("ℹ️ [자동 예약] 이미 다음 달 예약 존재 - MemberIdx: " + completedOrder.getMember_idx());
+                System.out.println("[자동 예약] 이미 다음 달 예약 존재 - MemberIdx: " + completedOrder.getMember_idx());
                 return;
             }
             
@@ -456,20 +456,20 @@ public class ScheduledPaymentMonitor {
             boolean isSuccess = (boolean) result.get("success");
             
             if (isSuccess) {
-                log.info("✅ 다음 달 자동 결제 예약 성공 - OriginalOrderIdx: " + completedOrder.getOrder_idx() + 
+                log.info("다음 달 자동 결제 예약 성공 - OriginalOrderIdx: " + completedOrder.getOrder_idx() + 
                         ", NewScheduleId: " + result.get("scheduleId") + ", NextPaymentDate: " + result.get("nextPaymentDate"));
-                System.out.println("🎯 [자동 예약] 성공! MemberIdx: " + completedOrder.getMember_idx() + 
+                System.out.println("[자동 예약] 성공! MemberIdx: " + completedOrder.getMember_idx() + 
                         ", 다음 결제일: " + result.get("nextPaymentDate"));
             } else {
-                log.error("❌ 다음 달 자동 결제 예약 실패 - OriginalOrderIdx: " + completedOrder.getOrder_idx() + 
+                log.error("다음 달 자동 결제 예약 실패 - OriginalOrderIdx: " + completedOrder.getOrder_idx() + 
                         ", Error: " + result.get("message"));
-                System.err.println("⚠️ [자동 예약] 실패! MemberIdx: " + completedOrder.getMember_idx() + 
+                System.err.println("[자동 예약] 실패! MemberIdx: " + completedOrder.getMember_idx() + 
                         ", 이유: " + result.get("message"));
             }
             
         } catch (Exception e) {
             log.error("다음 달 자동 결제 예약 처리 중 오류 발생 - OrderIdx: " + completedOrder.getOrder_idx(), e);
-            System.err.println("💥 [자동 예약] 오류 발생 - MemberIdx: " + completedOrder.getMember_idx() + 
+            System.err.println("[자동 예약] 오류 발생 - MemberIdx: " + completedOrder.getMember_idx() + 
                     ", 오류: " + e.getMessage());
         }
     }
